@@ -3,7 +3,7 @@
 // ============================================================================
 
 import type { Team, Pokemon, EVs, IVs } from '../types';
-import { getPokemonByName } from '../data/pokemonData';
+// import { getPokemonByName } from '../data/pokemonData';
 
 const DEFAULT_EVS: EVs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 const DEFAULT_IVS: IVs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
@@ -77,14 +77,6 @@ function parseTeraType(line: string): string {
 }
 
 /**
- * Parse happiness
- */
-function parseHappiness(line: string): number | undefined {
-  const match = line.match(/^Happiness:\\s*(\\d+)$/i);
-  return match ? parseInt(match[1], 10) : undefined;
-}
-
-/**
  * Clean species name from line like "Charizard (M) @ Choice Specs"
  */
 function parseSpecies(line: string): string {
@@ -115,7 +107,7 @@ function parseItem(line: string): string {
  */
 function parseNickname(line: string): string | undefined {
   const cleaned = line.split('@')[0].trim();
-  const nicknameMatch = cleaned.match(/^(\\w+)\\s*\\(/);
+  const nicknameMatch = cleaned.match(/^(\w+)\s*\(/);
   if (nicknameMatch && nicknameMatch[1]) {
     return nicknameMatch[1].trim();
   }
