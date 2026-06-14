@@ -2,7 +2,7 @@
 // PocketForge — Movepool Explorer Page
 // ============================================================================
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, BookOpen, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,7 +17,7 @@ import {
 } from '../utils/movepoolQuery';
 import type { Move } from '../types';
 
-const METHODS: (AcquisitionMethod | 'All')[] = ['All', 'Level', 'TM', 'Tutor', 'Coverage'];
+const METHODS: (AcquisitionMethod | 'All')[] = ['All', 'Level', 'TM', 'Tutor', 'Breeding', 'Coverage'];
 const CATEGORIES: (Move['category'] | 'All')[] = ['All', 'Physical', 'Special', 'Status'];
 
 export default function MovePoolExplorer() {
@@ -29,6 +29,7 @@ export default function MovePoolExplorer() {
   const [method, setMethod] = useState<AcquisitionMethod | 'All'>('All');
   const [category, setCategory] = useState<Move['category'] | 'All'>('All');
   const [moveQuery, setMoveQuery] = useState('');
+  const [movepool, setMovepool] = useState<any[]>([]);
 
   const searchResults = useMemo(
     () => (speciesQuery ? searchPokemon(speciesQuery) : []),
@@ -37,10 +38,15 @@ export default function MovePoolExplorer() {
 
   const dex = useMemo(() => getPokedexEntry(selectedSpecies), [selectedSpecies]);
 
-  const movepool = useMemo(
-    () => getMovepoolForSpecies(selectedSpecies),
-    [selectedSpecies],
-  );
+  useEffect(() => {
+    let active = true;
+    getMovepoolForSpecies(selectedSpecies).then((res) => {
+      if (active) setMovepool(res);
+    });
+    return () => {
+      active = false;
+    };
+  }, [selectedSpecies]);
 
   const filtered = useMemo(
     () => filterMovepool(movepool, { method, category, query: moveQuery }),

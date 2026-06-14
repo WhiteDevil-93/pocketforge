@@ -170,6 +170,9 @@ export default function Calculator() {
   const [selectedMoves, setSelectedMoves] = useState<(CalcMove | null)[]>([null, null, null, null]);
   const [activeMoveIndex, setActiveMoveIndex] = useState<number | null>(null);
 
+  // --- Generation Selector ---
+  const [genNum, setGenNum] = useState<number>(9);
+
   // --- Field ---
   const [field, setField] = useState<FieldConditions>(getDefaultField());
   const [showField, setShowField] = useState(false);
@@ -189,9 +192,9 @@ export default function Calculator() {
   const damageResults = useMemo(() => {
     return selectedMoves.map((move) => {
       if (!move || move.category === 'Status' || move.power === 0) return null;
-      return calculateDamage(attacker, defender, move, field, false, attackerTera);
+      return calculateDamage(attacker, defender, move, field, false, attackerTera, genNum);
     });
-  }, [attacker, defender, selectedMoves, field, attackerTera]);
+  }, [attacker, defender, selectedMoves, field, attackerTera, genNum]);
 
   // --- Handlers ---
 
@@ -525,8 +528,21 @@ export default function Calculator() {
   return (
     <div className="min-h-full pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle px-4 py-3">
+      <header className="sticky top-0 z-40 bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle px-4 py-3 flex items-center justify-between">
         <h1 className="font-headline text-xl text-text-primary">Damage Calculator</h1>
+        <div className="flex items-center gap-1.5">
+          <span className="font-micro text-text-tertiary">Gen</span>
+          <select
+            value={genNum}
+            onChange={(e) => setGenNum(parseInt(e.target.value, 10))}
+            className="px-2.5 py-1 rounded-xl bg-bg-tertiary border border-border-subtle text-text-primary font-body-medium text-xs outline-none focus:border-accent-primary"
+          >
+            <option value={9}>Gen 9</option>
+            <option value={8}>Gen 8</option>
+            <option value={7}>Gen 7</option>
+            <option value={6}>Gen 6</option>
+          </select>
+        </div>
       </header>
 
       <main className="px-4 py-4 space-y-4">
@@ -862,6 +878,12 @@ function DamageResultCard({ result }: { result: DamageResult }) {
       <div className="font-body-medium text-text-secondary mb-1">
         {result.koChance}
       </div>
+
+      {result.description && (
+        <div className="font-micro text-text-tertiary mb-2 border-t border-border-subtle pt-2">
+          {result.description}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-text-tertiary">
         <span className="font-micro">

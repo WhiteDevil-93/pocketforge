@@ -15,4 +15,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'pkmn-data': ['@pkmn/dex', '@pkmn/data', '@pkmn/sets'],
+          'smogon-calc': ['@smogon/calc'],
+        },
+      },
+    },
+  },
 });

@@ -13,6 +13,7 @@ import {
   getSpeedTiersForFormat,
   type SpeedModifiers,
 } from '../utils/speedCalculator';
+import { parseFormatGen } from '../utils/psFormat';
 
 interface ToggleProps {
   label: string;
@@ -63,9 +64,14 @@ export default function SpeedTierList() {
     [teams, selectedTeamId],
   );
 
+  const genNum = useMemo(
+    () => (team ? parseFormatGen(team.format) : 9),
+    [team],
+  );
+
   const ranking = useMemo(
-    () => (team ? rankTeamBySpeed(team, modifiers) : []),
-    [team, modifiers],
+    () => (team ? rankTeamBySpeed(team, modifiers, genNum) : []),
+    [team, modifiers, genNum],
   );
 
   const benchmarks = useMemo(
@@ -120,8 +126,8 @@ export default function SpeedTierList() {
             </div>
 
             {/* Modifier toggles */}
-            <div>
-              <h2 className="font-subtitle text-text-primary mb-2">Battlefield</h2>
+            <div className="space-y-3">
+              <h2 className="font-subtitle text-text-primary">Battlefield & Ability Modifiers</h2>
               <div className="grid grid-cols-2 gap-2">
                 <Toggle
                   label="Choice Scarf"
@@ -153,6 +159,50 @@ export default function SpeedTierList() {
                   active={!!modifiers.paralyzed}
                   onToggle={() => toggle('paralyzed')}
                 />
+                <Toggle
+                  label="Unburden"
+                  description="2× Speed when item lost"
+                  active={!!modifiers.isUnburdenActive}
+                  onToggle={() => toggle('isUnburdenActive')}
+                />
+                <Toggle
+                  label="Slow Start"
+                  description="0.5× Speed active"
+                  active={!!modifiers.isSlowStartActive}
+                  onToggle={() => toggle('isSlowStartActive')}
+                />
+              </div>
+
+              {/* Weather & Terrain Selectors */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <label className="font-micro text-text-tertiary mb-1 block">Active Weather</label>
+                  <select
+                    value={modifiers.weather || 'none'}
+                    onChange={(e) => setModifiers((m) => ({ ...m, weather: e.target.value === 'none' ? undefined : e.target.value }))}
+                    className="w-full h-[40px] px-3 rounded-card-md bg-bg-secondary border border-border-subtle font-body-medium text-xs text-text-primary outline-none focus:border-accent-primary"
+                  >
+                    <option value="none">None</option>
+                    <option value="sun">Sun (Chlorophyll / Proto)</option>
+                    <option value="rain">Rain (Swift Swim)</option>
+                    <option value="sand">Sandstorm (Sand Rush)</option>
+                    <option value="snow">Snow (Slush Rush)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-micro text-text-tertiary mb-1 block">Active Terrain</label>
+                  <select
+                    value={modifiers.terrain || 'none'}
+                    onChange={(e) => setModifiers((m) => ({ ...m, terrain: e.target.value === 'none' ? undefined : e.target.value }))}
+                    className="w-full h-[40px] px-3 rounded-card-md bg-bg-secondary border border-border-subtle font-body-medium text-xs text-text-primary outline-none focus:border-accent-primary"
+                  >
+                    <option value="none">None</option>
+                    <option value="electric">Electric (Surge Surfer / Quark)</option>
+                    <option value="grassy">Grassy</option>
+                    <option value="psychic">Psychic</option>
+                    <option value="misty">Misty</option>
+                  </select>
+                </div>
               </div>
             </div>
 
