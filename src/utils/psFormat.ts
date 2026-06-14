@@ -18,7 +18,7 @@ function parseEVsIVs(line: string, maxVal: number): Partial<EVs> {
   const entries = values.split('/');
 
   for (const entry of entries) {
-    const match = entry.trim().match(/^(\\d+)\\s+(hp|atk|def|spa|spd|spe)$/i);
+    const match = entry.trim().match(/^(\d+)\s+(hp|atk|def|spa|spd|spe)$/i);
     if (match) {
       const val = parseInt(match[1], 10);
       const stat = match[2].toLowerCase() as keyof EVs;
@@ -32,7 +32,7 @@ function parseEVsIVs(line: string, maxVal: number): Partial<EVs> {
  * Parse a nature line like "Modest Nature"
  */
 function parseNature(line: string): string {
-  const match = line.match(/^(\\w+)\\s+Nature/i);
+  const match = line.match(/^(\w+)\s+Nature/i);
   return match ? match[1] : "Serious";
 }
 
@@ -40,7 +40,7 @@ function parseNature(line: string): string {
  * Parse an ability line like "Ability: Blaze"
  */
 function parseAbility(line: string): string {
-  const match = line.match(/^Ability:\\s*(.+)$/i);
+  const match = line.match(/^Ability:\s*(.+)$/i);
   return match ? match[1].trim() : "";
 }
 
@@ -48,7 +48,7 @@ function parseAbility(line: string): string {
  * Parse level like "Level: 50"
  */
 function parseLevel(line: string): number {
-  const match = line.match(/^Level:\\s*(\\d+)$/i);
+  const match = line.match(/^Level:\s*(\d+)$/i);
   return match ? parseInt(match[1], 10) : 100;
 }
 
@@ -72,7 +72,7 @@ function parseShiny(line: string): boolean {
  * Parse tera type
  */
 function parseTeraType(line: string): string {
-  const match = line.match(/^Tera Type:\\s*(.+)$/i);
+  const match = line.match(/^Tera Type:\s*(.+)$/i);
   return match ? match[1].trim() : "";
 }
 
@@ -80,7 +80,7 @@ function parseTeraType(line: string): string {
  * Parse happiness
  */
 function parseHappiness(line: string): number | undefined {
-  const match = line.match(/^Happiness:\\s*(\\d+)$/i);
+  const match = line.match(/^Happiness:\s*(\d+)$/i);
   return match ? parseInt(match[1], 10) : undefined;
 }
 
@@ -93,12 +93,12 @@ function parseSpecies(line: string): string {
   // Remove gender marker
   cleaned = cleaned.replace(/\\s*\\([MF]\\)/, '');
   // Remove nickname (format: "Nickname (Species)")
-  const nicknameMatch = cleaned.match(/^\\w+\\s*\\((.+?)\\)$/);
+  const nicknameMatch = cleaned.match(/^\w+\s*\((.+?)\)$/);
   if (nicknameMatch) {
     return nicknameMatch[1].trim();
   }
   // Remove leading dash if present
-  cleaned = cleaned.replace(/^-\\s*/, '');
+  cleaned = cleaned.replace(/^-\s*/, '');
   return cleaned.trim();
 }
 
@@ -115,7 +115,7 @@ function parseItem(line: string): string {
  */
 function parseNickname(line: string): string | undefined {
   const cleaned = line.split('@')[0].trim();
-  const nicknameMatch = cleaned.match(/^(\\w+)\\s*\\(/);
+  const nicknameMatch = cleaned.match(/^(\w+)\s*\(/);
   if (nicknameMatch && nicknameMatch[1]) {
     return nicknameMatch[1].trim();
   }
