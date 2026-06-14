@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 const emptyPokemon = (): Pokemon => ({
   id: crypto.randomUUID(),
   species: '',
-  level: 100,
+  level: 50,
   gender: '',
   shiny: false,
   ability: '',
