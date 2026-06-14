@@ -15,6 +15,7 @@ import {
   Check,
   Zap,
   BookOpen,
+  Shield,
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useStore } from '../store/useStore';
@@ -394,6 +395,13 @@ export default function Teams() {
             aria-label="Speed Tiers"
           >
             <Zap size={20} className="text-text-secondary" />
+          </button>
+          <button
+            onClick={() => navigate('/weakness-analyzer')}
+            className="w-10 h-10 flex items-center justify-center rounded-full touch-target"
+            aria-label="Weakness Analyzer"
+          >
+            <Shield size={20} className="text-text-secondary" />
           </button>
           <button
             onClick={() => navigate('/settings')}

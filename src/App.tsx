@@ -14,6 +14,7 @@ import ImportExport from './pages/ImportExport';
 import CustomFormatsPage from './pages/CustomFormatsPage';
 import SpeedTierList from './pages/SpeedTierList';
 import MovePoolExplorer from './pages/MovePoolExplorer';
+import WeaknessAnalyzer from './pages/WeaknessAnalyzer';
 import { useStore } from './store/useStore';
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
@@ -116,6 +117,14 @@ export default function App() {
           element={
             <OnboardingGuard>
               <MovePoolExplorer />
+            </OnboardingGuard>
+          }
+        />
+        <Route
+          path="/weakness-analyzer"
+          element={
+            <OnboardingGuard>
+              <WeaknessAnalyzer />
             </OnboardingGuard>
           }
         />
