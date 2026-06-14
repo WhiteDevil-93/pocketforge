@@ -22,176 +22,142 @@ const OUTPUTS = {
   types: join(__dirname, '..', 'src', 'data', 'typesData.ts'),
 };
 
-async function fetchShowdownData(url: string): Promise<string> {
+async function fetchShowdownData(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
   return res.text();
 }
 
-// Parse Pokemon Showdown's TS export format into JS objects
-function parseShowdownTS(content: string): Record<string, any> {
-  const entries: Record<string, any> = {};
-  
+// Strip function definitions and other non-JSON syntax from Showdown TS data
+// Returns cleaned object literal text that can be parsed with new Function()
+function stripToJSObject(text) {
   // Remove comments
-  content = content.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  
-  // Extract the export object
-  const exportMatch = content.match(/export\s+(?:const|let|var)\s+\w+\s*:\s*\{[\s\S]*?\}\s*=\s*(\{[\s\S]*?\});?\s*$/);
-  if (!exportMatch) {
-    // Try alternate format: export const Pokedex: {[k: string]: ...} = { ... };
-    const altMatch = content.match(/=\s*(\{[\s\S]*\})\s*;?\s*$/);
-    if (!altMatch) throw new Error('Could not parse export object from Showdown data');
-    content = altMatch[1];
+  text = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+  // Extract just the object literal from export statement
+  const exportMatch = text.match(/export\s+(?:const|let|var)\s+\w+\s*:\s*\{[\s\S]*?\}\s*=\s*(\{[\s\S]*?\});?\s*$/);
+  if (exportMatch) {
+    text = exportMatch[1];
   } else {
-    content = exportMatch[1];
+    const altMatch = text.match(/=\s*(\{[\s\S]*\})\s*;?\s*$/);
+    if (!altMatch) throw new Error('Could not extract object from export statement');
+    text = altMatch[1];
   }
-  
-  // Simple recursive parser for Showdown's flat object format
-  function parseValue(str: string): any {
-    str = str.trim();
-    if (str === 'true') return true;
-    if (str === 'false') return false;
-    if (str === 'null') return null;
-    if (str === 'undefined') return undefined;
-    if (/^-?\d+$/.test(str)) return parseInt(str, 10);
-    if (/^-?\d+\.\d+$/.test(str)) return parseFloat(str);
-    if (str.startsWith('"') && str.endsWith('"')) return str.slice(1, -1).replace(/\\"/g, '"');
-    if (str.startsWith("'") && str.endsWith("'")) return str.slice(1, -1).replace(/\\'/g, "'");
-    if (str.startsWith('[') && str.endsWith(']')) {
-      const inner = str.slice(1, -1);
-      if (!inner.trim()) return [];
-      return splitTopLevel(inner).map(parseValue);
-    }
-    if (str.startsWith('{') && str.endsWith('}')) {
-      const inner = str.slice(1, -1);
-      if (!inner.trim()) return {};
-      const result: Record<string, any> = {};
-      for (const pair of splitTopLevel(inner)) {
-        const colonIdx = pair.indexOf(':');
-        if (colonIdx > 0) {
-          const key = pair.slice(0, colonIdx).trim().replace(/["']/g, '');
-          result[key] = parseValue(pair.slice(colonIdx + 1));
+
+  // Remove all function definitions using a state machine
+  // We look for: identifier(...) { ... } and skip the whole thing
+  const result = [];
+  let i = 0;
+  while (i < text.length) {
+    if (/[a-zA-Z_]/.test(text[i])) {
+      let j = i;
+      while (j < text.length && /[a-zA-Z0-9_]/.test(text[j])) j++;
+      const word = text.slice(i, j);
+
+      let k = j;
+      while (k < text.length && /\s/.test(text[k])) k++;
+
+      if (k < text.length && text[k] === '(') {
+        // Find matching )
+        let parenDepth = 1;
+        k++;
+        while (k < text.length && parenDepth > 0) {
+          if (text[k] === '(') parenDepth++;
+          else if (text[k] === ')') parenDepth--;
+          else if (text[k] === '"' || text[k] === "'" || text[k] === '`') {
+            const qc = text[k++];
+            while (k < text.length && text[k] !== qc) {
+              if (text[k] === '\\') k++;
+              k++;
+            }
+          }
+          k++;
+        }
+
+        // Skip whitespace
+        while (k < text.length && /\s/.test(text[k])) k++;
+
+        if (k < text.length && text[k] === '{') {
+          // This is a function definition - skip it entirely
+          let braceDepth = 1;
+          k++;
+          while (k < text.length && braceDepth > 0) {
+            if (text[k] === '{') braceDepth++;
+            else if (text[k] === '}') braceDepth--;
+            else if (text[k] === '"' || text[k] === "'" || text[k] === '`') {
+              const qc = text[k++];
+              while (k < text.length && text[k] !== qc) {
+                if (text[k] === '\\') k++;
+                k++;
+              }
+            }
+            k++;
+          }
+          // Also skip trailing comma if present
+          while (k < text.length && /\s/.test(text[k])) k++;
+          if (k < text.length && text[k] === ',') k++;
+          i = k;
+          continue;
         }
       }
-      return result;
     }
-    return str;
+    result.push(text[i]);
+    i++;
   }
-  
-  function splitTopLevel(str: string): string[] {
-    const parts: string[] = [];
-    let d = 0;
-    let s = false;
-    let sc = '';
-    let cur = '';
-    for (let i = 0; i < str.length; i++) {
-      const c = str[i];
-      if (s) {
-        cur += c;
-        if (c === '\\') { cur += str[++i] ?? ''; continue; }
-        if (c === sc) { s = false; continue; }
-      } else if (c === '"' || c === "'") {
-        s = true; sc = c; cur += c;
-      } else if (c === '[' || c === '{' || c === '(') {
-        d++; cur += c;
-      } else if (c === ']' || c === '}' || c === ')') {
-        d--; cur += c;
-        if (d < 0) { break; }
-      } else if (c === ',' && d === 0) {
-        parts.push(cur.trim());
-        cur = '';
-        continue;
-      } else {
-        cur += c;
-      }
-    }
-    if (cur.trim()) parts.push(cur.trim());
-    return parts;
-  }
-  
-  // Manual parse of top-level entries
-  let pos = 0;
-  while (pos < content.length) {
-    while (pos < content.length && /\s/.test(content[pos])) pos++;
-    if (pos >= content.length) break;
-    
-    let key = '';
-    if (content[pos] === '"' || content[pos] === "'") {
-      const qc = content[pos++];
-      while (pos < content.length && content[pos] !== qc) {
-        if (content[pos] === '\\') key += content[pos++];
-        key += content[pos++];
-      }
-      pos++;
-    } else {
-      while (pos < content.length && content[pos] !== ':' && !/\s/.test(content[pos])) {
-        key += content[pos++];
-      }
-    }
-    
-    while (pos < content.length && content[pos] !== ':') pos++;
-    if (pos >= content.length) break;
-    pos++;
-    
-    let value = '';
-    let vd = 0;
-    let vs = false;
-    let vsc = '';
-    while (pos < content.length) {
-      const c = content[pos];
-      if (vs) {
-        value += c;
-        if (c === '\\') { value += content[++pos] ?? ''; pos++; continue; }
-        if (c === vsc) { vs = false; pos++; continue; }
-        pos++;
-      } else if (c === '"' || c === "'") {
-        vs = true; vsc = c; value += c; pos++;
-      } else if (c === '[' || c === '{' || c === '(') {
-        vd++; value += c; pos++;
-      } else if (c === ']' || c === '}' || c === ')') {
-        vd--; value += c; pos++;
-        if (vd < 0) { break; }
-      } else if (c === ',' && vd === 0) {
-        pos++;
-        break;
-      } else {
-        value += c; pos++;
-      }
-    }
-    
-    if (key) {
-      entries[key] = parseValue(value);
-    }
-  }
-  
-  return entries;
+
+  return result.join('');
 }
 
-function transformPokemonData(pokedex: Record<string, any>): any[] {
+function parseShowdownData(content) {
+  const cleaned = stripToJSObject(content);
+  // Use Function constructor to evaluate the cleaned object literal
+  const code = 'return ' + cleaned;
+  try {
+    const fn = new Function(code);
+    return fn();
+  } catch (err) {
+    throw new Error('Failed to parse Showdown data: ' + err.message);
+  }
+}
+
+function transformPokemonData(pokedex) {
   return Object.entries(pokedex)
     .filter(([key, val]) => val && typeof val === 'object' && val.num > 0)
-    .map(([key, val]) => ({
-      id: key,
-      name: val.name || key,
-      types: val.types || [],
-      baseStats: {
-        hp: val.baseStats?.hp || 0,
-        atk: val.baseStats?.atk || 0,
-        def: val.baseStats?.def || 0,
-        spa: val.baseStats?.spa || 0,
-        spd: val.baseStats?.spd || 0,
-        spe: val.baseStats?.spe || 0,
-      },
-      abilities: Object.values(val.abilities || {}),
-      weight: val.weightkg || 0,
-      height: val.heightm || 0,
-      learnset: [], // Will be populated separately from learnsets
-    }));
+    .map(([key, val]) => {
+      const abilities = val.abilities || {};
+      const regularAbilities = [];
+      let hiddenAbility = '';
+      for (const [k, v] of Object.entries(abilities)) {
+        if (!v) continue;
+        if (k === 'H' || k === 'H1') {
+          hiddenAbility = v;
+        } else if (!k.startsWith('H')) {
+          regularAbilities.push(v);
+        }
+      }
+      return {
+        id: val.num || 0,
+        name: val.name || key,
+        types: val.types || [],
+        baseStats: {
+          hp: val.baseStats?.hp || 0,
+          atk: val.baseStats?.atk || 0,
+          def: val.baseStats?.def || 0,
+          spa: val.baseStats?.spa || 0,
+          spd: val.baseStats?.spd || 0,
+          spe: val.baseStats?.spe || 0,
+        },
+        abilities: regularAbilities,
+        hiddenAbility,
+        sprite: key.toLowerCase(),
+        learnset: [], // Will be populated separately from learnsets
+      };
+    });
 }
 
-function transformMovesData(moves: Record<string, any>): any[] {
+function transformMovesData(moves) {
   return Object.entries(moves)
-    .filter(([key, val]) => val && typeof val === 'object' && val.num > 0)
+    .filter(([key, val]) => val && typeof val === 'object' && val.num >= 0)
     .map(([key, val]) => ({
       id: key,
       name: val.name || key,
@@ -206,9 +172,9 @@ function transformMovesData(moves: Record<string, any>): any[] {
     }));
 }
 
-function transformItemsData(items: Record<string, any>): any[] {
+function transformItemsData(items) {
   return Object.entries(items)
-    .filter(([key, val]) => val && typeof val === 'object')
+    .filter(([key, val]) => val && typeof val === 'object' && val.name)
     .map(([key, val]) => ({
       id: key,
       name: val.name || key,
@@ -230,8 +196,8 @@ function transformItemsData(items: Record<string, any>): any[] {
     }));
 }
 
-function transformTypeChart(typechart: Record<string, any>): Record<string, any> {
-  const chart: Record<string, any> = {};
+function transformTypeChart(typechart) {
+  const chart = {};
   for (const [type, data] of Object.entries(typechart)) {
     if (typeof data === 'object') {
       chart[type] = { damageTaken: data.damageTaken || {} };
@@ -240,28 +206,72 @@ function transformTypeChart(typechart: Record<string, any>): Record<string, any>
   return chart;
 }
 
-function generatePokemonFile(pokemon: any[]): string {
+function generatePokemonFile(pokemon) {
   return `// Auto-generated from Pokemon Showdown — do not edit manually
 // Last updated: ${new Date().toISOString()}
 
-export interface PokemonEntry {
-  id: string;
+export interface PokedexEntry {
+  id: number;
   name: string;
   types: string[];
   baseStats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
   abilities: string[];
-  weight: number;
-  height: number;
+  hiddenAbility: string;
+  sprite: string;
   learnset: string[];
 }
 
-export const POKEDEX: PokemonEntry[] = ${JSON.stringify(pokemon, null, 2)};
+export const POKEDEX: PokedexEntry[] = ${JSON.stringify(pokemon, null, 2)};
 
 export const POKEMON_BY_ID = new Map(POKEDEX.map(p => [p.id, p]));
+export const POKEMON_BY_NAME = new Map(POKEDEX.map(p => [p.name.toLowerCase(), p]));
+export const POKEMON_BY_SLUG = new Map(POKEDEX.map(p => [p.sprite.toLowerCase(), p]));
+
+export function getPokemonByName(name: string): PokedexEntry | undefined {
+  const normalized = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  return POKEDEX.find(p =>
+    p.name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalized ||
+    p.sprite === normalized
+  );
+}
+
+export function getPokemonById(id: number): PokedexEntry | undefined {
+  return POKEDEX.find(p => p.id === id);
+}
+
+export function searchPokemon(query: string): PokedexEntry[] {
+  const normalized = query.toLowerCase().trim();
+  if (!normalized) return [];
+  return POKEDEX.filter(p =>
+    p.name.toLowerCase().includes(normalized)
+  ).slice(0, 20);
+}
+
+export function getPokemonByType(type: string): PokedexEntry[] {
+  return POKEDEX.filter(p =>
+    p.types.map(t => t.toLowerCase()).includes(type.toLowerCase())
+  );
+}
+
+export function getSpriteUrl(name: string, animated = false): string {
+  const normalized = name.toLowerCase().trim().replace(/\\s+/g, '').replace(/[^a-z0-9-]/g, '');
+  if (animated) {
+    return \`https://play.pokemonshowdown.com/sprites/ani/\${normalized}.gif\`;
+  }
+  return \`https://play.pokemonshowdown.com/sprites/gen5/\${normalized}.png\`;
+}
+
+export function getAllPokemonNames(): string[] {
+  return POKEDEX.map(p => p.name);
+}
+
+export function getViablePokemon(_format?: string): PokedexEntry[] {
+  return POKEDEX;
+}
 `;
 }
 
-function generateMovesFile(moves: any[]): string {
+function generateMovesFile(moves) {
   return `// Auto-generated from Pokemon Showdown — do not edit manually
 // Last updated: ${new Date().toISOString()}
 
@@ -281,10 +291,32 @@ export interface MoveEntry {
 export const MOVES: MoveEntry[] = ${JSON.stringify(moves, null, 2)};
 
 export const MOVES_BY_ID = new Map(MOVES.map(m => [m.id, m]));
+
+export function getMoveByName(name: string): MoveEntry | undefined {
+  return MOVES.find(m => m.name.toLowerCase() === name.toLowerCase().trim());
+}
+
+export function searchMoves(query: string): MoveEntry[] {
+  const normalized = query.toLowerCase().trim();
+  if (!normalized) return [];
+  return MOVES.filter(m => m.name.toLowerCase().includes(normalized)).slice(0, 20);
+}
+
+export function getMovesByType(type: string): MoveEntry[] {
+  return MOVES.filter(m => m.type.toLowerCase() === type.toLowerCase());
+}
+
+export function getMovesForPokemon(_pokemonName: string): MoveEntry[] {
+  return MOVES;
+}
+
+export function getAllMoveNames(): string[] {
+  return MOVES.map(m => m.name);
+}
 `;
 }
 
-function generateItemsFile(items: any[]): string {
+function generateItemsFile(items) {
   return `// Auto-generated from Pokemon Showdown — do not edit manually
 // Last updated: ${new Date().toISOString()}
 
@@ -294,14 +326,14 @@ export interface ItemEntry {
   description: string;
   category: string;
   fling: number;
-  onPlate: boolean;
-  onDrive: boolean;
-  onMemory: boolean;
-  megaStone: string | null;
-  megaEvolves: string | null;
-  zMove: string | null;
-  zMoveType: string | null;
-  zMoveFrom: string | null;
+  onPlate: any;
+  onDrive: any;
+  onMemory: any;
+  megaStone: any;
+  megaEvolves: any;
+  zMove: any;
+  zMoveType: any;
+  zMoveFrom: any;
   naturalGift: any;
   isBerry: boolean;
   isGem: boolean;
@@ -311,77 +343,120 @@ export interface ItemEntry {
 export const ITEMS: ItemEntry[] = ${JSON.stringify(items, null, 2)};
 
 export const ITEMS_BY_ID = new Map(ITEMS.map(i => [i.id, i]));
+
+export function getItemByName(name: string): ItemEntry | undefined {
+  return ITEMS.find(i => i.name.toLowerCase() === name.toLowerCase().trim());
+}
+
+export function searchItems(query: string): ItemEntry[] {
+  const normalized = query.toLowerCase().trim();
+  if (!normalized) return [];
+  return ITEMS.filter(i => i.name.toLowerCase().includes(normalized)).slice(0, 15);
+}
+
+export function getAllItemNames(): string[] {
+  return ITEMS.map(i => i.name);
+}
+
+export function getItemSpriteUrl(itemName: string): string {
+  const normalized = itemName.toLowerCase().replace(/\\s+/g, '').replace(/'/g, '').replace(/-/g, '');
+  return \`https://play.pokemonshowdown.com/sprites/itemicons/\${normalized}.png\`;
+}
 `;
 }
 
-function generateTypesFile(typechart: Record<string, any>): string {
+function generateTypesFile(typechart) {
   return `// Auto-generated from Pokemon Showdown — do not edit manually
 // Last updated: ${new Date().toISOString()}
 
-export const TYPE_CHART = ${JSON.stringify(typechart, null, 2)};
+export const TYPE_NAMES = [
+  "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
+  "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug",
+  "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy",
+] as const;
+
+export type TypeName = typeof TYPE_NAMES[number];
+
+export const TYPE_CHART: Record<string, any> = ${JSON.stringify(typechart, null, 2)};
 
 export const TYPES = Object.keys(TYPE_CHART);
 
 export function getEffectiveness(attackingType: string, defendingTypes: string[]): number {
   let mult = 1;
+  const atk = attackingType.toLowerCase();
   for (const def of defendingTypes) {
-    const dmg = TYPE_CHART[attackingType]?.damageTaken[def] ?? 0;
+    const dmg = TYPE_CHART[atk]?.damageTaken[def.toLowerCase()] ?? 0;
     if (dmg === 1) mult *= 2;
     else if (dmg === 2) mult *= 0.5;
     else if (dmg === 3) mult = 0;
   }
   return mult;
 }
+
+export function getAllTypes(): string[] {
+  return [...TYPE_NAMES];
+}
+
+export function getTypeColor(type: string): string {
+  const colors: Record<string, string> = {
+    Normal: "#A8A77A", Fire: "#EE8130", Water: "#6390F0", Electric: "#F7D02C",
+    Grass: "#7AC74C", Ice: "#96D9D6", Fighting: "#C22E28", Poison: "#A33EA1",
+    Ground: "#E2BF65", Flying: "#A98FF3", Psychic: "#F95587", Bug: "#A6B91A",
+    Rock: "#B6A136", Ghost: "#735797", Dragon: "#6F35FC", Dark: "#705746",
+    Steel: "#B7B7CE", Fairy: "#D685AD",
+  };
+  return colors[type] || "#94A3B8";
+}
 `;
 }
 
-async function main(): Promise<void> {
+async function main() {
   console.log('Fetching Pokemon Showdown data...\n');
-  
+
   const [pokedexRaw, movesRaw, itemsRaw, typechartRaw] = await Promise.all([
     fetchShowdownData(ENDPOINTS.pokedex),
     fetchShowdownData(ENDPOINTS.moves),
     fetchShowdownData(ENDPOINTS.items),
     fetchShowdownData(ENDPOINTS.typechart),
   ]);
-  
+
   console.log('Parsing Showdown data...');
-  const pokedex = parseShowdownTS(pokedexRaw);
-  const moves = parseShowdownTS(movesRaw);
-  const items = parseShowdownTS(itemsRaw);
-  const typechart = parseShowdownTS(typechartRaw);
-  
+  const pokedex = parseShowdownData(pokedexRaw);
+  const moves = parseShowdownData(movesRaw);
+  const items = parseShowdownData(itemsRaw);
+  const typechart = parseShowdownData(typechartRaw);
+
   console.log('Transforming data...');
   const pokemon = transformPokemonData(pokedex);
   const movesList = transformMovesData(moves);
   const itemsList = transformItemsData(items);
   const typesData = transformTypeChart(typechart);
-  
+
   console.log(`\n  Pokemon: ${pokemon.length} entries`);
   console.log(`  Moves: ${movesList.length} entries`);
   console.log(`  Items: ${itemsList.length} entries`);
   console.log(`  Types: ${Object.keys(typesData).length} entries`);
-  
+
   const pokemonFile = generatePokemonFile(pokemon);
   const movesFile = generateMovesFile(movesList);
   const itemsFile = generateItemsFile(itemsList);
   const typesFile = generateTypesFile(typesData);
-  
+
   const files = [
     { path: OUTPUTS.pokemon, content: pokemonFile },
     { path: OUTPUTS.moves, content: movesFile },
     { path: OUTPUTS.items, content: itemsFile },
     { path: OUTPUTS.types, content: typesFile },
   ];
-  
+
   let changed = false;
   for (const file of files) {
     const dir = dirname(file.path);
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-    
+
     const oldHash = existsSync(file.path) ? createHash('sha256').update(readFileSync(file.path, 'utf-8')).digest('hex') : '';
     const newHash = createHash('sha256').update(file.content).digest('hex');
-    
+
     if (oldHash !== newHash) {
       writeFileSync(file.path, file.content, 'utf-8');
       console.log(`\n  Updated: ${file.path}`);
@@ -390,13 +465,13 @@ async function main(): Promise<void> {
       console.log(`  Unchanged: ${file.path}`);
     }
   }
-  
+
   if (!changed) {
     console.log('\nNo changes detected — data is already up to date.');
   } else {
     console.log('\nDone! New data written to src/data/');
   }
-  
+
   if (process.stdout.isTTY === false) {
     console.log(`\n::set-output name=changed::${changed}`);
   }

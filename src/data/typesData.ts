@@ -1,6 +1,5 @@
-// ============================================================================
-// PocketForge — Type Effectiveness Chart (18x18 Matrix)
-// ============================================================================
+// Auto-generated from Pokemon Showdown — do not edit manually
+// Last updated: 2026-06-14T22:27:43.748Z
 
 export const TYPE_NAMES = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -10,125 +9,478 @@ export const TYPE_NAMES = [
 
 export type TypeName = typeof TYPE_NAMES[number];
 
-/** 
- * Type effectiveness multiplier matrix.
- * Matrix[attackingType][defendingType] = multiplier
- * 0 = no effect, 0.5 = not very effective, 1 = neutral, 2 = super effective
- */
-export const TYPE_CHART: Record<string, Record<string, number>> = {
-  Normal: {
-    Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 1,
-    Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 1,
-    Rock: 0.5, Ghost: 0, Dragon: 1, Dark: 1, Steel: 0.5, Fairy: 1,
+export const TYPE_CHART: Record<string, any> = {
+  "bug": {
+    "damageTaken": {
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 2,
+      "Fire": 1,
+      "Flying": 1,
+      "Ghost": 0,
+      "Grass": 2,
+      "Ground": 2,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 1,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Fire: {
-    Normal: 1, Fire: 0.5, Water: 0.5, Electric: 1, Grass: 2, Ice: 2,
-    Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 2,
-    Rock: 0.5, Ghost: 1, Dragon: 0.5, Dark: 1, Steel: 2, Fairy: 1,
+  "dark": {
+    "damageTaken": {
+      "prankster": 3,
+      "Bug": 1,
+      "Dark": 2,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 1,
+      "Fighting": 1,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 2,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 3,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Water: {
-    Normal: 1, Fire: 2, Water: 0.5, Electric: 1, Grass: 0.5, Ice: 1,
-    Fighting: 1, Poison: 1, Ground: 2, Flying: 1, Psychic: 1, Bug: 1,
-    Rock: 2, Ghost: 1, Dragon: 0.5, Dark: 1, Steel: 1, Fairy: 1,
+  "dragon": {
+    "damageTaken": {
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 1,
+      "Electric": 2,
+      "Fairy": 1,
+      "Fighting": 0,
+      "Fire": 2,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 2,
+      "Ground": 0,
+      "Ice": 1,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 2
+    }
   },
-  Electric: {
-    Normal: 1, Fire: 1, Water: 2, Electric: 0.5, Grass: 0.5, Ice: 1,
-    Fighting: 1, Poison: 1, Ground: 0, Flying: 2, Psychic: 1, Bug: 1,
-    Rock: 1, Ghost: 1, Dragon: 0.5, Dark: 1, Steel: 1, Fairy: 1,
+  "electric": {
+    "damageTaken": {
+      "par": 3,
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 2,
+      "Fairy": 0,
+      "Fighting": 0,
+      "Fire": 0,
+      "Flying": 2,
+      "Ghost": 0,
+      "Grass": 0,
+      "Ground": 1,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 2,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Grass: {
-    Normal: 1, Fire: 0.5, Water: 2, Electric: 1, Grass: 0.5, Ice: 1,
-    Fighting: 1, Poison: 0.5, Ground: 2, Flying: 0.5, Psychic: 1, Bug: 0.5,
-    Rock: 2, Ghost: 1, Dragon: 0.5, Dark: 1, Steel: 0.5, Fairy: 1,
+  "fairy": {
+    "damageTaken": {
+      "Bug": 2,
+      "Dark": 2,
+      "Dragon": 3,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 2,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 1,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 1,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Ice: {
-    Normal: 1, Fire: 0.5, Water: 0.5, Electric: 1, Grass: 2, Ice: 0.5,
-    Fighting: 1, Poison: 1, Ground: 2, Flying: 2, Psychic: 1, Bug: 1,
-    Rock: 1, Ghost: 1, Dragon: 2, Dark: 1, Steel: 0.5, Fairy: 1,
+  "fighting": {
+    "damageTaken": {
+      "Bug": 2,
+      "Dark": 2,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 1,
+      "Fighting": 0,
+      "Fire": 0,
+      "Flying": 1,
+      "Ghost": 0,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 1,
+      "Rock": 2,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Fighting: {
-    Normal: 2, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 2,
-    Fighting: 1, Poison: 0.5, Ground: 1, Flying: 0.5, Psychic: 0.5, Bug: 0.5,
-    Rock: 2, Ghost: 0, Dragon: 1, Dark: 2, Steel: 2, Fairy: 0.5,
+  "fire": {
+    "damageTaken": {
+      "brn": 3,
+      "Bug": 2,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 2,
+      "Fighting": 0,
+      "Fire": 2,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 2,
+      "Ground": 1,
+      "Ice": 2,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 1,
+      "Steel": 2,
+      "Stellar": 0,
+      "Water": 1
+    }
   },
-  Poison: {
-    Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 2, Ice: 1,
-    Fighting: 1, Poison: 0.5, Ground: 0.5, Flying: 1, Psychic: 1, Bug: 1,
-    Rock: 0.5, Ghost: 0.5, Dragon: 1, Dark: 1, Steel: 0, Fairy: 2,
+  "flying": {
+    "damageTaken": {
+      "Bug": 2,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 1,
+      "Fairy": 0,
+      "Fighting": 2,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 2,
+      "Ground": 3,
+      "Ice": 1,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 1,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Ground: {
-    Normal: 1, Fire: 2, Water: 1, Electric: 2, Grass: 0.5, Ice: 1,
-    Fighting: 1, Poison: 2, Ground: 1, Flying: 0, Psychic: 1, Bug: 0.5,
-    Rock: 2, Ghost: 1, Dragon: 1, Dark: 1, Steel: 2, Fairy: 1,
+  "ghost": {
+    "damageTaken": {
+      "trapped": 3,
+      "Bug": 2,
+      "Dark": 1,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 3,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 1,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 0,
+      "Normal": 3,
+      "Poison": 2,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Flying: {
-    Normal: 1, Fire: 1, Water: 1, Electric: 0.5, Grass: 2, Ice: 1,
-    Fighting: 2, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 2,
-    Rock: 0.5, Ghost: 1, Dragon: 1, Dark: 1, Steel: 0.5, Fairy: 1,
+  "grass": {
+    "damageTaken": {
+      "powder": 3,
+      "Bug": 1,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 2,
+      "Fairy": 0,
+      "Fighting": 0,
+      "Fire": 1,
+      "Flying": 1,
+      "Ghost": 0,
+      "Grass": 2,
+      "Ground": 2,
+      "Ice": 1,
+      "Normal": 0,
+      "Poison": 1,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 2
+    }
   },
-  Psychic: {
-    Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 1,
-    Fighting: 2, Poison: 2, Ground: 1, Flying: 1, Psychic: 0.5, Bug: 1,
-    Rock: 1, Ghost: 1, Dragon: 1, Dark: 0, Steel: 0.5, Fairy: 1,
+  "ground": {
+    "damageTaken": {
+      "sandstorm": 3,
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 3,
+      "Fairy": 0,
+      "Fighting": 0,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 1,
+      "Ground": 0,
+      "Ice": 1,
+      "Normal": 0,
+      "Poison": 2,
+      "Psychic": 0,
+      "Rock": 2,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 1
+    }
   },
-  Bug: {
-    Normal: 1, Fire: 0.5, Water: 1, Electric: 1, Grass: 2, Ice: 1,
-    Fighting: 0.5, Poison: 0.5, Ground: 1, Flying: 0.5, Psychic: 2, Bug: 1,
-    Rock: 1, Ghost: 0.5, Dragon: 1, Dark: 2, Steel: 0.5, Fairy: 0.5,
+  "ice": {
+    "damageTaken": {
+      "hail": 3,
+      "frz": 3,
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 1,
+      "Fire": 1,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 2,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 1,
+      "Steel": 1,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Rock: {
-    Normal: 1, Fire: 2, Water: 1, Electric: 1, Grass: 1, Ice: 2,
-    Fighting: 0.5, Poison: 1, Ground: 0.5, Flying: 2, Psychic: 1, Bug: 2,
-    Rock: 1, Ghost: 1, Dragon: 1, Dark: 1, Steel: 0.5, Fairy: 1,
+  "normal": {
+    "damageTaken": {
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 1,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 3,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Ghost: {
-    Normal: 0, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 1,
-    Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 2, Bug: 1,
-    Rock: 1, Ghost: 2, Dragon: 1, Dark: 0.5, Steel: 1, Fairy: 1,
+  "poison": {
+    "damageTaken": {
+      "psn": 3,
+      "tox": 3,
+      "Bug": 2,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 2,
+      "Fighting": 2,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 2,
+      "Ground": 1,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 2,
+      "Psychic": 1,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Dragon: {
-    Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 1,
-    Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 1,
-    Rock: 1, Ghost: 1, Dragon: 2, Dark: 1, Steel: 0.5, Fairy: 0,
+  "psychic": {
+    "damageTaken": {
+      "Bug": 1,
+      "Dark": 1,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 2,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 1,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 2,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Dark: {
-    Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 1,
-    Fighting: 0.5, Poison: 1, Ground: 1, Flying: 1, Psychic: 2, Bug: 1,
-    Rock: 1, Ghost: 2, Dragon: 1, Dark: 0.5, Steel: 1, Fairy: 0.5,
+  "rock": {
+    "damageTaken": {
+      "sandstorm": 3,
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 1,
+      "Fire": 2,
+      "Flying": 2,
+      "Ghost": 0,
+      "Grass": 1,
+      "Ground": 1,
+      "Ice": 0,
+      "Normal": 2,
+      "Poison": 2,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 1,
+      "Stellar": 0,
+      "Water": 1
+    }
   },
-  Steel: {
-    Normal: 1, Fire: 0.5, Water: 0.5, Electric: 0.5, Grass: 1, Ice: 2,
-    Fighting: 1, Poison: 1, Ground: 1, Flying: 1, Psychic: 1, Bug: 1,
-    Rock: 2, Ghost: 1, Dragon: 1, Dark: 1, Steel: 0.5, Fairy: 2,
+  "steel": {
+    "damageTaken": {
+      "psn": 3,
+      "tox": 3,
+      "sandstorm": 3,
+      "Bug": 2,
+      "Dark": 0,
+      "Dragon": 2,
+      "Electric": 0,
+      "Fairy": 2,
+      "Fighting": 1,
+      "Fire": 1,
+      "Flying": 2,
+      "Ghost": 0,
+      "Grass": 2,
+      "Ground": 1,
+      "Ice": 2,
+      "Normal": 2,
+      "Poison": 3,
+      "Psychic": 2,
+      "Rock": 2,
+      "Steel": 2,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-  Fairy: {
-    Normal: 1, Fire: 1, Water: 1, Electric: 1, Grass: 1, Ice: 1,
-    Fighting: 2, Poison: 0.5, Ground: 1, Flying: 1, Psychic: 1, Bug: 1,
-    Rock: 1, Ghost: 1, Dragon: 2, Dark: 2, Steel: 0.5, Fairy: 1,
+  "stellar": {
+    "damageTaken": {
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 0,
+      "Fairy": 0,
+      "Fighting": 0,
+      "Fire": 0,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 0,
+      "Ground": 0,
+      "Ice": 0,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 0,
+      "Stellar": 0,
+      "Water": 0
+    }
   },
-};
-
-/** Get effectiveness multiplier for an attacking type against defending type(s) */
-export function getEffectiveness(attackType: string, defenderTypes: string[]): number {
-  const attacker = TYPE_CHART[attackType];
-  if (!attacker) return 1;
-
-  let total = 1;
-  for (const defType of defenderTypes) {
-    const multiplier = attacker[defType];
-    if (multiplier !== undefined) {
-      total *= multiplier;
+  "water": {
+    "damageTaken": {
+      "Bug": 0,
+      "Dark": 0,
+      "Dragon": 0,
+      "Electric": 1,
+      "Fairy": 0,
+      "Fighting": 0,
+      "Fire": 2,
+      "Flying": 0,
+      "Ghost": 0,
+      "Grass": 1,
+      "Ground": 0,
+      "Ice": 2,
+      "Normal": 0,
+      "Poison": 0,
+      "Psychic": 0,
+      "Rock": 0,
+      "Steel": 2,
+      "Stellar": 0,
+      "Water": 2
     }
   }
-  return total;
+};
+
+export const TYPES = Object.keys(TYPE_CHART);
+
+export function getEffectiveness(attackingType: string, defendingTypes: string[]): number {
+  let mult = 1;
+  const atk = attackingType.toLowerCase();
+  for (const def of defendingTypes) {
+    const dmg = TYPE_CHART[atk]?.damageTaken[def.toLowerCase()] ?? 0;
+    if (dmg === 1) mult *= 2;
+    else if (dmg === 2) mult *= 0.5;
+    else if (dmg === 3) mult = 0;
+  }
+  return mult;
 }
 
-/** Get all type names */
 export function getAllTypes(): string[] {
   return [...TYPE_NAMES];
 }
 
-/** Get type color */
 export function getTypeColor(type: string): string {
   const colors: Record<string, string> = {
     Normal: "#A8A77A", Fire: "#EE8130", Water: "#6390F0", Electric: "#F7D02C",
