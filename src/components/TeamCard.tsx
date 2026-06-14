@@ -94,10 +94,10 @@ export default function TeamCard({
   const x = useMotionValue(0);
 
   // Transform x position to opacity of swipe actions
-  const leftActionsOpacity = useTransform(x, [0, 60], [0, 1]);
-  const leftActionsScale = useTransform(x, [0, 80], [0.8, 1]);
-  const rightDeleteOpacity = useTransform(x, [0, -60], [0, 1]);
-  const rightDeleteScale = useTransform(x, [0, -80], [0.8, 1]);
+  useTransform(x, [0, 60], [0, 1]);
+  useTransform(x, [0, 80], [0.8, 1]);
+  useTransform(x, [0, -60], [0, 1]);
+  useTransform(x, [0, -80], [0.8, 1]);
 
   const formatColors = getFormatBadgeColors(team.format);
   const validationHint = getValidationHint(team);
@@ -163,7 +163,7 @@ export default function TeamCard({
     [onDelete, team.id]
   );
 
-  const handleDuplicate = useCallback(
+  const _handleDuplicate = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       setIsSwiped(null);
@@ -171,6 +171,7 @@ export default function TeamCard({
     },
     [onDuplicate, team.id]
   );
+  void _handleDuplicate;
 
   return (
     <motion.div

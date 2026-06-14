@@ -2,7 +2,6 @@
 // PocketForge — Reusable Empty State Component
 // ============================================================================
 
-import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 
