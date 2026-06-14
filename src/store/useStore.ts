@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Team, Pokemon, AppSettings } from '../types';
+import type { Team, Pokemon, AppSettings, CustomFormat } from '../types';
 
 // ---- Default data -----------------------------------------------------------
 
@@ -71,6 +71,12 @@ interface StoreState {
   // Actions — Folders
   addFolder: (name: string) => void;
   removeFolder: (name: string) => void;
+
+  // Actions — Custom Formats
+  customFormats: CustomFormat[];
+  addCustomFormat: (format: Omit<CustomFormat, "id" | "createdAt">) => void;
+  updateCustomFormat: (id: string, updates: Partial<CustomFormat>) => void;
+  deleteCustomFormat: (id: string) => void;
 }
 
 // ---- Store implementation ---------------------------------------------------
@@ -84,6 +90,7 @@ export const useStore = create<StoreState>()(
       settings: { ...DEFAULT_SETTINGS },
       currentTeamId: null,
       currentPokemonIndex: null,
+      customFormats: [] as CustomFormat[],
 
       // ---- Team actions ----
 
@@ -291,6 +298,29 @@ export const useStore = create<StoreState>()(
           folders: state.folders.filter(f => f !== name),
         }));
       },
+
+      // ---- Custom Formats ----
+
+      addCustomFormat: (format) => {
+        const newFormat: CustomFormat = {
+          ...format,
+          id: `custom-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({ customFormats: [...state.customFormats, newFormat] }));
+      },
+      updateCustomFormat: (id, updates) => {
+        set((state) => ({
+          customFormats: state.customFormats.map((f) =>
+            f.id === id ? { ...f, ...updates } : f
+          ),
+        }));
+      },
+      deleteCustomFormat: (id) => {
+        set((state) => ({
+          customFormats: state.customFormats.filter((f) => f.id !== id),
+        }));
+      },
     }),
     {
       name: 'pocketforge-storage',
@@ -298,6 +328,7 @@ export const useStore = create<StoreState>()(
         teams: state.teams,
         folders: state.folders,
         settings: state.settings,
+        customFormats: state.customFormats,
       }),
     }
   )

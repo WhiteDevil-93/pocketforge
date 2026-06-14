@@ -20,6 +20,7 @@ import {
   ChevronRight,
   X,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { FORMATS, getFormatById } from '../data/formatsData';
@@ -454,6 +455,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const settings = useStore((s) => s.settings);
   const teams = useStore((s) => s.teams);
+  const customFormats = useStore((s) => s.customFormats);
   const updateSettings = useStore((s) => s.updateSettings);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -646,6 +648,19 @@ export default function SettingsPage() {
               </div>
             }
             onClick={() => setFormatSheetOpen(true)}
+          />
+        </div>
+
+        {/* Custom Formats Section */}
+        <SectionHeader title="Custom Formats" />
+        <div className="bg-bg-secondary rounded-2xl border border-border-subtle overflow-hidden">
+          <SettingsRow
+            icon={Sparkles}
+            iconColor="#EAB308"
+            label="Manage Custom Formats"
+            subtitle={`${customFormats.length} format${customFormats.length !== 1 ? 's' : ''} created`}
+            rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
+            onClick={() => navigate('/custom-formats')}
           />
         </div>
 

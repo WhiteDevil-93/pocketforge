@@ -2,7 +2,7 @@
 // PocketForge — Format Definitions
 // ============================================================================
 
-import type { Format } from '../types';
+import type { Format, CustomFormat } from '../types';
 
 export const FORMATS: Format[] = [
   // Generation 9 (Scarlet/Violet)
@@ -48,9 +48,24 @@ export const FORMATS: Format[] = [
   { id: "gen1ou", name: "Gen 1 OU", generation: 1, rules: ["species-clause", "sleep-clause", "ohko-clause", "evo-clause"] },
 ];
 
+/** Combine built-in and custom formats */
+export function getCombinedFormats(customFormats: CustomFormat[] = []): Format[] {
+  return [...FORMATS, ...customFormats.map(customToFormat)];
+}
+
+function customToFormat(cf: CustomFormat): Format {
+  return {
+    id: cf.id,
+    name: cf.name,
+    generation: cf.generation || 9,
+    rules: cf.rules,
+    restrictedPokemon: cf.restrictedDex,
+  };
+}
+
 /** Get format by ID */
-export function getFormatById(id: string): Format | undefined {
-  return FORMATS.find(f => f.id === id.toLowerCase().trim());
+export function getFormatById(id: string, customFormats?: CustomFormat[]): Format | undefined {
+  return getCombinedFormats(customFormats).find(f => f.id === id.toLowerCase().trim());
 }
 
 /** Get formats by generation */
@@ -59,11 +74,16 @@ export function getFormatsByGeneration(gen: number): Format[] {
 }
 
 /** Get all format names grouped by generation */
-export function getFormatsGrouped(): Record<number, Format[]> {
-  const grouped: Record<number, Format[]> = {};
-  for (const format of FORMATS) {
+export function getFormatsGrouped(customFormats?: CustomFormat[]): Record<number | string, Format[]> {
+  const grouped: Record<number | string, Format[]> = {};
+  const allFormats = getCombinedFormats(customFormats);
+  for (const format of allFormats) {
     if (!grouped[format.generation]) grouped[format.generation] = [];
     grouped[format.generation].push(format);
+  }
+  // Merge custom formats under "Custom" section
+  if (customFormats && customFormats.length > 0) {
+    grouped['Custom'] = customFormats.map(customToFormat);
   }
   return grouped;
 }

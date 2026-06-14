@@ -10,6 +10,7 @@ import Builder from './pages/Builder';
 import Analysis from './pages/Analysis';
 import SettingsPage from './pages/SettingsPage';
 import ImportExport from './pages/ImportExport';
+import CustomFormatsPage from './pages/CustomFormatsPage';
 import { useStore } from './store/useStore';
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
@@ -80,6 +81,14 @@ export default function App() {
           element={
             <OnboardingGuard>
               <ImportExport />
+            </OnboardingGuard>
+          }
+        />
+        <Route
+          path="/custom-formats"
+          element={
+            <OnboardingGuard>
+              <CustomFormatsPage />
             </OnboardingGuard>
           }
         />

@@ -127,6 +127,18 @@ export type FormatRule =
   | 'sleep-mod'
   | string;
 
+// ---- Custom Format ----------------------------------------------------------
+
+export interface CustomFormat {
+  id: string;
+  name: string;
+  description?: string;
+  rules: string[];
+  restrictedDex?: string[];
+  generation?: number;
+  createdAt: string;
+}
+
 // ---- Pokedex Entry ----------------------------------------------------------
 
 export interface PokedexEntry {
@@ -196,6 +208,12 @@ export interface AppState {
   // Actions — Folders
   addFolder: (name: string) => void;
   removeFolder: (name: string) => void;
+
+  // Actions — Custom Formats
+  customFormats: CustomFormat[];
+  addCustomFormat: (format: Omit<CustomFormat, "id" | "createdAt">) => void;
+  updateCustomFormat: (id: string, updates: Partial<CustomFormat>) => void;
+  deleteCustomFormat: (id: string) => void;
 }
 
 // ---- Utility Types ----------------------------------------------------------

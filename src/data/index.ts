@@ -15,7 +15,7 @@ export { ITEMS, getItemByName, searchItems, getAllItemNames, getItemSpriteUrl } 
 export { NATURES, getNatureByName, getNatureModifier, getNatureDescription, getAllNatureNames } from './naturesData';
 
 // Formats data
-export { FORMATS, getFormatById, getFormatsByGeneration, getFormatsGrouped, getAllFormatIds, getAllFormatNames, DEFAULT_FORMAT } from './formatsData';
+export { FORMATS, getFormatById, getFormatsByGeneration, getFormatsGrouped, getAllFormatIds, getAllFormatNames, DEFAULT_FORMAT, getCombinedFormats } from './formatsData';
 
 // Types data
 export { TYPE_NAMES, TYPE_CHART, getEffectiveness, getAllTypes, getTypeColor } from './typesData';

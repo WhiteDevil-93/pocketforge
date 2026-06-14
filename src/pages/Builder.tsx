@@ -41,6 +41,7 @@ export default function Builder() {
   const updatePokemon = useStore((s) => s.updatePokemon);
   const addPokemon = useStore((s) => s.addPokemon);
   const removePokemon = useStore((s) => s.removePokemon);
+  const customFormats = useStore((s) => s.customFormats);
 
   // Find team
   const team = teams.find((t) => t.id === teamId);
@@ -61,10 +62,18 @@ export default function Builder() {
 
   // Memo
   const teamName = team?.name || 'Untitled Team';
-  const formatInfo = team?.format ? getFormatById(team.format) : null;
-  const formatsGrouped = useMemo(() => getFormatsGrouped(), []);
+  const formatInfo = team?.format ? getFormatById(team.format, customFormats) : null;
+  const formatsGrouped = useMemo(() => getFormatsGrouped(customFormats), [customFormats]);
   const generations = useMemo(
-    () => Object.keys(formatsGrouped).sort((a, b) => Number(b) - Number(a)),
+    () => Object.keys(formatsGrouped).sort((a, b) => {
+      // Sort numeric generations descending, put 'Custom' at the top
+      const aNum = Number(a);
+      const bNum = Number(b);
+      if (isNaN(aNum) && isNaN(bNum)) return 0;
+      if (isNaN(aNum)) return -1;
+      if (isNaN(bNum)) return 1;
+      return bNum - aNum;
+    }),
     [formatsGrouped]
   );
 
@@ -441,10 +450,10 @@ export default function Builder() {
           {generations.map((gen) => (
             <div key={gen}>
               <h3 className="font-caption text-text-secondary uppercase mb-2 px-1">
-                Generation {gen}
+                {gen === 'Custom' ? 'Custom Formats' : `Generation ${gen}`}
               </h3>
               <div className="space-y-1">
-                {formatsGrouped[Number(gen)]?.map((format) => (
+                {formatsGrouped[gen]?.map((format) => (
                   <button
                     key={format.id}
                     onClick={() => handleSetFormat(format.id)}
