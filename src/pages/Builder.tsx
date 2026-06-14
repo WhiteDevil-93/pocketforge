@@ -427,6 +427,7 @@ export default function Builder() {
           <PokemonEditor
             pokemon={team.pokemon[editingSlot]}
             slotIndex={editingSlot}
+            formatId={team.format}
             onSave={handleSavePokemon}
             onDelete={handleDeletePokemon}
             onBack={() => {

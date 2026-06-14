@@ -38,6 +38,8 @@ export interface Pokemon {
   evs: EVs;
   ivs: IVs;
   nature: string;
+  megaActive?: boolean;   // Mega Evolution active
+  megaStone?: string;     // Equipped Mega Stone
 }
 
 // ---- Team -------------------------------------------------------------------
@@ -118,22 +120,29 @@ export type FormatRule =
   | 'item-clause'
   | 'evo-clause'
   | 'sleep-clause'
+  | 'sleep-clause-mod'
   | 'ohko-clause'
+  | 'evasion-clause'
   | 'endless-battle-clause'
   | 'dynamax-clause'
   | 'tera-allow'
   | 'z-move-ban'
   | 'mega-allow'
+  | 'mega-once'
+  | 'restricted-dex'
+  | 'level-5'
+  | 'camo-ability'
+  | 'shared-power'
   | 'sleep-mod'
   | string;
 
-// ---- Custom Format ----------------------------------------------------------
+// ---- Custom Format (user-created) -------------------------------------------
 
 export interface CustomFormat {
   id: string;
   name: string;
   description?: string;
-  rules: string[];
+  rules: FormatRule[];
   restrictedDex?: string[];
   generation?: number;
   createdAt: string;
@@ -231,6 +240,6 @@ export interface DefensiveCoverage {
   type: string;
   effectiveness: number;   // max multiplier against this team
   weakTo: number;          // how many team members are weak
-  resist: number;          // how many team members resist
+  resist: number;          // how many team members are resist
   immune: number;          // how many team members are immune
 }

@@ -1,14 +1,15 @@
 // ============================================================================
-// PocketForge — Bottom Navigation (3 tabs)
+// PocketForge — Bottom Navigation (4 tabs)
 // ============================================================================
 
 import { Link, useLocation } from 'react-router';
-import { Users, Wrench, BarChart3 } from 'lucide-react';
+import { Users, Wrench, BarChart3, Calculator as CalculatorIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TABS = [
   { path: '/teams', label: 'Teams', icon: Users },
   { path: '/builder', label: 'Builder', icon: Wrench },
+  { path: '/calc', label: 'Calc', icon: CalculatorIcon },
   { path: '/analysis', label: 'Analysis', icon: BarChart3 },
 ];
 

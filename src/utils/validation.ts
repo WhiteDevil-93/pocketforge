@@ -6,6 +6,7 @@ import type { Team, Pokemon, ValidationResult } from '../types';
 import { getTotalEVs } from './statCalc';
 import { getPokemonByName } from '../data/pokemonData';
 import { FORMATS } from '../data/formatsData';
+import { isEligibleForChampionsMA } from '../data/championsRoster';
 
 /**
  * Validate a single Pokemon's EV spread
@@ -128,6 +129,15 @@ export function validateTeam(team: Team, formatId?: string): ValidationResult {
         for (const [item, count] of Object.entries(itemCounts)) {
           if (count > 1) {
             errors.push(`Item Clause: ${count} Pokemon hold ${item} (max 1 in ${formatData.name})`);
+          }
+        }
+      }
+
+      // Champions M-A: restricted dex roster check
+      if (formatData.id === 'champions-ma') {
+        for (let i = 0; i < team.pokemon.length; i++) {
+          if (!isEligibleForChampionsMA(team.pokemon[i].species)) {
+            errors.push(`${team.pokemon[i].species} is not eligible for Champions Regulation M-A`);
           }
         }
       }

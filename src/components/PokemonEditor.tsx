@@ -29,6 +29,11 @@ import {
   getNatureByName,
   getNatureDescription,
   getAllTypes,
+  formatSupportsTera,
+  formatSupportsMega,
+  formatSupportsZMoves,
+  isMegaStone,
+  getMegaByStone,
 } from '../data';
 import {
   calculateAllStats,
@@ -42,6 +47,7 @@ import type { Pokemon, EVs, IVs } from '../types';
 interface PokemonEditorProps {
   pokemon: Pokemon;
   slotIndex: number;
+  formatId?: string;
   onSave: (updates: Partial<Pokemon>) => void;
   onDelete: () => void;
   onBack: () => void;
@@ -55,6 +61,7 @@ const STAT_NAMES = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'] as const;
 export default function PokemonEditor({
   pokemon,
   slotIndex,
+  formatId,
   onSave,
   onDelete,
   onBack,
@@ -77,9 +84,13 @@ export default function PokemonEditor({
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Mega Evolution active toggle (local, not persisted directly)
+  const [megaActive, setMegaActive] = useState(pokemon.megaActive || false);
+
   // Sync draft when pokemon prop changes
   useEffect(() => {
     setDraft({ ...pokemon });
+    setMegaActive(pokemon.megaActive || false);
   }, [pokemon]);
 
   const dexEntry = useMemo(
@@ -95,16 +106,27 @@ export default function PokemonEditor({
   }, [dexEntry]);
   const allTypes = useMemo(() => getAllTypes(), []);
 
+  // Determine if the equipped item is a Mega Stone
+  const equippedMegaStone = draft.item && isMegaStone(draft.item) ? getMegaByStone(draft.item) : null;
+  const megaEnabled = equippedMegaStone !== null;
+
+  // Get effective base stats (Mega if toggled, otherwise base)
+  const effectiveBaseStats = useMemo(() => {
+    if (megaActive && equippedMegaStone) {
+      return equippedMegaStone.baseStats;
+    }
+    return dexEntry?.baseStats || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+  }, [megaActive, equippedMegaStone, dexEntry]);
+
   const stats = useMemo(() => {
-    if (!dexEntry) return null;
     return calculateAllStats(
-      dexEntry.baseStats,
+      effectiveBaseStats,
       draft.evs,
       draft.ivs,
       draft.level,
       draft.nature
     );
-  }, [dexEntry, draft.evs, draft.ivs, draft.level, draft.nature]);
+  }, [effectiveBaseStats, draft.evs, draft.ivs, draft.level, draft.nature]);
 
   const totalEVs = getTotalEVs(draft.evs);
   const remainingEVs = getRemainingEVs(draft.evs);
@@ -154,8 +176,16 @@ export default function PokemonEditor({
   }, []);
 
   const handleSave = useCallback(() => {
-    onSave(draft);
-  }, [draft, onSave]);
+    const updates: Partial<Pokemon> = { ...draft };
+    if (megaActive && equippedMegaStone) {
+      updates.megaActive = true;
+      updates.megaStone = equippedMegaStone.stone;
+    } else {
+      updates.megaActive = false;
+      updates.megaStone = undefined;
+    }
+    onSave(updates);
+  }, [draft, megaActive, equippedMegaStone, onSave]);
 
   // Filtered lists for bottom sheets
   const filteredPokemon = useMemo(() => {
@@ -176,8 +206,16 @@ export default function PokemonEditor({
 
   const filteredItems = useMemo(() => {
     if (!searchQuery) return [];
-    return searchItems(searchQuery);
-  }, [searchQuery]);
+    const results = searchItems(searchQuery);
+    // Filter items based on format rules
+    return results.filter((item) => {
+      // Hide Mega Stones if format doesn't support Mega
+      if (item.category === 'Mega Stone' && !formatSupportsMega(formatId || '')) return false;
+      // Hide Z-Crystals if format bans Z-Moves
+      if (item.category === 'Z-Crystal' && !formatSupportsZMoves(formatId || '')) return false;
+      return true;
+    });
+  }, [searchQuery, formatId]);
 
   // ---- Sheet selection handlers ----
   const handleSelectSpecies = useCallback(
@@ -264,7 +302,9 @@ export default function PokemonEditor({
               </motion.div>
             )}
           </div>
-          <h2 className="font-title text-text-primary mt-3">{draft.species}</h2>
+          <h2 className="font-title text-text-primary mt-3">
+            {megaActive && equippedMegaStone ? equippedMegaStone.megaName : draft.species}
+          </h2>
           {draft.nickname && (
             <p className="font-body text-text-secondary">&quot;{draft.nickname}&quot;</p>
           )}
@@ -381,15 +421,46 @@ export default function PokemonEditor({
                 }}
               />
 
+              {/* Mega Evolution Toggle */}
+              {megaEnabled && (
+                <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-accent-secondary/10 border border-accent-secondary/20">
+                  <div className="flex items-center gap-2">
+                    <span className="font-body text-accent-secondary font-medium">
+                      {equippedMegaStone?.megaName}
+                    </span>
+                    <span className="font-caption text-text-secondary">
+                      {equippedMegaStone?.ability}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-caption text-text-secondary">Mega</span>
+                    <button
+                      onClick={() => setMegaActive(!megaActive)}
+                      className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${
+                        megaActive ? 'bg-accent-secondary' : 'bg-bg-elevated'
+                      }`}
+                    >
+                      <motion.div
+                        animate={{ x: megaActive ? 20 : 2 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        className="absolute top-1 w-5 h-5 rounded-full bg-white shadow"
+                      />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Tera Type */}
-              <PickerRow
-                label="Tera Type"
-                value={draft.teraType || 'None'}
-                onTap={() => {
-                  setSearchQuery('');
-                  setSheet({ type: 'tera' });
-                }}
-              />
+              {formatSupportsTera(formatId || '') && (
+                <PickerRow
+                  label="Tera Type"
+                  value={draft.teraType || 'None'}
+                  onTap={() => {
+                    setSearchQuery('');
+                    setSheet({ type: 'tera' });
+                  }}
+                />
+              )}
             </div>
           </Accordion>
 
@@ -453,11 +524,12 @@ export default function PokemonEditor({
                 <StatBar
                   key={stat}
                   stat={stat}
-                  baseStat={dexEntry?.baseStats[stat] || 0}
+                  baseStat={effectiveBaseStats[stat]}
                   ev={draft.evs[stat]}
                   iv={draft.ivs[stat]}
                   level={draft.level}
                   nature={draft.nature}
+                  isMegaActive={megaActive}
                   onEVChange={(v) => updateEV(stat, v)}
                   onIVChange={(v) => updateIV(stat, v)}
                 />

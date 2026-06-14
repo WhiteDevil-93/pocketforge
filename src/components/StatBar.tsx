@@ -13,6 +13,7 @@ interface StatBarProps {
   iv: number;
   level: number;
   nature: string;
+  isMegaActive?: boolean;
   onEVChange?: (value: number) => void;
   onIVChange?: (value: number) => void;
   showStepper?: boolean;
@@ -35,6 +36,7 @@ export default function StatBar({
   iv,
   level,
   nature,
+  isMegaActive,
   onEVChange,
   onIVChange,
   showStepper = true,
@@ -76,7 +78,7 @@ export default function StatBar({
             style={{ background: `linear-gradient(90deg, ${colors.main} 0%, ${colors.light} 100%)` }}
           />
         </div>
-        <span className="font-stat-number text-xs text-text-primary w-8 text-right">
+        <span className={`font-stat-number text-xs w-8 text-right ${isMegaActive ? 'text-accent-secondary' : 'text-text-primary'}`}>
           {finalStat}
         </span>
       </div>
@@ -112,7 +114,7 @@ export default function StatBar({
       </div>
 
       {/* Final stat value */}
-      <span className="font-stat-number text-sm text-text-primary w-10 text-right shrink-0">
+      <span className={`font-stat-number text-sm w-10 text-right shrink-0 ${isMegaActive ? 'text-accent-secondary' : 'text-text-primary'}`}>
         {finalStat}
       </span>
 

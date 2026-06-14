@@ -7,6 +7,7 @@ import Layout from './components/Layout';
 import Onboarding from './pages/Onboarding';
 import Teams from './pages/Teams';
 import Builder from './pages/Builder';
+import Calculator from './pages/Calculator';
 import Analysis from './pages/Analysis';
 import SettingsPage from './pages/SettingsPage';
 import ImportExport from './pages/ImportExport';
@@ -49,6 +50,14 @@ export default function App() {
           element={
             <OnboardingGuard>
               <Builder />
+            </OnboardingGuard>
+          }
+        />
+        <Route
+          path="/calc"
+          element={
+            <OnboardingGuard>
+              <Calculator />
             </OnboardingGuard>
           }
         />

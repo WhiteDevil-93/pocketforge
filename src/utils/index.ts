@@ -33,3 +33,11 @@ export {
   getCoverageGaps,
   getTeamBalanceScore,
 } from './typeChart';
+
+export {
+  calculateDamage,
+  getKoChance,
+  formatDamagePercent,
+  getDefaultCalcPokemon,
+  getDefaultField,
+} from './damageCalc';

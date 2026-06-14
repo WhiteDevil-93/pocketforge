@@ -15,7 +15,13 @@ export { ITEMS, getItemByName, searchItems, getAllItemNames, getItemSpriteUrl } 
 export { NATURES, getNatureByName, getNatureModifier, getNatureDescription, getAllNatureNames } from './naturesData';
 
 // Formats data
-export { FORMATS, getFormatById, getFormatsByGeneration, getFormatsGrouped, getAllFormatIds, getAllFormatNames, DEFAULT_FORMAT, getCombinedFormats } from './formatsData';
+export { FORMATS, getFormatById, getFormatsByGeneration, getFormatsGrouped, getAllFormatIds, getAllFormatNames, getCombinedFormats, DEFAULT_FORMAT, formatSupportsTera, formatSupportsMega, formatSupportsDynamax, formatSupportsZMoves } from './formatsData';
+
+// Champions M-A roster
+export { CHAMPIONS_MA_ROSTER, isEligibleForChampionsMA } from './championsRoster';
+
+// Mega Evolution data
+export { MEGA_DATA, getMegaByStone, getMegaByBase, isMegaStone, getAllMegaStones } from './megaData';
 
 // Types data
 export { TYPE_NAMES, TYPE_CHART, getEffectiveness, getAllTypes, getTypeColor } from './typesData';
