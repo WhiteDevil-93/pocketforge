@@ -3,22 +3,19 @@
 // ============================================================================
 
 import type { Team, Pokemon, EVs, IVs } from '../types';
-// import { getPokemonByName } from '../data/pokemonData';
 
 const DEFAULT_EVS: EVs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 const DEFAULT_IVS: IVs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
 
-/**
- * Parse an EV/IV line like "EVs: 252 HP / 4 Atk / 252 Spe"
- */
+/** Parse an EV/IV line like "EVs: 252 HP / 4 Atk / 252 Spe" */
 function parseEVsIVs(line: string, maxVal: number): Partial<EVs> {
   const result: Partial<EVs> = {};
-  const parts = line.split(':'); // Remove prefix like "EVs:"
+  const parts = line.split(':');
   const values = parts.length > 1 ? parts[1] : line;
   const entries = values.split('/');
 
   for (const entry of entries) {
-    const match = entry.trim().match(/^(\\d+)\\s+(hp|atk|def|spa|spd|spe)$/i);
+    const match = entry.trim().match(/^(\d+)\s+(hp|atk|def|spa|spd|spe)$/i);
     if (match) {
       const val = parseInt(match[1], 10);
       const stat = match[2].toLowerCase() as keyof EVs;
@@ -28,95 +25,62 @@ function parseEVsIVs(line: string, maxVal: number): Partial<EVs> {
   return result;
 }
 
-/**
- * Parse a nature line like "Modest Nature"
- */
 function parseNature(line: string): string {
-  const match = line.match(/^(\\w+)\\s+Nature/i);
-  return match ? match[1] : "Serious";
+  const match = line.match(/^(\w+)\s+Nature/i);
+  return match ? match[1] : 'Serious';
 }
 
-/**
- * Parse an ability line like "Ability: Blaze"
- */
 function parseAbility(line: string): string {
-  const match = line.match(/^Ability:\\s*(.+)$/i);
-  return match ? match[1].trim() : "";
+  const match = line.match(/^Ability:\s*(.+)$/i);
+  return match ? match[1].trim() : '';
 }
 
-/**
- * Parse level like "Level: 50"
- */
 function parseLevel(line: string): number {
-  const match = line.match(/^Level:\\s*(\\d+)$/i);
+  const match = line.match(/^Level:\s*(\d+)$/i);
   return match ? parseInt(match[1], 10) : 100;
 }
 
-/**
- * Parse gender from line or species marker
- */
 function parseGender(speciesLine: string): 'M' | 'F' | '' {
-  if (speciesLine.includes('(M)')) return 'M';
-  if (speciesLine.includes('(F)')) return 'F';
+  if (/\(M\)/.test(speciesLine)) return 'M';
+  if (/\(F\)/.test(speciesLine)) return 'F';
   return '';
 }
 
-/**
- * Parse shiny
- */
 function parseShiny(line: string): boolean {
-  return line.toLowerCase().includes('shiny: yes');
+  return /shiny:\s*yes/i.test(line);
 }
 
-/**
- * Parse tera type
- */
 function parseTeraType(line: string): string {
-  const match = line.match(/^Tera Type:\\s*(.+)$/i);
-  return match ? match[1].trim() : "";
+  const match = line.match(/^Tera Type:\s*(.+)$/i);
+  return match ? match[1].trim() : '';
 }
 
-/**
- * Clean species name from line like "Charizard (M) @ Choice Specs"
- */
+/** Clean species name from line like "Zard (Charizard) (M) @ Choice Specs" */
 function parseSpecies(line: string): string {
-  // Remove item (everything after @)
   let cleaned = line.split('@')[0].trim();
-  // Remove gender marker
-  cleaned = cleaned.replace(/\\s*\\([MF]\\)/, '');
-  // Remove nickname (format: "Nickname (Species)")
-  const nicknameMatch = cleaned.match(/^\\w+\\s*\\((.+?)\\)$/);
-  if (nicknameMatch) {
-    return nicknameMatch[1].trim();
-  }
-  // Remove leading dash if present
-  cleaned = cleaned.replace(/^-\\s*/, '');
+  cleaned = cleaned.replace(/\s*\((?:M|F)\)/g, '');
+  // Nickname (Species) form
+  const nicknameMatch = cleaned.match(/^.+?\s*\(([^)]+)\)\s*$/);
+  if (nicknameMatch) return nicknameMatch[1].trim();
+  cleaned = cleaned.replace(/^-\s*/, '');
   return cleaned.trim();
 }
 
-/**
- * Parse item from line like "Charizard @ Choice Specs"
- */
 function parseItem(line: string): string {
-  const match = line.match(/@\\s*(.+)$/);
-  return match ? match[1].trim() : "";
+  const match = line.match(/@\s*(.+)$/);
+  return match ? match[1].trim() : '';
 }
 
-/**
- * Parse nickname from line like "Zard (Charizard) @ Choice Specs"
- */
 function parseNickname(line: string): string | undefined {
-  const cleaned = line.split('@')[0].trim();
-  const nicknameMatch = cleaned.match(/^(\w+)\s*\(/);
+  const cleaned = line.split('@')[0].trim().replace(/\s*\((?:M|F)\)/g, '');
+  const nicknameMatch = cleaned.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
   if (nicknameMatch && nicknameMatch[1]) {
     return nicknameMatch[1].trim();
   }
   return undefined;
 }
 
-/**
- * Import a single Pokemon from PS format lines
- */
+/** Import a single Pokemon from PS format lines */
 export function importPokemonFromPSFormat(lines: string[]): Partial<Pokemon> {
   const pokemon: Partial<Pokemon> = {
     level: 100,
@@ -125,45 +89,45 @@ export function importPokemonFromPSFormat(lines: string[]): Partial<Pokemon> {
     moves: [],
     evs: { ...DEFAULT_EVS },
     ivs: { ...DEFAULT_IVS },
-    nature: "Serious",
+    nature: 'Serious',
   };
 
-  let moveLines: string[] = [];
+  const moveLines: string[] = [];
+  let speciesParsed = false;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) continue;
 
     if (line.startsWith('-')) {
-      // Move line
       const moveName = line.substring(1).trim();
       if (moveName) moveLines.push(moveName);
-    } else if (line.startsWith('Ability:')) {
+    } else if (/^Ability:/i.test(line)) {
       pokemon.ability = parseAbility(line);
-    } else if (line.startsWith('EVs:')) {
+    } else if (/^EVs:/i.test(line)) {
       const evs = parseEVsIVs(line, 252);
       pokemon.evs = { ...DEFAULT_EVS, ...evs };
-    } else if (line.startsWith('IVs:')) {
+    } else if (/^IVs:/i.test(line)) {
       const ivs = parseEVsIVs(line, 31);
       pokemon.ivs = { ...DEFAULT_IVS, ...ivs };
-    } else if (line.includes('Nature')) {
+    } else if (/Nature\b/i.test(line)) {
       pokemon.nature = parseNature(line);
-    } else if (line.startsWith('Level:')) {
+    } else if (/^Level:/i.test(line)) {
       pokemon.level = parseLevel(line);
-    } else if (line.startsWith('Shiny:')) {
+    } else if (/^Shiny:/i.test(line)) {
       pokemon.shiny = parseShiny(line);
-    } else if (line.startsWith('Tera Type:')) {
+    } else if (/^Tera Type:/i.test(line)) {
       pokemon.teraType = parseTeraType(line);
-    } else if (line.startsWith('Happiness:')) {
-      // Not stored in our model
-    } else {
-      // Species line (first non-empty, non-move line)
+    } else if (/^Happiness:/i.test(line)) {
+      // Not stored
+    } else if (!speciesParsed) {
       pokemon.species = parseSpecies(line);
       pokemon.gender = parseGender(line);
       const item = parseItem(line);
       if (item) pokemon.item = item;
       const nickname = parseNickname(line);
-      if (nickname) pokemon.nickname = nickname;
+      if (nickname && nickname !== pokemon.species) pokemon.nickname = nickname;
+      speciesParsed = true;
     }
   }
 
@@ -171,13 +135,10 @@ export function importPokemonFromPSFormat(lines: string[]): Partial<Pokemon> {
   return pokemon;
 }
 
-/**
- * Export a single Pokemon to PS format string
- */
+/** Export a single Pokemon to PS format string */
 export function exportPokemonToPSFormat(pokemon: Pokemon): string {
   const lines: string[] = [];
 
-  // Species line with nickname and item
   let speciesLine = pokemon.species;
   if (pokemon.nickname) {
     speciesLine = `${pokemon.nickname} (${pokemon.species})`;
@@ -190,48 +151,25 @@ export function exportPokemonToPSFormat(pokemon: Pokemon): string {
   }
   lines.push(speciesLine);
 
-  // Ability
-  if (pokemon.ability) {
-    lines.push(`Ability: ${pokemon.ability}`);
-  }
+  if (pokemon.ability) lines.push(`Ability: ${pokemon.ability}`);
+  if (pokemon.level && pokemon.level !== 100) lines.push(`Level: ${pokemon.level}`);
+  if (pokemon.shiny) lines.push('Shiny: Yes');
+  if (pokemon.teraType) lines.push(`Tera Type: ${pokemon.teraType}`);
 
-  // Level
-  if (pokemon.level && pokemon.level !== 100) {
-    lines.push(`Level: ${pokemon.level}`);
-  }
-
-  // Shiny
-  if (pokemon.shiny) {
-    lines.push(`Shiny: Yes`);
-  }
-
-  // Tera Type
-  if (pokemon.teraType) {
-    lines.push(`Tera Type: ${pokemon.teraType}`);
-  }
-
-  // EVs
   const evEntries = Object.entries(pokemon.evs)
     .filter(([, v]) => v > 0)
     .map(([k, v]) => `${v} ${k.toUpperCase()}`)
     .join(' / ');
-  if (evEntries) {
-    lines.push(`EVs: ${evEntries}`);
-  }
+  if (evEntries) lines.push(`EVs: ${evEntries}`);
 
-  // Nature
   lines.push(`${pokemon.nature} Nature`);
 
-  // IVs (only show non-31 IVs)
   const ivEntries = Object.entries(pokemon.ivs)
     .filter(([, v]) => v !== 31)
     .map(([k, v]) => `${v} ${k.toUpperCase()}`)
     .join(' / ');
-  if (ivEntries) {
-    lines.push(`IVs: ${ivEntries}`);
-  }
+  if (ivEntries) lines.push(`IVs: ${ivEntries}`);
 
-  // Moves
   for (const move of pokemon.moves) {
     lines.push(`- ${move}`);
   }
@@ -239,26 +177,31 @@ export function exportPokemonToPSFormat(pokemon: Pokemon): string {
   return lines.join('\n');
 }
 
-/**
- * Import a full team from PS format text
- */
+/** Import a full team from PS format text */
 export function importTeamFromPSFormat(text: string): Partial<Team> {
-  const lines = text.split('\n').map(l => l.trim());
+  const lines = text.split('\n').map((l) => l.trim());
   const team: Partial<Team> = {
     pokemon: [],
   };
 
-  // Try to extract team name from first comment line
   if (lines[0]?.startsWith('===')) {
-    const nameMatch = lines[0].match(/===\\s*(.+?)\\s*===/);
+    const nameMatch = lines[0].match(/===\s*(.+?)\s*===/);
     if (nameMatch) team.name = nameMatch[1].trim();
   }
 
-  // Parse each Pokemon (separated by blank lines)
+  for (const line of lines) {
+    const fmtMatch = line.match(/^\/\/\s*Format:\s*(\S+)/i);
+    if (fmtMatch) {
+      team.format = fmtMatch[1].trim();
+      break;
+    }
+  }
+
   const pokemonBlocks: string[][] = [];
   let currentBlock: string[] = [];
 
   for (const line of lines) {
+    if (line.startsWith('//')) continue;
     if (line === '' || line.startsWith('===')) {
       if (currentBlock.length > 0) {
         pokemonBlocks.push(currentBlock);
@@ -268,9 +211,7 @@ export function importTeamFromPSFormat(text: string): Partial<Team> {
       currentBlock.push(line);
     }
   }
-  if (currentBlock.length > 0) {
-    pokemonBlocks.push(currentBlock);
-  }
+  if (currentBlock.length > 0) pokemonBlocks.push(currentBlock);
 
   for (const block of pokemonBlocks.slice(0, 6)) {
     const parsed = importPokemonFromPSFormat(block);
@@ -282,28 +223,41 @@ export function importTeamFromPSFormat(text: string): Partial<Team> {
   return team;
 }
 
-/**
- * Export a full team to PS format string
- */
+/** Export a full team to PS format string */
 export function exportTeamToPSFormat(team: Team): string {
   const lines: string[] = [];
 
-  // Team name header
   if (team.name) {
     lines.push(`=== ${team.name} ===`);
     lines.push('');
   }
 
-  // Format
   if (team.format) {
     lines.push(`// Format: ${team.format}`);
   }
 
-  // Each Pokemon (separated by blank lines)
   for (let i = 0; i < team.pokemon.length; i++) {
-    if (i > 0) lines.push('');
+    if (i > 0 || team.format) lines.push('');
     lines.push(exportPokemonToPSFormat(team.pokemon[i]));
   }
 
   return lines.join('\n');
+}
+
+/** Validate Showdown format syntax */
+export function validateShowdownFormat(text: string): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  if (!text.trim()) {
+    return { isValid: false, errors: ['Empty input.'] };
+  }
+  const parsed = importTeamFromPSFormat(text);
+  if (!parsed.pokemon || parsed.pokemon.length === 0) {
+    errors.push('No Pokémon detected. Make sure each entry has a species line.');
+  } else {
+    parsed.pokemon.forEach((p, i) => {
+      if (!p.species) errors.push(`Pokémon #${i + 1}: missing species.`);
+      if (p.moves && p.moves.length > 4) errors.push(`Pokémon #${i + 1}: more than 4 moves.`);
+    });
+  }
+  return { isValid: errors.length === 0, errors };
 }

@@ -13,6 +13,8 @@ import {
   Users,
   AlertTriangle,
   Check,
+  Zap,
+  BookOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useStore } from '../store/useStore';
@@ -378,6 +380,20 @@ export default function Teams() {
             aria-label="Search teams"
           >
             <Search size={20} className="text-text-secondary" />
+          </button>
+          <button
+            onClick={() => navigate('/movepool')}
+            className="w-10 h-10 flex items-center justify-center rounded-full touch-target"
+            aria-label="Movepool Explorer"
+          >
+            <BookOpen size={20} className="text-text-secondary" />
+          </button>
+          <button
+            onClick={() => navigate('/speed-tiers')}
+            className="w-10 h-10 flex items-center justify-center rounded-full touch-target"
+            aria-label="Speed Tiers"
+          >
+            <Zap size={20} className="text-text-secondary" />
           </button>
           <button
             onClick={() => navigate('/settings')}

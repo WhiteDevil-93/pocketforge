@@ -12,6 +12,8 @@ import Analysis from './pages/Analysis';
 import SettingsPage from './pages/SettingsPage';
 import ImportExport from './pages/ImportExport';
 import CustomFormatsPage from './pages/CustomFormatsPage';
+import SpeedTierList from './pages/SpeedTierList';
+import MovePoolExplorer from './pages/MovePoolExplorer';
 import { useStore } from './store/useStore';
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
@@ -98,6 +100,22 @@ export default function App() {
           element={
             <OnboardingGuard>
               <CustomFormatsPage />
+            </OnboardingGuard>
+          }
+        />
+        <Route
+          path="/speed-tiers"
+          element={
+            <OnboardingGuard>
+              <SpeedTierList />
+            </OnboardingGuard>
+          }
+        />
+        <Route
+          path="/movepool"
+          element={
+            <OnboardingGuard>
+              <MovePoolExplorer />
             </OnboardingGuard>
           }
         />

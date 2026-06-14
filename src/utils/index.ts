@@ -19,7 +19,24 @@ export {
   importTeamFromPSFormat,
   exportPokemonToPSFormat,
   importPokemonFromPSFormat,
+  validateShowdownFormat,
 } from './psFormat';
+
+export {
+  calculateSpeed,
+  rankTeamBySpeed,
+  outspeeds,
+  getSpeedTiersForFormat,
+  COMMON_SPEED_BENCHMARKS,
+} from './speedCalculator';
+export type { SpeedModifiers, PokemonWithSpeed, SpeedTier } from './speedCalculator';
+
+export {
+  getMovepoolForSpecies,
+  filterMovepool,
+  getPokedexEntry,
+} from './movepoolQuery';
+export type { AcquisitionMethod, AnnotatedMove } from './movepoolQuery';
 
 export {
   validateTeam,
