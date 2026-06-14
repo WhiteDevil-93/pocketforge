@@ -17,6 +17,7 @@ import TypeBadge from './TypeBadge';
 import BottomSheet from './BottomSheet';
 import StepperInput from './StepperInput';
 import StatBar from './StatBar';
+import { getSetsForSpecies, type SmogonSet } from '../data/smogonSets';
 import {
   getPokemonByName,
   getTypeColor,
@@ -173,6 +174,32 @@ export default function PokemonEditor({
 
   const toggleAccordion = useCallback((section: AccordionSection) => {
     setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
+  }, []);
+
+  // ---- Sample Sets ----
+  const sampleSets = useMemo(
+    () => getSetsForSpecies(draft.species),
+    [draft.species]
+  );
+
+  const applySampleSet = useCallback((set: SmogonSet) => {
+    setDraft((prev) => ({
+      ...prev,
+      item: set.item,
+      ability: set.ability,
+      nature: set.nature,
+      teraType: set.teraType ?? prev.teraType,
+      evs: { ...set.evs },
+      ivs: {
+        hp: set.ivs?.hp ?? 31,
+        atk: set.ivs?.atk ?? 31,
+        def: set.ivs?.def ?? 31,
+        spa: set.ivs?.spa ?? 31,
+        spd: set.ivs?.spd ?? 31,
+        spe: set.ivs?.spe ?? 31,
+      },
+      moves: set.moves.slice(0, 4),
+    }));
   }, []);
 
   const handleSave = useCallback(() => {
@@ -463,6 +490,72 @@ export default function PokemonEditor({
               )}
             </div>
           </Accordion>
+
+          {/* ===== SAMPLE SETS ===== */}
+          {sampleSets.length > 0 && (
+            <div className="rounded-2xl bg-bg-secondary border border-border-subtle overflow-hidden">
+              <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+                <span className="font-subtitle text-text-primary">Sample Sets</span>
+                <span className="font-caption text-text-tertiary">
+                  {sampleSets.length}
+                </span>
+              </div>
+              <div className="px-4 pb-4 space-y-2">
+                {sampleSets.map((s) => (
+                  <motion.button
+                    key={`${s.species}-${s.name}`}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => applySampleSet(s)}
+                    className="w-full text-left rounded-xl bg-bg-tertiary border border-border-subtle p-3 touch-target hover:border-accent-primary/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-body-medium text-text-primary">
+                        {s.name}
+                      </span>
+                      <span className="font-micro uppercase text-accent-primary">
+                        Load Set
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                      <span className="font-micro text-text-secondary px-1.5 py-0.5 rounded bg-bg-elevated">
+                        {s.item}
+                      </span>
+                      <span className="font-micro text-text-secondary px-1.5 py-0.5 rounded bg-bg-elevated">
+                        {s.ability}
+                      </span>
+                      <span className="font-micro text-text-secondary px-1.5 py-0.5 rounded bg-bg-elevated">
+                        {s.nature}
+                      </span>
+                      {s.teraType && (
+                        <span
+                          className="font-micro px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: `${getTypeColor(s.teraType)}26`,
+                            color: getTypeColor(s.teraType),
+                          }}
+                        >
+                          Tera {s.teraType}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-1.5">
+                      {s.moves.map((m) => (
+                        <span
+                          key={m}
+                          className="font-micro text-text-primary px-1.5 py-0.5 rounded bg-bg-elevated"
+                        >
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="font-caption text-text-secondary">
+                      {s.description}
+                    </p>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ===== MOVES ===== */}
           <Accordion

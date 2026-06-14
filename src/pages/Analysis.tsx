@@ -30,6 +30,7 @@ import {
 import { getPokemonByName } from '../data/pokemonData';
 import { TYPE_NAMES, getEffectiveness } from '../data/typesData';
 import { calculateStat } from '../utils/statCalc';
+import { explainEVSpread, type EVExplanation } from '../utils/evExplainer';
 import { isEligibleForChampionsMA } from '../data/championsRoster';
 import TypeCoverageChart from '../components/TypeCoverageChart';
 import SynergyMatrix from '../components/SynergyMatrix';
@@ -327,6 +328,103 @@ function TeamHeader({ team }: { team: Team }) {
         <span>Edit Team</span>
         <ChevronRight size={14} />
       </button>
+    </motion.div>
+  );
+}
+
+// ---- EV Spread Card ---------------------------------------------------------
+
+const ROLE_COLORS: Record<EVExplanation['role'], string> = {
+  'Physical Attacker': '#EF4444',
+  'Special Attacker': '#A855F7',
+  'Mixed Attacker': '#F97316',
+  'Physical Wall': '#22C55E',
+  'Special Wall': '#14B8A6',
+  'Mixed Wall': '#10B981',
+  'Fast Support': '#EAB308',
+  'Bulky Support': '#3B82F6',
+  Balanced: '#94A3B8',
+};
+
+function EVSpreadCard({
+  pokemon,
+  index,
+}: {
+  pokemon: Pokemon;
+  index: number;
+}) {
+  const explanation = useMemo(() => explainEVSpread(pokemon), [pokemon]);
+  const roleColor = ROLE_COLORS[explanation.role];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06, duration: 0.3, ease: easeSmooth }}
+      className="bg-bg-secondary rounded-xl border border-border-subtle p-3"
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <PokemonSprite name={pokemon.species} size={40} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-body-medium text-text-primary truncate">
+              {pokemon.nickname || pokemon.species}
+            </span>
+            <span
+              className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
+              style={{
+                color: roleColor,
+                backgroundColor: `${roleColor}1F`,
+              }}
+            >
+              {explanation.role}
+            </span>
+          </div>
+          <p className="text-[11px] text-text-secondary leading-snug mt-0.5">
+            {explanation.summary}
+          </p>
+        </div>
+      </div>
+
+      {explanation.investments.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {explanation.investments.map((inv) => (
+            <span
+              key={inv}
+              className="text-[10px] font-jetbrains-mono text-text-secondary bg-bg-tertiary px-1.5 py-0.5 rounded"
+            >
+              {inv}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-0.5">
+        {explanation.speedTier && (
+          <div className="flex items-start gap-1.5">
+            <Zap size={11} className="text-accent-primary mt-0.5 shrink-0" />
+            <span className="text-[11px] text-text-secondary">
+              {explanation.speedTier}
+            </span>
+          </div>
+        )}
+        {explanation.bulkNote && (
+          <div className="flex items-start gap-1.5">
+            <Shield size={11} className="text-success mt-0.5 shrink-0" />
+            <span className="text-[11px] text-text-secondary">
+              {explanation.bulkNote}
+            </span>
+          </div>
+        )}
+        {explanation.offenseNote && (
+          <div className="flex items-start gap-1.5">
+            <Swords size={11} className="text-danger mt-0.5 shrink-0" />
+            <span className="text-[11px] text-text-secondary">
+              {explanation.offenseNote}
+            </span>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -859,6 +957,19 @@ export default function Analysis() {
               </div>
             </motion.div>
           )}
+
+          {/* EV Spreads */}
+          <motion.div variants={itemVariants}>
+            <div className="bg-bg-secondary rounded-2xl border border-border-subtle px-4 mb-3">
+              <AccordionSection title="EV Spreads" badge={selectedTeam.pokemon.length}>
+                <div className="space-y-2 pb-1">
+                  {selectedTeam.pokemon.map((p, i) => (
+                    <EVSpreadCard key={p.id} pokemon={p} index={i} />
+                  ))}
+                </div>
+              </AccordionSection>
+            </div>
+          </motion.div>
 
           {/* Suggestions */}
           {analysis.suggestions.length > 0 && (
