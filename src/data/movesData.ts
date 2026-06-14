@@ -428,7 +428,7 @@ export function getMovesByType(type: string): Move[] {
 }
 
 /** Get all moves a Pokemon can learn (placeholder — would need per-Pokemon learnsets) */
-export function getMovesForPokemon(pokemonName: string): Move[] {
+export function getMovesForPokemon(_pokemonName: string): Move[] {
   // In a full implementation, this would use per-Pokemon learnsets
   // For now, return a curated list of common competitive moves
   return MOVES;
