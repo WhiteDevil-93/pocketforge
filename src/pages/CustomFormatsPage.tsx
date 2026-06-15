@@ -3,8 +3,8 @@
 // ============================================================================
 
 import { useState, useCallback } from 'react';
-import PageHeader from '../components/PageHeader';
 import { motion, AnimatePresence } from 'framer-motion';
+import PageHeader from '../components/PageHeader';
 import {
   Plus,
   Sparkles,

@@ -71,6 +71,7 @@ Runs import/export, movepool, speed, and damage calc smoke tests.
 - **Validation** — species clause, item clause, mega-once, level 50, Champions whitelists
 - **Import / Export** — Showdown paste format and packed team URLs (`?team=…`)
 - **Analysis** — type coverage, speed tiers, Champions eligibility card
+- **AI Coach (Phase 2, workspace)** — optional FastAPI + Gemma backend; see `backend/README.md`
 - **Calculator** — `@smogon/calc` damage rolls
 - **Offline PWA** — service worker via `vite-plugin-pwa`
 

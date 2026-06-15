@@ -1,0 +1,6 @@
+# Install only on the training machine (RTX 4050)
+unsloth
+transformers>=4.48.0
+datasets>=3.2.0
+peft>=0.14.0
+trl>=0.13.0

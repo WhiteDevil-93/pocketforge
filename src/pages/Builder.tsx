@@ -32,6 +32,7 @@ import {
 import type { Pokemon } from '../types';
 import { validateTeam } from '../utils';
 import { getDefaultLevelForFormat } from '../lib/showdown';
+import { HOME_PATH } from '../lib/routes';
 
 const EMPTY_SLOTS = 6;
 
@@ -237,7 +238,7 @@ export default function Builder() {
             Create or select a team to start building.
           </p>
           <button
-            onClick={() => navigate('/teams')}
+            onClick={() => navigate(HOME_PATH)}
             className="h-12 px-6 rounded-xl bg-accent-primary font-body-medium text-white touch-target"
           >
             Go to Teams
@@ -253,7 +254,7 @@ export default function Builder() {
       <div className="sticky top-0 z-30 bg-bg-primary/95 backdrop-blur-sm border-b border-border-subtle">
         <div className="flex items-center justify-between h-14 px-4">
           <button
-            onClick={() => navigate('/teams')}
+            onClick={() => navigate(HOME_PATH)}
             className="w-12 h-12 flex items-center justify-center -ml-2 touch-target"
           >
             <ChevronLeft size={24} className="text-text-primary" />

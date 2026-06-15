@@ -18,13 +18,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { springSnappy, transitionFast } from '../lib/motion';
-import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
 import { importTeamFromPSFormat, exportTeamToPSFormat } from '../utils';
 import type { Team } from '../types';
 import { Teams, Team as ShowdownTeam } from '@pkmn/sets';
 import { getDexForFormat } from '../lib/showdown';
 import { DEFAULT_FORMAT } from '../data/formatsData';
+import PageHeader from '../components/PageHeader';
 
 // ---- Sample teams for one-click import -------------------------------------
 
