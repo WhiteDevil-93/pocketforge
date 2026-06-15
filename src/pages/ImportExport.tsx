@@ -17,6 +17,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { springSnappy, transitionFast } from '../lib/motion';
 import { useStore } from '../store/useStore';
 import { importTeamFromPSFormat, exportTeamToPSFormat } from '../utils';
 import type { Team } from '../types';
@@ -162,7 +163,7 @@ function Toast({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }
       initial={{ opacity: 0, y: -20, x: '-50%' }}
       animate={{ opacity: 1, y: 0, x: '-50%' }}
       exit={{ opacity: 0, y: -10, x: '-50%' }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+      transition={transitionFast}
       className="fixed top-4 left-1/2 z-[60] flex items-center gap-2 px-4 py-3 rounded-card-md bg-bg-elevated shadow-card"
       style={{ borderLeft: `3px solid ${borderColor}` }}
     >
@@ -431,7 +432,14 @@ export default function ImportExport() {
 
       {/* Tab Switcher */}
       <div className="sticky z-30 top-[56px] bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle">
-        <div className="flex">
+        <div className="relative grid grid-cols-2">
+          <motion.div
+            className="pointer-events-none absolute bottom-0 h-0.5 bg-accent-primary"
+            animate={{ left: activeTab === 'import' ? '0%' : '50%' }}
+            style={{ width: '50%' }}
+            transition={springSnappy}
+          />
+
           {(['import', 'export'] as TabId[]).map((tab) => (
             <button
               key={tab}
@@ -439,18 +447,11 @@ export default function ImportExport() {
                 setActiveTab(tab);
                 setImportError(null);
               }}
-              className={`relative flex-1 h-[48px] font-body-medium capitalize transition-colors ${
+              className={`flex h-[48px] items-center justify-center font-body-medium capitalize transition-colors ${
                 activeTab === tab ? 'text-accent-primary' : 'text-text-secondary'
               }`}
             >
               {tab}
-              {activeTab === tab && (
-                <motion.div
-                  layoutId="import-export-tab-indicator"
-                  className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent-primary rounded-full"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
             </button>
           ))}
         </div>
@@ -458,7 +459,7 @@ export default function ImportExport() {
 
       {/* Content */}
       <div className="flex-1 px-4 py-4 pb-24">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {/* ====== IMPORT TAB ====== */}
           {activeTab === 'import' && (
             <motion.div
@@ -466,7 +467,7 @@ export default function ImportExport() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
+              transition={transitionFast}
               className="flex flex-col gap-4"
             >
               {/* Import Text Area */}
@@ -563,7 +564,7 @@ export default function ImportExport() {
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
+              transition={transitionFast}
               className="flex flex-col gap-4"
             >
               {!hasTeams ? (

@@ -48,6 +48,7 @@ import {
   getStatColorClass,
 } from '../utils';
 import type { Pokemon, EVs, IVs } from '../types';
+import { springSnappy, transitionFast } from '../lib/motion';
 
 interface PokemonEditorProps {
   pokemon: Pokemon;
@@ -65,7 +66,7 @@ const STAT_NAMES = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'] as const;
 
 export default function PokemonEditor({
   pokemon,
-  slotIndex,
+  slotIndex: _slotIndex,
   formatId,
   onSave,
   onDelete,
@@ -288,11 +289,10 @@ export default function PokemonEditor({
 
   return (
     <motion.div
-      layoutId={`pokemon-card-${slotIndex}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={transitionFast}
       className="fixed inset-0 z-40 bg-bg-primary flex flex-col"
     >
       {/* Top App Bar */}
@@ -624,7 +624,7 @@ export default function PokemonEditor({
             onToggle={() => toggleAccordion('stats')}
             rightLabel={`${totalEVs}/508`}
           >
-            <div className="space-y-1 pt-2">
+            <div className="space-y-2 pt-2">
               {STAT_NAMES.map((stat) => (
                 <StatBar
                   key={stat}
@@ -1104,8 +1104,8 @@ function Accordion({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{
-              height: { type: 'spring', stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2, delay: expanded ? 0.05 : 0 },
+              height: springSnappy,
+              opacity: transitionFast,
             }}
             className="overflow-hidden"
           >

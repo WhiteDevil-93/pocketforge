@@ -18,10 +18,10 @@ import {
   Heart,
   WifiOff,
   ChevronRight,
-  X,
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
+import BottomSheet from '../components/BottomSheet';
 import { useStore } from '../store/useStore';
 import { FORMATS, getFormatById } from '../data/formatsData';
 import { CHAMPIONS_META } from '../data/championsLegality';
@@ -103,55 +103,6 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-// ---- Bottom Sheet Component ------------------------------------------------
-
-function BottomSheet({
-  isOpen,
-  onClose,
-  title,
-  children,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={onClose}
-          />
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-bg-secondary rounded-t-3xl max-h-[80vh] overflow-y-auto"
-          >
-            {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-2">
-              <div className="w-9 h-1 rounded-full bg-text-tertiary" />
-            </div>
-            <div className="px-4 pb-4">
-              <h2 className="font-headline text-text-primary mb-4">{title}</h2>
-              {children}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
 // ---- Format Picker Sheet ---------------------------------------------------
 
 function FormatPickerSheet({
@@ -193,26 +144,13 @@ function FormatPickerSheet({
   };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Select Format">
-      {/* Search */}
-      <div className="relative mb-3">
-        <input
-          type="text"
-          placeholder="Search formats..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full h-11 px-4 pr-10 bg-bg-tertiary rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-        />
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-          >
-            <X size={16} className="text-text-tertiary" />
-          </button>
-        )}
-      </div>
-
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Select Format"
+      searchPlaceholder="Search formats..."
+      onSearch={setSearch}
+    >
       {/* Format list grouped by generation */}
       <div className="space-y-4">
         {Object.entries(grouped)
@@ -303,7 +241,7 @@ function ClearDataDialog({
   }, [isOpen]);
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Clear All Data?">
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Clear All Data?" showSearch={false}>
       <div className="space-y-4">
         <div className="flex items-start gap-3">
           <AlertTriangle size={22} className="text-warning shrink-0 mt-0.5" />
@@ -364,7 +302,7 @@ function ClearDataDialog({
 
 function AttributionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Data Attribution">
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Data Attribution" showSearch={false}>
       <div className="space-y-3 text-sm text-text-primary">
         <p>Pokemon data powered by:</p>
         <ul className="space-y-1.5 list-disc list-inside text-text-secondary">
@@ -396,7 +334,7 @@ function AttributionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 
 function CreditsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Credits">
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Credits" showSearch={false}>
       <div className="space-y-3 text-sm text-text-primary">
         <p className="font-medium">PocketForge Teambuilder</p>
         <p className="text-text-secondary">

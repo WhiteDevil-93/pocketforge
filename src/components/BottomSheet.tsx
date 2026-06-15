@@ -3,8 +3,11 @@
 // ============================================================================
 
 import { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
+import { useVisualViewport } from '../hooks/use-visual-viewport';
+import { transitionBackdrop, transitionSheet } from '../lib/motion';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -14,6 +17,13 @@ interface BottomSheetProps {
   onSearch?: (query: string) => void;
   children: React.ReactNode;
   showSearch?: boolean;
+}
+
+function blurActiveElement() {
+  const active = document.activeElement;
+  if (active instanceof HTMLElement) {
+    active.blur();
+  }
 }
 
 export default function BottomSheet({
@@ -26,12 +36,27 @@ export default function BottomSheet({
   showSearch = true,
 }: BottomSheetProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const viewport = useVisualViewport(isOpen);
 
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
+      return;
     }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      blurActiveElement();
+    };
   }, [isOpen]);
+
+  const handleClose = useCallback(() => {
+    blurActiveElement();
+    onClose();
+  }, [onClose]);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +72,9 @@ export default function BottomSheet({
     onSearch?.('');
   }, [onSearch]);
 
-  return (
+  const sheetMaxHeight = Math.min(viewport.height * 0.85, viewport.height - 16);
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -56,9 +83,10 @@ export default function BottomSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] }}
-            className="fixed inset-0 z-[60] sheet-backdrop"
-            onClick={onClose}
+            transition={transitionBackdrop}
+            className="fixed inset-0 z-[90] sheet-backdrop"
+            style={{ top: viewport.offsetTop }}
+            onClick={handleClose}
           />
 
           {/* Sheet */}
@@ -66,20 +94,24 @@ export default function BottomSheet({
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-[70] bg-bg-tertiary rounded-t-3xl max-h-[85vh] flex flex-col"
-            style={{ willChange: 'transform' }}
+            transition={transitionSheet}
+            className="fixed left-0 right-0 z-[100] bg-bg-tertiary rounded-t-3xl flex flex-col shadow-2xl"
+            style={{
+              bottom: viewport.offsetTop,
+              maxHeight: sheetMaxHeight,
+              willChange: 'transform',
+            }}
           >
             {/* Drag Handle */}
-            <div className="flex justify-center pt-3 pb-2 px-4">
+            <div className="flex justify-center pt-3 pb-2 px-4 shrink-0">
               <div className="w-9 h-1 rounded-full bg-text-tertiary/50" />
             </div>
 
             {/* Header */}
-            <div className="px-4 pb-3 flex items-center justify-between">
+            <div className="px-4 pb-3 flex items-center justify-between shrink-0">
               <h2 className="font-headline text-lg text-text-primary">{title}</h2>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-elevated touch-target"
               >
                 <X size={16} className="text-text-secondary" />
@@ -88,25 +120,27 @@ export default function BottomSheet({
 
             {/* Search */}
             {showSearch && (
-              <div className="px-4 pb-3">
+              <div className="px-4 pb-3 shrink-0">
                 <div className="relative">
                   <Search
                     size={18}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"
                   />
                   <input
-                    type="text"
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
                     value={searchQuery}
                     onChange={handleSearchChange}
                     placeholder={searchPlaceholder}
                     className="w-full h-12 pl-10 pr-10 bg-bg-secondary rounded-xl text-text-primary placeholder-text-tertiary outline-none border border-border-subtle focus:border-accent-primary/50 transition-colors"
                     style={{ fontSize: '16px' }}
-                    autoFocus
                   />
                   {searchQuery && (
                     <button
+                      type="button"
                       onClick={handleClearSearch}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 touch-target"
                     >
                       <X size={16} className="text-text-tertiary" />
                     </button>
@@ -116,12 +150,13 @@ export default function BottomSheet({
             )}
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 pb-6 overscroll-contain">
-              {children}
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-safe overscroll-contain">
+              <div className="pb-4">{children}</div>
             </div>
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

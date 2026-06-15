@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import BottomNav from './BottomNav';
+import { transitionFast } from '../lib/motion';
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,17 +22,14 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-[100dvh] flex flex-col relative">
       {/* Main content area */}
-      <main className={`flex-1 ${showNav ? 'pb-space-16' : ''}`}>
-        <AnimatePresence mode="wait" initial={false}>
+      <main className={`flex-1 ${showNav ? 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))]' : ''}`}>
+        <AnimatePresence initial={false}>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{
-              duration: 0.3,
-              ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
-            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transitionFast}
             className="min-h-full"
           >
             {children}

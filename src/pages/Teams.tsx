@@ -18,6 +18,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { springTap, transitionFast } from '../lib/motion';
 import { useStore } from '../store/useStore';
 import type { Team } from '../types';
 import SearchInput from '../components/SearchInput';
@@ -113,7 +114,7 @@ function Toast({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }
       initial={{ opacity: 0, y: -20, x: '-50%' }}
       animate={{ opacity: 1, y: 0, x: '-50%' }}
       exit={{ opacity: 0, y: -10, x: '-50%' }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+      transition={transitionFast}
       className="fixed top-4 left-1/2 z-[60] flex items-center gap-2 px-4 py-3 rounded-card-md bg-bg-elevated shadow-card"
       style={{ borderLeft: `3px solid ${borderColor}` }}
     >
@@ -431,7 +432,7 @@ export default function Teams() {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+              transition={springTap}
             >
               <Check size={28} className="text-success" />
             </motion.div>
@@ -516,7 +517,7 @@ export default function Teams() {
         )}
 
         {/* Folder Groupings */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {folderNames.map((folder) => (
             <div key={folder} className="mb-4">
               {/* Folder Header */}
@@ -527,7 +528,7 @@ export default function Teams() {
               >
                 <motion.div
                   animate={{ rotate: expandedFolders[folder] ? 0 : -90 }}
-                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }}
+                  transition={transitionFast}
                 >
                   <ChevronDown size={20} className="text-text-secondary" />
                 </motion.div>
@@ -593,7 +594,7 @@ export default function Teams() {
           boxShadow: '0 4px 20px rgba(59, 130, 246, 0.35)',
         }}
         whileTap={{ scale: 0.92 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+        transition={springTap}
         onClick={handleCreateTeam}
         aria-label="Create new team"
       >
