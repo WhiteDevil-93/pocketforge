@@ -410,6 +410,8 @@ export function getTypeColor(type: string): string {
 `;
 }
 
+export { stripToJSObject, parseShowdownData, fetchShowdownData };
+
 async function main() {
   console.log('Fetching Pokemon Showdown data...\n');
 
@@ -466,6 +468,10 @@ async function main() {
     }
   }
 
+  const { generateChampionsData } = await import('./generate-champions-data.mjs');
+  const championsChanged = await generateChampionsData({ stripToJSObject });
+  changed = changed || championsChanged;
+
   if (!changed) {
     console.log('\nNo changes detected — data is already up to date.');
   } else {
@@ -477,7 +483,10 @@ async function main() {
   }
 }
 
-main().catch(err => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch(err => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

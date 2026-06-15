@@ -31,7 +31,7 @@ import { getPokemonByName } from '../data/pokemonData';
 import { TYPE_NAMES, getEffectiveness } from '../data/typesData';
 import { calculateStat } from '../utils/statCalc';
 import { explainEVSpread, type EVExplanation } from '../utils/evExplainer';
-import { isEligibleForChampionsMA } from '../data/championsRoster';
+import { isEligibleForChampionsMA, isChampionsFormatId, CHAMPIONS_META } from '../data/championsLegality';
 import TypeCoverageChart from '../components/TypeCoverageChart';
 import SynergyMatrix from '../components/SynergyMatrix';
 import ScoreGauge from '../components/ScoreGauge';
@@ -480,7 +480,7 @@ function ChampionsMAEligibility({ team }: { team: Team }) {
   return (
     <div className="bg-bg-secondary rounded-2xl border border-border-subtle p-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-subtitle text-text-primary">Champions M-A Roster</h3>
+        <h3 className="font-subtitle text-text-primary">{CHAMPIONS_META.regulationName} Roster</h3>
         <span
           className={`text-[11px] font-jetbrains-mono font-bold ${
             eligibleCount === team.pokemon.length ? 'text-success' : 'text-warning'
@@ -814,7 +814,7 @@ export default function Analysis() {
           </motion.div>
 
           {/* Champions M-A Eligibility */}
-          {selectedTeam.format === 'champions-ma' && (
+          {isChampionsFormatId(selectedTeam.format) && (
             <motion.div variants={itemVariants} className="mb-3">
               <ChampionsMAEligibility team={selectedTeam} />
             </motion.div>

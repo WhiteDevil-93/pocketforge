@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { FORMATS, getFormatById } from '../data/formatsData';
+import { CHAMPIONS_META } from '../data/championsLegality';
 
 const easeSmooth = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
 
@@ -178,11 +179,18 @@ function FormatPickerSheet({
       )
     : FORMATS;
 
-  const grouped = filteredFormats.reduce<Record<number, typeof FORMATS>>((acc, f) => {
-    if (!acc[f.generation]) acc[f.generation] = [];
-    acc[f.generation].push(f);
+  const grouped = filteredFormats.reduce<Record<string, typeof FORMATS>>((acc, f) => {
+    const key = f.generation === 10 ? 'Champions' : `Gen ${f.generation}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(f);
     return acc;
   }, {});
+
+  const groupOrder = (key: string) => {
+    if (key === 'Champions') return 1000;
+    const n = parseInt(key.replace('Gen ', ''), 10);
+    return Number.isNaN(n) ? 0 : n;
+  };
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Select Format">
@@ -208,11 +216,11 @@ function FormatPickerSheet({
       {/* Format list grouped by generation */}
       <div className="space-y-4">
         {Object.entries(grouped)
-          .sort(([a], [b]) => Number(b) - Number(a))
-          .map(([gen, formats]) => (
-            <div key={gen}>
+          .sort(([a], [b]) => groupOrder(b) - groupOrder(a))
+          .map(([group, formats]) => (
+            <div key={group}>
               <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
-                Gen {gen}
+                {group}
               </span>
               <div className="mt-1 space-y-0.5">
                 {formats.map((f) => (
@@ -362,8 +370,11 @@ function AttributionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         <ul className="space-y-1.5 list-disc list-inside text-text-secondary">
           <li>Smogon University</li>
           <li>Pokemon Showdown</li>
-          <li>PokeAPI</li>
+          <li>Showdown Champions mod ({CHAMPIONS_META.showdownFormat})</li>
         </ul>
+        <p className="text-text-secondary">
+          Champions regulation data last synced {new Date(CHAMPIONS_META.updatedAt).toLocaleDateString()}.
+        </p>
         <p className="text-text-secondary">Sprites from Pokemon Showdown CDN</p>
         <p className="text-text-secondary">Type icons from Smogon</p>
         <p className="text-[11px] text-text-tertiary pt-2 border-t border-border-subtle">
@@ -706,6 +717,22 @@ export default function SettingsPage() {
             iconColor="#94A3B8"
             label="Version"
             rightElement={<span className="text-sm text-text-secondary">1.0.0</span>}
+          />
+          <div className="h-px bg-border-subtle mx-4" />
+          <SettingsRow
+            icon={WifiOff}
+            iconColor="#22C55E"
+            label="Offline ready"
+            subtitle="Install from browser menu for full PWA"
+          />
+          <div className="h-px bg-border-subtle mx-4" />
+          <SettingsRow
+            icon={Gamepad2}
+            iconColor="#F59E0B"
+            label="Champions regulation"
+            rightElement={
+              <span className="text-sm text-text-secondary">{CHAMPIONS_META.regulationName}</span>
+            }
           />
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow

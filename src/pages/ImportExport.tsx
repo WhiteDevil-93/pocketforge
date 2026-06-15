@@ -20,6 +20,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
 import { importTeamFromPSFormat, exportTeamToPSFormat } from '../utils';
 import type { Team } from '../types';
+import { Teams, Team as ShowdownTeam } from '@pkmn/sets';
+import { getDexForFormat } from '../lib/showdown';
+import { DEFAULT_FORMAT } from '../data/formatsData';
 
 // ---- Sample teams for one-click import -------------------------------------
 
@@ -276,7 +279,7 @@ export default function ImportExport() {
       const teamName = parsed.name || 'Imported Team';
       const teamData: Partial<Team> = {
         name: teamName,
-        format: parsed.format || 'gen9ou',
+        format: parsed.format || DEFAULT_FORMAT,
         pokemon: validPokemon as Team['pokemon'],
       };
 
@@ -304,7 +307,7 @@ export default function ImportExport() {
         const teamName = parsed.name || 'Sample Team';
         const teamData: Partial<Team> = {
           name: teamName,
-          format: parsed.format || 'gen9ou',
+          format: parsed.format || DEFAULT_FORMAT,
           pokemon: (parsed.pokemon || []) as Team['pokemon'],
         };
 
@@ -351,6 +354,42 @@ export default function ImportExport() {
       handleCopyToClipboard();
     }
   }, [exportText, selectedTeam, addToast, handleCopyToClipboard]);
+
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
+
+  const handleCopyShareLink = useCallback(async () => {
+    if (!selectedTeam) return;
+
+    try {
+      const sets = selectedTeam.pokemon.map((pokemon) => ({
+        name: pokemon.nickname || '',
+        species: pokemon.species,
+        gender: pokemon.gender,
+        item: pokemon.item || '',
+        ability: pokemon.ability,
+        evs: { ...pokemon.evs },
+        ivs: { ...pokemon.ivs },
+        nature: pokemon.nature || 'Serious',
+        level: pokemon.level || 100,
+        shiny: pokemon.shiny || false,
+        teraType: pokemon.teraType || '',
+        moves: pokemon.moves || [],
+      }));
+
+      const genDex = getDexForFormat(selectedTeam.format);
+      const showdownTeam = new ShowdownTeam(sets, genDex);
+      const packed = Teams.packTeam(showdownTeam);
+      const shareUrl = `${window.location.origin}${window.location.pathname}?team=${encodeURIComponent(packed)}#/teams`;
+
+      await navigator.clipboard.writeText(shareUrl);
+      setShareLinkCopied(true);
+      addToast('Shareable link copied to clipboard!', 'success');
+      setTimeout(() => setShareLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to create share link:', err);
+      addToast('Failed to create share link', 'error');
+    }
+  }, [selectedTeam, addToast]);
 
   const handleDownload = useCallback(() => {
     if (!exportText || !selectedTeam) return;
@@ -591,7 +630,26 @@ export default function ImportExport() {
                       ) : (
                         <>
                           <Copy size={20} className="text-accent-primary" />
-                          Copy to Clipboard
+                          Copy human-readable paste
+                        </>
+                      )}
+                    </button>
+
+                    {/* Copy Share Link */}
+                    <button
+                      onClick={handleCopyShareLink}
+                      disabled={!selectedTeam || selectedTeam.pokemon.length === 0}
+                      className="flex items-center justify-center gap-2 h-[48px] w-full rounded-card-md bg-bg-secondary border border-border-subtle font-body-medium text-text-primary active:scale-[0.97] transition-transform disabled:opacity-50"
+                    >
+                      {shareLinkCopied ? (
+                        <>
+                          <Check size={20} className="text-success" />
+                          <span className="text-success">Link Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Share2 size={20} className="text-accent-secondary" />
+                          Copy Share Link (URL)
                         </>
                       )}
                     </button>

@@ -28,8 +28,9 @@ import TeamCard from '../components/TeamCard';
 
 const FORMAT_FILTERS = [
   { id: 'all', label: 'All' },
+  { id: 'champions-ma', label: 'Champions' },
   { id: 'gen9ou', label: 'Gen 9 OU' },
-  { id: 'gen9vgc', label: 'VGC' },
+  { id: 'gen9vgc-regi', label: 'VGC' },
   { id: 'gen9nationaldex', label: 'National Dex' },
   { id: 'gen9ubers', label: 'Ubers' },
   { id: 'gen9uu', label: 'UU' },

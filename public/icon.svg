@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PocketForge">
+  <rect width="512" height="512" rx="96" fill="#0B1120"/>
+  <circle cx="256" cy="256" r="196" fill="#F8FAFC" stroke="#1E293B" stroke-width="16"/>
+  <path d="M60 256h392" stroke="#1E293B" stroke-width="16"/>
+  <path d="M256 60a196 196 0 0 1 0 392a196 196 0 0 1 0-392Z" fill="#EF4444"/>
+  <circle cx="256" cy="256" r="52" fill="#F8FAFC" stroke="#1E293B" stroke-width="12"/>
+  <circle cx="256" cy="256" r="24" fill="#0B1120"/>
+</svg>

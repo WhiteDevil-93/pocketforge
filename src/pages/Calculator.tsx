@@ -46,6 +46,7 @@ import type {
   StatusCondition,
   DamageResult,
 } from '../utils/damageCalc';
+import { Dex } from '../lib/showdown';
 
 // ---- Constants --------------------------------------------------------------
 
@@ -703,25 +704,31 @@ export default function Calculator() {
                     </div>
                   </div>
 
-                  {/* Screens & Toggle */}
+                  {/* Attacker Side */}
                   <div>
-                    <span className="font-micro text-text-tertiary block mb-2">Screens & Effects</span>
+                    <span className="font-micro text-text-tertiary block mb-2">Attacker Side Conditions</span>
                     <div className="flex flex-wrap gap-2">
                       {[
                         { key: 'reflect' as const, label: 'Reflect' },
                         { key: 'lightScreen' as const, label: 'Light Screen' },
                         { key: 'auroraVeil' as const, label: 'Aurora Veil' },
                         { key: 'stealthRock' as const, label: 'Stealth Rock' },
-                        { key: 'multiscale' as const, label: 'Multiscale' },
-                        { key: 'friendGuard' as const, label: 'Friend Guard' },
+                        { key: 'tailwind' as const, label: 'Tailwind' },
+                        { key: 'helpingHand' as const, label: 'Helping Hand' },
                       ].map((toggle) => (
                         <button
                           key={toggle.key}
                           onClick={() =>
-                            setField((f) => ({ ...f, [toggle.key]: !f[toggle.key] }))
+                            setField((f) => ({
+                              ...f,
+                              attackerSide: {
+                                ...f.attackerSide,
+                                [toggle.key]: !f.attackerSide[toggle.key],
+                              },
+                            }))
                           }
                           className={`px-3 py-1.5 rounded-full font-micro transition-all ${
-                            field[toggle.key]
+                            field.attackerSide[toggle.key]
                               ? 'bg-success/20 text-success border border-success/30'
                               : 'bg-bg-tertiary text-text-tertiary'
                           }`}
@@ -729,6 +736,128 @@ export default function Calculator() {
                           {toggle.label}
                         </button>
                       ))}
+
+                      {/* Spikes Stepper */}
+                      <div className="flex items-center gap-2 px-3 py-1 bg-bg-tertiary rounded-full font-micro text-text-tertiary">
+                        <span>Spikes:</span>
+                        <button
+                          onClick={() =>
+                            setField((f) => ({
+                              ...f,
+                              attackerSide: {
+                                ...f.attackerSide,
+                                spikes: Math.max(0, f.attackerSide.spikes - 1),
+                              },
+                            }))
+                          }
+                          className="w-5 h-5 flex items-center justify-center rounded bg-bg-elevated text-text-primary text-xs"
+                        >
+                          -
+                        </button>
+                        <span className="font-mono text-text-primary text-xs">{field.attackerSide.spikes}</span>
+                        <button
+                          onClick={() =>
+                            setField((f) => ({
+                              ...f,
+                              attackerSide: {
+                                ...f.attackerSide,
+                                spikes: Math.min(3, f.attackerSide.spikes + 1),
+                              },
+                            }))
+                          }
+                          className="w-5 h-5 flex items-center justify-center rounded bg-bg-elevated text-text-primary text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Defender Side */}
+                  <div>
+                    <span className="font-micro text-text-tertiary block mb-2">Defender Side Conditions</span>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { key: 'reflect' as const, label: 'Reflect' },
+                        { key: 'lightScreen' as const, label: 'Light Screen' },
+                        { key: 'auroraVeil' as const, label: 'Aurora Veil' },
+                        { key: 'stealthRock' as const, label: 'Stealth Rock' },
+                        { key: 'tailwind' as const, label: 'Tailwind' },
+                        { key: 'friendGuard' as const, label: 'Friend Guard' },
+                      ].map((toggle) => (
+                        <button
+                          key={toggle.key}
+                          onClick={() =>
+                            setField((f) => ({
+                              ...f,
+                              defenderSide: {
+                                ...f.defenderSide,
+                                [toggle.key]: !f.defenderSide[toggle.key],
+                              },
+                            }))
+                          }
+                          className={`px-3 py-1.5 rounded-full font-micro transition-all ${
+                            field.defenderSide[toggle.key]
+                              ? 'bg-danger/20 text-danger border border-danger/30'
+                              : 'bg-bg-tertiary text-text-tertiary'
+                          }`}
+                        >
+                          {toggle.label}
+                        </button>
+                      ))}
+
+                      {/* Spikes Stepper */}
+                      <div className="flex items-center gap-2 px-3 py-1 bg-bg-tertiary rounded-full font-micro text-text-tertiary">
+                        <span>Spikes:</span>
+                        <button
+                          onClick={() =>
+                            setField((f) => ({
+                              ...f,
+                              defenderSide: {
+                                ...f.defenderSide,
+                                spikes: Math.max(0, f.defenderSide.spikes - 1),
+                              },
+                            }))
+                          }
+                          className="w-5 h-5 flex items-center justify-center rounded bg-bg-elevated text-text-primary text-xs"
+                        >
+                          -
+                        </button>
+                        <span className="font-mono text-text-primary text-xs">{field.defenderSide.spikes}</span>
+                        <button
+                          onClick={() =>
+                            setField((f) => ({
+                              ...f,
+                              defenderSide: {
+                                ...f.defenderSide,
+                                spikes: Math.min(3, f.defenderSide.spikes + 1),
+                              },
+                            }))
+                          }
+                          className="w-5 h-5 flex items-center justify-center rounded bg-bg-elevated text-text-primary text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* General / Overrides */}
+                  <div>
+                    <span className="font-micro text-text-tertiary block mb-2">Defender Ability Overrides</span>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() =>
+                          setField((f) => ({ ...f, defenderMultiscale: !f.defenderMultiscale }))
+                        }
+                        className={`px-3 py-1.5 rounded-full font-micro transition-all ${
+                          field.defenderMultiscale
+                            ? 'bg-success/20 text-success border border-success/30'
+                            : 'bg-bg-tertiary text-text-tertiary'
+                        }`}
+                      >
+                        Multiscale (Active)
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -753,23 +882,33 @@ export default function Calculator() {
       >
         {sheetMode === 'pokemon' && (
           <div className="space-y-1">
-            {filteredPokemon.map((p) => (
-              <button
-                key={p.name}
-                onClick={() => selectPokemon(p.name)}
-                className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-bg-secondary touch-target transition-colors hover:bg-bg-elevated"
-              >
-                <PokemonSprite name={p.name} size={40} />
-                <div className="flex-1 text-left">
-                  <span className="font-body-medium text-text-primary">{p.name}</span>
-                  <div className="flex gap-1 mt-0.5">
-                    {p.types.map((t) => (
-                      <TypeBadge key={t} type={t} size="sm" />
-                    ))}
+            {filteredPokemon.map((p) => {
+              const tier = Dex.species.get(p.name)?.tier;
+              return (
+                <button
+                  key={p.name}
+                  onClick={() => selectPokemon(p.name)}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-bg-secondary touch-target transition-colors hover:bg-bg-elevated"
+                >
+                  <PokemonSprite name={p.name} size={40} />
+                  <div className="flex-1 text-left flex items-center justify-between">
+                    <div>
+                      <span className="font-body-medium text-text-primary">{p.name}</span>
+                      <div className="flex gap-1 mt-0.5">
+                        {p.types.map((t) => (
+                          <TypeBadge key={t} type={t} size="sm" />
+                        ))}
+                      </div>
+                    </div>
+                    {tier && (tier as string) !== 'N/A' && (
+                      <span className="h-4 px-1.5 rounded bg-bg-tertiary text-text-secondary font-micro font-bold text-[8px] uppercase flex items-center shrink-0">
+                        {tier}
+                      </span>
+                    )}
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -878,6 +1017,20 @@ function DamageResultCard({ result }: { result: DamageResult }) {
       <div className="font-body-medium text-text-secondary mb-1">
         {result.koChance}
       </div>
+
+      {result.recoveryText && (
+        <div className="font-micro text-success flex items-center gap-1.5 mt-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-success" />
+          {result.recoveryText}
+        </div>
+      )}
+
+      {result.recoilText && (
+        <div className="font-micro text-danger flex items-center gap-1.5 mt-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-danger" />
+          {result.recoilText}
+        </div>
+      )}
 
       {result.description && (
         <div className="font-micro text-text-tertiary mb-2 border-t border-border-subtle pt-2">

@@ -195,8 +195,9 @@ export const COMMON_SPEED_BENCHMARKS: SpeedTier[] = [
 
 /** Format-specific benchmark presets. */
 export function getSpeedTiersForFormat(format: string): SpeedTier[] {
-  // VGC uses Level 50; halve the speeds roughly.
-  if (format.toLowerCase().includes('vgc') || format.toLowerCase().includes('doubles')) {
+  const f = format.toLowerCase();
+  // VGC / Champions doubles use Level 50; halve benchmark speeds.
+  if (f.includes('vgc') || f.includes('doubles') || f.startsWith('champions')) {
     return COMMON_SPEED_BENCHMARKS.map((t) => ({
       speed: Math.floor(t.speed / 2),
       label: `${t.label} (L50)`,

@@ -38,15 +38,23 @@ export interface CalcMove {
   accuracy: number | null;
 }
 
-export interface FieldConditions {
-  weather: Weather;
-  terrain: Terrain;
+export interface SideConditions {
   reflect: boolean;
   lightScreen: boolean;
   auroraVeil: boolean;
   stealthRock: boolean;
-  multiscale: boolean;
+  spikes: number; // 0-3
+  tailwind: boolean;
+  helpingHand: boolean;
   friendGuard: boolean;
+}
+
+export interface FieldConditions {
+  weather: Weather;
+  terrain: Terrain;
+  attackerSide: SideConditions;
+  defenderSide: SideConditions;
+  defenderMultiscale: boolean;
 }
 
 export type Weather = 'none' | 'sun' | 'rain' | 'sand' | 'snow' | 'harsh-sun' | 'heavy-rain';
@@ -69,6 +77,9 @@ export interface DamageResult {
   critMinDamage: number;
   critMaxDamage: number;
   damageRolls: number[];
+  recoveryText?: string;
+  recoilText?: string;
+  fullDesc?: string;
 }
 
 // ---- Status Mapping ----
@@ -132,7 +143,6 @@ function normalizeDamageRolls(damage: any): number[] {
   if (Array.isArray(damage)) {
     if (damage.length === 0) return [0];
     if (Array.isArray(damage[0])) {
-      // For multi-hit/2D arrays, flatten to a 1D array of numbers
       return (damage as any[]).flat().filter((x) => typeof x === 'number');
     }
     return damage as number[];
@@ -154,7 +164,6 @@ export function calculateDamage(
   useTera: boolean = false,
   genNum: number = 9
 ): DamageResult {
-  // If the move category is status or power is 0, it does 0 damage
   if (move.category === 'Status' || move.power === 0) {
     return {
       minPercent: 0,
@@ -178,7 +187,6 @@ export function calculateDamage(
 
   const gen = Generations.get(genNum as any);
 
-  // 1. Build @smogon/calc Pokemon
   const calcAttacker = new SmogonPokemon(gen, attacker.name || 'Gengar', {
     level: attacker.level || 50,
     nature: attacker.nature || 'Hardy',
@@ -198,10 +206,9 @@ export function calculateDamage(
     ability: defender.ability || undefined,
     item: defender.item || undefined,
     status: mapStatus(defender.status),
-    teraType: (defender.teraType as any) || undefined, // always check defender's base tera if set
+    teraType: (defender.teraType as any) || undefined,
   });
 
-  // 2. Build @smogon/calc Move
   const calcMoveNormal = new SmogonMove(gen, move.name, {
     useMax: false,
     isCrit: false,
@@ -212,26 +219,40 @@ export function calculateDamage(
     isCrit: true,
   });
 
-  // 3. Build @smogon/calc Field
+  const attackerSide = fieldConditions.attackerSide || {} as any;
+  const defenderSide = fieldConditions.defenderSide || {} as any;
+
   const calcField = new Field({
     weather: mapWeather(fieldConditions.weather),
     terrain: mapTerrain(fieldConditions.terrain),
     gameType: isMultiTarget ? 'Doubles' : 'Singles',
+    attackerSide: {
+      isReflect: attackerSide.reflect ?? false,
+      isLightScreen: attackerSide.lightScreen ?? false,
+      isAuroraVeil: attackerSide.auroraVeil ?? false,
+      isSR: attackerSide.stealthRock ?? false,
+      spikes: attackerSide.spikes ?? 0,
+      isTailwind: attackerSide.tailwind ?? false,
+      isHelpingHand: attackerSide.helpingHand ?? false,
+      isFriendGuard: attackerSide.friendGuard ?? false,
+    },
     defenderSide: {
-      isReflect: fieldConditions.reflect,
-      isLightScreen: fieldConditions.lightScreen,
-      isAuroraVeil: fieldConditions.auroraVeil,
-      isSR: fieldConditions.stealthRock,
-      isFriendGuard: fieldConditions.friendGuard,
+      isReflect: defenderSide.reflect ?? (fieldConditions as any).reflect ?? false,
+      isLightScreen: defenderSide.lightScreen ?? (fieldConditions as any).lightScreen ?? false,
+      isAuroraVeil: defenderSide.auroraVeil ?? (fieldConditions as any).auroraVeil ?? false,
+      isSR: defenderSide.stealthRock ?? (fieldConditions as any).stealthRock ?? false,
+      spikes: defenderSide.spikes ?? 0,
+      isTailwind: defenderSide.tailwind ?? false,
+      isHelpingHand: defenderSide.helpingHand ?? false,
+      isFriendGuard: defenderSide.friendGuard ?? (fieldConditions as any).friendGuard ?? false,
     },
   });
 
-  // Apply Multiscale override if manually checked
-  if (fieldConditions.multiscale && calcDefender.ability !== 'Multiscale') {
+  const hasMultiscale = fieldConditions.defenderMultiscale ?? (fieldConditions as any).multiscale ?? false;
+  if (hasMultiscale && calcDefender.ability !== 'Multiscale') {
     calcDefender.ability = 'Multiscale' as any;
   }
 
-  // 4. Calculate
   let normalResult;
   let critResult;
   try {
@@ -239,7 +260,6 @@ export function calculateDamage(
     critResult = calculate(gen, calcAttacker, calcDefender, calcMoveCrit, calcField);
   } catch (err) {
     console.error('Damage calculation engine threw an error:', err);
-    // Return empty results
     return {
       minPercent: 0,
       maxPercent: 0,
@@ -260,7 +280,6 @@ export function calculateDamage(
     };
   }
 
-  // 5. Map results
   const defenderHP = calcDefender.stats.hp;
   const normalRolls = normalizeDamageRolls(normalResult.damage);
   const critRolls = normalizeDamageRolls(critResult.damage);
@@ -275,14 +294,15 @@ export function calculateDamage(
   const critMinPercent = defenderHP > 0 ? (critMinDamage / defenderHP) * 100 : 0;
   const critMaxPercent = defenderHP > 0 ? (critMaxDamage / defenderHP) * 100 : 0;
 
-  // Safe description parsing
   let koChance = 'no guaranteed KO';
   let description = '';
   try {
     const descText = normalResult.desc();
     description = descText;
-    const parts = descText.split('--');
-    koChance = parts.length > 1 ? parts[1].trim() : 'no guaranteed KO';
+    const ko = normalResult.kochance();
+    if (ko && ko.text) {
+      koChance = ko.text;
+    }
   } catch (err) {
     if (maxDamage === 0) {
       koChance = 'no effect (immune)';
@@ -290,13 +310,32 @@ export function calculateDamage(
     }
   }
 
-  // STAB details
+  let recoveryText = '';
+  try {
+    const rec = normalResult.recovery();
+    if (rec && rec.text) {
+      recoveryText = rec.text;
+    }
+  } catch (e) {}
+
+  let recoilText = '';
+  try {
+    const rec = normalResult.recoil();
+    if (rec && rec.text) {
+      recoilText = rec.text;
+    }
+  } catch (e) {}
+
+  let fullDesc = '';
+  try {
+    fullDesc = normalResult.fullDesc();
+  } catch (e) {}
+
   const attackerTypes = calcAttacker.types;
   const moveType = calcMoveNormal.type;
   const isStab = attackerTypes.includes(moveType);
   const stabMultiplier = isStab ? (calcAttacker.ability === 'Adaptability' ? 2 : 1.5) : 1;
 
-  // Effectiveness details
   const effectiveness = getEffectiveness(moveType, calcDefender.types);
 
   return {
@@ -316,12 +355,12 @@ export function calculateDamage(
     critMinDamage,
     critMaxDamage,
     damageRolls: normalRolls,
+    recoveryText,
+    recoilText,
+    fullDesc,
   };
 }
 
-/**
- * Get KO chance description (kept for backward compatibility, though calculated in normalResult.desc())
- */
 export function getKoChance(maxHP: number, minDamage: number, maxDamage: number): string {
   if (maxDamage <= 0) return 'no damage';
   if (minDamage >= maxHP) return 'guaranteed OHKO';
@@ -333,16 +372,10 @@ export function getKoChance(maxHP: number, minDamage: number, maxDamage: number)
   return '4HKO or more';
 }
 
-/**
- * Format damage percentage for display
- */
 export function formatDamagePercent(percent: number): string {
   return percent.toFixed(1) + '%';
 }
 
-/**
- * Get a default CalcPokemon for initialization
- */
 export function getDefaultCalcPokemon(): CalcPokemon {
   return {
     name: '',
@@ -358,18 +391,23 @@ export function getDefaultCalcPokemon(): CalcPokemon {
   };
 }
 
-/**
- * Get default field conditions
- */
+const defaultSide = (): SideConditions => ({
+  reflect: false,
+  lightScreen: false,
+  auroraVeil: false,
+  stealthRock: false,
+  spikes: 0,
+  tailwind: false,
+  helpingHand: false,
+  friendGuard: false,
+});
+
 export function getDefaultField(): FieldConditions {
   return {
     weather: 'none',
     terrain: 'none',
-    reflect: false,
-    lightScreen: false,
-    auroraVeil: false,
-    stealthRock: false,
-    multiscale: false,
-    friendGuard: false,
+    attackerSide: defaultSide(),
+    defenderSide: defaultSide(),
+    defenderMultiscale: false,
   };
 }

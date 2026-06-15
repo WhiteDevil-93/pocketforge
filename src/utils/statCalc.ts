@@ -3,11 +3,10 @@
 // ============================================================================
 
 import type { EVs, IVs } from '../types';
-import { getNatureByName } from '../data/naturesData';
+import { getGen } from '../lib/showdown';
 
 /**
- * Calculate a non-HP stat value
- * Formula: ((2 * Base + IV + EV/4) * Level/100 + 5) * Nature
+ * Calculate a non-HP stat value using @pkmn/data engine
  */
 export function calculateStat(
   baseStat: number,
@@ -17,17 +16,14 @@ export function calculateStat(
   nature: string,
   statName: string
 ): number {
-  const natureMultiplier = getNatureMultiplier(nature, statName);
-  const evPortion = Math.floor(ev / 4);
-  const base = 2 * baseStat + iv + evPortion;
-  const scaled = Math.floor((base * level) / 100);
-  const raw = Math.floor((scaled + 5) * natureMultiplier);
-  return raw;
+  const gen = getGen(9);
+  const statKey = statName.toLowerCase() as any;
+  const natureObj = gen.natures.get(nature);
+  return gen.stats.calc(statKey, baseStat, iv, ev, level, natureObj);
 }
 
 /**
- * Calculate HP stat value
- * Formula: ((2 * Base + IV + EV/4) * Level/100) + Level + 10
+ * Calculate HP stat value using @pkmn/data engine
  */
 export function calculateHP(
   baseHP: number,
@@ -35,22 +31,19 @@ export function calculateHP(
   iv: number,
   level: number
 ): number {
-  const evPortion = Math.floor(ev / 4);
-  const base = 2 * baseHP + iv + evPortion;
-  const scaled = Math.floor((base * level) / 100);
-  return scaled + level + 10;
+  const gen = getGen(9);
+  return gen.stats.calc('hp', baseHP, iv, ev, level);
 }
 
 /**
- * Get nature multiplier for a stat
+ * Get nature multiplier for a stat (delegates to @pkmn/data)
  */
 export function getNatureMultiplier(nature: string, stat: string): number {
-  const n = getNatureByName(nature);
-  if (!n) return 1.0;
-
-  const s = stat.toLowerCase();
-  if (n.increased === s) return 1.1;
-  if (n.decreased === s) return 0.9;
+  const gen = getGen(9);
+  const natureObj = gen.natures.get(nature);
+  if (!natureObj) return 1.0;
+  if (natureObj.plus === stat.toLowerCase()) return 1.1;
+  if (natureObj.minus === stat.toLowerCase()) return 0.9;
   return 1.0;
 }
 
@@ -104,10 +97,10 @@ export function calculateAllStats(
   return {
     hp: calculateHP(baseStats.hp, evs.hp, ivs.hp, level),
     atk: calculateStat(baseStats.atk, evs.atk, ivs.atk, level, nature, "atk"),
-    def: calculateStat(baseStats.def, evs.def, ivs.def, level, nature, "def"),
-    spa: calculateStat(baseStats.spa, evs.spa, ivs.spa, level, nature, "spa"),
-    spd: calculateStat(baseStats.spd, evs.spd, ivs.spd, level, nature, "spd"),
-    spe: calculateStat(baseStats.spe, evs.spe, ivs.spe, level, nature, "spe"),
+    def: calculateStat(baseStats.def, evs.def, evs.def, level, nature, "def"),
+    spa: calculateStat(baseStats.spa, evs.spa, evs.spa, level, nature, "spa"),
+    spd: calculateStat(baseStats.spd, evs.spd, evs.spd, level, nature, "spd"),
+    spe: calculateStat(baseStats.spe, evs.spe, evs.spe, level, nature, "spe"),
   };
 }
 

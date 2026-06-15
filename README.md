@@ -1,73 +1,105 @@
-# React + TypeScript + Vite
+# PocketForge
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Mobile-first Pokémon team builder for **Pokémon Champions Regulation M-A** and Showdown formats. Build teams, validate legality, run analysis, import/export Showdown sets, and use damage/speed tools — all in the browser as an installable PWA.
 
-Currently, two official plugins are available:
+**Live app:** [https://whitedevil-93.github.io/pocketforge/](https://whitedevil-93.github.io/pocketforge/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Quickstart
 
-## React Compiler
+### Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 22+
+- npm 10+
 
-## Expanding the ESLint configuration
+### Run locally
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/WhiteDevil-93/pocketforge.git
+cd pocketforge
+npm ci
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open [http://localhost:3000](http://localhost:3000). Vite serves the app at the site root in dev; production builds use the `/pocketforge/` base path for GitHub Pages.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Build for production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npm run preview
+```
+
+Preview serves the built `dist/` folder locally.
+
+### Install as an app (PWA)
+
+After loading the deployed site (or a production preview), use your browser’s **Install** / **Add to Home Screen** option. PocketForge caches the app shell and works offline after the first visit. Teams are stored in your browser’s localStorage.
+
+### Refresh Pokémon / Champions data
+
+Pull the latest Showdown dex and Champions regulation whitelists:
+
+```bash
+npm run update-data
+```
+
+This updates `src/data/*` from [pokemon-showdown](https://github.com/smogon/pokemon-showdown) (base dex + `champions` mod). A GitHub Action runs the same script daily and redeploys when data changes.
+
+### Verify Showdown integration
+
+```bash
+npm run verify
+```
+
+Runs import/export, movepool, speed, and damage calc smoke tests.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite dev server on port 3000 |
+| `npm run build` | Typecheck + production build to `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm run lint` | ESLint |
+| `npm run update-data` | Fetch Showdown + Champions mod data |
+| `npm run verify` | Integration smoke tests |
+
+## Features
+
+- **Champions M-A** — default format with roster, item, and move legality from Showdown’s champions mod
+- **Team Builder** — EVs/IVs, mega toggle, format-scoped species/item/move pickers
+- **Validation** — species clause, item clause, mega-once, level 50, Champions whitelists
+- **Import / Export** — Showdown paste format and packed team URLs (`?team=…`)
+- **Analysis** — type coverage, speed tiers, Champions eligibility card
+- **Calculator** — `@smogon/calc` damage rolls
+- **Offline PWA** — service worker via `vite-plugin-pwa`
+
+## Deployment
+
+Pushes to `main` trigger `.github/workflows/deploy.yml`, which builds and publishes to GitHub Pages.
+
+Ensure **Settings → Pages → Build and deployment → Source** is set to **GitHub Actions**.
+
+## Tech stack
+
+- React 19 + TypeScript + Vite 7
+- `@pkmn/dex`, `@pkmn/data`, `@pkmn/sets`, `@smogon/calc`
+- Zustand + localStorage persistence
+- Tailwind CSS + Framer Motion
+
+## Data sources
+
+- [Pokémon Showdown](https://github.com/smogon/pokemon-showdown) — species, moves, items, type chart
+- Showdown **champions mod** — Regulation roster, banned items/moves, learnsets
+- Sprites from [play.pokemonshowdown.com](https://play.pokemonshowdown.com)
+
+Pokémon and related trademarks belong to Nintendo / Creatures Inc. / GAME FREAK. PocketForge is an unofficial fan project.
+
+## WSL note
+
+If `npm run build` fails with a Rollup platform error, `node_modules` was likely installed on Windows. From WSL:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
 ```

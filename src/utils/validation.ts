@@ -6,12 +6,43 @@ import type { Team, Pokemon, ValidationResult } from '../types';
 import { getTotalEVs } from './statCalc';
 import { getPokemonByName } from '../data/pokemonData';
 import { FORMATS } from '../data/formatsData';
-import { isEligibleForChampionsMA } from '../data/championsRoster';
+import {
+  isEligibleForChampionsMA,
+  isChampionsItemLegal,
+  isMoveLegalForChampionsSpecies,
+  isChampionsFormatId,
+} from '../data/championsLegality';
+import { isMegaStone } from '../data/megaData';
+import { Dex, getGen, parseFormatGen } from '../lib/showdown';
+
+function isChampionsFormat(formatId: string): boolean {
+  return isChampionsFormatId(formatId);
+}
+
+/**
+ * Helper to resolve the base species name to check learnsets.
+ * Battle-only and Mega/Gmax forms inherit learnsets from their base species.
+ */
+function getBaseSpeciesName(speciesName: string, gen: any): string {
+  const spec = gen.species.get(speciesName) || Dex.species.get(speciesName);
+  if (spec) {
+    if (spec.battleOnly && typeof spec.battleOnly === 'string') {
+      return spec.battleOnly;
+    }
+    if (spec.changesFrom && typeof spec.changesFrom === 'string') {
+      return spec.changesFrom;
+    }
+    if (spec.baseSpecies && spec.baseSpecies !== spec.name) {
+      return spec.baseSpecies;
+    }
+  }
+  return speciesName.split('-')[0];
+}
 
 /**
  * Validate a single Pokemon's EV spread
  */
-function validatePokemonEVs(pokemon: Pokemon, index: number): string[] {
+function validatePokemonEVs(pokemon: Pokemon, index: number, formatId?: string): string[] {
   const errors: string[] = [];
   const totalEVs = getTotalEVs(pokemon.evs);
 
@@ -28,7 +59,6 @@ function validatePokemonEVs(pokemon: Pokemon, index: number): string[] {
     }
   }
 
-  // Check IV ranges
   for (const [stat, value] of Object.entries(pokemon.ivs)) {
     if (value > 31) {
       errors.push(`Pokemon #${index + 1} (${pokemon.species}): ${stat.toUpperCase()} IV (${value}) exceeds 31`);
@@ -38,17 +68,18 @@ function validatePokemonEVs(pokemon: Pokemon, index: number): string[] {
     }
   }
 
-  // Check level range
   if (pokemon.level < 1 || pokemon.level > 100) {
     errors.push(`Pokemon #${index + 1} (${pokemon.species}): Level must be 1-100`);
   }
 
-  // Check moves count
+  if (formatId && isChampionsFormat(formatId) && pokemon.level !== 50) {
+    errors.push(`Pokemon #${index + 1} (${pokemon.species}): Level must be 50 in Champions formats`);
+  }
+
   if (pokemon.moves.length === 0) {
     errors.push(`Pokemon #${index + 1} (${pokemon.species}): No moves selected`);
   }
 
-  // Check ability
   if (!pokemon.ability) {
     errors.push(`Pokemon #${index + 1} (${pokemon.species}): No ability selected`);
   }
@@ -56,68 +87,88 @@ function validatePokemonEVs(pokemon: Pokemon, index: number): string[] {
   return errors;
 }
 
-/**
- * Validate species clause (no duplicate species)
- */
 function validateSpeciesClause(pokemon: Pokemon[]): string[] {
   const errors: string[] = [];
   const speciesCounts: Record<string, number> = {};
 
   for (const p of pokemon) {
+    if (!p.species) continue;
     const species = p.species.toLowerCase();
     speciesCounts[species] = (speciesCounts[species] || 0) + 1;
   }
 
   for (const [species, count] of Object.entries(speciesCounts)) {
     if (count > 1) {
-      errors.push(`Species Clause: ${count} copies of ${species} (max 1)`);
+      const prettyName = species.charAt(0).toUpperCase() + species.slice(1);
+      errors.push(`Species Clause: ${count} copies of ${prettyName} (max 1)`);
     }
   }
 
   return errors;
 }
 
+function validateMegaOnce(pokemon: Pokemon[]): string[] {
+  const megaHolders = pokemon.filter((p) => p.item && isMegaStone(p.item));
+  if (megaHolders.length > 1) {
+    return [
+      `Mega Once: ${megaHolders.length} Pokémon hold Mega Stones (${megaHolders.map((p) => p.species).join(', ')}). Only one may Mega Evolve per battle.`,
+    ];
+  }
+  return [];
+}
+
 /**
  * Validate a full team against format rules
  */
-export function validateTeam(team: Team, formatId?: string): ValidationResult {
+export async function validateTeam(team: Team, formatId?: string): Promise<ValidationResult> {
   const errors: string[] = [];
 
-  // Check team name
   if (!team.name || team.name.trim().length === 0) {
-    errors.push("Team name is required");
+    errors.push('Team name is required');
   }
 
-  // Check Pokemon count
   if (team.pokemon.length === 0) {
-    errors.push("Team must have at least 1 Pokemon");
+    errors.push('Team must have at least 1 Pokemon');
   }
   if (team.pokemon.length > 6) {
-    errors.push("Team cannot have more than 6 Pokemon");
+    errors.push('Team cannot have more than 6 Pokemon');
   }
 
-  // Validate each Pokemon
+  const format = formatId || team.format;
+  const genNum = parseFormatGen(format);
+  const gen = getGen(genNum);
+
   for (let i = 0; i < team.pokemon.length; i++) {
-    const pokeErrors = validatePokemonEVs(team.pokemon[i], i);
+    const mon = team.pokemon[i];
+    const pokeErrors = validatePokemonEVs(mon, i, format);
     errors.push(...pokeErrors);
 
-    // Check if species exists
-    const dexEntry = getPokemonByName(team.pokemon[i].species);
+    const dexEntry = getPokemonByName(mon.species);
     if (!dexEntry) {
-      errors.push(`Pokemon #${i + 1}: Unknown species "${team.pokemon[i].species}"`);
+      errors.push(`Pokemon #${i + 1}: Unknown species "${mon.species}"`);
+    } else {
+      // Validate move legality using learnset API
+      const baseSpecies = getBaseSpeciesName(mon.species, gen);
+      for (const move of mon.moves) {
+        if (move) {
+          try {
+            const canLearn = await gen.learnsets.canLearn(baseSpecies, move);
+            if (!canLearn) {
+              errors.push(`Pokemon #${i + 1} (${mon.species}): Cannot learn move "${move}" in Generation ${genNum}`);
+            }
+          } catch (err) {
+            console.error(`Failed to validate move legality for ${mon.species} - ${move}:`, err);
+          }
+        }
+      }
     }
   }
 
-  // Species clause
-  const speciesErrors = validateSpeciesClause(team.pokemon);
-  errors.push(...speciesErrors);
+  errors.push(...validateSpeciesClause(team.pokemon));
 
-  // Format-specific validation
-  const format = formatId || team.format;
   if (format) {
-    const formatData = FORMATS.find(f => f.id === format);
+    const formatData = FORMATS.find((f) => f.id === format);
     if (formatData) {
-      // Item clause check
       if (formatData.rules.includes('item-clause')) {
         const itemCounts: Record<string, number> = {};
         for (const p of team.pokemon) {
@@ -128,26 +179,29 @@ export function validateTeam(team: Team, formatId?: string): ValidationResult {
         }
         for (const [item, count] of Object.entries(itemCounts)) {
           if (count > 1) {
-            errors.push(`Item Clause: ${count} Pokemon hold ${item} (max 1 in ${formatData.name})`);
+            const prettyItem = item.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            errors.push(`Item Clause: ${count} Pokemon hold ${prettyItem} (max 1 in ${formatData.name})`);
           }
         }
       }
 
-      // Champions M-A: restricted dex roster check
-      if (formatData.id === 'champions-ma') {
-        for (let i = 0; i < team.pokemon.length; i++) {
-          if (!isEligibleForChampionsMA(team.pokemon[i].species)) {
-            errors.push(`${team.pokemon[i].species} is not eligible for Champions Regulation M-A`);
-          }
-        }
+      if (formatData.rules.includes('mega-once')) {
+        errors.push(...validateMegaOnce(team.pokemon));
       }
 
-      // Gen 9-specific: Tera Type check
-      if (formatData.generation >= 9) {
+      if (isChampionsFormat(formatData.id)) {
         for (let i = 0; i < team.pokemon.length; i++) {
-          if (!team.pokemon[i].teraType) {
-            // Warning-level: not an error but worth noting
-            // errors.push(`Pokemon #${i + 1} (${team.pokemon[i].species}): No Tera Type set`);
+          const mon = team.pokemon[i];
+          if (!isEligibleForChampionsMA(mon.species)) {
+            errors.push(`${mon.species} is not eligible for ${formatData.name}`);
+          }
+          if (mon.item && !isChampionsItemLegal(mon.item)) {
+            errors.push(`${mon.species}: ${mon.item} is not legal in ${formatData.name}`);
+          }
+          for (const move of mon.moves) {
+            if (move && !isMoveLegalForChampionsSpecies(mon.species, move)) {
+              errors.push(`${mon.species}: ${move} is not legal in ${formatData.name}`);
+            }
           }
         }
       }
@@ -160,9 +214,7 @@ export function validateTeam(team: Team, formatId?: string): ValidationResult {
   };
 }
 
-/**
- * Quick validation check (returns boolean only)
- */
-export function isTeamValid(team: Team, formatId?: string): boolean {
-  return validateTeam(team, formatId).isValid;
+export async function isTeamValid(team: Team, formatId?: string): Promise<boolean> {
+  const result = await validateTeam(team, formatId);
+  return result.isValid;
 }

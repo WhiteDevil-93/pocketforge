@@ -6,6 +6,7 @@ import { useRef, useState, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { Copy, Trash2, Download, AlertTriangle, Check } from 'lucide-react';
 import type { Team } from '../types';
+import { getFormatById } from '../data/formatsData';
 import PokemonSprite from './PokemonSprite';
 
 interface TeamCardProps {
@@ -24,6 +25,7 @@ function getFormatBadgeColors(format: string): { bg: string; text: string } {
   const f = format.toLowerCase();
   if (f.includes('ubers') || f.includes('ag')) return { bg: 'rgba(239, 68, 68, 0.12)', text: '#EF4444' };
   if (f.includes('uu') || f.includes('ru') || f.includes('nu') || f.includes('pu')) return { bg: 'rgba(234, 179, 8, 0.12)', text: '#EAB308' };
+  if (f.startsWith('champions')) return { bg: 'rgba(245, 158, 11, 0.14)', text: '#F59E0B' };
   if (f.includes('vgc') || f.includes('doubles')) return { bg: 'rgba(6, 182, 212, 0.12)', text: '#06B6D4' };
   if (f.includes('nationaldex') || f.includes('natdex')) return { bg: 'rgba(34, 197, 94, 0.12)', text: '#22C55E' };
   if (f.includes('1v1') || f.includes('hackmons') || f.includes('almostanyability')) return { bg: 'rgba(168, 85, 247, 0.12)', text: '#A855F7' };
@@ -53,14 +55,14 @@ function getRelativeTime(dateStr: string): string {
 // ---- Format display name ---------------------------------------------------
 
 function getFormatDisplayName(format: string): string {
-  // Convert "gen9ou" -> "Gen 9 OU"
+  const info = getFormatById(format);
+  if (info) return info.name;
   const match = format.match(/gen(\d)(.+)/i);
   if (match) {
-    const gen = match[1];
-    const rest = match[2].toUpperCase();
-    return `Gen ${gen} ${rest}`;
+    return `Gen ${match[1]} ${match[2].toUpperCase()}`;
   }
-  return format.toUpperCase();
+  if (format.startsWith('champions')) return 'Champions';
+  return format;
 }
 
 // ---- Validation hint text --------------------------------------------------

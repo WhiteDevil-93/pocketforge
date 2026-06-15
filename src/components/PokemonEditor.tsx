@@ -35,6 +35,10 @@ import {
   formatSupportsZMoves,
   isMegaStone,
   getMegaByStone,
+  isChampionsFormatId,
+  isEligibleForChampionsMA,
+  isChampionsItemLegal,
+  getChampionsMovesForSpecies,
 } from '../data';
 import {
   calculateAllStats,
@@ -215,34 +219,42 @@ export default function PokemonEditor({
   }, [draft, megaActive, equippedMegaStone, onSave]);
 
   // Filtered lists for bottom sheets
+  const isChampions = isChampionsFormatId(formatId || '');
+
   const filteredPokemon = useMemo(() => {
-    if (!searchQuery) return POKEDEX.slice(0, 50);
-    return POKEDEX.filter((p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 50);
-  }, [searchQuery]);
+    let pool = POKEDEX;
+    if (isChampions) {
+      pool = pool.filter((p) => isEligibleForChampionsMA(p.name) || isEligibleForChampionsMA(p.sprite));
+    }
+    if (!searchQuery) return pool.slice(0, 50);
+    return pool
+      .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .slice(0, 50);
+  }, [searchQuery, isChampions]);
 
   const filteredMoves = useMemo(() => {
     if (sheet.type !== 'move') return [];
-    const allMoves = getMovesForPokemon(draft.species);
+    const championsMoves = isChampions && draft.species ? getChampionsMovesForSpecies(draft.species) : [];
+    const allMoves =
+      isChampions && championsMoves.length > 0
+        ? championsMoves.map((name) => getMoveByName(name)).filter((m): m is NonNullable<typeof m> => !!m)
+        : getMovesForPokemon(draft.species);
     if (!searchQuery) return allMoves.slice(0, 50);
-    return allMoves.filter((m) =>
-      m.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 50);
-  }, [sheet.type, draft.species, searchQuery]);
+    return allMoves
+      .filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .slice(0, 50);
+  }, [sheet.type, draft.species, searchQuery, isChampions]);
 
   const filteredItems = useMemo(() => {
     if (!searchQuery) return [];
     const results = searchItems(searchQuery);
-    // Filter items based on format rules
     return results.filter((item) => {
-      // Hide Mega Stones if format doesn't support Mega
       if (item.category === 'Mega Stone' && !formatSupportsMega(formatId || '')) return false;
-      // Hide Z-Crystals if format bans Z-Moves
       if (item.category === 'Z-Crystal' && !formatSupportsZMoves(formatId || '')) return false;
+      if (isChampions && !isChampionsItemLegal(item.name)) return false;
       return true;
     });
-  }, [searchQuery, formatId]);
+  }, [searchQuery, formatId, isChampions]);
 
   // ---- Sheet selection handlers ----
   const handleSelectSpecies = useCallback(

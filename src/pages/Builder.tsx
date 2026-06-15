@@ -2,7 +2,7 @@
 // PocketForge — Team Builder / Editor Page
 // ============================================================================
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -26,8 +26,12 @@ import {
   getPokemonByName,
   POKEDEX,
   getTypeColor,
+  isEligibleForChampionsMA,
+  isChampionsFormatId,
 } from '../data';
 import type { Pokemon } from '../types';
+import { validateTeam } from '../utils';
+import { getDefaultLevelForFormat } from '../lib/showdown';
 
 const EMPTY_SLOTS = 6;
 
@@ -60,31 +64,63 @@ export default function Builder() {
   // Validation state
   const [validationPulse, setValidationPulse] = useState(false);
 
+  // Run validation on team changes
+  useEffect(() => {
+    if (!team) return;
+    let active = true;
+
+    const runValidation = async () => {
+      const result = await validateTeam(team);
+      if (!active) return;
+
+      const errorsChanged = JSON.stringify(result.errors) !== JSON.stringify(team.validationErrors || []);
+      const statusChanged = result.isValid !== team.isValid;
+
+      if (errorsChanged || statusChanged) {
+        updateTeam(team.id, {
+          isValid: result.isValid,
+          validationErrors: result.errors,
+        });
+      }
+    };
+
+    runValidation();
+
+    return () => {
+      active = false;
+    };
+  }, [team?.pokemon, team?.format, team?.name, updateTeam]);
+
   // Memo
   const teamName = team?.name || 'Untitled Team';
   const formatInfo = team?.format ? getFormatById(team.format, customFormats) : null;
   const formatsGrouped = useMemo(() => getFormatsGrouped(customFormats), [customFormats]);
-  const generations = useMemo(
-    () => Object.keys(formatsGrouped).sort((a, b) => {
-      // Sort numeric generations descending, put 'Custom' at the top
-      const aNum = Number(a);
-      const bNum = Number(b);
-      if (isNaN(aNum) && isNaN(bNum)) return 0;
-      if (isNaN(aNum)) return -1;
-      if (isNaN(bNum)) return 1;
-      return bNum - aNum;
-    }),
-    [formatsGrouped]
-  );
+  const generations = useMemo(() => {
+    const order = (key: string) => {
+      if (key === 'Champions') return 1000;
+      if (key === 'Custom') return 999;
+      const n = parseInt(key.replace('Gen ', ''), 10);
+      return Number.isNaN(n) ? 0 : n;
+    };
+    return Object.keys(formatsGrouped).sort((a, b) => order(b) - order(a));
+  }, [formatsGrouped]);
 
   const filledSlots = team?.pokemon?.length || 0;
 
+  const isChampions = team ? isChampionsFormatId(team.format) : false;
+
   const filteredPokemon = useMemo(() => {
-    if (!pokemonSearch) return POKEDEX.slice(0, 50);
-    return POKEDEX.filter((p) =>
-      p.name.toLowerCase().includes(pokemonSearch.toLowerCase())
-    ).slice(0, 50);
-  }, [pokemonSearch]);
+    let pool = POKEDEX;
+    if (isChampions) {
+      pool = pool.filter(
+        (p) => isEligibleForChampionsMA(p.name) || isEligibleForChampionsMA(p.sprite)
+      );
+    }
+    if (!pokemonSearch) return pool.slice(0, 50);
+    return pool
+      .filter((p) => p.name.toLowerCase().includes(pokemonSearch.toLowerCase()))
+      .slice(0, 50);
+  }, [pokemonSearch, isChampions]);
 
   // ---- Actions ----
 
@@ -132,7 +168,7 @@ export default function Builder() {
         species: speciesName,
         ability: entry.abilities[0] || '',
         teraType: entry.types[0] || '',
-        level: 50,
+        level: getDefaultLevelForFormat(team.format),
         moves: [],
         evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },

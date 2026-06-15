@@ -13,7 +13,7 @@ export const FORMATS: Format[] = [
     id: "champions-ma",
     name: "Pokemon Champions Regulation M-A",
     generation: 10,
-    rules: ["species-clause", "item-clause", "mega-once", "restricted-dex", "sleep-clause-mod", "ohko-clause", "evasion-clause"]
+    rules: ["species-clause", "item-clause", "mega-once", "restricted-dex", "level-50", "sleep-clause-mod", "ohko-clause", "evasion-clause"]
   },
 
   // Generation 9 (Scarlet/Violet)
@@ -100,9 +100,9 @@ export function getFormatsGrouped(customFormats?: CustomFormat[]): Record<string
   // Custom section first
   const custom = all.filter(f => f.id.startsWith('custom-'));
   if (custom.length > 0) grouped['Custom'] = custom;
-  // Built-in by generation
+  // Built-in by generation (Champions formats get their own section)
   for (const format of all.filter(f => !f.id.startsWith('custom-'))) {
-    const key = `Gen ${format.generation}`;
+    const key = format.generation === 10 ? 'Champions' : `Gen ${format.generation}`;
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(format);
   }
@@ -146,4 +146,10 @@ export function formatSupportsZMoves(formatId: string, customFormats?: CustomFor
   const fmt = getFormatById(formatId, customFormats);
   if (!fmt) return false;
   return !fmt.rules.includes('z-move-ban');
+}
+
+/** Check if a format requires level 50 */
+export function formatRequiresLevel50(formatId: string, customFormats?: CustomFormat[]): boolean {
+  const fmt = getFormatById(formatId, customFormats);
+  return fmt ? fmt.rules.includes('level-50') : false;
 }

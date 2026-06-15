@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone, BarChart3, ArrowLeftRight, ChevronDown, Gamepad2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { getFormatsGrouped } from '../data';
+import { getFormatsGrouped, DEFAULT_FORMAT, getFormatById } from '../data';
 import type { Format } from '../types';
 
 const FEATURES = [
@@ -15,7 +15,7 @@ const FEATURES = [
     icon: Smartphone,
     iconColor: 'text-accent-primary',
     title: 'Build teams on the go',
-    description: 'Create and edit competitive Pokemon teams from anywhere, even offline.',
+    description: 'Build Champions and Showdown teams on the go — works offline as an installable app.',
   },
   {
     icon: BarChart3,
@@ -89,8 +89,15 @@ function FormatPicker({
   const [searchQuery, setSearchQuery] = useState('');
   const grouped = getFormatsGrouped();
 
+  const groupOrder = (key: string) => {
+    if (key === 'Champions') return 1000;
+    if (key === 'Custom') return 999;
+    const n = parseInt(key.replace('Gen ', ''), 10);
+    return Number.isNaN(n) ? 0 : n;
+  };
+
   const filteredGroups = Object.entries(grouped)
-    .sort(([a], [b]) => parseInt(b) - parseInt(a))
+    .sort(([a], [b]) => groupOrder(b) - groupOrder(a))
     .map(([gen, formats]) => ({
       generation: parseInt(gen),
       formats: formats.filter(f =>
@@ -204,12 +211,14 @@ function FormatPicker({
 export default function Onboarding() {
   const navigate = useNavigate();
   const completeOnboarding = useStore((s) => s.completeOnboarding);
-  const [selectedFormat, setSelectedFormat] = useState('Gen 9 OU');
+  const [selectedFormat, setSelectedFormat] = useState(
+    () => getFormatById(DEFAULT_FORMAT)?.name ?? 'Pokemon Champions Regulation M-A'
+  );
 
   const handleGetStarted = () => {
     // Find the format ID from the name
     const grouped = getFormatsGrouped();
-    let formatId = 'gen9ou';
+    let formatId = DEFAULT_FORMAT;
     for (const [, formats] of Object.entries(grouped)) {
       const found = formats.find(f => f.name === selectedFormat);
       if (found) {
@@ -222,7 +231,7 @@ export default function Onboarding() {
   };
 
   const handleSkip = () => {
-    completeOnboarding('gen9ou');
+    completeOnboarding(DEFAULT_FORMAT);
     navigate('/teams', { replace: true });
   };
 

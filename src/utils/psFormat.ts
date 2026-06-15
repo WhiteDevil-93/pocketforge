@@ -3,8 +3,10 @@
 // ============================================================================
 
 import { Team as ShowdownTeam } from '@pkmn/sets';
-import { Dex } from '../lib/showdown';
+import { getDexForFormat, parseFormatGen } from '../lib/showdown';
 import type { Team, Pokemon, EVs, IVs } from '../types';
+
+export { parseFormatGen };
 
 /**
  * Helper to ensure a statistics object is fully populated.
@@ -34,31 +36,17 @@ function normalizeIVs(ivs: any): IVs {
 /**
  * Import a single Pokemon from Showdown format lines or text.
  */
-export function parseFormatGen(format?: string): number {
-  if (!format) return 9;
-  const match = format.toLowerCase().match(/^gen(\d+)/);
-  if (match) {
-    const num = parseInt(match[1], 10);
-    if (num >= 1 && num <= 9) return num;
-  }
-  return 9;
-}
-
-/**
- * Import a single Pokemon from Showdown format lines or text.
- */
 export function importPokemonFromPSFormat(lines: string[]): Partial<Pokemon> {
   const text = lines.join('\n');
-  let genNum = 9;
+  let format = '';
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith('// Format:')) {
-      const format = trimmed.replace('// Format:', '').trim();
-      genNum = parseFormatGen(format);
+      format = trimmed.replace('// Format:', '').trim();
     }
   }
   try {
-    const parsed = ShowdownTeam.import(text, Dex.forGen(genNum));
+    const parsed = ShowdownTeam.import(text, getDexForFormat(format || 'gen9'));
     if (parsed && parsed.team && parsed.team.length > 0) {
       const mon = parsed.team[0];
       return {
@@ -86,7 +74,8 @@ export function importPokemonFromPSFormat(lines: string[]): Partial<Pokemon> {
 /**
  * Export a single Pokemon to Showdown format string.
  */
-export function exportPokemonToPSFormat(pokemon: Pokemon, genNum: number = 9): string {
+export function exportPokemonToPSFormat(pokemon: Pokemon, formatOrGen: string | number = 9): string {
+  const format = typeof formatOrGen === 'string' ? formatOrGen : `gen${formatOrGen}`;
   const pkmnSet = {
     name: pokemon.nickname || '',
     species: pokemon.species,
@@ -103,7 +92,7 @@ export function exportPokemonToPSFormat(pokemon: Pokemon, genNum: number = 9): s
   };
 
   try {
-    const genDex = Dex.forGen(genNum);
+    const genDex = getDexForFormat(format);
     const team = new ShowdownTeam([pkmnSet], genDex);
     return team.export(genDex).trim();
   } catch (err) {
@@ -142,12 +131,11 @@ export function importTeamFromPSFormat(text: string): Partial<Team> {
     .join('\n');
 
   try {
-    const genNum = parseFormatGen(format);
-    const genDex = Dex.forGen(genNum);
+    const genDex = getDexForFormat(format || 'gen9');
     const parsed = ShowdownTeam.import(cleanedText, genDex);
     if (parsed && parsed.team) {
       team.name = name || parsed.name || 'Imported Team';
-      team.format = format || parsed.format || 'gen9ou';
+      team.format = format || parsed.format || 'champions-ma';
       team.pokemon = parsed.team.map((mon) => ({
         id: crypto.randomUUID(),
         species: mon.species || '',
@@ -203,8 +191,7 @@ export function exportTeamToPSFormat(team: Team): string {
   }));
 
   try {
-    const genNum = parseFormatGen(team.format);
-    const genDex = Dex.forGen(genNum);
+    const genDex = getDexForFormat(team.format);
     const showdownTeam = new ShowdownTeam(sets, genDex);
     const exportedText = showdownTeam.export(genDex);
     

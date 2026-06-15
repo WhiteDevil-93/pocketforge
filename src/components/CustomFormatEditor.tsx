@@ -16,6 +16,8 @@ const RULE_OPTIONS: { id: string; label: string }[] = [
   { id: 'evasion-clause', label: 'Evasion Clause' },
   { id: 'sleep-clause-mod', label: 'Sleep Clause' },
   { id: 'mega-once', label: 'Mega Once' },
+  { id: 'level-50', label: 'Level 50' },
+  { id: 'restricted-dex', label: 'Restricted Dex' },
   { id: 'tera-allow', label: 'Terastallize' },
   { id: 'level-5', label: 'Level 5 (LC)' },
   { id: 'endless-battle-clause', label: 'Endless Battle' },
@@ -26,7 +28,7 @@ const RULE_OPTIONS: { id: string; label: string }[] = [
 const TEMPLATES: { name: string; rules: string[]; gen: number; desc: string }[] = [
   {
     name: 'Champions M-A',
-    rules: ['species-clause', 'item-clause', 'mega-once', 'sleep-clause-mod', 'ohko-clause', 'evasion-clause'],
+    rules: ['species-clause', 'item-clause', 'mega-once', 'restricted-dex', 'level-50', 'sleep-clause-mod', 'ohko-clause', 'evasion-clause'],
     gen: 10,
     desc: 'Current regulation',
   },

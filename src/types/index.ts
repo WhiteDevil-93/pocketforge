@@ -130,6 +130,7 @@ export type FormatRule =
   | 'mega-allow'
   | 'mega-once'
   | 'restricted-dex'
+  | 'level-50'
   | 'level-5'
   | 'camo-ability'
   | 'shared-power'

@@ -5,19 +5,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Team, Pokemon, AppSettings, CustomFormat } from '../types';
+import { DEFAULT_FORMAT } from '../data/formatsData';
+import { getDefaultLevelForFormat } from '../lib/showdown';
 
 // ---- Default data -----------------------------------------------------------
 
 const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
-  defaultFormat: 'gen9ou',
+  defaultFormat: DEFAULT_FORMAT,
   hasCompletedOnboarding: false,
 };
 
 const emptyPokemon = (): Pokemon => ({
   id: crypto.randomUUID(),
   species: '',
-  level: 50,
+  level: getDefaultLevelForFormat(DEFAULT_FORMAT),
   gender: '',
   shiny: false,
   ability: '',
@@ -100,7 +102,7 @@ export const useStore = create<StoreState>()(
         const newTeam: Team = {
           id: teamId,
           name,
-          format: format || get().settings.defaultFormat || 'gen9ou',
+          format: format || get().settings.defaultFormat || DEFAULT_FORMAT,
           folder: 'My Teams',
           pokemon: [],
           createdAt: now,
@@ -242,7 +244,7 @@ export const useStore = create<StoreState>()(
         const newTeam: Team = {
           id: teamId,
           name: teamData.name || 'Imported Team',
-          format: teamData.format || get().settings.defaultFormat || 'gen9ou',
+          format: teamData.format || get().settings.defaultFormat || DEFAULT_FORMAT,
           folder: teamData.folder || 'My Teams',
           pokemon: (teamData.pokemon || []).map(p => ({
             ...emptyPokemon(),

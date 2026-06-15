@@ -15,13 +15,23 @@ export { ITEMS, getItemByName, searchItems, getAllItemNames, getItemSpriteUrl } 
 export { NATURES, getNatureByName, getNatureModifier, getNatureDescription, getAllNatureNames } from './naturesData';
 
 // Formats data
-export { FORMATS, getFormatById, getFormatsByGeneration, getFormatsGrouped, getAllFormatIds, getAllFormatNames, getCombinedFormats, DEFAULT_FORMAT, formatSupportsTera, formatSupportsMega, formatSupportsDynamax, formatSupportsZMoves } from './formatsData';
+export { FORMATS, getFormatById, getFormatsByGeneration, getFormatsGrouped, getAllFormatIds, getAllFormatNames, getCombinedFormats, DEFAULT_FORMAT, formatSupportsTera, formatSupportsMega, formatSupportsDynamax, formatSupportsZMoves, formatRequiresLevel50 } from './formatsData';
 
-// Champions M-A roster
-export { CHAMPIONS_MA_ROSTER, isEligibleForChampionsMA } from './championsRoster';
+// Champions regulation data (auto-updated from Showdown champions mod)
+export { CHAMPIONS_MA_ROSTER } from './championsRoster';
+export {
+  CHAMPIONS_META,
+  isEligibleForChampionsMA,
+  isChampionsItemLegal,
+  isChampionsMoveLegal,
+  getChampionsMovesForSpecies,
+  isMoveLegalForChampionsSpecies,
+  isChampionsFormatId,
+  normalizeSlug,
+} from './championsLegality';
 
 // Mega Evolution data
 export { MEGA_DATA, getMegaByStone, getMegaByBase, isMegaStone, getAllMegaStones } from './megaData';
 
 // Types data
-export { TYPE_NAMES, TYPE_CHART, getEffectiveness, getAllTypes, getTypeColor } from './typesData';
+export { TYPE_NAMES, getEffectiveness, getAllTypes, getTypeColor } from './typesData';
