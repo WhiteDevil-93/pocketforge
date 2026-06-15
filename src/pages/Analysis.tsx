@@ -32,7 +32,6 @@ import { TYPE_NAMES, getEffectiveness } from '../data/typesData';
 import { calculateStat } from '../utils/statCalc';
 import { explainEVSpread, type EVExplanation } from '../utils/evExplainer';
 import { isEligibleForChampionsMA, isChampionsFormatId, CHAMPIONS_META } from '../data/championsLegality';
-import AICoachPanel from '../components/AICoachPanel';
 import TypeCoverageChart from '../components/TypeCoverageChart';
 import SynergyMatrix from '../components/SynergyMatrix';
 import ScoreGauge from '../components/ScoreGauge';
@@ -788,10 +787,6 @@ export default function Analysis() {
       {/* Team Header */}
       <div className="mb-4">
         <TeamHeader team={selectedTeam} />
-      </div>
-
-      <div className="mb-4">
-        <AICoachPanel team={selectedTeam} />
       </div>
 
       {analysis && (
