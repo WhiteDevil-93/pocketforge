@@ -12,6 +12,7 @@ import { useStore } from './store/useStore';
 import { Teams as ShowdownTeams } from '@pkmn/sets';
 import { DEFAULT_FORMAT } from './data/formatsData';
 import { getDefaultLevelForFormat } from './lib/showdown';
+import { HOME_PATH } from './lib/routes';
 
 // Lazy loaded pages to optimize initial bundle size
 const Calculator = lazy(() => import('./pages/Calculator'));
@@ -230,8 +231,9 @@ export default function App() {
               </OnboardingGuard>
             }
           />
-          <Route path="/" element={<Navigate to="/teams" replace />} />
-          <Route path="*" element={<Navigate to="/teams" replace />} />
+          <Route path="/home" element={<Navigate to={HOME_PATH} replace />} />
+          <Route path="/" element={<Navigate to={HOME_PATH} replace />} />
+          <Route path="*" element={<Navigate to={HOME_PATH} replace />} />
         </Routes>
       </Suspense>
     </Layout>

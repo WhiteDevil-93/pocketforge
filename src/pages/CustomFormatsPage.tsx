@@ -3,10 +3,9 @@
 // ============================================================================
 
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import PageHeader from '../components/PageHeader';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronLeft,
   Plus,
   Sparkles,
   Trash2,
@@ -141,7 +140,6 @@ function DeleteSheet({
 // ---- Main page --------------------------------------------------------------
 
 export default function CustomFormatsPage() {
-  const navigate = useNavigate();
   const customFormats = useStore((s) => s.customFormats);
   const addCustomFormat = useStore((s) => s.addCustomFormat);
   const updateCustomFormat = useStore((s) => s.updateCustomFormat);
@@ -181,26 +179,16 @@ export default function CustomFormatsPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+      <PageHeader title="Custom Formats" backTo="/settings" backLabel="Settings">
         <button
-          onClick={() => navigate('/settings')}
-          className="flex items-center gap-1 text-text-secondary active:text-text-primary transition-colors"
-        >
-          <ChevronLeft size={20} />
-          <span className="text-sm font-medium">Settings</span>
-        </button>
-        <h1 className="absolute inset-x-0 text-center pointer-events-none text-title text-text-primary font-semibold">
-          Custom Formats
-        </h1>
-        <button
+          type="button"
           onClick={handleCreate}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent-primary text-white text-sm font-medium active:scale-95 transition-transform"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent-primary text-white text-sm font-medium active:scale-95 transition-transform shrink-0"
         >
           <Plus size={16} />
           New
         </button>
-      </div>
+      </PageHeader>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-4">

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { springSnappy, transitionFast } from '../lib/motion';
+import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
 import { importTeamFromPSFormat, exportTeamToPSFormat } from '../utils';
 import type { Team } from '../types';
@@ -425,10 +426,7 @@ export default function ImportExport() {
         ))}
       </AnimatePresence>
 
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-40 h-[56px] flex items-center px-4 bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle">
-        <h1 className="font-title text-text-primary">Import / Export</h1>
-      </header>
+      <PageHeader title="Import / Export" />
 
       {/* Tab Switcher */}
       <div className="sticky z-30 top-[56px] bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle">

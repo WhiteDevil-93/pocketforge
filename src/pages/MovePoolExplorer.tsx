@@ -3,8 +3,8 @@
 // ============================================================================
 
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import { ArrowLeft, BookOpen, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import { motion } from 'framer-motion';
 import PokemonSprite from '../components/PokemonSprite';
 import TypeBadge from '../components/TypeBadge';
@@ -21,8 +21,6 @@ const METHODS: (AcquisitionMethod | 'All')[] = ['All', 'Level', 'TM', 'Tutor', '
 const CATEGORIES: (Move['category'] | 'All')[] = ['All', 'Physical', 'Special', 'Status'];
 
 export default function MovePoolExplorer() {
-  const navigate = useNavigate();
-
   const [speciesQuery, setSpeciesQuery] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState<string>('Garchomp');
 
@@ -55,19 +53,7 @@ export default function MovePoolExplorer() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col">
-      <header className="sticky top-0 z-40 h-[56px] flex items-center gap-2 px-4 bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-full hover:bg-bg-tertiary"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} className="text-text-primary" />
-        </button>
-        <h1 className="font-title text-text-primary flex items-center gap-2">
-          <BookOpen size={20} className="text-accent-primary" />
-          Movepool Explorer
-        </h1>
-      </header>
+      <PageHeader title="Movepool Explorer" />
 
       <div className="flex-1 px-4 py-4 pb-24 flex flex-col gap-4">
         {/* Species selector */}

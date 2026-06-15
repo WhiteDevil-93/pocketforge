@@ -3,9 +3,9 @@
 // ============================================================================
 
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, Gauge } from 'lucide-react';
+import { Gauge } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
 import PokemonSprite from '../components/PokemonSprite';
 import {
@@ -45,7 +45,6 @@ function Toggle({ label, description, active, onToggle }: ToggleProps) {
 }
 
 export default function SpeedTierList() {
-  const navigate = useNavigate();
   const teams = useStore((s) => s.teams);
   const currentTeamId = useStore((s) => s.currentTeamId);
 
@@ -81,20 +80,7 @@ export default function SpeedTierList() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col">
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 h-[56px] flex items-center gap-2 px-4 bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-full hover:bg-bg-tertiary"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} className="text-text-primary" />
-        </button>
-        <h1 className="font-title text-text-primary flex items-center gap-2">
-          <Zap size={20} className="text-accent-primary" />
-          Speed Tiers
-        </h1>
-      </header>
+      <PageHeader title="Speed Tiers" />
 
       <div className="flex-1 px-4 py-4 pb-24 flex flex-col gap-4">
         {/* Team selector */}

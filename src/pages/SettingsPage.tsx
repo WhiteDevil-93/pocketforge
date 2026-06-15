@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronLeft,
   Moon,
   Sun,
   Gamepad2,
@@ -22,6 +21,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import BottomSheet from '../components/BottomSheet';
+import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
 import { FORMATS, getFormatById } from '../data/formatsData';
 import { CHAMPIONS_META } from '../data/championsLegality';
@@ -513,15 +513,8 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-[100dvh] px-4 pb-8">
-      {/* Top App Bar */}
-      <div className="flex items-center h-14 -mx-4 px-4 border-b border-border-subtle mb-2">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center justify-center w-10 h-10 -ml-2 touch-target"
-        >
-          <ChevronLeft size={24} className="text-text-primary" />
-        </button>
-        <h1 className="font-title text-text-primary ml-1">Settings</h1>
+      <div className="-mx-4 mb-2">
+        <PageHeader title="Settings" />
       </div>
 
       {/* Offline Indicator */}

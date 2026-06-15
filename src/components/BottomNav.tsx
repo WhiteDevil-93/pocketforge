@@ -3,25 +3,24 @@
 // ============================================================================
 
 import { Link, useLocation } from 'react-router';
-import { Users, Wrench, BarChart3, Calculator as CalculatorIcon } from 'lucide-react';
+import { Home, Wrench, BarChart3, Calculator as CalculatorIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { springSnappy, springTap } from '../lib/motion';
+import { HOME_PATH, isHomeHubPath } from '../lib/routes';
 
 const TABS = [
-  { path: '/teams', label: 'Teams', icon: Users },
-  { path: '/builder', label: 'Builder', icon: Wrench },
-  { path: '/calc', label: 'Calc', icon: CalculatorIcon },
-  { path: '/analysis', label: 'Analysis', icon: BarChart3 },
+  { path: HOME_PATH, label: 'Home', icon: Home, match: (path: string) => isHomeHubPath(path) },
+  { path: '/builder', label: 'Builder', icon: Wrench, match: (path: string) => path === '/builder' || path.startsWith('/builder/') },
+  { path: '/calc', label: 'Calc', icon: CalculatorIcon, match: (path: string) => path === '/calc' || path.startsWith('/calc/') },
+  { path: '/analysis', label: 'Analysis', icon: BarChart3, match: (path: string) => path === '/analysis' || path.startsWith('/analysis/') },
 ] as const;
 
-const INDICATOR_WIDTH = 48; // px — matches w-12
+const INDICATOR_WIDTH = 48;
 
 export default function BottomNav() {
   const location = useLocation();
   const currentPath = location.pathname;
-  const activeIndex = TABS.findIndex(
-    (tab) => currentPath === tab.path || currentPath.startsWith(`${tab.path}/`)
-  );
+  const activeIndex = TABS.findIndex((tab) => tab.match(currentPath));
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-bg-tertiary/95 backdrop-blur-xl border-t border-border-subtle pb-safe">
@@ -41,7 +40,7 @@ export default function BottomNav() {
         )}
 
         {TABS.map((tab) => {
-          const isActive = currentPath === tab.path || currentPath.startsWith(`${tab.path}/`);
+          const isActive = tab.match(currentPath);
           const Icon = tab.icon;
 
           return (
@@ -49,6 +48,7 @@ export default function BottomNav() {
               key={tab.path}
               to={tab.path}
               className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1"
+              aria-current={isActive ? 'page' : undefined}
             >
               <motion.div
                 whileTap={{ scale: 0.85 }}

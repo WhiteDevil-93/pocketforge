@@ -3,9 +3,9 @@
 // ============================================================================
 
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Shield, ShieldAlert, Target } from 'lucide-react';
+import { Shield, ShieldAlert, Target } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
 import TypeBadge from '../components/TypeBadge';
 import {
@@ -14,7 +14,6 @@ import {
 } from '../utils/weaknessAnalyzer';
 
 export default function WeaknessAnalyzer() {
-  const navigate = useNavigate();
   const teams = useStore((s) => s.teams);
   const currentTeamId = useStore((s) => s.currentTeamId);
 
@@ -39,20 +38,7 @@ export default function WeaknessAnalyzer() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col">
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 h-[56px] flex items-center gap-2 px-4 bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-full hover:bg-bg-tertiary"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} className="text-text-primary" />
-        </button>
-        <h1 className="font-title text-text-primary flex items-center gap-2">
-          <Shield size={20} className="text-accent-primary" />
-          Weakness Analyzer
-        </h1>
-      </header>
+      <PageHeader title="Weakness Analyzer" />
 
       <div className="flex-1 px-4 py-4 pb-24 flex flex-col gap-4">
         {teams.length === 0 ? (
