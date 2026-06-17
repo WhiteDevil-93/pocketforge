@@ -281,5 +281,5 @@ export const CHAMPIONS_MA_ROSTER: string[] = [
 export function isEligibleForChampionsMA(species: string): boolean {
   if (!species) return false;
   const slug = species.toLowerCase().trim().replace(/\s+/g, '').replace(/-/g, '').replace(/[^a-z0-9]/g, '');
-  return CHAMPIONS_MA_ROSTER.includes(slug) || CHAMPIONS_MA_ROSTER.some((id) => slug.includes(id) || id.includes(slug));
+  return CHAMPIONS_MA_ROSTER.includes(slug);
 }

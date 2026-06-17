@@ -4,6 +4,7 @@
 
 import { Team as ShowdownTeam } from '@pkmn/sets';
 import { getDexForFormat, parseFormatGen } from '../lib/showdown';
+import { DEFAULT_FORMAT } from '../data/formatsData';
 import type { Team, Pokemon, EVs, IVs } from '../types';
 
 export { parseFormatGen };
@@ -135,7 +136,7 @@ export function importTeamFromPSFormat(text: string): Partial<Team> {
     const parsed = ShowdownTeam.import(cleanedText, genDex);
     if (parsed && parsed.team) {
       team.name = name || parsed.name || 'Imported Team';
-      team.format = format || parsed.format || 'champions-ma';
+      team.format = format || parsed.format || DEFAULT_FORMAT;
       team.pokemon = parsed.team.map((mon) => ({
         id: crypto.randomUUID(),
         species: mon.species || '',

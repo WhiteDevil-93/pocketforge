@@ -29,7 +29,7 @@ import TeamCard from '../components/TeamCard';
 
 const FORMAT_FILTERS = [
   { id: 'all', label: 'All' },
-  { id: 'champions-ma', label: 'Champions' },
+  { id: 'champions', label: 'Champions' },
   { id: 'gen9ou', label: 'Gen 9 OU' },
   { id: 'gen9vgc-regi', label: 'VGC' },
   { id: 'gen9nationaldex', label: 'National Dex' },
@@ -205,7 +205,11 @@ export default function Teams() {
 
     // Format filter
     if (activeFormat !== 'all') {
-      result = result.filter((team) => team.format === activeFormat);
+      if (activeFormat === 'champions') {
+        result = result.filter((team) => team.format?.startsWith('champions'));
+      } else {
+        result = result.filter((team) => team.format === activeFormat);
+      }
     }
 
     return result;
