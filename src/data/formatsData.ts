@@ -8,7 +8,13 @@
 import type { Format, CustomFormat } from '../types';
 
 export const FORMATS: Format[] = [
-  // Pokemon Champions — Current (as of June 2026)
+  {
+    id: "champions-mb",
+    name: "Pokemon Champions Regulation M-B",
+    generation: 10,
+    rules: ["species-clause", "item-clause", "mega-once", "restricted-dex", "level-50", "sleep-clause-mod", "ohko-clause", "evasion-clause"]
+  },
+  // Pokemon Champions — Previous (M-A ended June 17, 2026)
   {
     id: "champions-ma",
     name: "Pokemon Champions Regulation M-A",
@@ -119,8 +125,8 @@ export function getAllFormatNames(customFormats?: CustomFormat[]): string[] {
   return getCombinedFormats(customFormats).map(f => f.name);
 }
 
-/** Default format — Pokemon Champions Regulation M-A (current as of June 2026) */
-export const DEFAULT_FORMAT = "champions-ma";
+/** Default format — Pokemon Champions Regulation M-B (current as of June 2026) */
+export const DEFAULT_FORMAT = "champions-mb";
 
 /** Check if a format supports Tera */
 export function formatSupportsTera(formatId: string, customFormats?: CustomFormat[]): boolean {

@@ -27,6 +27,19 @@ export function isEligibleForChampionsMA(species: string): boolean {
   return ROSTER_SET.has(normalizeSlug(species));
 }
 
+export const CHAMPIONS_MB_ROSTER: string[] = [
+  ...CHAMPIONS_MA_ROSTER,
+  "raichumegax",
+  "raichumegay",
+];
+
+/** Check if a Pokémon is eligible for Champions Regulation M-B */
+export function isEligibleForChampionsMB(species: string): boolean {
+  if (!species) return false;
+  return ROSTER_SET.has(normalizeSlug(species)) || normalizeSlug(species) === 'raichumegax' || normalizeSlug(species) === 'raichumegay';
+}
+
+
 export function isChampionsItemLegal(itemName: string): boolean {
   if (!itemName) return true;
   const entry = getItemByName(itemName);

@@ -22,6 +22,7 @@ export { CHAMPIONS_MA_ROSTER } from './championsRoster';
 export {
   CHAMPIONS_META,
   isEligibleForChampionsMA,
+  isEligibleForChampionsMB,
   isChampionsItemLegal,
   isChampionsMoveLegal,
   getChampionsMovesForSpecies,

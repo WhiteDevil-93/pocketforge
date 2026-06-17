@@ -8,6 +8,7 @@ import { getPokemonByName } from '../data/pokemonData';
 import { FORMATS } from '../data/formatsData';
 import {
   isEligibleForChampionsMA,
+  isEligibleForChampionsMB,
   isChampionsItemLegal,
   isMoveLegalForChampionsSpecies,
   isChampionsFormatId,
@@ -192,7 +193,10 @@ export async function validateTeam(team: Team, formatId?: string): Promise<Valid
       if (isChampionsFormat(formatData.id)) {
         for (let i = 0; i < team.pokemon.length; i++) {
           const mon = team.pokemon[i];
-          if (!isEligibleForChampionsMA(mon.species)) {
+          const isEligible = formatData.id === 'champions-mb'
+            ? isEligibleForChampionsMB(mon.species)
+            : isEligibleForChampionsMA(mon.species);
+          if (!isEligible) {
             errors.push(`${mon.species} is not eligible for ${formatData.name}`);
           }
           if (mon.item && !isChampionsItemLegal(mon.item)) {

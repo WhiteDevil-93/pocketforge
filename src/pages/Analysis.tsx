@@ -31,7 +31,7 @@ import { getPokemonByName } from '../data/pokemonData';
 import { TYPE_NAMES, getEffectiveness } from '../data/typesData';
 import { calculateStat } from '../utils/statCalc';
 import { explainEVSpread, type EVExplanation } from '../utils/evExplainer';
-import { isEligibleForChampionsMA, isChampionsFormatId, CHAMPIONS_META } from '../data/championsLegality';
+import { isEligibleForChampionsMA, isEligibleForChampionsMB, isChampionsFormatId, CHAMPIONS_META } from '../data/championsLegality';
 import TypeCoverageChart from '../components/TypeCoverageChart';
 import SynergyMatrix from '../components/SynergyMatrix';
 import ScoreGauge from '../components/ScoreGauge';
@@ -545,6 +545,84 @@ function ChampionsMAEligibility({ team }: { team: Team }) {
   );
 }
 
+// ---- Champions M-B Eligibility Card ----------------------------------------
+
+function ChampionsMBEligibility({ team }: { team: Team }) {
+  const eligibleCount = team.pokemon.filter((p) =>
+    isEligibleForChampionsMB(p.species)
+  ).length;
+  const ineligiblePokemon = team.pokemon.filter(
+    (p) => !isEligibleForChampionsMB(p.species)
+  );
+
+  return (
+    <div className="bg-bg-secondary rounded-2xl border border-border-subtle p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-subtitle text-text-primary">Regulation M-B Roster</h3>
+        <span
+          className={`text-[11px] font-jetbrains-mono font-bold ${
+            eligibleCount === team.pokemon.length ? 'text-success' : 'text-warning'
+          }`}
+        >
+          {eligibleCount}/{team.pokemon.length} eligible
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-2 bg-bg-elevated rounded-full overflow-hidden mb-3">
+        <motion.div
+          className="h-full rounded-full"
+          style={{
+            background:
+              eligibleCount === team.pokemon.length
+                ? '#22C55E'
+                : 'linear-gradient(90deg, #EAB308 0%, #EF4444 100%)',
+          }}
+          initial={{ width: 0 }}
+          animate={{
+            width: `${team.pokemon.length > 0 ? (eligibleCount / team.pokemon.length) * 100 : 0}%`,
+          }}
+          transition={{ duration: 0.6, ease: easeSmooth }}
+        />
+      </div>
+
+      {/* Ineligible list */}
+      {ineligiblePokemon.length > 0 && (
+        <div className="space-y-2">
+          <span className="text-[10px] text-warning uppercase tracking-wide font-medium">
+            Ineligible Pokemon
+          </span>
+          <div className="space-y-1.5">
+            {ineligiblePokemon.map((p) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-2 py-1"
+              >
+                <AlertTriangle size={14} className="text-warning shrink-0" />
+                <PokemonSprite name={p.species} size={24} />
+                <span className="text-[12px] text-text-primary">
+                  {p.nickname || p.species}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ineligiblePokemon.length === 0 && team.pokemon.length > 0 && (
+        <div className="flex items-center gap-2 py-1">
+          <CheckCircle size={14} className="text-success" />
+          <span className="text-[12px] text-success">
+            All Pokemon are eligible for Regulation M-B
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---- Analysis Engine --------------------------------------------------------
 
 interface AnalysisResult {
@@ -813,10 +891,14 @@ export default function Analysis() {
             </div>
           </motion.div>
 
-          {/* Champions M-A Eligibility */}
+          {/* Champions Eligibility */}
           {isChampionsFormatId(selectedTeam.format) && (
             <motion.div variants={itemVariants} className="mb-3">
-              <ChampionsMAEligibility team={selectedTeam} />
+              {selectedTeam.format === 'champions-mb' ? (
+                <ChampionsMBEligibility team={selectedTeam} />
+              ) : (
+                <ChampionsMAEligibility team={selectedTeam} />
+              )}
             </motion.div>
           )}
 
