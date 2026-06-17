@@ -26,7 +26,7 @@ import {
   getPokemonByName,
   POKEDEX,
   getTypeColor,
-  isEligibleForChampionsMA,
+  isEligibleForChampionsFormat,
   isChampionsFormatId,
 } from '../data';
 import type { Pokemon } from '../types';
@@ -112,15 +112,18 @@ export default function Builder() {
   const filteredPokemon = useMemo(() => {
     let pool = POKEDEX;
     if (isChampions) {
+      const fmt = team?.format ?? 'champions-mb';
       pool = pool.filter(
-        (p) => isEligibleForChampionsMA(p.name) || isEligibleForChampionsMA(p.sprite)
+        (p) =>
+          isEligibleForChampionsFormat(p.name, fmt) ||
+          isEligibleForChampionsFormat(p.sprite, fmt)
       );
     }
     if (!pokemonSearch) return pool.slice(0, 50);
     return pool
       .filter((p) => p.name.toLowerCase().includes(pokemonSearch.toLowerCase()))
       .slice(0, 50);
-  }, [pokemonSearch, isChampions]);
+  }, [pokemonSearch, isChampions, team?.format]);
 
   // ---- Actions ----
 

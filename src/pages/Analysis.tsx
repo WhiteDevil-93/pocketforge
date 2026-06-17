@@ -480,7 +480,7 @@ function ChampionsMAEligibility({ team }: { team: Team }) {
   return (
     <div className="bg-bg-secondary rounded-2xl border border-border-subtle p-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-subtitle text-text-primary">{CHAMPIONS_META.regulationName} Roster</h3>
+        <h3 className="font-subtitle text-text-primary">Regulation M-A Roster</h3>
         <span
           className={`text-[11px] font-jetbrains-mono font-bold ${
             eligibleCount === team.pokemon.length ? 'text-success' : 'text-warning'
@@ -558,7 +558,7 @@ function ChampionsMBEligibility({ team }: { team: Team }) {
   return (
     <div className="bg-bg-secondary rounded-2xl border border-border-subtle p-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-subtitle text-text-primary">Regulation M-B Roster</h3>
+        <h3 className="font-subtitle text-text-primary">{CHAMPIONS_META.regulationName} Roster</h3>
         <span
           className={`text-[11px] font-jetbrains-mono font-bold ${
             eligibleCount === team.pokemon.length ? 'text-success' : 'text-warning'
@@ -615,7 +615,7 @@ function ChampionsMBEligibility({ team }: { team: Team }) {
         <div className="flex items-center gap-2 py-1">
           <CheckCircle size={14} className="text-success" />
           <span className="text-[12px] text-success">
-            All Pokemon are eligible for Regulation M-B
+            All Pokemon are eligible for {CHAMPIONS_META.regulationName}
           </span>
         </div>
       )}

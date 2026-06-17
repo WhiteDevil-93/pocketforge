@@ -1,6 +1,7 @@
 // Auto-generated from Pokémon Showdown champions mod — do not edit manually
 // Items with isNonstandard: "Past" in data/mods/champions/items.ts
-// Last updated: 2026-06-15T00:17:28.068Z
+// Includes PocketForge M-B patch until Showdown ships Reg M-B
+// Last updated: 2026-06-17T13:21:32.327Z
 
 export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "abilityshield",
@@ -16,7 +17,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "beastball",
   "berrysweet",
   "bignugget",
-  "bigroot",
   "bindingband",
   "blacksludge",
   "blunderpolicy",
@@ -32,7 +32,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "covertcloak",
   "crackedpot",
   "custapberry",
-  "damprock",
   "darkranite",
   "dawnstone",
   "destinyknot",
@@ -53,7 +52,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "electricseed",
   "enigmaberry",
   "eviolite",
-  "expertbelt",
   "falinksite",
   "fastball",
   "figyberry",
@@ -78,16 +76,13 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "healball",
   "hearthflamemask",
   "heatranite",
-  "heatrock",
   "heavyball",
   "heavydutyboots",
   "hondewberry",
   "iapapaberry",
   "icestone",
   "icicleplate",
-  "icyrock",
   "insectplate",
-  "ironball",
   "ironplate",
   "jabocaberry",
   "keeberry",
@@ -97,8 +92,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "leafstone",
   "levelball",
   "liechiberry",
-  "lifeorb",
-  "lightclay",
   "loadeddice",
   "loveball",
   "lovesweet",
@@ -115,14 +108,12 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "masterpieceteacup",
   "meadowplate",
   "metalalloy",
-  "metronome",
   "micleberry",
   "mindplate",
   "mirrorherb",
   "mistyseed",
   "moonball",
   "moonstone",
-  "muscleband",
   "nestball",
   "netball",
   "normalgem",
@@ -164,10 +155,8 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "safariball",
   "safetygoggles",
   "salacberry",
-  "shedshell",
   "shinystone",
   "skyplate",
-  "smoothrock",
   "snowball",
   "souldew",
   "splashplate",
@@ -197,9 +186,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "waterstone",
   "weaknesspolicy",
   "wellspringmask",
-  "widelens",
   "wikiberry",
-  "wiseglasses",
-  "zapplate",
-  "zoomlens"
+  "zapplate"
 ];

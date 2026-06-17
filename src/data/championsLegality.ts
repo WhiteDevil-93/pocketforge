@@ -3,7 +3,7 @@
 // ============================================================================
 // Generated rosters/banlists are refreshed by scripts/update-from-showdown.mjs
 
-import { CHAMPIONS_MA_ROSTER } from './championsRoster';
+import { CHAMPIONS_MA_ROSTER, CHAMPIONS_MB_ROSTER } from './championsRoster';
 import { CHAMPIONS_BANNED_ITEMS } from './championsBannedItems';
 import { CHAMPIONS_BANNED_MOVES } from './championsBannedMoves';
 import { CHAMPIONS_LEARNSETS } from './championsLearnsets';
@@ -12,33 +12,32 @@ import { getItemByName } from './itemsData';
 import { getMoveByName } from './movesData';
 
 export { CHAMPIONS_META };
+export { CHAMPIONS_MB_ROSTER };
 
 /** Normalize species / item / move names to PS-style slugs. */
 export function normalizeSlug(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, '').replace(/-/g, '').replace(/[^a-z0-9]/g, '');
 }
 
-const ROSTER_SET = new Set(CHAMPIONS_MA_ROSTER.map(normalizeSlug));
+const MA_ROSTER_SET = new Set(CHAMPIONS_MA_ROSTER.map(normalizeSlug));
+const MB_ROSTER_SET = new Set(CHAMPIONS_MB_ROSTER.map(normalizeSlug));
 const BANNED_ITEM_SET = new Set(CHAMPIONS_BANNED_ITEMS);
 const BANNED_MOVE_SET = new Set(CHAMPIONS_BANNED_MOVES);
 
 export function isEligibleForChampionsMA(species: string): boolean {
   if (!species) return false;
-  return ROSTER_SET.has(normalizeSlug(species));
+  return MA_ROSTER_SET.has(normalizeSlug(species));
 }
 
-export const CHAMPIONS_MB_ROSTER: string[] = [
-  ...CHAMPIONS_MA_ROSTER,
-  "raichumegax",
-  "raichumegay",
-];
-
-/** Check if a Pokémon is eligible for Champions Regulation M-B */
 export function isEligibleForChampionsMB(species: string): boolean {
   if (!species) return false;
-  return ROSTER_SET.has(normalizeSlug(species)) || normalizeSlug(species) === 'raichumegax' || normalizeSlug(species) === 'raichumegay';
+  return MB_ROSTER_SET.has(normalizeSlug(species));
 }
 
+/** Active ranked regulation (M-B). */
+export function isEligibleForChampions(species: string): boolean {
+  return isEligibleForChampionsMB(species);
+}
 
 export function isChampionsItemLegal(itemName: string): boolean {
   if (!itemName) return true;
@@ -82,4 +81,9 @@ export function isMoveLegalForChampionsSpecies(species: string, moveName: string
 
 export function isChampionsFormatId(formatId: string): boolean {
   return formatId.toLowerCase().startsWith('champions');
+}
+
+export function isEligibleForChampionsFormat(species: string, formatId: string): boolean {
+  if (formatId === 'champions-ma') return isEligibleForChampionsMA(species);
+  return isEligibleForChampionsMB(species);
 }

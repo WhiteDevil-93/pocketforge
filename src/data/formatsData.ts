@@ -1,8 +1,8 @@
 // ============================================================================
 // PocketForge — Format Definitions
 // ============================================================================
-// Updated June 2026 — includes Pokemon Champions Regulation M-A
-// Source: https://bulbapedia.bulbagarden.net/wiki/Regulation_Set_M-A
+// Updated June 2026 — Pokemon Champions Regulation M-B (current ranked)
+// Source: https://www.serebii.net/pokemonchampions/rankedbattle/regulationm-b.shtml
 // ============================================================================
 
 import type { Format, CustomFormat } from '../types';

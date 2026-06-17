@@ -18,11 +18,13 @@ export { NATURES, getNatureByName, getNatureModifier, getNatureDescription, getA
 export { FORMATS, getFormatById, getFormatsByGeneration, getFormatsGrouped, getAllFormatIds, getAllFormatNames, getCombinedFormats, DEFAULT_FORMAT, formatSupportsTera, formatSupportsMega, formatSupportsDynamax, formatSupportsZMoves, formatRequiresLevel50 } from './formatsData';
 
 // Champions regulation data (auto-updated from Showdown champions mod)
-export { CHAMPIONS_MA_ROSTER } from './championsRoster';
+export { CHAMPIONS_MA_ROSTER, CHAMPIONS_MB_ROSTER, CHAMPIONS_ROSTER } from './championsRoster';
 export {
   CHAMPIONS_META,
+  isEligibleForChampions,
   isEligibleForChampionsMA,
   isEligibleForChampionsMB,
+  isEligibleForChampionsFormat,
   isChampionsItemLegal,
   isChampionsMoveLegal,
   getChampionsMovesForSpecies,

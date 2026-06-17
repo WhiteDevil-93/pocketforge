@@ -36,7 +36,7 @@ import {
   isMegaStone,
   getMegaByStone,
   isChampionsFormatId,
-  isEligibleForChampionsMA,
+  isEligibleForChampionsFormat,
   isChampionsItemLegal,
   getChampionsMovesForSpecies,
 } from '../data';
@@ -225,13 +225,17 @@ export default function PokemonEditor({
   const filteredPokemon = useMemo(() => {
     let pool = POKEDEX;
     if (isChampions) {
-      pool = pool.filter((p) => isEligibleForChampionsMA(p.name) || isEligibleForChampionsMA(p.sprite));
+      const fmt = formatId || 'champions-mb';
+      pool = pool.filter(
+        (p) =>
+          isEligibleForChampionsFormat(p.name, fmt) || isEligibleForChampionsFormat(p.sprite, fmt)
+      );
     }
     if (!searchQuery) return pool.slice(0, 50);
     return pool
       .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
       .slice(0, 50);
-  }, [searchQuery, isChampions]);
+  }, [searchQuery, isChampions, formatId]);
 
   const filteredMoves = useMemo(() => {
     if (sheet.type !== 'move') return [];
