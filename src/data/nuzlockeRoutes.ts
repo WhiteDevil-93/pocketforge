@@ -471,10 +471,144 @@ export const GAME_SUN: NuzlockeGame = {
   ],
 };
 
+// Note: Scarlet, Violet, Sword, and Shield are defined inline below
+const GAME_SCARLET_OBJ: NuzlockeGame = {
+  id: "scarlet",
+  name: "Pokémon Scarlet",
+  generation: 9,
+  routes: [
+    { id: "sv_cabo_poco", name: "Cabo Poco", order: 1 },
+    { id: "sv_route_1_south", name: "South Province (Area 1)", order: 2 },
+    { id: "sv_los_platos", name: "Los Platos", order: 3 },
+    { id: "sv_route_1_north", name: "South Province (Area 2)", order: 4 },
+    { id: "sv_cortondo", name: "Cortondo", order: 5 },
+    { id: "sv_alfornada", name: "Alfornada", order: 6 },
+    { id: "sv_poco_path", name: "Poco Path", order: 7 },
+    { id: "sv_inlet_grotto", name: "Inlet Grotto", order: 8 },
+    { id: "sv_cortondo_gym", name: "Cortondo Gym", order: 9 },
+    { id: "sv_artazon", name: "Artazon", order: 10 },
+    { id: "sv_levincia", name: "Levincia", order: 11 },
+    { id: "sv_zapapico", name: "Zapapico", order: 12 },
+    { id: "sv_mesagoza", name: "Mesagoza", order: 13 },
+    { id: "sv_casseroya_lake", name: "Casseroya Lake", order: 14 },
+    { id: "sv_glaseado_mountain", name: "Glaseado Mountain", order: 15 },
+    { id: "sv_montenevera", name: "Montenevera", order: 16 },
+    { id: "sv_porto_marinada", name: "Porto Marinada", order: 17 },
+    { id: "sv_medali", name: "Medali", order: 18 },
+    { id: "sv_palafin", name: "Palafin", order: 19 },
+    { id: "sv_tagtree", name: "Tagtree Thicket", order: 20 },
+    { id: "sv_north_province", name: "North Province", order: 21 },
+    { id: "sv_area_zero", name: "Area Zero", order: 22 }
+  ],
+  bosses: [
+    { id: "sv_katy", name: "Katy", location: "Cortondo Gym", type: "Bug", levelCap: 15, team: [{ species: "Nymble", level: 14 }, { species: "Teddiursa", level: 15 }] },
+    { id: "sv_brassius", name: "Brassius", location: "Artazon Gym", type: "Grass", levelCap: 17, team: [{ species: "Petilil", level: 16 }, { species: "Smoliv", level: 16 }, { species: "Sudowoodo", level: 17 }] },
+    { id: "sv_iono", name: "Iono", location: "Levincia Gym", type: "Electric", levelCap: 24, team: [{ species: "Wattrel", level: 23 }, { species: "Bellibolt", level: 23 }, { species: "Luxio", level: 23 }, { species: "Mismagius", level: 24 }] },
+    { id: "sv_kofu", name: "Kofu", location: "Cascarrafa Gym", type: "Water", levelCap: 30, team: [{ species: "Veluza", level: 29 }, { species: "Wugtrio", level: 29 }, { species: "Crabominable", level: 30 }] },
+    { id: "sv_larry", name: "Larry", location: "Medali Gym", type: "Normal", levelCap: 36, team: [{ species: "Komala", level: 35 }, { species: "Dudunsparce", level: 35 }, { species: "Staraptor", level: 36 }] },
+    { id: "sv_ryme", name: "Ryme", location: "Montenevera Gym", type: "Ghost", levelCap: 41, team: [{ species: "Mimikyu", level: 40 }, { species: "Banjirao", level: 40 }, { species: "Houndstone", level: 41 }] },
+    { id: "sv_tulip", name: "Tulip", location: "Alfornada Gym", type: "Psychic", levelCap: 45, team: [{ species: "Farigiraf", level: 44 }, { species: "Gardevoir", level: 44 }, { species: "Espathra", level: 45 }] },
+    { id: "sv_grusha", name: "Grusha", location: "Glaseado Gym", type: "Ice", levelCap: 48, team: [{ species: "Frosmoth", level: 47 }, { species: "Beartic", level: 47 }, { species: "Cetitan", level: 48 }] }
+  ],
+};
+
+const GAME_VIOLET_OBJ: NuzlockeGame = {
+  id: "violet",
+  name: "Pokémon Violet",
+  generation: 9,
+  routes: [
+    { id: "vi_cabo_poco", name: "Cabo Poco", order: 1 },
+    { id: "vi_route_1_south", name: "South Province (Area 1)", order: 2 },
+    { id: "vi_los_platos", name: "Los Platos", order: 3 },
+    { id: "vi_route_1_north", name: "South Province (Area 2)", order: 4 },
+    { id: "vi_cortondo", name: "Cortondo", order: 5 },
+    { id: "vi_alfornada", name: "Alfornada", order: 6 },
+    { id: "vi_poco_path", name: "Poco Path", order: 7 },
+    { id: "vi_inlet_grotto", name: "Inlet Grotto", order: 8 },
+    { id: "vi_cortondo_gym", name: "Cortondo Gym", order: 9 },
+    { id: "vi_artazon", name: "Artazon", order: 10 },
+    { id: "vi_levincia", name: "Levincia", order: 11 },
+    { id: "vi_zapapico", name: "Zapapico", order: 12 },
+    { id: "vi_mesagoza", name: "Mesagoza", order: 13 },
+    { id: "vi_casseroya_lake", name: "Casseroya Lake", order: 14 },
+    { id: "vi_glaseado_mountain", name: "Glaseado Mountain", order: 15 },
+    { id: "vi_montenevera", name: "Montenevera", order: 16 },
+    { id: "vi_porto_marinada", name: "Porto Marinada", order: 17 },
+    { id: "vi_medali", name: "Medali", order: 18 },
+    { id: "vi_palafin", name: "Palafin", order: 19 },
+    { id: "vi_tagtree", name: "Tagtree Thicket", order: 20 },
+    { id: "vi_north_province", name: "North Province", order: 21 },
+    { id: "vi_area_zero", name: "Area Zero", order: 22 }
+  ],
+  bosses: [
+    { id: "vi_katy", name: "Katy", location: "Cortondo Gym", type: "Bug", levelCap: 15, team: [{ species: "Nymble", level: 14 }, { species: "Teddiursa", level: 15 }] },
+    { id: "vi_brassius", name: "Brassius", location: "Artazon Gym", type: "Grass", levelCap: 17, team: [{ species: "Petilil", level: 16 }, { species: "Smoliv", level: 16 }, { species: "Sudowoodo", level: 17 }] },
+    { id: "vi_iono", name: "Iono", location: "Levincia Gym", type: "Electric", levelCap: 24, team: [{ species: "Wattrel", level: 23 }, { species: "Bellibolt", level: 23 }, { species: "Luxio", level: 23 }, { species: "Mismagius", level: 24 }] },
+    { id: "vi_kofu", name: "Kofu", location: "Cascarrafa Gym", type: "Water", levelCap: 30, team: [{ species: "Veluza", level: 29 }, { species: "Wugtrio", level: 29 }, { species: "Crabominable", level: 30 }] },
+    { id: "vi_larry", name: "Larry", location: "Medali Gym", type: "Normal", levelCap: 36, team: [{ species: "Komala", level: 35 }, { species: "Dudunsparce", level: 35 }, { species: "Staraptor", level: 36 }] },
+    { id: "vi_ryme", name: "Ryme", location: "Montenevera Gym", type: "Ghost", levelCap: 41, team: [{ species: "Mimikyu", level: 40 }, { species: "Banjirao", level: 40 }, { species: "Houndstone", level: 41 }] },
+    { id: "vi_tulip", name: "Tulip", location: "Alfornada Gym", type: "Psychic", levelCap: 45, team: [{ species: "Farigiraf", level: 44 }, { species: "Gardevoir", level: 44 }, { species: "Espathra", level: 45 }] },
+    { id: "vi_grusha", name: "Grusha", location: "Glaseado Gym", type: "Ice", levelCap: 48, team: [{ species: "Frosmoth", level: 47 }, { species: "Beartic", level: 47 }, { species: "Cetitan", level: 48 }] }
+  ],
+};
+
+const GAME_SWORD_OBJ: NuzlockeGame = {
+  id: "sword",
+  name: "Pokémon Sword",
+  generation: 8,
+  routes: [
+    { id: "sw_postwick", name: "Postwick", order: 1 },
+    { id: "sw_route_1", name: "Route 1", order: 2 },
+    { id: "sw_wedgehurst", name: "Wedgehurst", order: 3 },
+    { id: "sw_route_2", name: "Route 2", order: 4 },
+    { id: "sw_wild_area_station", name: "Wild Area Station", order: 5 },
+    { id: "sw_motostoke", name: "Motostoke", order: 6 },
+    { id: "sw_route_3", name: "Route 3", order: 7 },
+    { id: "sw_galar_mine", name: "Galar Mine", order: 8 },
+    { id: "sw_route_4", name: "Route 4", order: 9 },
+    { id: "sw_turffield", name: "Turffield", order: 10 },
+    { id: "sw_route_5", name: "Route 5", order: 11 },
+    { id: "sw_hulbury", name: "Hulbury", order: 12 },
+    { id: "sw_galar_mine_2", name: "Galar Mine No. 2", order: 13 },
+    { id: "sw_route_6", name: "Route 6", order: 14 },
+    { id: "sw_stow-on-side", name: "Stow-on-Side", order: 15 },
+    { id: "sw_route_7", name: "Route 7", order: 16 },
+    { id: "sw_route_8", name: "Route 8", order: 17 },
+    { id: "sw_circhester", name: "Circhester", order: 18 },
+    { id: "sw_route_9", name: "Route 9", order: 19 },
+    { id: "sw_spikemuth", name: "Spikemuth", order: 20 },
+    { id: "sw_route_10", name: "Route 10", order: 21 },
+    { id: "sw_hammerlocke", name: "Hammerlocke", order: 22 },
+    { id: "sw_wyndon", name: "Wyndon", order: 23 }
+  ],
+  bosses: [
+    { id: "sw_milo", name: "Milo", location: "Turffield Stadium", type: "Grass", levelCap: 20, team: [{ species: "Gossifleur", level: 19 }, { species: "Eldegoss", level: 20 }] },
+    { id: "sw_nessa", name: "Nessa", location: "Hulbury Stadium", type: "Water", levelCap: 24, team: [{ species: "Goldeen", level: 22 }, { species: "Arrokuda", level: 23 }, { species: "Drednaw", level: 24 }] },
+    { id: "sw_kabu", name: "Kabu", location: "Motostoke Stadium", type: "Fire", levelCap: 25, team: [{ species: "Ninetales", level: 25 }, { species: "Arcanine", level: 25 }, { species: "Centiskorch", level: 25 }] },
+    { id: "sw_bea", name: "Bea", location: "Stow-on-Side Stadium", type: "Fighting", levelCap: 36, team: [{ species: "Hitmontop", level: 34 }, { species: "Pangoro", level: 34 }, { species: "Sirfetch'd", level: 35 }, { species: "Machamp", level: 36 }] },
+    { id: "sw_opal", name: "Opal", location: "Ballonlea Stadium", type: "Fairy", levelCap: 38, team: [{ species: "Weezing", level: 36 }, { species: "Mawile", level: 36 }, { species: "Togekiss", level: 37 }, { species: "Alcremie", level: 38 }] },
+    { id: "sw_gordie", name: "Gordie", location: "Circhester Stadium", type: "Rock", levelCap: 42, team: [{ species: "Barbaracle", level: 40 }, { species: "Shuckle", level: 40 }, { species: "Stonjourner", level: 41 }, { species: "Coalossal", level: 42 }] },
+    { id: "sw_piers", name: "Piers", location: "Spikemuth", type: "Dark", levelCap: 44, team: [{ species: "Scrafty", level: 44 }, { species: "Malamar", level: 44 }, { species: "Skuntank", level: 44 }, { species: "Obstagoon", level: 45 }] },
+    { id: "sw_rai", name: "Raihan", location: "Hammerlocke Stadium", type: "Dragon", levelCap: 48, team: [{ species: "Gigalith", level: 46 }, { species: "Flygon", level: 47 }, { species: "Sandaconda", level: 46 }, { species: "Duraludon", level: 48 }] }
+  ],
+};
+
+// ---- Import batch files ----
+import { BATCH1_GAMES } from './nuzlocke/batch1';
+import { BATCH2_GAMES } from './nuzlocke/batch2';
+import { BATCH3_GAMES } from './nuzlocke/batch3';
+
 export const NUZLOCKE_GAMES: NuzlockeGame[] = [
-  GAME_SCARLET,
-  GAME_VIOLET,
-  GAME_SWORD,
+  // Gen IX
+  GAME_SCARLET_OBJ,
+  GAME_VIOLET_OBJ,
+  // Gen VIII
+  GAME_SWORD_OBJ,
+  // Gen I-VII from batches
+  ...BATCH1_GAMES,
+  ...BATCH2_GAMES,
+  ...BATCH3_GAMES,
+  // Base games
   GAME_RED,
   GAME_GOLD,
   GAME_RUBY,

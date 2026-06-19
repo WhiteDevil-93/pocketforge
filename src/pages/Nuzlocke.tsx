@@ -3,14 +3,14 @@
 // ============================================================================
 
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair } from 'lucide-react';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import { NUZLOCKE_GAMES, getGameById } from '../data/nuzlockeRoutes';
 import PokemonSprite from '../components/PokemonSprite';
 import TypeBadge from '../components/TypeBadge';
-import { getEffectiveness } from '../utils/typeChart';
+import { getEffectiveness } from '../data/typesData';
+import type { NuzlockeEncounter } from '../store/useNuzlockeStore';
 
 // ---- Stat Card for Run List ----
 function RunCard({ run, isActive, onSelect, onDelete }: { run: any; isActive: boolean; onSelect: () => void; onDelete: () => void }) {
@@ -130,7 +130,6 @@ function BossCard({ boss, teamTypes }: { boss: any; teamTypes: string[] }) {
 
 // ---- Main Page ----
 export default function Nuzlocke() {
-  const navigate = useNavigate();
   const runs = useNuzlockeStore((s) => s.runs);
   const currentRunId = useNuzlockeStore((s) => s.currentRunId);
   const createRun = useNuzlockeStore((s) => s.createRun);
@@ -151,10 +150,11 @@ export default function Nuzlocke() {
 
   const handleUpdate = (routeId: string, sp: string, nick: string, st: string) => {
     if (!currentRunId) return;
+    const status = st as NuzlockeEncounter['status'];
     if (!sp.trim()) { removeEncounter(currentRunId, routeId); return; }
     const ex = currentRun?.encounters.find((e) => e.routeId === routeId);
-    if (ex) updateEncounter(currentRunId, routeId, { species: sp, nickname: nick, status: st });
-    else addEncounter(currentRunId, { routeId, species: sp, nickname: nick, status: st });
+    if (ex) updateEncounter(currentRunId, routeId, { species: sp, nickname: nick, status });
+    else addEncounter(currentRunId, { routeId, species: sp, nickname: nick, status });
   };
 
   // ---- Run Selection View ----
