@@ -16,6 +16,7 @@ import { HOME_PATH } from './lib/routes';
 
 // Lazy loaded pages to optimize initial bundle size
 const Calculator = lazy(() => import('./pages/Calculator'));
+const Nuzlocke = lazy(() => import('./pages/Nuzlocke'));
 const SpeedTierList = lazy(() => import('./pages/SpeedTierList'));
 const MovePoolExplorer = lazy(() => import('./pages/MovePoolExplorer'));
 const ImportExport = lazy(() => import('./pages/ImportExport'));
@@ -228,6 +229,14 @@ export default function App() {
             element={
               <OnboardingGuard>
                 <WeaknessAnalyzer />
+              </OnboardingGuard>
+            }
+          />
+          <Route
+            path="/nuzlocke"
+            element={
+              <OnboardingGuard>
+                <Nuzlocke />
               </OnboardingGuard>
             }
           />
