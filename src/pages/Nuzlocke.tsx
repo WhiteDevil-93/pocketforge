@@ -188,13 +188,13 @@ export default function Nuzlocke() {
         <AnimatePresence>
           {showNew && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex flex-col justify-end bg-black/50" onClick={() => setShowNew(false)}>
-              <motion.div initial={{ y: 200 }} animate={{ y: 0 }} exit={{ y: 200 }} className="bg-bg-secondary rounded-t-3xl p-6 space-y-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <motion.div initial={{ y: 200 }} animate={{ y: 0 }} exit={{ y: 200 }} className="bg-bg-secondary rounded-t-3xl p-6 pb-24 space-y-4 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="w-10 h-1 rounded-full bg-text-tertiary/30 mx-auto" />
                 <h2 className="text-headline font-semibold text-text-primary text-center">New Nuzlocke Run</h2>
                 <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Run name" className="w-full h-12 px-4 rounded-xl bg-bg-tertiary border border-border-subtle text-text-primary placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
                 <div className="space-y-1.5">
                   <label className="text-caption font-medium text-text-secondary">Select Game</label>
-                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pb-2">
                     {NUZLOCKE_GAMES.map((g) => (
                       <button key={g.id} onClick={() => setSelGame(g.id)} className={`h-10 px-3 rounded-lg text-sm font-medium transition-colors text-left ${selGame === g.id ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>
                         {g.name}
