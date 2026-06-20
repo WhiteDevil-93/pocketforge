@@ -213,7 +213,6 @@ export default function Nuzlocke() {
   const removeEncounter = useNuzlockeStore((s) => s.removeEncounter);
   const addTeraRaid = useNuzlockeStore((s) => s.addTeraRaid);
   const updateTeraRaid = useNuzlockeStore((s) => s.updateTeraRaid);
-  const removeTeraRaid = useNuzlockeStore((s) => s.removeTeraRaid);
 
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
