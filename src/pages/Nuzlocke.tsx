@@ -2,7 +2,7 @@
 // PocketForge — Nuzlocke Tracker (All Games)
 // ============================================================================
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair } from 'lucide-react';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
@@ -11,6 +11,19 @@ import PokemonSprite from '../components/PokemonSprite';
 import TypeBadge from '../components/TypeBadge';
 import { getEffectiveness } from '../data/typesData';
 import type { NuzlockeEncounter } from '../store/useNuzlockeStore';
+
+// ---- Lazy-loaded encounter data ----
+let encounterCache: Record<string, string[]> | null = null;
+async function loadEncounters(): Promise<Record<string, string[]>> {
+  if (encounterCache) return encounterCache;
+  const base = import.meta.env.BASE_URL || '/';
+  const res = await fetch(`${base}data/routeEncounters.json`);
+  encounterCache = await res.json();
+  return encounterCache!;
+}
+function getEncountersForRoute(routeId: string): string[] {
+  return encounterCache?.[routeId] || [];
+}
 
 // ---- Stat Card for Run List ----
 function RunCard({ run, isActive, onSelect, onDelete }: { run: any; isActive: boolean; onSelect: () => void; onDelete: () => void }) {
@@ -44,6 +57,7 @@ function RouteRow({ route, encounter, onUpdate }: { route: any; encounter?: any;
   const [nickname, setNickname] = useState(encounter?.nickname || '');
   const [status, setStatus] = useState(encounter?.status || 'caught');
   const sc: Record<string, string> = { caught: '#22C55E', dead: '#EF4444', boxed: '#3B82F6', missed: '#64748B' };
+  const routeEncounters: string[] = getEncountersForRoute(route.id);
 
   return (
     <div className="bg-bg-secondary rounded-xl border border-border-subtle overflow-hidden">
@@ -62,6 +76,20 @@ function RouteRow({ route, encounter, onUpdate }: { route: any; encounter?: any;
         {open && (
           <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
             <div className="px-3 pb-3 space-y-2">
+              {routeEncounters.length > 0 && (
+                <div>
+                  <p className="text-caption text-text-tertiary mb-1.5">Available Encounters</p>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                    {routeEncounters.map((sp) => (
+                      <button key={sp} onClick={() => setSpecies(sp)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${species === sp ? 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>
+                        <PokemonSprite name={sp} size={20} />
+                        <span className="truncate max-w-[80px]">{sp}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2">
                 <input type="text" value={species} onChange={(e) => setSpecies(e.target.value)} placeholder="Species" className="flex-1 h-10 px-3 rounded-lg bg-bg-tertiary border border-border-subtle text-text-primary text-sm placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
                 <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Nickname" className="flex-1 h-10 px-3 rounded-lg bg-bg-tertiary border border-border-subtle text-text-primary text-sm placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
@@ -143,6 +171,8 @@ export default function Nuzlocke() {
   const [newName, setNewName] = useState('');
   const [selGame, setSelGame] = useState('scarlet');
   const [tab, setTab] = useState<'routes' | 'bosses'>('routes');
+  const [, setEncLoaded] = useState(false);
+  useEffect(() => { loadEncounters().then(() => setEncLoaded(true)); }, []);
 
   const currentRun = runs.find((r) => r.id === currentRunId);
   const game = currentRun ? getGameById(currentRun.gameId) : null;
