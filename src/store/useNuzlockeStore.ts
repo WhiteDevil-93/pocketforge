@@ -12,12 +12,20 @@ export interface NuzlockeEncounter {
   status: 'caught' | 'dead' | 'boxed' | 'missed';
 }
 
+export interface TeraRaidDen {
+  routeId: string;
+  species: string;
+  status: 'caught' | 'fled' | 'failed';
+  rolledAt: string;
+}
+
 export interface NuzlockeRun {
   id: string;
   name: string;
   gameId: string;
   startedAt: string;
   encounters: NuzlockeEncounter[];
+  teraRaids: TeraRaidDen[];
   rules: {
     dupesClause: boolean;
     shinyClause: boolean;
@@ -35,6 +43,9 @@ interface NuzlockeState {
   updateEncounter: (runId: string, routeId: string, updates: Partial<NuzlockeEncounter>) => void;
   removeEncounter: (runId: string, routeId: string) => void;
   updateRules: (runId: string, rules: Partial<NuzlockeRun['rules']>) => void;
+  addTeraRaid: (runId: string, raid: TeraRaidDen) => void;
+  updateTeraRaid: (runId: string, routeId: string, updates: Partial<TeraRaidDen>) => void;
+  removeTeraRaid: (runId: string, routeId: string) => void;
 }
 
 function generateId(): string {
@@ -52,6 +63,7 @@ export const useNuzlockeStore = create<NuzlockeState>()(
           id, name, gameId,
           startedAt: new Date().toISOString(),
           encounters: [],
+          teraRaids: [],
           rules: { dupesClause: true, shinyClause: true, levelCap: true },
         };
         set((s) => ({ runs: [...s.runs, newRun], currentRunId: id }));
@@ -63,6 +75,9 @@ export const useNuzlockeStore = create<NuzlockeState>()(
       updateEncounter: (runId, routeId, updates) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, encounters: r.encounters.map((e) => e.routeId === routeId ? { ...e, ...updates } : e) } : r) })),
       removeEncounter: (runId, routeId) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, encounters: r.encounters.filter((e) => e.routeId !== routeId) } : r) })),
       updateRules: (runId, rules) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, rules: { ...r.rules, ...rules } } : r) })),
+      addTeraRaid: (runId, raid) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: [...r.teraRaids, raid] } : r) })),
+      updateTeraRaid: (runId, routeId, updates) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: r.teraRaids.map((t) => t.routeId === routeId ? { ...t, ...updates } : t) } : r) })),
+      removeTeraRaid: (runId, routeId) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: r.teraRaids.filter((t) => t.routeId !== routeId) } : r) })),
     }),
     { name: 'pocketforge-nuzlocke', partialize: (state) => ({ runs: state.runs, currentRunId: state.currentRunId }) }
   )

@@ -4,13 +4,13 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair } from 'lucide-react';
+import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair, Dices } from 'lucide-react';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import { NUZLOCKE_GAMES, getGameById } from '../data/nuzlockeRoutes';
 import PokemonSprite from '../components/PokemonSprite';
 import TypeBadge from '../components/TypeBadge';
 import { getEffectiveness } from '../data/typesData';
-import type { NuzlockeEncounter } from '../store/useNuzlockeStore';
+import type { NuzlockeEncounter, TeraRaidDen } from '../store/useNuzlockeStore';
 
 // ---- Lazy-loaded encounter data ----
 let encounterCache: Record<string, string[]> | null = null;
@@ -51,11 +51,21 @@ function RunCard({ run, isActive, onSelect, onDelete }: { run: any; isActive: bo
 }
 
 // ---- Route Row ----
-function RouteRow({ route, encounter, onUpdate }: { route: any; encounter?: any; onUpdate: (s: string, n: string, st: string) => void }) {
+function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpdate }: {
+  route: any;
+  encounter?: any;
+  teraRaid?: TeraRaidDen;
+  onUpdate: (s: string, n: string, st: string) => void;
+  onTeraRoll: () => void;
+  onTeraUpdate: (species: string, status: TeraRaidDen['status']) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [species, setSpecies] = useState(encounter?.species || '');
   const [nickname, setNickname] = useState(encounter?.nickname || '');
   const [status, setStatus] = useState(encounter?.status || 'caught');
+  const [teraSpecies, setTeraSpecies] = useState(teraRaid?.species || '');
+  const [teraStatus, setTeraStatus] = useState<TeraRaidDen['status']>(teraRaid?.status || 'caught');
+  const isPaldea = route.id.startsWith('sv_') || route.id.startsWith('vi_');
   const sc: Record<string, string> = { caught: '#22C55E', dead: '#EF4444', boxed: '#3B82F6', missed: '#64748B' };
   const routeEncounters: string[] = getEncountersForRoute(route.id);
 
@@ -90,6 +100,41 @@ function RouteRow({ route, encounter, onUpdate }: { route: any; encounter?: any;
                   </div>
                 </div>
               )}
+
+              {/* Tera Raid Den — Paldea only */}
+              {isPaldea && routeEncounters.length > 0 && (
+                <div className="border-t border-border-subtle pt-2 mt-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-caption font-medium" style={{ color: '#B91CFC' }}>Tera Raid Den</p>
+                    {teraRaid && <span className="text-caption text-text-tertiary">{new Date(teraRaid.rolledAt).toLocaleDateString()}</span>}
+                  </div>
+
+                  {!teraRaid ? (
+                    <button onClick={onTeraRoll}
+                      className="w-full h-10 rounded-lg border-2 border-dashed flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+                      style={{ borderColor: '#B91CFC33', color: '#B91CFC', backgroundColor: '#B91CFC08' }}>
+                      <Dices size={16} /> Roll Raid Den
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input type="text" value={teraSpecies} onChange={(e) => setTeraSpecies(e.target.value)} placeholder="Raid Pokemon"
+                          className="flex-1 h-10 px-3 rounded-lg bg-bg-tertiary border border-border-subtle text-text-primary text-sm placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
+                        {teraSpecies && <PokemonSprite name={teraSpecies} size={32} />}
+                      </div>
+                      <div className="flex gap-2">
+                        {(['caught', 'fled', 'failed'] as const).map((s) => (
+                          <button key={s} onClick={() => { setTeraStatus(s); onTeraUpdate(teraSpecies, s); }}
+                            className={`flex-1 h-8 rounded-lg text-xs font-medium capitalize transition-colors ${teraStatus === s ? 'text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}
+                            style={teraStatus === s ? { backgroundColor: s === 'caught' ? '#22C55E' : s === 'fled' ? '#F59E0B' : '#EF4444' } : {}}>{s}</button>
+                        ))}
+                      </div>
+                      <button onClick={() => onTeraUpdate(teraSpecies, teraStatus)} className="w-full h-9 rounded-lg text-white text-sm font-medium active:scale-[0.98] transition-transform" style={{ backgroundColor: '#B91CFC' }}>Save Raid</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <input type="text" value={species} onChange={(e) => setSpecies(e.target.value)} placeholder="Species" className="flex-1 h-10 px-3 rounded-lg bg-bg-tertiary border border-border-subtle text-text-primary text-sm placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
                 <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Nickname" className="flex-1 h-10 px-3 rounded-lg bg-bg-tertiary border border-border-subtle text-text-primary text-sm placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
@@ -166,6 +211,9 @@ export default function Nuzlocke() {
   const addEncounter = useNuzlockeStore((s) => s.addEncounter);
   const updateEncounter = useNuzlockeStore((s) => s.updateEncounter);
   const removeEncounter = useNuzlockeStore((s) => s.removeEncounter);
+  const addTeraRaid = useNuzlockeStore((s) => s.addTeraRaid);
+  const updateTeraRaid = useNuzlockeStore((s) => s.updateTeraRaid);
+  const removeTeraRaid = useNuzlockeStore((s) => s.removeTeraRaid);
 
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
@@ -185,6 +233,21 @@ export default function Nuzlocke() {
     const ex = currentRun?.encounters.find((e) => e.routeId === routeId);
     if (ex) updateEncounter(currentRunId, routeId, { species: sp, nickname: nick, status });
     else addEncounter(currentRunId, { routeId, species: sp, nickname: nick, status });
+  };
+
+  const handleTeraRoll = (routeId: string) => {
+    if (!currentRunId) return;
+    const encounters = getEncountersForRoute(routeId);
+    if (encounters.length === 0) return;
+    const randomSpecies = encounters[Math.floor(Math.random() * encounters.length)];
+    addTeraRaid(currentRunId, { routeId, species: randomSpecies, status: 'caught', rolledAt: new Date().toISOString() });
+  };
+
+  const handleTeraUpdate = (routeId: string, species: string, status: TeraRaidDen['status']) => {
+    if (!currentRunId) return;
+    const ex = currentRun?.teraRaids.find((t) => t.routeId === routeId);
+    if (ex) updateTeraRaid(currentRunId, routeId, { species, status });
+    else addTeraRaid(currentRunId, { routeId, species, status, rolledAt: new Date().toISOString() });
   };
 
   // ---- Run Selection View ----
@@ -279,7 +342,8 @@ export default function Nuzlocke() {
             <motion.div key="routes" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-2">
               {game?.routes.map((r) => {
                 const enc = currentRun.encounters.find((e) => e.routeId === r.id);
-                return <RouteRow key={r.id} route={r} encounter={enc} onUpdate={(sp, nick, st) => handleUpdate(r.id, sp, nick, st)} />;
+                const teraRaid = currentRun.teraRaids.find((t) => t.routeId === r.id);
+                return <RouteRow key={r.id} route={r} encounter={enc} teraRaid={teraRaid} onUpdate={(sp, nick, st) => handleUpdate(r.id, sp, nick, st)} onTeraRoll={() => handleTeraRoll(r.id)} onTeraUpdate={(sp, st) => handleTeraUpdate(r.id, sp, st)} />;
               })}
             </motion.div>
           ) : (
