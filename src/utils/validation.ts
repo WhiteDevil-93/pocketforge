@@ -147,8 +147,8 @@ export async function validateTeam(team: Team, formatId?: string): Promise<Valid
     const dexEntry = getPokemonByName(mon.species);
     if (!dexEntry) {
       errors.push(`Pokemon #${i + 1}: Unknown species "${mon.species}"`);
-    } else {
-      // Validate move legality using learnset API
+    } else if (!isChampionsFormat(format)) {
+      // Validate move legality using learnset API (skip for Champions — uses custom learnsets below)
       const baseSpecies = getBaseSpeciesName(mon.species, gen);
       for (const move of mon.moves) {
         if (move) {
