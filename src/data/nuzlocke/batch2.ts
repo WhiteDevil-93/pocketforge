@@ -10,6 +10,7 @@ const GAME_SAPPHIRE: NuzlockeGame = {
   name: "Pokémon Sapphire",
   generation: 3,
   routes: [
+    { id: "sa_starter", name: "Starter", order: 0 },
     { id: "sa_littleroot_town", name: "Littleroot Town", order: 1 },
     { id: "sa_route_101", name: "Route 101", order: 2 },
     { id: "sa_oldale_town", name: "Oldale Town", order: 3 },
@@ -91,6 +92,7 @@ const GAME_EMERALD: NuzlockeGame = {
   name: "Pokémon Emerald",
   generation: 3,
   routes: [
+    { id: "em_starter", name: "Starter", order: 0 },
     { id: "em_littleroot_town", name: "Littleroot Town", order: 1 },
     { id: "em_route_101", name: "Route 101", order: 2 },
     { id: "em_oldale_town", name: "Oldale Town", order: 3 },
@@ -172,6 +174,7 @@ const GAME_OMEGARUBY: NuzlockeGame = {
   name: "Pokémon Omega Ruby",
   generation: 6,
   routes: [
+    { id: "or_starter", name: "Starter", order: 0 },
     { id: "or_littleroot_town", name: "Littleroot Town", order: 1 },
     { id: "or_route_101", name: "Route 101", order: 2 },
     { id: "or_oldale_town", name: "Oldale Town", order: 3 },
@@ -253,6 +256,7 @@ const GAME_ALPHASAPPHIRE: NuzlockeGame = {
   name: "Pokémon Alpha Sapphire",
   generation: 6,
   routes: [
+    { id: "as_starter", name: "Starter", order: 0 },
     { id: "as_littleroot_town", name: "Littleroot Town", order: 1 },
     { id: "as_route_101", name: "Route 101", order: 2 },
     { id: "as_oldale_town", name: "Oldale Town", order: 3 },
@@ -334,6 +338,7 @@ const GAME_PEARL: NuzlockeGame = {
   name: "Pokémon Pearl",
   generation: 4,
   routes: [
+    { id: "pe_starter", name: "Starter", order: 0 },
     { id: "pe_twinleaf_town", name: "Twinleaf Town", order: 1 },
     { id: "pe_route_201", name: "Route 201", order: 2 },
     { id: "pe_sandgem_town", name: "Sandgem Town", order: 3 },
@@ -404,6 +409,7 @@ const GAME_PLATINUM: NuzlockeGame = {
   name: "Pokémon Platinum",
   generation: 4,
   routes: [
+    { id: "pl_starter", name: "Starter", order: 0 },
     { id: "pl_twinleaf_town", name: "Twinleaf Town", order: 1 },
     { id: "pl_route_201", name: "Route 201", order: 2 },
     { id: "pl_sandgem_town", name: "Sandgem Town", order: 3 },
@@ -474,6 +480,7 @@ const GAME_BRILLIANTDIAMOND: NuzlockeGame = {
   name: "Pokémon Brilliant Diamond",
   generation: 8,
   routes: [
+    { id: "bd_starter", name: "Starter", order: 0 },
     { id: "bd_twinleaf_town", name: "Twinleaf Town", order: 1 },
     { id: "bd_route_201", name: "Route 201", order: 2 },
     { id: "bd_sandgem_town", name: "Sandgem Town", order: 3 },
@@ -546,6 +553,7 @@ const GAME_SHININGPEARL: NuzlockeGame = {
   name: "Pokémon Shining Pearl",
   generation: 8,
   routes: [
+    { id: "sp_starter", name: "Starter", order: 0 },
     { id: "sp_twinleaf_town", name: "Twinleaf Town", order: 1 },
     { id: "sp_route_201", name: "Route 201", order: 2 },
     { id: "sp_sandgem_town", name: "Sandgem Town", order: 3 },

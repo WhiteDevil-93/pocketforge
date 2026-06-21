@@ -10,6 +10,7 @@ const GAME_BLUE: NuzlockeGame = {
   name: "Pokémon Blue",
   generation: 1,
   routes: [
+    { id: "bu_starter", name: "Starter", order: 0 },
     { id: "bu_pallet_town", name: "Pallet Town", order: 1 },
     { id: "bu_route_1", name: "Route 1", order: 2 },
     { id: "bu_viridian_city", name: "Viridian City", order: 3 },
@@ -72,6 +73,7 @@ const GAME_YELLOW: NuzlockeGame = {
   name: "Pokémon Yellow",
   generation: 1,
   routes: [
+    { id: "ye_starter", name: "Starter", order: 0 },
     { id: "ye_pallet_town", name: "Pallet Town", order: 1 },
     { id: "ye_route_1", name: "Route 1", order: 2 },
     { id: "ye_viridian_city", name: "Viridian City", order: 3 },
@@ -134,6 +136,7 @@ const GAME_FIRERED: NuzlockeGame = {
   name: "Pokémon Fire Red",
   generation: 3,
   routes: [
+    { id: "fr_starter", name: "Starter", order: 0 },
     { id: "fr_pallet_town", name: "Pallet Town", order: 1 },
     { id: "fr_route_1", name: "Route 1", order: 2 },
     { id: "fr_viridian_city", name: "Viridian City", order: 3 },
@@ -208,6 +211,7 @@ const GAME_LEAFGREEN: NuzlockeGame = {
   name: "Pokémon Leaf Green",
   generation: 3,
   routes: [
+    { id: "lg_starter", name: "Starter", order: 0 },
     { id: "lg_pallet_town", name: "Pallet Town", order: 1 },
     { id: "lg_route_1", name: "Route 1", order: 2 },
     { id: "lg_viridian_city", name: "Viridian City", order: 3 },
@@ -282,6 +286,7 @@ const GAME_SILVER: NuzlockeGame = {
   name: "Pokémon Silver",
   generation: 2,
   routes: [
+    { id: "si_starter", name: "Starter", order: 0 },
     { id: "si_new_bark_town", name: "New Bark Town", order: 1 },
     { id: "si_route_29", name: "Route 29", order: 2 },
     { id: "si_cherrygrove_city", name: "Cherrygrove City", order: 3 },
@@ -346,6 +351,7 @@ const GAME_CRYSTAL: NuzlockeGame = {
   name: "Pokémon Crystal",
   generation: 2,
   routes: [
+    { id: "cr_starter", name: "Starter", order: 0 },
     { id: "cr_new_bark_town", name: "New Bark Town", order: 1 },
     { id: "cr_route_29", name: "Route 29", order: 2 },
     { id: "cr_cherrygrove_city", name: "Cherrygrove City", order: 3 },
@@ -410,6 +416,7 @@ const GAME_SOULSILVER: NuzlockeGame = {
   name: "Pokémon Soul Silver",
   generation: 4,
   routes: [
+    { id: "ss_starter", name: "Starter", order: 0 },
     { id: "ss_new_bark_town", name: "New Bark Town", order: 1 },
     { id: "ss_route_29", name: "Route 29", order: 2 },
     { id: "ss_cherrygrove_city", name: "Cherrygrove City", order: 3 },
@@ -477,6 +484,7 @@ const GAME_HEARTGOLD: NuzlockeGame = {
   name: "Pokémon Heart Gold",
   generation: 4,
   routes: [
+    { id: "hg_starter", name: "Starter", order: 0 },
     { id: "hg_new_bark_town", name: "New Bark Town", order: 1 },
     { id: "hg_route_29", name: "Route 29", order: 2 },
     { id: "hg_cherrygrove_city", name: "Cherrygrove City", order: 3 },

@@ -30,6 +30,7 @@ export const GAME_RED: NuzlockeGame = {
   name: "Pokémon Red",
   generation: 1,
   routes: [
+    { id: "re_starter", name: "Starter", order: 0 },
     { id: "re_pallet_town", name: "Pallet Town", order: 1 },
     { id: "re_route_1", name: "Route 1", order: 2 },
     { id: "re_viridian_city", name: "Viridian City", order: 3 },
@@ -83,6 +84,7 @@ export const GAME_GOLD: NuzlockeGame = {
   name: "Pokémon Gold",
   generation: 2,
   routes: [
+    { id: "go_starter", name: "Starter", order: 0 },
     { id: "go_new_bark_town", name: "New Bark Town", order: 1 },
     { id: "go_route_29", name: "Route 29", order: 2 },
     { id: "go_cherrygrove_city", name: "Cherrygrove City", order: 3 },
@@ -141,6 +143,7 @@ export const GAME_RUBY: NuzlockeGame = {
   name: "Pokémon Ruby",
   generation: 3,
   routes: [
+    { id: "ru_starter", name: "Starter", order: 0 },
     { id: "ru_littleroot_town", name: "Littleroot Town", order: 1 },
     { id: "ru_route_101", name: "Route 101", order: 2 },
     { id: "ru_oldale_town", name: "Oldale Town", order: 3 },
@@ -214,6 +217,7 @@ export const GAME_DIAMOND: NuzlockeGame = {
   name: "Pokémon Diamond",
   generation: 4,
   routes: [
+    { id: "di_starter", name: "Starter", order: 0 },
     { id: "di_twinleaf_town", name: "Twinleaf Town", order: 1 },
     { id: "di_route_201", name: "Route 201", order: 2 },
     { id: "di_lake_verity", name: "Lake Verity", order: 3 },
@@ -282,6 +286,7 @@ export const GAME_BLACK: NuzlockeGame = {
   name: "Pokémon Black",
   generation: 5,
   routes: [
+    { id: "bl_starter", name: "Starter", order: 0 },
     { id: "bl_nuvema_town", name: "Nuvema Town", order: 1 },
     { id: "bl_route_1", name: "Route 1", order: 2 },
     { id: "bl_accumula_town", name: "Accumula Town", order: 3 },
@@ -339,6 +344,7 @@ export const GAME_X: NuzlockeGame = {
   name: "Pokémon X",
   generation: 6,
   routes: [
+    { id: "x_starter", name: "Starter", order: 0 },
     { id: "x_vaniville_town", name: "Vaniville Town", order: 1 },
     { id: "x_route_1", name: "Route 1", order: 2 },
     { id: "x_aquacorde_town", name: "Aquacorde Town", order: 3 },
@@ -405,6 +411,7 @@ export const GAME_SUN: NuzlockeGame = {
   name: "Pokémon Sun",
   generation: 7,
   routes: [
+    { id: "su_starter", name: "Starter", order: 0 },
     { id: "su_route_1", name: "Route 1", order: 1 },
     { id: "su_iki_town", name: "Iki Town", order: 2 },
     { id: "su_route_1_(hauoli_outskirts)", name: "Route 1 (Hau'oli Outskirts)", order: 3 },
@@ -477,6 +484,7 @@ const GAME_SCARLET_OBJ: NuzlockeGame = {
   name: "Pokémon Scarlet",
   generation: 9,
   routes: [
+    { id: "sv_starter", name: "Starter", order: 0 },
     { id: "sv_cabo_poco", name: "Cabo Poco", order: 1 },
     { id: "sv_route_1_south", name: "South Province (Area 1)", order: 2 },
     { id: "sv_los_platos", name: "Los Platos", order: 3 },
@@ -501,14 +509,48 @@ const GAME_SCARLET_OBJ: NuzlockeGame = {
     { id: "sv_area_zero", name: "Area Zero", order: 22 }
   ],
   bosses: [
+    // ---- Team Star ----
+    { id: "sv_giacomo", name: "Giacomo", location: "Segin Squad Base", type: "Dark", levelCap: 20, team: [{ species: "Toxicroak", level: 20 }, { species: "Pawniard", level: 20 }] },
+    { id: "sv_mela", name: "Mela", location: "Schedar Squad Base", type: "Fire", levelCap: 27, team: [{ species: "Torkoal", level: 27 }, { species: "Salandit", level: 27 }] },
+    { id: "sv_atticus", name: "Atticus", location: "Navi Squad Base", type: "Poison", levelCap: 32, team: [{ species: "Skuntank", level: 32 }, { species: "Zangoose", level: 32 }] },
+    { id: "sv_ortega", name: "Ortega", location: "Ruchbah Squad Base", type: "Fairy", levelCap: 50, team: [{ species: "Azumarill", level: 50 }, { species: "Wigglytuff", level: 50 }, { species: "Dachsbun", level: 50 }] },
+    { id: "sv_eri", name: "Eri", location: "Caph Squad Base", type: "Fighting", levelCap: 55, team: [{ species: "Hitmontop", level: 55 }, { species: "Passimian", level: 55 }, { species: "Lucario", level: 55 }] },
+    // ---- Titans ----
+    { id: "sv_titan_klawf", name: "Klawf (Stony Cliff Titan)", location: "South Province (Area 3)", type: "Rock", levelCap: 16, team: [{ species: "Klawf", level: 16 }] },
+    { id: "sv_titan_bombirdier", name: "Bombirdier (Open Sky Titan)", location: "West Province (Area 1)", type: "Flying", levelCap: 19, team: [{ species: "Bombirdier", level: 19 }] },
+    { id: "sv_titan_orthworm", name: "Orthworm (Lurking Steel Titan)", location: "East Province (Area 3)", type: "Steel", levelCap: 28, team: [{ species: "Orthworm", level: 28 }] },
+    { id: "sv_titan_great_tusk", name: "Great Tusk (Quaking Earth Titan)", location: "Asado Desert", type: "Ground", levelCap: 44, team: [{ species: "Great Tusk", level: 44 }] },
+    { id: "sv_titan_tatsugiri", name: "Dondozo & Tatsugiri (False Dragon Titan)", location: "Casseroya Lake", type: "Water", levelCap: 55, team: [{ species: "Dondozo", level: 55 }, { species: "Tatsugiri", level: 55 }] },
+    // ---- Gym Leaders ----
     { id: "sv_katy", name: "Katy", location: "Cortondo Gym", type: "Bug", levelCap: 15, team: [{ species: "Nymble", level: 14 }, { species: "Teddiursa", level: 15 }] },
     { id: "sv_brassius", name: "Brassius", location: "Artazon Gym", type: "Grass", levelCap: 17, team: [{ species: "Petilil", level: 16 }, { species: "Smoliv", level: 16 }, { species: "Sudowoodo", level: 17 }] },
     { id: "sv_iono", name: "Iono", location: "Levincia Gym", type: "Electric", levelCap: 24, team: [{ species: "Wattrel", level: 23 }, { species: "Bellibolt", level: 23 }, { species: "Luxio", level: 23 }, { species: "Mismagius", level: 24 }] },
     { id: "sv_kofu", name: "Kofu", location: "Cascarrafa Gym", type: "Water", levelCap: 30, team: [{ species: "Veluza", level: 29 }, { species: "Wugtrio", level: 29 }, { species: "Crabominable", level: 30 }] },
     { id: "sv_larry", name: "Larry", location: "Medali Gym", type: "Normal", levelCap: 36, team: [{ species: "Komala", level: 35 }, { species: "Dudunsparce", level: 35 }, { species: "Staraptor", level: 36 }] },
-    { id: "sv_ryme", name: "Ryme", location: "Montenevera Gym", type: "Ghost", levelCap: 41, team: [{ species: "Mimikyu", level: 40 }, { species: "Banjirao", level: 40 }, { species: "Houndstone", level: 41 }] },
+    { id: "sv_ryme", name: "Ryme", location: "Montenevera Gym", type: "Ghost", levelCap: 41, team: [{ species: "Mimikyu", level: 40 }, { species: "Banette", level: 40 }, { species: "Houndstone", level: 41 }] },
     { id: "sv_tulip", name: "Tulip", location: "Alfornada Gym", type: "Psychic", levelCap: 45, team: [{ species: "Farigiraf", level: 44 }, { species: "Gardevoir", level: 44 }, { species: "Espathra", level: 45 }] },
-    { id: "sv_grusha", name: "Grusha", location: "Glaseado Gym", type: "Ice", levelCap: 48, team: [{ species: "Frosmoth", level: 47 }, { species: "Beartic", level: 47 }, { species: "Cetitan", level: 48 }] }
+    { id: "sv_grusha", name: "Grusha", location: "Glaseado Gym", type: "Ice", levelCap: 48, team: [{ species: "Frosmoth", level: 47 }, { species: "Beartic", level: 47 }, { species: "Cetitan", level: 48 }] },
+    // ---- Rival Nemona ----
+    { id: "sv_nemona_1", name: "Nemona (Battle 1)", location: "Cabo Poco", type: "Normal", levelCap: 8, team: [{ species: "Pawmi", level: 8 }] },
+    { id: "sv_nemona_2", name: "Nemona (Battle 2)", location: "Los Platos", type: "Normal", levelCap: 26, team: [{ species: "Pawmo", level: 24 }, { species: "Dunsparce", level: 24 }, { species: "Cacnea", level: 26 }] },
+    { id: "sv_nemona_3", name: "Nemona (Battle 3)", location: "Cascarrafa", type: "Normal", levelCap: 39, team: [{ species: "Pawmo", level: 37 }, { species: "Dudunsparce", level: 37 }, { species: "Sliggoo", level: 38 }, { species: "Ribombee", level: 39 }] },
+    { id: "sv_nemona_4", name: "Nemona (Battle 4)", location: "Montenevera", type: "Normal", levelCap: 51, team: [{ species: "Pawmot", level: 49 }, { species: "Dudunsparce", level: 49 }, { species: "Goodra", level: 50 }, { species: "Ribombee", level: 50 }, { species: "Lycanroc", level: 51 }] },
+    { id: "sv_nemona_champion", name: "Nemona (Champion)", location: "Mesagoza", type: "Normal", levelCap: 69, team: [{ species: "Pawmot", level: 65 }, { species: "Dudunsparce", level: 65 }, { species: "Goodra", level: 65 }, { species: "Ribombee", level: 65 }, { species: "Lycanroc", level: 65 }, { species: "Slaking", level: 69 }] },
+    // ---- Arven ----
+    { id: "sv_arven_titan", name: "Arven (Titan)", location: "Area Zero", type: "Grass", levelCap: 60, team: [{ species: "Naclstack", level: 58 }, { species: "Greedent", level: 58 }, { species: "Cloyster", level: 58 }, { species: "Scovillain", level: 58 }, { species: "Toedscruel", level: 58 }, { species: "Mabosstiff", level: 60 }] },
+    // ---- Director Clavell ----
+    { id: "sv_clavell", name: "Director Clavell", location: "Academy", type: "Various", levelCap: 60, team: [{ species: "Oranguru", level: 58 }, { species: "Abomasnow", level: 58 }, { species: "Polteageist", level: 58 }, { species: "Amoonguss", level: 58 }, { species: "Gyarados", level: 58 }, { species: "Quaquaval", level: 60 }] },
+    // ---- Penny ----
+    { id: "sv_penny", name: "Penny", location: "Academy", type: "Various", levelCap: 62, team: [{ species: "Umbreon", level: 60 }, { species: "Vaporeon", level: 60 }, { species: "Jolteon", level: 60 }, { species: "Flareon", level: 60 }, { species: "Leafeon", level: 60 }, { species: "Sylveon", level: 62 }] },
+    // ---- Elite Four ----
+    { id: "sv_rika", name: "Rika", location: "Pokémon League", type: "Ground", levelCap: 58, team: [{ species: "Whiscash", level: 57 }, { species: "Camerupt", level: 57 }, { species: "Donphan", level: 57 }, { species: "Dugtrio", level: 57 }, { species: "Clodsire", level: 58 }] },
+    { id: "sv_poppy", name: "Poppy", location: "Pokémon League", type: "Steel", levelCap: 59, team: [{ species: "Corviknight", level: 58 }, { species: "Magnezone", level: 58 }, { species: "Bronzong", level: 58 }, { species: "Lucario", level: 58 }, { species: "Tinkaton", level: 59 }] },
+    { id: "sv_larry_e4", name: "Larry (Elite Four)", location: "Pokémon League", type: "Flying", levelCap: 60, team: [{ species: "Tropius", level: 59 }, { species: "Oricorio", level: 59 }, { species: "Altaria", level: 59 }, { species: "Staraptor", level: 59 }, { species: "Flamigo", level: 60 }] },
+    { id: "sv_hassel", name: "Hassel", location: "Pokémon League", type: "Dragon", levelCap: 60, team: [{ species: "Noivern", level: 59 }, { species: "Haxorus", level: 59 }, { species: "Dragonite", level: 59 }, { species: "Dragalge", level: 59 }, { species: "Baxcalibur", level: 60 }] },
+    // ---- Champion ----
+    { id: "sv_geeta", name: "Geeta", location: "Champion Battle", type: "Various", levelCap: 65, team: [{ species: "Espathra", level: 61 }, { species: "Avalugg", level: 61 }, { species: "Kingambit", level: 61 }, { species: "Veluza", level: 61 }, { species: "Gogoat", level: 61 }, { species: "Glimmora", level: 65 }] },
+    // ---- Final Boss ----
+    { id: "sv_ai_sada", name: "AI Sada", location: "Area Zero (Paradise)", type: "Various", levelCap: 72, team: [{ species: "Slither Wing", level: 66 }, { species: "Scream Tail", level: 66 }, { species: "Brute Bonnet", level: 66 }, { species: "Flutter Mane", level: 66 }, { species: "Sandy Shocks", level: 66 }, { species: "Koraidon", level: 72 }] },
   ],
 };
 
@@ -517,6 +559,7 @@ const GAME_VIOLET_OBJ: NuzlockeGame = {
   name: "Pokémon Violet",
   generation: 9,
   routes: [
+    { id: "vi_starter", name: "Starter", order: 0 },
     { id: "vi_cabo_poco", name: "Cabo Poco", order: 1 },
     { id: "vi_route_1_south", name: "South Province (Area 1)", order: 2 },
     { id: "vi_los_platos", name: "Los Platos", order: 3 },
@@ -541,14 +584,48 @@ const GAME_VIOLET_OBJ: NuzlockeGame = {
     { id: "vi_area_zero", name: "Area Zero", order: 22 }
   ],
   bosses: [
+    // ---- Team Star ----
+    { id: "vi_giacomo", name: "Giacomo", location: "Segin Squad Base", type: "Dark", levelCap: 20, team: [{ species: "Toxicroak", level: 20 }, { species: "Pawniard", level: 20 }] },
+    { id: "vi_mela", name: "Mela", location: "Schedar Squad Base", type: "Fire", levelCap: 27, team: [{ species: "Torkoal", level: 27 }, { species: "Salandit", level: 27 }] },
+    { id: "vi_atticus", name: "Atticus", location: "Navi Squad Base", type: "Poison", levelCap: 32, team: [{ species: "Skuntank", level: 32 }, { species: "Zangoose", level: 32 }] },
+    { id: "vi_ortega", name: "Ortega", location: "Ruchbah Squad Base", type: "Fairy", levelCap: 50, team: [{ species: "Azumarill", level: 50 }, { species: "Wigglytuff", level: 50 }, { species: "Dachsbun", level: 50 }] },
+    { id: "vi_eri", name: "Eri", location: "Caph Squad Base", type: "Fighting", levelCap: 55, team: [{ species: "Hitmontop", level: 55 }, { species: "Passimian", level: 55 }, { species: "Lucario", level: 55 }] },
+    // ---- Titans ----
+    { id: "vi_titan_klawf", name: "Klawf (Stony Cliff Titan)", location: "South Province (Area 3)", type: "Rock", levelCap: 16, team: [{ species: "Klawf", level: 16 }] },
+    { id: "vi_titan_bombirdier", name: "Bombirdier (Open Sky Titan)", location: "West Province (Area 1)", type: "Flying", levelCap: 19, team: [{ species: "Bombirdier", level: 19 }] },
+    { id: "vi_titan_orthworm", name: "Orthworm (Lurking Steel Titan)", location: "East Province (Area 3)", type: "Steel", levelCap: 28, team: [{ species: "Orthworm", level: 28 }] },
+    { id: "vi_titan_iron_treads", name: "Iron Treads (Quaking Earth Titan)", location: "Asado Desert", type: "Ground", levelCap: 44, team: [{ species: "Iron Treads", level: 44 }] },
+    { id: "vi_titan_tatsugiri", name: "Dondozo & Tatsugiri (False Dragon Titan)", location: "Casseroya Lake", type: "Water", levelCap: 55, team: [{ species: "Dondozo", level: 55 }, { species: "Tatsugiri", level: 55 }] },
+    // ---- Gym Leaders ----
     { id: "vi_katy", name: "Katy", location: "Cortondo Gym", type: "Bug", levelCap: 15, team: [{ species: "Nymble", level: 14 }, { species: "Teddiursa", level: 15 }] },
     { id: "vi_brassius", name: "Brassius", location: "Artazon Gym", type: "Grass", levelCap: 17, team: [{ species: "Petilil", level: 16 }, { species: "Smoliv", level: 16 }, { species: "Sudowoodo", level: 17 }] },
     { id: "vi_iono", name: "Iono", location: "Levincia Gym", type: "Electric", levelCap: 24, team: [{ species: "Wattrel", level: 23 }, { species: "Bellibolt", level: 23 }, { species: "Luxio", level: 23 }, { species: "Mismagius", level: 24 }] },
     { id: "vi_kofu", name: "Kofu", location: "Cascarrafa Gym", type: "Water", levelCap: 30, team: [{ species: "Veluza", level: 29 }, { species: "Wugtrio", level: 29 }, { species: "Crabominable", level: 30 }] },
     { id: "vi_larry", name: "Larry", location: "Medali Gym", type: "Normal", levelCap: 36, team: [{ species: "Komala", level: 35 }, { species: "Dudunsparce", level: 35 }, { species: "Staraptor", level: 36 }] },
-    { id: "vi_ryme", name: "Ryme", location: "Montenevera Gym", type: "Ghost", levelCap: 41, team: [{ species: "Mimikyu", level: 40 }, { species: "Banjirao", level: 40 }, { species: "Houndstone", level: 41 }] },
+    { id: "vi_ryme", name: "Ryme", location: "Montenevera Gym", type: "Ghost", levelCap: 41, team: [{ species: "Mimikyu", level: 40 }, { species: "Banette", level: 40 }, { species: "Houndstone", level: 41 }] },
     { id: "vi_tulip", name: "Tulip", location: "Alfornada Gym", type: "Psychic", levelCap: 45, team: [{ species: "Farigiraf", level: 44 }, { species: "Gardevoir", level: 44 }, { species: "Espathra", level: 45 }] },
-    { id: "vi_grusha", name: "Grusha", location: "Glaseado Gym", type: "Ice", levelCap: 48, team: [{ species: "Frosmoth", level: 47 }, { species: "Beartic", level: 47 }, { species: "Cetitan", level: 48 }] }
+    { id: "vi_grusha", name: "Grusha", location: "Glaseado Gym", type: "Ice", levelCap: 48, team: [{ species: "Frosmoth", level: 47 }, { species: "Beartic", level: 47 }, { species: "Cetitan", level: 48 }] },
+    // ---- Rival Nemona ----
+    { id: "vi_nemona_1", name: "Nemona (Battle 1)", location: "Cabo Poco", type: "Normal", levelCap: 8, team: [{ species: "Pawmi", level: 8 }] },
+    { id: "vi_nemona_2", name: "Nemona (Battle 2)", location: "Los Platos", type: "Normal", levelCap: 26, team: [{ species: "Pawmo", level: 24 }, { species: "Dunsparce", level: 24 }, { species: "Cacnea", level: 26 }] },
+    { id: "vi_nemona_3", name: "Nemona (Battle 3)", location: "Cascarrafa", type: "Normal", levelCap: 39, team: [{ species: "Pawmo", level: 37 }, { species: "Dudunsparce", level: 37 }, { species: "Sliggoo", level: 38 }, { species: "Ribombee", level: 39 }] },
+    { id: "vi_nemona_4", name: "Nemona (Battle 4)", location: "Montenevera", type: "Normal", levelCap: 51, team: [{ species: "Pawmot", level: 49 }, { species: "Dudunsparce", level: 49 }, { species: "Goodra", level: 50 }, { species: "Ribombee", level: 50 }, { species: "Lycanroc", level: 51 }] },
+    { id: "vi_nemona_champion", name: "Nemona (Champion)", location: "Mesagoza", type: "Normal", levelCap: 69, team: [{ species: "Pawmot", level: 65 }, { species: "Dudunsparce", level: 65 }, { species: "Goodra", level: 65 }, { species: "Ribombee", level: 65 }, { species: "Lycanroc", level: 65 }, { species: "Slaking", level: 69 }] },
+    // ---- Arven ----
+    { id: "vi_arven_titan", name: "Arven (Titan)", location: "Area Zero", type: "Grass", levelCap: 60, team: [{ species: "Naclstack", level: 58 }, { species: "Greedent", level: 58 }, { species: "Cloyster", level: 58 }, { species: "Scovillain", level: 58 }, { species: "Toedscruel", level: 58 }, { species: "Mabosstiff", level: 60 }] },
+    // ---- Director Clavell ----
+    { id: "vi_clavell", name: "Director Clavell", location: "Academy", type: "Various", levelCap: 60, team: [{ species: "Oranguru", level: 58 }, { species: "Abomasnow", level: 58 }, { species: "Polteageist", level: 58 }, { species: "Amoonguss", level: 58 }, { species: "Gyarados", level: 58 }, { species: "Quaquaval", level: 60 }] },
+    // ---- Penny ----
+    { id: "vi_penny", name: "Penny", location: "Academy", type: "Various", levelCap: 62, team: [{ species: "Umbreon", level: 60 }, { species: "Vaporeon", level: 60 }, { species: "Jolteon", level: 60 }, { species: "Flareon", level: 60 }, { species: "Leafeon", level: 60 }, { species: "Sylveon", level: 62 }] },
+    // ---- Elite Four ----
+    { id: "vi_rika", name: "Rika", location: "Pokémon League", type: "Ground", levelCap: 58, team: [{ species: "Whiscash", level: 57 }, { species: "Camerupt", level: 57 }, { species: "Donphan", level: 57 }, { species: "Dugtrio", level: 57 }, { species: "Clodsire", level: 58 }] },
+    { id: "vi_poppy", name: "Poppy", location: "Pokémon League", type: "Steel", levelCap: 59, team: [{ species: "Corviknight", level: 58 }, { species: "Magnezone", level: 58 }, { species: "Bronzong", level: 58 }, { species: "Lucario", level: 58 }, { species: "Tinkaton", level: 59 }] },
+    { id: "vi_larry_e4", name: "Larry (Elite Four)", location: "Pokémon League", type: "Flying", levelCap: 60, team: [{ species: "Tropius", level: 59 }, { species: "Oricorio", level: 59 }, { species: "Altaria", level: 59 }, { species: "Staraptor", level: 59 }, { species: "Flamigo", level: 60 }] },
+    { id: "vi_hassel", name: "Hassel", location: "Pokémon League", type: "Dragon", levelCap: 60, team: [{ species: "Noivern", level: 59 }, { species: "Haxorus", level: 59 }, { species: "Dragonite", level: 59 }, { species: "Dragalge", level: 59 }, { species: "Baxcalibur", level: 60 }] },
+    // ---- Champion ----
+    { id: "vi_geeta", name: "Geeta", location: "Champion Battle", type: "Various", levelCap: 65, team: [{ species: "Espathra", level: 61 }, { species: "Avalugg", level: 61 }, { species: "Kingambit", level: 61 }, { species: "Veluza", level: 61 }, { species: "Gogoat", level: 61 }, { species: "Glimmora", level: 65 }] },
+    // ---- Final Boss ----
+    { id: "vi_ai_turo", name: "AI Turo", location: "Area Zero (Paradise)", type: "Various", levelCap: 72, team: [{ species: "Iron Moth", level: 66 }, { species: "Iron Bundle", level: 66 }, { species: "Iron Hands", level: 66 }, { species: "Iron Jugulis", level: 66 }, { species: "Iron Thorns", level: 66 }, { species: "Miraidon", level: 72 }] },
   ],
 };
 
@@ -557,6 +634,7 @@ const GAME_SWORD_OBJ: NuzlockeGame = {
   name: "Pokémon Sword",
   generation: 8,
   routes: [
+    { id: "sw_starter", name: "Starter", order: 0 },
     { id: "sw_postwick", name: "Postwick", order: 1 },
     { id: "sw_route_1", name: "Route 1", order: 2 },
     { id: "sw_wedgehurst", name: "Wedgehurst", order: 3 },

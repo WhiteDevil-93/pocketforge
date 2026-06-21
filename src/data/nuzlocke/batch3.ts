@@ -10,6 +10,7 @@ const GAME_WHITE: NuzlockeGame = {
   name: "Pokémon White",
   generation: 5,
   routes: [
+    { id: "wh_starter", name: "Starter", order: 0 },
     { id: "wh_nuvema_town", name: "Nuvema Town", order: 1 },
     { id: "wh_route_1", name: "Route 1", order: 2 },
     { id: "wh_accumula_town", name: "Accumula Town", order: 3 },
@@ -69,6 +70,7 @@ const GAME_BLACK2: NuzlockeGame = {
   name: "Pokémon Black 2",
   generation: 5,
   routes: [
+    { id: "b2_starter", name: "Starter", order: 0 },
     { id: "b2_aspertia_city", name: "Aspertia City", order: 1 },
     { id: "b2_route_19", name: "Route 19", order: 2 },
     { id: "b2_floccesy_town", name: "Floccesy Town", order: 3 },
@@ -123,6 +125,7 @@ const GAME_WHITE2: NuzlockeGame = {
   name: "Pokémon White 2",
   generation: 5,
   routes: [
+    { id: "w2_starter", name: "Starter", order: 0 },
     { id: "w2_aspertia_city", name: "Aspertia City", order: 1 },
     { id: "w2_route_19", name: "Route 19", order: 2 },
     { id: "w2_floccesy_town", name: "Floccesy Town", order: 3 },
@@ -177,6 +180,7 @@ const GAME_Y: NuzlockeGame = {
   name: "Pokémon Y",
   generation: 6,
   routes: [
+    { id: "py_starter", name: "Starter", order: 0 },
     { id: "py_vaniville_town", name: "Vaniville Town", order: 1 },
     { id: "py_route_1", name: "Route 1", order: 2 },
     { id: "py_aquacorde_town", name: "Aquacorde Town", order: 3 },
@@ -241,6 +245,7 @@ const GAME_MOON: NuzlockeGame = {
   name: "Pokémon Moon",
   generation: 7,
   routes: [
+    { id: "mo_starter", name: "Starter", order: 0 },
     { id: "mo_hauoli_outskirts", name: "Hau'oli Outskirts", order: 1 },
     { id: "mo_route_1", name: "Route 1", order: 2 },
     { id: "mo_hauoli_city", name: "Hau'oli City", order: 3 },
@@ -296,6 +301,7 @@ const GAME_ULTRASUN: NuzlockeGame = {
   name: "Pokémon Ultra Sun",
   generation: 7,
   routes: [
+    { id: "us_starter", name: "Starter", order: 0 },
     { id: "us_hauoli_outskirts", name: "Hau'oli Outskirts", order: 1 },
     { id: "us_route_1", name: "Route 1", order: 2 },
     { id: "us_hauoli_city", name: "Hau'oli City", order: 3 },
@@ -351,6 +357,7 @@ const GAME_ULTRAMOON: NuzlockeGame = {
   name: "Pokémon Ultra Moon",
   generation: 7,
   routes: [
+    { id: "um_starter", name: "Starter", order: 0 },
     { id: "um_hauoli_outskirts", name: "Hau'oli Outskirts", order: 1 },
     { id: "um_route_1", name: "Route 1", order: 2 },
     { id: "um_hauoli_city", name: "Hau'oli City", order: 3 },
@@ -406,6 +413,7 @@ const GAME_SHIELD: NuzlockeGame = {
   name: "Pokémon Shield",
   generation: 8,
   routes: [
+    { id: "sh_starter", name: "Starter", order: 0 },
     { id: "sh_postwick", name: "Postwick", order: 1 },
     { id: "sh_route_1", name: "Route 1", order: 2 },
     { id: "sh_wedgehurst", name: "Wedgehurst", order: 3 },
@@ -448,6 +456,7 @@ const GAME_RADICALRED: NuzlockeGame = {
   name: "Pokémon Radical Red",
   generation: 3,
   routes: [
+    { id: "rr_starter", name: "Starter", order: 0 },
     { id: "rr_pallet_town", name: "Pallet Town", order: 1 },
     { id: "rr_route_1", name: "Route 1", order: 2 },
     { id: "rr_viridian_city", name: "Viridian City", order: 3 },
@@ -513,6 +522,7 @@ const GAME_RENEGADEPLATINUM: NuzlockeGame = {
   name: "Pokémon Renegade Platinum",
   generation: 4,
   routes: [
+    { id: "rp_starter", name: "Starter", order: 0 },
     { id: "rp_twinleaf_town", name: "Twinleaf Town", order: 1 },
     { id: "rp_route_201", name: "Route 201", order: 2 },
     { id: "rp_sandgem_town", name: "Sandgem Town", order: 3 },
@@ -583,6 +593,7 @@ const GAME_STORMSILVER: NuzlockeGame = {
   name: "Pokémon Storm Silver",
   generation: 4,
   routes: [
+    { id: "stss_starter", name: "Starter", order: 0 },
     { id: "stss_new_bark_town", name: "New Bark Town", order: 1 },
     { id: "stss_route_29", name: "Route 29", order: 2 },
     { id: "stss_cherrygrove_city", name: "Cherrygrove City", order: 3 },
@@ -650,6 +661,7 @@ const GAME_INCLEMENTEMERALD: NuzlockeGame = {
   name: "Pokémon Inclement Emerald",
   generation: 3,
   routes: [
+    { id: "ie_starter", name: "Starter", order: 0 },
     { id: "ie_littleroot_town", name: "Littleroot Town", order: 1 },
     { id: "ie_route_101", name: "Route 101", order: 2 },
     { id: "ie_oldale_town", name: "Oldale Town", order: 3 },

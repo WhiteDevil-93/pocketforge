@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair, Dices } from 'lucide-react';
+import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair, Dices, Star } from 'lucide-react';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import { NUZLOCKE_GAMES, getGameById } from '../data/nuzlockeRoutes';
 import PokemonSprite from '../components/PokemonSprite';
@@ -23,6 +23,52 @@ async function loadEncounters(): Promise<Record<string, string[]>> {
 }
 function getEncountersForRoute(routeId: string): string[] {
   return encounterCache?.[routeId] || [];
+}
+
+// ---- Starter Pokemon by game prefix ----
+const STARTER_POKEMON: Record<string, string[]> = {
+  re: ['Bulbasaur', 'Charmander', 'Squirtle'],
+  bu: ['Bulbasaur', 'Charmander', 'Squirtle'],
+  ye: ['Bulbasaur', 'Charmander', 'Squirtle', 'Pikachu'],
+  fr: ['Bulbasaur', 'Charmander', 'Squirtle'],
+  lg: ['Bulbasaur', 'Charmander', 'Squirtle'],
+  go: ['Chikorita', 'Cyndaquil', 'Totodile'],
+  si: ['Chikorita', 'Cyndaquil', 'Totodile'],
+  cr: ['Chikorita', 'Cyndaquil', 'Totodile'],
+  hg: ['Chikorita', 'Cyndaquil', 'Totodile'],
+  ss: ['Chikorita', 'Cyndaquil', 'Totodile'],
+  ru: ['Treecko', 'Torchic', 'Mudkip'],
+  sa: ['Treecko', 'Torchic', 'Mudkip'],
+  em: ['Treecko', 'Torchic', 'Mudkip'],
+  or: ['Treecko', 'Torchic', 'Mudkip'],
+  as: ['Treecko', 'Torchic', 'Mudkip'],
+  di: ['Turtwig', 'Chimchar', 'Piplup'],
+  pe: ['Turtwig', 'Chimchar', 'Piplup'],
+  pl: ['Turtwig', 'Chimchar', 'Piplup'],
+  bd: ['Turtwig', 'Chimchar', 'Piplup'],
+  sp: ['Turtwig', 'Chimchar', 'Piplup'],
+  bl: ['Snivy', 'Tepig', 'Oshawott'],
+  wh: ['Snivy', 'Tepig', 'Oshawott'],
+  b2: ['Snivy', 'Tepig', 'Oshawott'],
+  w2: ['Snivy', 'Tepig', 'Oshawott'],
+  px: ['Chespin', 'Fennekin', 'Froakie'],
+  py: ['Chespin', 'Fennekin', 'Froakie'],
+  mo: ['Rowlet', 'Litten', 'Popplio'],
+  su: ['Rowlet', 'Litten', 'Popplio'],
+  us: ['Rowlet', 'Litten', 'Popplio'],
+  um: ['Rowlet', 'Litten', 'Popplio'],
+  sw: ['Grookey', 'Scorbunny', 'Sobble'],
+  sh: ['Grookey', 'Scorbunny', 'Sobble'],
+  sv: ['Sprigatito', 'Fuecoco', 'Quaxly'],
+  vi: ['Sprigatito', 'Fuecoco', 'Quaxly'],
+  rr: ['Bulbasaur', 'Charmander', 'Squirtle'],
+  rp: ['Turtwig', 'Chimchar', 'Piplup'],
+  stss: ['Chikorita', 'Cyndaquil', 'Totodile'],
+  ie: ['Treecko', 'Torchic', 'Mudkip'],
+};
+function getStartersForRoute(routeId: string): string[] {
+  const prefix = routeId.split('_')[0];
+  return routeId.endsWith('_starter') ? (STARTER_POKEMON[prefix] || []) : [];
 }
 
 // ---- Stat Card for Run List ----
@@ -66,15 +112,17 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
   const [teraSpecies, setTeraSpecies] = useState(teraRaid?.species || '');
   const [teraStatus, setTeraStatus] = useState<TeraRaidDen['status']>(teraRaid?.status || 'caught');
   const isPaldea = route.id.startsWith('sv_') || route.id.startsWith('vi_');
+  const isStarter = route.id.endsWith('_starter');
   const sc: Record<string, string> = { caught: '#22C55E', dead: '#EF4444', boxed: '#3B82F6', missed: '#64748B' };
   const routeEncounters: string[] = getEncountersForRoute(route.id);
+  const starterPokemon: string[] = getStartersForRoute(route.id);
 
   return (
-    <div className="bg-bg-secondary rounded-xl border border-border-subtle overflow-hidden">
+    <div className={`rounded-xl border overflow-hidden ${isStarter ? 'bg-amber-500/5 border-amber-500/20' : 'bg-bg-secondary border-border-subtle'}`}>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 text-left">
         <div className="flex items-center gap-3 min-w-0">
-          <MapPin size={16} className="text-text-tertiary shrink-0" />
-          <span className="text-body text-text-primary truncate">{route.name}</span>
+          {isStarter ? <Star size={16} className="text-amber-500 shrink-0" /> : <MapPin size={16} className="text-text-tertiary shrink-0" />}
+          <span className={`text-body truncate ${isStarter ? 'font-bold text-amber-600' : 'text-text-primary'}`}>{route.name}</span>
           {encounter && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sc[encounter.status] || '#64748B' }} />}
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -86,13 +134,13 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
         {open && (
           <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
             <div className="px-3 pb-3 space-y-2">
-              {routeEncounters.length > 0 && (
+              {(routeEncounters.length > 0 || starterPokemon.length > 0) && (
                 <div>
-                  <p className="text-caption text-text-tertiary mb-1.5">Available Encounters</p>
+                  <p className={`text-caption mb-1.5 ${isStarter ? 'text-amber-500 font-medium' : 'text-text-tertiary'}`}>{isStarter ? 'Choose Your Starter' : 'Available Encounters'}</p>
                   <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                    {routeEncounters.map((sp) => (
+                    {(starterPokemon.length > 0 ? starterPokemon : routeEncounters).map((sp) => (
                       <button key={sp} onClick={() => setSpecies(sp)}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${species === sp ? 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${species === sp ? (isStarter ? 'bg-amber-500/20 text-amber-600 border border-amber-500/30' : 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30') : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>
                         <PokemonSprite name={sp} size={20} />
                         <span className="truncate max-w-[80px]">{sp}</span>
                       </button>
