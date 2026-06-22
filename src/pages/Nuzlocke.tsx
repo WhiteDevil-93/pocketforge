@@ -365,7 +365,7 @@ function VSComparison({ boss, teamEncounters, onClose }: { boss: any; teamEncoun
 }
 
 // ---- Boss Card ----
-function BossCard({ boss, teamTypes, teamEncounters, onVS }: { boss: any; teamTypes: string[]; teamEncounters: NuzlockeEncounter[]; onVS: (b: any) => void }) {
+function BossCard({ boss, teamTypes, onVS }: { boss: any; teamTypes: string[]; onVS: (b: any) => void }) {
   const [open, setOpen] = useState(false);
   const eff = useMemo(() => { if (!teamTypes.length) return null; return getEffectiveness(boss.type.toLowerCase(), teamTypes); }, [boss.type, teamTypes]);
   const category = getBossCategory(boss);
@@ -701,7 +701,7 @@ export default function Nuzlocke() {
                 ))}
               </div>
               {filteredBosses.map((b) => (
-                <BossCard key={b.id} boss={b} teamTypes={teamTypes} teamEncounters={currentRun.encounters} onVS={setVsBoss} />
+                <BossCard key={b.id} boss={b} teamTypes={teamTypes} onVS={setVsBoss} />
               ))}
               {filteredBosses.length === 0 && <p className="text-sm text-text-tertiary text-center py-8">No bosses in this category</p>}
             </motion.div>
