@@ -10,6 +10,8 @@ export interface NuzlockeEncounter {
   species: string;
   nickname: string;
   status: 'caught' | 'dead' | 'boxed' | 'missed';
+  nature?: string;
+  evolvedSpecies?: string;
 }
 
 export interface TeraRaidDen {

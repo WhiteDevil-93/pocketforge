@@ -71,6 +71,9 @@ function getStartersForRoute(routeId: string): string[] {
   return routeId.endsWith('_starter') ? (STARTER_POKEMON[prefix] || []) : [];
 }
 
+// ---- Natures ----
+const NATURES = ['Adamant', 'Bashful', 'Bold', 'Brave', 'Calm', 'Careful', 'Docile', 'Gentle', 'Hardy', 'Hasty', 'Impish', 'Jolly', 'Lax', 'Lonely', 'Mild', 'Modest', 'Naive', 'Naughty', 'Quiet', 'Quirky', 'Rash', 'Relaxed', 'Sassy', 'Serious', 'Timid'];
+
 // ---- Stat Card for Run List ----
 function RunCard({ run, isActive, onSelect, onDelete }: { run: any; isActive: boolean; onSelect: () => void; onDelete: () => void }) {
   const game = getGameById(run.gameId);
@@ -101,7 +104,7 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
   route: any;
   encounter?: any;
   teraRaid?: TeraRaidDen;
-  onUpdate: (s: string, n: string, st: string) => void;
+  onUpdate: (s: string, n: string, st: string, nat: string, ev: string) => void;
   onTeraRoll: () => void;
   onTeraUpdate: (species: string, status: TeraRaidDen['status']) => void;
 }) {
@@ -109,6 +112,8 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
   const [species, setSpecies] = useState(encounter?.species || '');
   const [nickname, setNickname] = useState(encounter?.nickname || '');
   const [status, setStatus] = useState(encounter?.status || 'caught');
+  const [nature, setNature] = useState(encounter?.nature || '');
+  const [evolvedSpecies, setEvolvedSpecies] = useState(encounter?.evolvedSpecies || '');
   const [teraSpecies, setTeraSpecies] = useState(teraRaid?.species || '');
   const [teraStatus, setTeraStatus] = useState<TeraRaidDen['status']>(teraRaid?.status || 'caught');
   const isPaldea = route.id.startsWith('sv_') || route.id.startsWith('vi_');
@@ -116,6 +121,7 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
   const sc: Record<string, string> = { caught: '#22C55E', dead: '#EF4444', boxed: '#3B82F6', missed: '#64748B' };
   const routeEncounters: string[] = getEncountersForRoute(route.id);
   const starterPokemon: string[] = getStartersForRoute(route.id);
+  const displaySpecies = evolvedSpecies || species;
 
   return (
     <div className={`rounded-xl border overflow-hidden ${isStarter ? 'bg-amber-500/5 border-amber-500/20' : 'bg-bg-secondary border-border-subtle'}`}>
@@ -126,7 +132,13 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
           {encounter && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sc[encounter.status] || '#64748B' }} />}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {encounter?.species && <PokemonSprite name={encounter.species} size={28} />}
+          {encounter?.species && (
+            <div className="flex items-center gap-1.5">
+              {encounter?.evolvedSpecies && <span className="text-caption text-text-tertiary italic">{encounter.species} &rarr;</span>}
+              <PokemonSprite name={displaySpecies} size={28} />
+              {encounter?.nature && <span className="text-caption px-1.5 py-0.5 rounded bg-bg-tertiary text-text-secondary">{encounter.nature}</span>}
+            </div>
+          )}
           {open ? <ChevronUp size={16} className="text-text-tertiary" /> : <ChevronDown size={16} className="text-text-tertiary" />}
         </div>
       </button>
@@ -189,12 +201,32 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
               </div>
               <div className="flex gap-2">
                 {(['caught', 'dead', 'boxed', 'missed'] as const).map((s) => (
-                  <button key={s} onClick={() => { setStatus(s); onUpdate(species, nickname, s); }}
+                  <button key={s} onClick={() => setStatus(s)}
                     className={`flex-1 h-8 rounded-lg text-xs font-medium capitalize transition-colors ${status === s ? 'text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}
                     style={status === s ? { backgroundColor: sc[s] } : {}}>{s}</button>
                 ))}
               </div>
-              <button onClick={() => onUpdate(species, nickname, status)} className="w-full h-10 rounded-lg bg-accent-primary text-white text-sm font-medium active:scale-[0.98] transition-transform">Save</button>
+
+              {/* Nature */}
+              <select value={nature} onChange={(e) => setNature(e.target.value)}
+                className="w-full h-10 px-3 rounded-lg bg-bg-tertiary border border-border-subtle text-text-primary text-sm focus:border-accent-primary focus:outline-none">
+                <option value="">Nature (optional)</option>
+                {NATURES.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+
+              {/* Evolution */}
+              {species && (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center gap-2 px-3 h-10 rounded-lg bg-bg-tertiary border border-border-subtle">
+                    <span className="text-caption text-text-tertiary">Evolved:</span>
+                    <input type="text" value={evolvedSpecies} onChange={(e) => setEvolvedSpecies(e.target.value)} placeholder={species}
+                      className="flex-1 bg-transparent text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none" />
+                  </div>
+                  {evolvedSpecies && <PokemonSprite name={evolvedSpecies} size={32} />}
+                </div>
+              )}
+
+              <button onClick={() => onUpdate(species, nickname, status, nature, evolvedSpecies)} className="w-full h-10 rounded-lg bg-accent-primary text-white text-sm font-medium active:scale-[0.98] transition-transform">Save</button>
             </div>
           </motion.div>
         )}
@@ -271,15 +303,16 @@ export default function Nuzlocke() {
 
   const currentRun = runs.find((r) => r.id === currentRunId);
   const game = currentRun ? getGameById(currentRun.gameId) : null;
-  const teamTypes = useMemo(() => currentRun ? currentRun.encounters.filter((e) => e.status === 'caught' && e.species).map((e) => e.species) : [], [currentRun]);
+  const teamTypes = useMemo(() => currentRun ? currentRun.encounters.filter((e) => e.status === 'caught' && e.species).map((e) => e.evolvedSpecies || e.species) : [], [currentRun]);
 
-  const handleUpdate = (routeId: string, sp: string, nick: string, st: string) => {
+  const handleUpdate = (routeId: string, sp: string, nick: string, st: string, nat: string, ev: string) => {
     if (!currentRunId) return;
     const status = st as NuzlockeEncounter['status'];
     if (!sp.trim()) { removeEncounter(currentRunId, routeId); return; }
     const ex = currentRun?.encounters.find((e) => e.routeId === routeId);
-    if (ex) updateEncounter(currentRunId, routeId, { species: sp, nickname: nick, status });
-    else addEncounter(currentRunId, { routeId, species: sp, nickname: nick, status });
+    const updates: Partial<NuzlockeEncounter> = { species: sp, nickname: nick, status, nature: nat || undefined, evolvedSpecies: ev || undefined };
+    if (ex) updateEncounter(currentRunId, routeId, updates);
+    else addEncounter(currentRunId, { routeId, species: sp, nickname: nick, status, nature: nat || undefined, evolvedSpecies: ev || undefined });
   };
 
   const handleTeraRoll = (routeId: string) => {
@@ -390,7 +423,7 @@ export default function Nuzlocke() {
               {game?.routes.map((r) => {
                 const enc = currentRun.encounters.find((e) => e.routeId === r.id);
                 const teraRaid = currentRun.teraRaids.find((t) => t.routeId === r.id);
-                return <RouteRow key={r.id} route={r} encounter={enc} teraRaid={teraRaid} onUpdate={(sp, nick, st) => handleUpdate(r.id, sp, nick, st)} onTeraRoll={() => handleTeraRoll(r.id)} onTeraUpdate={(sp, st) => handleTeraUpdate(r.id, sp, st)} />;
+                return <RouteRow key={r.id} route={r} encounter={enc} teraRaid={teraRaid} onUpdate={(sp, nick, st, nat, ev) => handleUpdate(r.id, sp, nick, st, nat, ev)} onTeraRoll={() => handleTeraRoll(r.id)} onTeraUpdate={(sp, st) => handleTeraUpdate(r.id, sp, st)} />;
               })}
             </motion.div>
           ) : (
