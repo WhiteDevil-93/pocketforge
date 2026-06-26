@@ -5,10 +5,10 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Search, Settings, Plus, FolderOpen, ChevronDown, ChevronRight,
+  Search, Settings, Plus, FolderOpen, ChevronDown,
   Users, AlertTriangle, Check, Zap, BookOpen, Shield,
-  Wrench, Calculator, Crosshair, BarChart3, Heart, Sparkles,
-  TrendingUp, Trophy, Swords, ArrowRight
+  Wrench, Calculator, Crosshair, Heart, Sparkles,
+  TrendingUp, ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { springTap, transitionFast } from '../lib/motion';
