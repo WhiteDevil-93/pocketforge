@@ -33,6 +33,9 @@ export {
   normalizeSlug,
 } from './championsLegality';
 
+// Pikalytics usage data
+export { PIKALYTICS_TOP_20, PIKALYTICS_TEAM_CORES, PIKALYTICS_DETAILS, getPikalyticsData, getPikalyticsRank, getPikalyticsWinrate } from './pikalyticsMeta';
+
 // Mega Evolution data
 export { MEGA_DATA, getMegaByStone, getMegaByBase, isMegaStone, getAllMegaStones } from './megaData';
 
