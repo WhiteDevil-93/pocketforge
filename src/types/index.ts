@@ -54,6 +54,7 @@ export interface Team {
   updatedAt: string;      // ISO date
   isValid: boolean;
   validationErrors?: string[];
+  record?: { wins: number; losses: number; draws: number };
 }
 
 // ---- Move -------------------------------------------------------------------

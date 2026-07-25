@@ -27,6 +27,7 @@ import {
   getTeamBalanceScore,
   getCoverageGaps,
 } from '../utils/typeChart';
+import { analyzeTeamSynergy } from '../utils/synergyAnalyzer';
 import { getPokemonByName } from '../data/pokemonData';
 import { TYPE_NAMES, getEffectiveness } from '../data/typesData';
 import { calculateStat } from '../utils/statCalc';
@@ -766,7 +767,15 @@ function analyzeTeam(team: Team): AnalysisResult {
     });
   }
 
-  // Speed control suggestion
+  // Synergy suggestions
+  const synergyReport = analyzeTeamSynergy(team);
+  for (const s of synergyReport.suggestions) {
+    suggestions.push({
+      type: 'info',
+      title: 'Synergy Recommendation',
+      description: s,
+    });
+  }
   if (speedControlCount === 0 && team.pokemon.length >= 4) {
     suggestions.push({
       type: 'info',

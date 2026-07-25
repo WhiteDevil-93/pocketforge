@@ -5,6 +5,8 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair, Dices, Star, Search, Zap, Target, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { useStore } from '../store/useStore';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import { NUZLOCKE_GAMES, getGameById } from '../data/nuzlockeRoutes';
 import PokemonSprite from '../components/PokemonSprite';
@@ -12,6 +14,20 @@ import TypeBadge from '../components/TypeBadge';
 import { getEffectiveness } from '../data/typesData';
 import { getAllPokemonNames, getPokemonByName } from '../data/pokemonData';
 import type { NuzlockeEncounter, TeraRaidDen, NuzlockeRun } from '../store/useNuzlockeStore';
+
+function isDupesLine(speciesName: string, encounters: NuzlockeEncounter[]): boolean {
+  if (!speciesName) return false;
+  const targetSpec = getPokemonByName(speciesName);
+  const targetBase = targetSpec?.name.toLowerCase() || speciesName.toLowerCase();
+
+  return encounters.some((e) => {
+    if (e.status !== 'caught' && e.status !== 'boxed') return false;
+    const caughtSpec = getPokemonByName(e.evolvedSpecies || e.species);
+    const caughtBase = caughtSpec?.name.toLowerCase() || e.species.toLowerCase();
+    const prevo = (caughtSpec as unknown as { prevo?: string })?.prevo;
+    return targetBase === caughtBase || (prevo && prevo.toLowerCase() === targetBase);
+  });
+}
 
 // ---- Lazy-loaded encounter data ----
 let encounterCache: Record<string, string[]> | null = null;
@@ -157,10 +173,11 @@ function RunCard({ run, isActive, onSelect, onDelete }: { run: NuzlockeRun; isAc
 }
 
 // ---- Route Row ----
-function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpdate }: {
+function RouteCard({ route, encounter, teraRaid, allEncounters = [], onUpdate, onTeraRoll, onTeraUpdate }: {
   route: { id: string; name: string };
   encounter?: NuzlockeEncounter;
   teraRaid?: TeraRaidDen;
+  allEncounters?: NuzlockeEncounter[];
   onUpdate: (s: string, n: string, st: string, nat: string, ev: string) => void;
   onTeraRoll: () => void;
   onTeraUpdate: (species: string, status: TeraRaidDen['status']) => void;
@@ -207,13 +224,17 @@ function RouteRow({ route, encounter, teraRaid, onUpdate, onTeraRoll, onTeraUpda
                 <div>
                   <p className={`text-caption mb-1.5 ${isStarter ? 'text-amber-500 font-medium' : 'text-text-tertiary'}`}>{isStarter ? 'Choose Your Starter' : 'Available Encounters'}</p>
                   <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                    {(starterPokemon.length > 0 ? starterPokemon : routeEncounters).map((sp) => (
-                      <button key={sp} onClick={() => setSpecies(sp)}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${species === sp ? (isStarter ? 'bg-amber-500/20 text-amber-600 border border-amber-500/30' : 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30') : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>
-                        <PokemonSprite name={sp} size={20} />
-                        <span className="truncate max-w-[80px]">{sp}</span>
-                      </button>
-                    ))}
+                    {(starterPokemon.length > 0 ? starterPokemon : routeEncounters).map((sp) => {
+                      const dupes = isDupesLine(sp, allEncounters);
+                      return (
+                        <button key={sp} onClick={() => setSpecies(sp)}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-colors ${species === sp ? (isStarter ? 'bg-amber-500/20 text-amber-600 border border-amber-500/30' : 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30') : 'bg-bg-tertiary text-text-secondary border border-border-subtle'} ${dupes ? 'opacity-60' : ''}`}>
+                          <PokemonSprite name={sp} size={20} />
+                          <span className="truncate max-w-[80px]">{sp}</span>
+                          {dupes && <span className="text-[9px] font-bold text-amber-500 px-1 rounded bg-amber-500/10">Dupes</span>}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -450,6 +471,10 @@ function PokemonCard({ encounter }: { encounter: NuzlockeEncounter }) {
 
 // ---- Main Page ----
 export default function Nuzlocke() {
+  const navigate = useNavigate();
+  const importTeam = useStore((s) => s.importTeam);
+  const setCurrentTeam = useStore((s) => s.setCurrentTeam);
+
   const runs = useNuzlockeStore((s) => s.runs);
   const currentRunId = useNuzlockeStore((s) => s.currentRunId);
   const createRun = useNuzlockeStore((s) => s.createRun);
@@ -460,6 +485,41 @@ export default function Nuzlocke() {
   const removeEncounter = useNuzlockeStore((s) => s.removeEncounter);
   const addTeraRaid = useNuzlockeStore((s) => s.addTeraRaid);
   const updateTeraRaid = useNuzlockeStore((s) => s.updateTeraRaid);
+
+  const currentRun = runs.find((r) => r.id === currentRunId);
+
+  const handleExportPartyToBuilder = useCallback(() => {
+    if (!currentRun) return;
+    const caughtEncounters = currentRun.encounters.filter((e) => e.status === 'caught' && e.species);
+    if (caughtEncounters.length === 0) return;
+
+    const pokemonList = caughtEncounters.slice(0, 6).map((e) => {
+      const spec = e.evolvedSpecies || e.species;
+      return {
+        id: crypto.randomUUID(),
+        species: spec,
+        nickname: e.nickname || spec,
+        level: 50,
+        gender: '' as const,
+        shiny: false,
+        nature: e.nature || 'Serious',
+        moves: [],
+        ability: '',
+        item: '',
+        teraType: '',
+        evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+        ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+      };
+    });
+
+    const teamId = importTeam({
+      name: `${currentRun.name} Party`,
+      format: 'gen9ou',
+      pokemon: pokemonList,
+    });
+    setCurrentTeam(teamId);
+    navigate(`/builder/${teamId}`);
+  }, [currentRun, importTeam, setCurrentTeam, navigate]);
 
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
@@ -480,7 +540,6 @@ export default function Nuzlocke() {
   const [showCustom, setShowCustom] = useState(false);
   const [customName, setCustomName] = useState('');
 
-  const currentRun = runs.find((r) => r.id === currentRunId);
   const game = currentRun ? getGameById(currentRun.gameId) : null;
   const teamTypes = useMemo(() => currentRun ? currentRun.encounters.filter((e) => e.status === 'caught' && e.species).map((e) => e.evolvedSpecies || e.species) : [], [currentRun]);
 
@@ -610,6 +669,8 @@ export default function Nuzlocke() {
   const boxMons = currentRun.encounters.filter((e) => e.status === 'boxed');
   const graveMons = currentRun.encounters.filter((e) => e.status === 'dead');
 
+  const upcomingBoss = game?.bosses?.[0] || null;
+
   return (
     <div className="min-h-full flex flex-col">
       {/* Header */}
@@ -622,11 +683,26 @@ export default function Nuzlocke() {
             </div>
             <p className="text-caption text-text-secondary ml-7">{game?.name}</p>
           </div>
+          {alive > 0 && (
+            <button
+              onClick={handleExportPartyToBuilder}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent-primary/15 text-accent-primary text-xs font-medium hover:bg-accent-primary/25 transition-colors"
+            >
+              <ArrowRight size={14} /> To Builder
+            </button>
+          )}
         </div>
-        <div className="flex gap-4 mt-2 ml-7">
-          <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={14} /> {alive}</span>
-          <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><Skull size={14} /> {dead}</span>
-          <span className="text-caption flex items-center gap-1" style={{ color: '#3B82F6' }}><Archive size={14} /> {boxed}</span>
+        <div className="flex items-center justify-between mt-2 ml-7">
+          <div className="flex gap-4">
+            <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={14} /> {alive}</span>
+            <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><Skull size={14} /> {dead}</span>
+            <span className="text-caption flex items-center gap-1" style={{ color: '#3B82F6' }}><Archive size={14} /> {boxed}</span>
+          </div>
+          {upcomingBoss && (
+            <span className="text-caption font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 flex items-center gap-1">
+              <Zap size={12} /> Cap: Lv.{upcomingBoss.levelCap}
+            </span>
+          )}
         </div>
       </div>
 
@@ -685,7 +761,7 @@ export default function Nuzlocke() {
 
               {filteredRoutes.map((r) => (
                 <div key={r.id} id={`route-${r.id}`}>
-                  <RouteRow route={r} encounter={currentRun.encounters.find((e) => e.routeId === r.id)} teraRaid={currentRun.teraRaids.find((t) => t.routeId === r.id)} onUpdate={(sp, nick, st, nat, ev) => handleUpdate(r.id, sp, nick, st, nat, ev)} onTeraRoll={() => handleTeraRoll(r.id)} onTeraUpdate={(sp, st) => handleTeraUpdate(r.id, sp, st)} />
+                  <RouteCard route={r} encounter={currentRun.encounters.find((e) => e.routeId === r.id)} teraRaid={currentRun.teraRaids.find((t) => t.routeId === r.id)} allEncounters={currentRun.encounters} onUpdate={(sp, nick, st, nat, ev) => handleUpdate(r.id, sp, nick, st, nat, ev)} onTeraRoll={() => handleTeraRoll(r.id)} onTeraUpdate={(sp, st) => handleTeraUpdate(r.id, sp, st)} />
                 </div>
               ))}
               {filteredRoutes.length === 0 && <p className="text-sm text-text-tertiary text-center py-8">No routes match your search</p>}

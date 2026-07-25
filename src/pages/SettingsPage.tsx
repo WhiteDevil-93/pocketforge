@@ -497,9 +497,55 @@ export default function SettingsPage() {
     input.click();
   }, []);
 
+  // Export Full Backup
+  const handleExportAllData = useCallback(() => {
+    const pfStorage = localStorage.getItem('pocketforge-storage');
+    const nuzlockeStorage = localStorage.getItem('pocketforge-nuzlocke-storage');
+    const fullBackup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      store: pfStorage ? JSON.parse(pfStorage) : null,
+      nuzlocke: nuzlockeStorage ? JSON.parse(nuzlockeStorage) : null,
+    };
+    const blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pocketforge-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExportMessage('Full App Backup downloaded successfully!');
+    setTimeout(() => setExportMessage(''), 3000);
+  }, []);
+
+  // Import Full Backup
+  const handleImportAllData = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (json.store) {
+          localStorage.setItem('pocketforge-storage', typeof json.store === 'string' ? json.store : JSON.stringify(json.store));
+        }
+        if (json.nuzlocke) {
+          localStorage.setItem('pocketforge-nuzlocke-storage', typeof json.nuzlocke === 'string' ? json.nuzlocke : JSON.stringify(json.nuzlocke));
+        }
+        setExportMessage('Backup restored! Reloading app...');
+        setTimeout(() => window.location.reload(), 1200);
+      } catch {
+        setExportMessage('Invalid backup JSON file.');
+        setTimeout(() => setExportMessage(''), 3000);
+      }
+    };
+    reader.readAsText(file);
+  }, []);
+
   // Clear all data
   const handleClearAll = useCallback(() => {
     localStorage.removeItem('pocketforge-storage');
+    localStorage.removeItem('pocketforge-nuzlocke-storage');
     window.location.reload();
   }, []);
 
@@ -605,19 +651,46 @@ export default function SettingsPage() {
             icon={Download}
             iconColor="#3B82F6"
             label="Export All Teams"
-            subtitle="Download as JSON file"
+            subtitle="Download teams as JSON file"
             rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
             onClick={handleExport}
             disabled={teams.length === 0}
           />
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow
+            icon={Download}
+            iconColor="#8B5CF6"
+            label="Full App Backup"
+            subtitle="Export teams, custom formats & Nuzlocke runs"
+            rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
+            onClick={handleExportAllData}
+          />
+          <div className="h-px bg-border-subtle mx-4" />
+          <SettingsRow
             icon={Upload}
             iconColor="#06B6D4"
             label="Import Teams from File"
-            subtitle="JSON or backup file"
+            subtitle="JSON team file"
             rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
             onClick={handleImport}
+          />
+          <div className="h-px bg-border-subtle mx-4" />
+          <SettingsRow
+            icon={Upload}
+            iconColor="#10B981"
+            label="Restore Full Backup"
+            subtitle="Restore teams & Nuzlocke runs (.json)"
+            rightElement={
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={handleImportAllData}
+                />
+                <ChevronRight size={16} className="text-text-tertiary" />
+              </label>
+            }
           />
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow
