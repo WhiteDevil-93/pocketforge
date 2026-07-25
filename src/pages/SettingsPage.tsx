@@ -118,9 +118,7 @@ function FormatPickerSheet({
 }) {
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    if (isOpen) setSearch('');
-  }, [isOpen]);
+  if (!isOpen) return null;
 
   const filteredFormats = search
     ? FORMATS.filter(
@@ -236,9 +234,7 @@ function ClearDataDialog({
   const [confirmText, setConfirmText] = useState('');
   const isConfirmed = confirmText === 'DELETE';
 
-  useEffect(() => {
-    if (isOpen) setConfirmText('');
-  }, [isOpen]);
+  if (!isOpen) return null;
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Clear All Data?" showSearch={false}>
@@ -361,22 +357,18 @@ function CreditsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 // ---- Storage Bar Component -------------------------------------------------
 
 function StorageBar() {
-  const [usage, setUsage] = useState(0);
-
-  useEffect(() => {
-    // Calculate localStorage usage
+  const [usage] = useState(() => {
     let total = 0;
-    for (const key in localStorage) {
-      if (localStorage.hasOwnProperty(key)) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
         total += localStorage.getItem(key)?.length || 0;
       }
     }
-    // Approximate bytes (2 bytes per char)
     const bytes = total * 2;
-    // localStorage limit is typically ~5MB
     const limit = 5 * 1024 * 1024;
-    setUsage((bytes / limit) * 100);
-  }, []);
+    return (bytes / limit) * 100;
+  });
 
   const mbUsed = ((usage / 100) * 5).toFixed(1);
 

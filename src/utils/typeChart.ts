@@ -10,6 +10,7 @@ import { getPokemonByName } from '../data/pokemonData';
  * Get offensive type coverage for a single Pokemon's moves
  */
 export function getMoveCoverage(_moves: string[]): Record<string, boolean> {
+  void _moves;
   const coverage: Record<string, boolean> = {};
   for (const type of TYPE_NAMES) {
     coverage[type] = false;

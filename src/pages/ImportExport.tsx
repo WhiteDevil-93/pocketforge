@@ -199,7 +199,6 @@ export default function ImportExport() {
 
   // Export state
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
-  const [exportText, setExportText] = useState('');
   const [copied, setCopied] = useState(false);
 
   // Toast
@@ -218,26 +217,17 @@ export default function ImportExport() {
 
   // ---- Export text generation ----------------------------------------------
 
+  const activeSelectedTeamId = selectedTeamId || teams[0]?.id || '';
+
   const selectedTeam = useMemo(
-    () => teams.find((t) => t.id === selectedTeamId),
-    [teams, selectedTeamId]
+    () => teams.find((t) => t.id === activeSelectedTeamId),
+    [teams, activeSelectedTeamId]
   );
 
-  useEffect(() => {
-    if (selectedTeam) {
-      const text = exportTeamToPSFormat(selectedTeam);
-      setExportText(text);
-    } else {
-      setExportText('');
-    }
-  }, [selectedTeam]);
-
-  // Set default selected team
-  useEffect(() => {
-    if (teams.length > 0 && !selectedTeamId) {
-      setSelectedTeamId(teams[0].id);
-    }
-  }, [teams, selectedTeamId]);
+  const exportText = useMemo(
+    () => (selectedTeam ? exportTeamToPSFormat(selectedTeam) : ''),
+    [selectedTeam]
+  );
 
   // ---- Import handlers -----------------------------------------------------
 
@@ -582,8 +572,10 @@ export default function ImportExport() {
                     </label>
                     <div className="relative">
                       <select
-                        value={selectedTeamId}
+                        value={activeSelectedTeamId}
                         onChange={(e) => setSelectedTeamId(e.target.value)}
+                        title="Select Team"
+                        aria-label="Select Team"
                         className="w-full h-[48px] px-4 pr-10 rounded-card-md bg-bg-tertiary border border-border-subtle font-body text-text-primary appearance-none outline-none focus:border-accent-primary/50"
                       >
                         {teams.map((team) => (
@@ -608,6 +600,9 @@ export default function ImportExport() {
                       <textarea
                         value={exportText}
                         readOnly
+                        title="Export Preview"
+                        aria-label="Export Preview"
+                        placeholder="Export preview"
                         className="w-full min-h-[240px] p-3 rounded-card-md bg-bg-tertiary border border-border-subtle font-jetbrains-mono text-[13px] text-text-primary resize-y outline-none"
                       />
                     </div>

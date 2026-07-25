@@ -21,7 +21,7 @@ export function parseFormatGen(format?: string): number {
   return DEFAULT_GEN;
 }
 
-/** True for Pokémon Champions regulation formats (e.g. champions-ma). */
+/** True for Pokémon Champions regulation formats (e.g. champions-mb). */
 export function isChampionsFormat(format?: string): boolean {
   return (format || '').toLowerCase().trim().startsWith('champions');
 }

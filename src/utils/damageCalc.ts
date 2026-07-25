@@ -83,7 +83,7 @@ export interface DamageResult {
 }
 
 // ---- Status Mapping ----
-function mapStatus(status: StatusCondition): any {
+function mapStatus(status: StatusCondition): 'brn' | 'par' | 'slp' | 'frz' | 'psn' | 'tox' | undefined {
   switch (status) {
     case 'burned': return 'brn';
     case 'paralyzed': return 'par';
@@ -96,7 +96,7 @@ function mapStatus(status: StatusCondition): any {
 }
 
 // ---- Weather Mapping ----
-function mapWeather(weather: Weather): any {
+function mapWeather(weather: Weather): 'Sun' | 'Rain' | 'Sand' | 'Snow' | undefined {
   switch (weather) {
     case 'sun':
     case 'harsh-sun':
@@ -114,7 +114,7 @@ function mapWeather(weather: Weather): any {
 }
 
 // ---- Terrain Mapping ----
-function mapTerrain(terrain: Terrain): any {
+function mapTerrain(terrain: Terrain): 'Electric' | 'Grassy' | 'Psychic' | 'Misty' | undefined {
   switch (terrain) {
     case 'electric': return 'Electric';
     case 'grassy': return 'Grassy';
@@ -136,14 +136,14 @@ function getEffectivenessLabel(multiplier: number): string {
 }
 
 // ---- Normalizing Damage Rolls ----
-function normalizeDamageRolls(damage: any): number[] {
+function normalizeDamageRolls(damage: number | number[] | number[][]): number[] {
   if (typeof damage === 'number') {
     return [damage];
   }
   if (Array.isArray(damage)) {
     if (damage.length === 0) return [0];
     if (Array.isArray(damage[0])) {
-      return (damage as any[]).flat().filter((x) => typeof x === 'number');
+      return (damage as (number | number[])[]).flat().filter((x): x is number => typeof x === 'number');
     }
     return damage as number[];
   }
@@ -185,7 +185,7 @@ export function calculateDamage(
     };
   }
 
-  const gen = Generations.get(genNum as any);
+  const gen = Generations.get(genNum as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9);
 
   const calcAttacker = new SmogonPokemon(gen, attacker.name || 'Gengar', {
     level: attacker.level || 50,
@@ -195,7 +195,7 @@ export function calculateDamage(
     ability: attacker.ability || undefined,
     item: attacker.item || undefined,
     status: mapStatus(attacker.status),
-    teraType: useTera ? (attacker.teraType as any) || undefined : undefined,
+    teraType: useTera ? (attacker.teraType as never) || undefined : undefined,
   });
 
   const calcDefender = new SmogonPokemon(gen, defender.name || 'Chansey', {
@@ -206,7 +206,7 @@ export function calculateDamage(
     ability: defender.ability || undefined,
     item: defender.item || undefined,
     status: mapStatus(defender.status),
-    teraType: (defender.teraType as any) || undefined,
+    teraType: (defender.teraType as never) || undefined,
   });
 
   const calcMoveNormal = new SmogonMove(gen, move.name, {
@@ -219,8 +219,9 @@ export function calculateDamage(
     isCrit: true,
   });
 
-  const attackerSide = fieldConditions.attackerSide || {} as any;
-  const defenderSide = fieldConditions.defenderSide || {} as any;
+  const fc = fieldConditions as unknown as Record<string, unknown>;
+  const attackerSide = fieldConditions.attackerSide || ({} as Partial<SideConditions>);
+  const defenderSide = fieldConditions.defenderSide || ({} as Partial<SideConditions>);
 
   const calcField = new Field({
     weather: mapWeather(fieldConditions.weather),
@@ -237,20 +238,20 @@ export function calculateDamage(
       isFriendGuard: attackerSide.friendGuard ?? false,
     },
     defenderSide: {
-      isReflect: defenderSide.reflect ?? (fieldConditions as any).reflect ?? false,
-      isLightScreen: defenderSide.lightScreen ?? (fieldConditions as any).lightScreen ?? false,
-      isAuroraVeil: defenderSide.auroraVeil ?? (fieldConditions as any).auroraVeil ?? false,
-      isSR: defenderSide.stealthRock ?? (fieldConditions as any).stealthRock ?? false,
+      isReflect: defenderSide.reflect ?? (fc.reflect as boolean | undefined) ?? false,
+      isLightScreen: defenderSide.lightScreen ?? (fc.lightScreen as boolean | undefined) ?? false,
+      isAuroraVeil: defenderSide.auroraVeil ?? (fc.auroraVeil as boolean | undefined) ?? false,
+      isSR: defenderSide.stealthRock ?? (fc.stealthRock as boolean | undefined) ?? false,
       spikes: defenderSide.spikes ?? 0,
       isTailwind: defenderSide.tailwind ?? false,
       isHelpingHand: defenderSide.helpingHand ?? false,
-      isFriendGuard: defenderSide.friendGuard ?? (fieldConditions as any).friendGuard ?? false,
+      isFriendGuard: defenderSide.friendGuard ?? (fc.friendGuard as boolean | undefined) ?? false,
     },
   });
 
-  const hasMultiscale = fieldConditions.defenderMultiscale ?? (fieldConditions as any).multiscale ?? false;
+  const hasMultiscale = fieldConditions.defenderMultiscale ?? (fc.multiscale as boolean | undefined) ?? false;
   if (hasMultiscale && calcDefender.ability !== 'Multiscale') {
-    calcDefender.ability = 'Multiscale' as any;
+    calcDefender.ability = 'Multiscale' as never;
   }
 
   let normalResult;
@@ -303,7 +304,7 @@ export function calculateDamage(
     if (ko && ko.text) {
       koChance = ko.text;
     }
-  } catch (err) {
+  } catch {
     if (maxDamage === 0) {
       koChance = 'no effect (immune)';
       description = '0 damage (immune)';
@@ -316,7 +317,9 @@ export function calculateDamage(
     if (rec && rec.text) {
       recoveryText = rec.text;
     }
-  } catch (e) {}
+  } catch {
+    /* ignore error */
+  }
 
   let recoilText = '';
   try {
@@ -324,12 +327,16 @@ export function calculateDamage(
     if (rec && rec.text) {
       recoilText = rec.text;
     }
-  } catch (e) {}
+  } catch {
+    /* ignore error */
+  }
 
   let fullDesc = '';
   try {
     fullDesc = normalResult.fullDesc();
-  } catch (e) {}
+  } catch {
+    /* ignore error */
+  }
 
   const attackerTypes = calcAttacker.types;
   const moveType = calcMoveNormal.type;

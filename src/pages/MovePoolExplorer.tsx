@@ -14,6 +14,7 @@ import {
   filterMovepool,
   getPokedexEntry,
   type AcquisitionMethod,
+  type AnnotatedMove,
 } from '../utils/movepoolQuery';
 import type { Move } from '../types';
 
@@ -27,7 +28,7 @@ export default function MovePoolExplorer() {
   const [method, setMethod] = useState<AcquisitionMethod | 'All'>('All');
   const [category, setCategory] = useState<Move['category'] | 'All'>('All');
   const [moveQuery, setMoveQuery] = useState('');
-  const [movepool, setMovepool] = useState<any[]>([]);
+  const [movepool, setMovepool] = useState<AnnotatedMove[]>([]);
 
   const searchResults = useMemo(
     () => (speciesQuery ? searchPokemon(speciesQuery) : []),
@@ -181,10 +182,11 @@ export default function MovePoolExplorer() {
               No moves match the current filters.
             </p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" role="list">
               {filtered.slice(0, 200).map((m, idx) => (
-                <motion.li
+                <motion.div
                   key={`${m.name}-${m.acquisition}`}
+                  role="listitem"
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(idx, 30) * 0.01 }}
@@ -208,9 +210,9 @@ export default function MovePoolExplorer() {
                       {m.acquisition}
                     </span>
                   </div>
-                </motion.li>
+                </motion.div>
               ))}
-            </ul>
+            </div>
           )}
           {filtered.length > 200 && (
             <p className="font-caption text-text-tertiary text-center">

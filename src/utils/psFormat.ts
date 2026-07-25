@@ -4,6 +4,7 @@
 
 import { Team as ShowdownTeam } from '@pkmn/sets';
 import { getDexForFormat, parseFormatGen } from '../lib/showdown';
+import { DEFAULT_FORMAT } from '../data/formatsData';
 import type { Team, Pokemon, EVs, IVs } from '../types';
 
 export { parseFormatGen };
@@ -11,7 +12,7 @@ export { parseFormatGen };
 /**
  * Helper to ensure a statistics object is fully populated.
  */
-function normalizeEVs(evs: any): EVs {
+function normalizeEVs(evs?: Partial<EVs> | Record<string, number> | null): EVs {
   return {
     hp: evs?.hp ?? 0,
     atk: evs?.atk ?? 0,
@@ -22,7 +23,7 @@ function normalizeEVs(evs: any): EVs {
   };
 }
 
-function normalizeIVs(ivs: any): IVs {
+function normalizeIVs(ivs?: Partial<IVs> | Record<string, number> | null): IVs {
   return {
     hp: ivs?.hp ?? 31,
     atk: ivs?.atk ?? 31,
@@ -135,7 +136,7 @@ export function importTeamFromPSFormat(text: string): Partial<Team> {
     const parsed = ShowdownTeam.import(cleanedText, genDex);
     if (parsed && parsed.team) {
       team.name = name || parsed.name || 'Imported Team';
-      team.format = format || parsed.format || 'champions-ma';
+      team.format = format || parsed.format || DEFAULT_FORMAT;
       team.pokemon = parsed.team.map((mon) => ({
         id: crypto.randomUUID(),
         species: mon.species || '',

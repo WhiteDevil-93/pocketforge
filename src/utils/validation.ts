@@ -8,11 +8,13 @@ import { getPokemonByName } from '../data/pokemonData';
 import { FORMATS } from '../data/formatsData';
 import {
   isEligibleForChampionsMA,
+  isEligibleForChampionsMB,
   isChampionsItemLegal,
   isMoveLegalForChampionsSpecies,
   isChampionsFormatId,
 } from '../data/championsLegality';
 import { isMegaStone } from '../data/megaData';
+import type { Generation } from '@pkmn/data';
 import { Dex, getGen, parseFormatGen } from '../lib/showdown';
 
 function isChampionsFormat(formatId: string): boolean {
@@ -23,7 +25,7 @@ function isChampionsFormat(formatId: string): boolean {
  * Helper to resolve the base species name to check learnsets.
  * Battle-only and Mega/Gmax forms inherit learnsets from their base species.
  */
-function getBaseSpeciesName(speciesName: string, gen: any): string {
+function getBaseSpeciesName(speciesName: string, gen: Generation): string {
   const spec = gen.species.get(speciesName) || Dex.species.get(speciesName);
   if (spec) {
     if (spec.battleOnly && typeof spec.battleOnly === 'string') {
@@ -146,8 +148,8 @@ export async function validateTeam(team: Team, formatId?: string): Promise<Valid
     const dexEntry = getPokemonByName(mon.species);
     if (!dexEntry) {
       errors.push(`Pokemon #${i + 1}: Unknown species "${mon.species}"`);
-    } else {
-      // Validate move legality using learnset API
+    } else if (!isChampionsFormat(format)) {
+      // Validate move legality using learnset API (skip for Champions — uses custom learnsets below)
       const baseSpecies = getBaseSpeciesName(mon.species, gen);
       for (const move of mon.moves) {
         if (move) {
@@ -192,7 +194,10 @@ export async function validateTeam(team: Team, formatId?: string): Promise<Valid
       if (isChampionsFormat(formatData.id)) {
         for (let i = 0; i < team.pokemon.length; i++) {
           const mon = team.pokemon[i];
-          if (!isEligibleForChampionsMA(mon.species)) {
+          const isEligible = formatData.id === 'champions-mb'
+            ? isEligibleForChampionsMB(mon.species)
+            : isEligibleForChampionsMA(mon.species);
+          if (!isEligible) {
             errors.push(`${mon.species} is not eligible for ${formatData.name}`);
           }
           if (mon.item && !isChampionsItemLegal(mon.item)) {

@@ -25,7 +25,6 @@ import {
   searchItems,
   getPokemonByName,
   getMoveByName,
-  getTypeColor,
 } from '../data';
 import BottomSheet from '../components/BottomSheet';
 import PokemonSprite from '../components/PokemonSprite';
@@ -115,6 +114,8 @@ function StatSlider({
           step={4}
           value={ev}
           onChange={(e) => onEvChange(Number(e.target.value))}
+          title={`${STAT_LABELS[stat]} EV`}
+          aria-label={`${STAT_LABELS[stat]} EV`}
           className="flex-1 h-1.5 accent-accent-primary appearance-none bg-bg-elevated rounded-full cursor-pointer"
         />
         <span className="font-mono text-[10px] text-text-secondary w-7 text-right">{ev}</span>
@@ -124,6 +125,9 @@ function StatSlider({
           max={31}
           value={iv}
           onChange={(e) => onIvChange(Math.min(31, Math.max(0, Number(e.target.value))))}
+          title={`${STAT_LABELS[stat]} IV`}
+          aria-label={`${STAT_LABELS[stat]} IV`}
+          placeholder={`${STAT_LABELS[stat]} IV`}
           className="w-9 h-6 bg-bg-elevated rounded text-center font-mono text-[10px] text-text-primary outline-none border border-border-subtle"
         />
       </div>
@@ -136,6 +140,8 @@ function LevelStepper({ level, onChange }: { level: number; onChange: (l: number
     <div className="flex items-center gap-3">
       <button
         onClick={() => onChange(Math.max(1, level - 1))}
+        title="Decrease level"
+        aria-label="Decrease level"
         className="w-8 h-8 flex items-center justify-center rounded-lg bg-bg-elevated touch-target"
       >
         <Minus size={14} className="text-text-secondary" />
@@ -146,6 +152,8 @@ function LevelStepper({ level, onChange }: { level: number; onChange: (l: number
       </div>
       <button
         onClick={() => onChange(Math.min(100, level + 1))}
+        title="Increase level"
+        aria-label="Increase level"
         className="w-8 h-8 flex items-center justify-center rounded-lg bg-bg-elevated touch-target"
       >
         <Plus size={14} className="text-text-secondary" />
@@ -478,14 +486,9 @@ export default function Calculator() {
                       onClick={() => onUpdateStatus(opt.value)}
                       className={`px-2.5 py-1 rounded-full font-micro transition-all ${
                         pokemon.status === opt.value
-                          ? 'text-white'
+                          ? 'bg-accent-primary text-white font-bold'
                           : 'bg-bg-tertiary text-text-tertiary'
                       }`}
-                      style={
-                        pokemon.status === opt.value
-                          ? { backgroundColor: opt.color }
-                          : undefined
-                      }
                     >
                       {opt.label}
                     </button>
@@ -536,6 +539,8 @@ export default function Calculator() {
           <select
             value={genNum}
             onChange={(e) => setGenNum(parseInt(e.target.value, 10))}
+            title="Generation"
+            aria-label="Generation"
             className="px-2.5 py-1 rounded-xl bg-bg-tertiary border border-border-subtle text-text-primary font-body-medium text-xs outline-none focus:border-accent-primary"
           >
             <option value={9}>Gen 9</option>
@@ -595,10 +600,7 @@ export default function Calculator() {
                 >
                   {move ? (
                     <>
-                      <div
-                        className="w-4 h-4 rounded-full shrink-0"
-                        style={{ backgroundColor: getTypeColor(move.type) }}
-                      />
+                      <div className="w-4 h-4 rounded-full shrink-0 bg-accent-primary" />
                       <div className="flex-1 text-left">
                         <div className="flex items-center gap-2">
                           <span className="font-body-medium text-text-primary">{move.name}</span>
@@ -608,10 +610,10 @@ export default function Calculator() {
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-0.5">
-                          <span className="font-micro text-text-tertiary">
+                          <span className="font-micro text-text-[#94A3B8]">
                             PWR: <span className="text-text-secondary">{move.power}</span>
                           </span>
-                          <span className="font-micro text-text-tertiary">
+                          <span className="font-micro text-text-[#94A3B8]">
                             ACC: <span className="text-text-secondary">{move.accuracy ?? '--'}%</span>
                           </span>
                         </div>
@@ -689,14 +691,9 @@ export default function Calculator() {
                           onClick={() => setField((f) => ({ ...f, terrain: opt.value }))}
                           className={`px-3 py-1.5 rounded-full font-micro transition-all ${
                             field.terrain === opt.value
-                              ? 'text-white'
+                              ? 'bg-accent-primary text-white font-bold'
                               : 'bg-bg-tertiary text-text-tertiary'
                           }`}
-                          style={
-                            field.terrain === opt.value
-                              ? { backgroundColor: opt.color }
-                              : undefined
-                          }
                         >
                           {opt.label}
                         </button>
@@ -920,10 +917,7 @@ export default function Calculator() {
                 onClick={() => selectMove(m.name)}
                 className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-bg-secondary touch-target transition-colors hover:bg-bg-elevated"
               >
-                <div
-                  className="w-4 h-4 rounded-full shrink-0"
-                  style={{ backgroundColor: getTypeColor(m.type) }}
-                />
+                <div className="w-4 h-4 rounded-full shrink-0 bg-accent-primary" />
                 <div className="flex-1 text-left">
                   <div className="flex items-center gap-2">
                     <span className="font-body-medium text-text-primary">{m.name}</span>

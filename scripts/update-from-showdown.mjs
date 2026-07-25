@@ -292,8 +292,13 @@ export const MOVES: MoveEntry[] = ${JSON.stringify(moves, null, 2)};
 
 export const MOVES_BY_ID = new Map(MOVES.map(m => [m.id, m]));
 
+const toMoveId = (name: string): string =>
+  name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+
 export function getMoveByName(name: string): MoveEntry | undefined {
-  return MOVES.find(m => m.name.toLowerCase() === name.toLowerCase().trim());
+  if (!name) return undefined;
+  const id = toMoveId(name);
+  return MOVES_BY_ID.get(id) || MOVES.find(m => toMoveId(m.name) === id);
 }
 
 export function searchMoves(query: string): MoveEntry[] {

@@ -101,6 +101,8 @@ export default function SpeedTierList() {
               <select
                 value={selectedTeamId}
                 onChange={(e) => setSelectedTeamId(e.target.value)}
+                title="Select Team"
+                aria-label="Select Team"
                 className="w-full h-[48px] px-4 rounded-card-md bg-bg-tertiary border border-border-subtle font-body text-text-primary outline-none focus:border-accent-primary/50"
               >
                 {teams.map((t) => (
@@ -166,6 +168,8 @@ export default function SpeedTierList() {
                   <select
                     value={modifiers.weather || 'none'}
                     onChange={(e) => setModifiers((m) => ({ ...m, weather: e.target.value === 'none' ? undefined : e.target.value }))}
+                    title="Active Weather"
+                    aria-label="Active Weather"
                     className="w-full h-[40px] px-3 rounded-card-md bg-bg-secondary border border-border-subtle font-body-medium text-xs text-text-primary outline-none focus:border-accent-primary"
                   >
                     <option value="none">None</option>
@@ -180,6 +184,8 @@ export default function SpeedTierList() {
                   <select
                     value={modifiers.terrain || 'none'}
                     onChange={(e) => setModifiers((m) => ({ ...m, terrain: e.target.value === 'none' ? undefined : e.target.value }))}
+                    title="Active Terrain"
+                    aria-label="Active Terrain"
                     className="w-full h-[40px] px-3 rounded-card-md bg-bg-secondary border border-border-subtle font-body-medium text-xs text-text-primary outline-none focus:border-accent-primary"
                   >
                     <option value="none">None</option>
@@ -202,10 +208,11 @@ export default function SpeedTierList() {
                   Add Pokémon to this team to see speed rankings.
                 </p>
               ) : (
-                <ol className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2" role="list">
                   {ranking.map((entry, idx) => (
-                    <motion.li
+                    <motion.div
                       key={entry.pokemon.id}
+                      role="listitem"
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.04 }}
@@ -227,9 +234,9 @@ export default function SpeedTierList() {
                       <span className="font-jetbrains-mono text-accent-primary font-bold">
                         {entry.finalSpeed}
                       </span>
-                    </motion.li>
+                    </motion.div>
                   ))}
-                </ol>
+                </div>
               )}
             </div>
 

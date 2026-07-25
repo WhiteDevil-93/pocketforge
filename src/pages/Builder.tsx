@@ -19,14 +19,14 @@ import {
 import PokemonCard from '../components/PokemonCard';
 import PokemonEditor from '../components/PokemonEditor';
 import BottomSheet from '../components/BottomSheet';
+import TypeBadge from '../components/TypeBadge';
 import { useStore } from '../store/useStore';
 import {
   getFormatById,
   getFormatsGrouped,
   getPokemonByName,
   POKEDEX,
-  getTypeColor,
-  isEligibleForChampionsMA,
+  isEligibleForChampionsFormat,
   isChampionsFormatId,
 } from '../data';
 import type { Pokemon } from '../types';
@@ -89,7 +89,7 @@ export default function Builder() {
     return () => {
       active = false;
     };
-  }, [team?.pokemon, team?.format, team?.name, updateTeam]);
+  }, [team, updateTeam]);
 
   // Memo
   const teamName = team?.name || 'Untitled Team';
@@ -112,15 +112,18 @@ export default function Builder() {
   const filteredPokemon = useMemo(() => {
     let pool = POKEDEX;
     if (isChampions) {
+      const fmt = team?.format ?? 'champions-mb';
       pool = pool.filter(
-        (p) => isEligibleForChampionsMA(p.name) || isEligibleForChampionsMA(p.sprite)
+        (p) =>
+          isEligibleForChampionsFormat(p.name, fmt) ||
+          isEligibleForChampionsFormat(p.sprite, fmt)
       );
     }
     if (!pokemonSearch) return pool.slice(0, 50);
     return pool
       .filter((p) => p.name.toLowerCase().includes(pokemonSearch.toLowerCase()))
       .slice(0, 50);
-  }, [pokemonSearch, isChampions]);
+  }, [pokemonSearch, isChampions, team?.format]);
 
   // ---- Actions ----
 
@@ -254,6 +257,8 @@ export default function Builder() {
         <div className="flex items-center justify-between h-14 px-4">
           <button
             onClick={() => navigate('/teams')}
+            title="Back to Teams"
+            aria-label="Back to Teams"
             className="w-12 h-12 flex items-center justify-center -ml-2 touch-target"
           >
             <ChevronLeft size={24} className="text-text-primary" />
@@ -270,6 +275,8 @@ export default function Builder() {
               animate={validationPulse ? { scale: [1, 1.15, 1] } : {}}
               transition={{ duration: 0.3 }}
               onClick={handleValidate}
+              title="Validate team"
+              aria-label="Validate team"
               className={`w-10 h-10 flex items-center justify-center rounded-full touch-target ${
                 team.isValid
                   ? 'bg-success/15 text-success'
@@ -286,6 +293,8 @@ export default function Builder() {
             {/* Overflow */}
             <button
               onClick={() => setShowContextMenu(true)}
+              title="More options"
+              aria-label="More options"
               className="w-10 h-10 flex items-center justify-center rounded-full touch-target"
             >
               <MoreVertical size={20} className="text-text-primary" />
@@ -315,8 +324,10 @@ export default function Builder() {
                 }}
                 autoFocus
                 maxLength={50}
-                className="flex-1 h-12 px-4 bg-bg-tertiary rounded-xl font-headline text-text-primary outline-none border border-accent-primary/50"
-                style={{ fontSize: '24px' }}
+                title="Team Name"
+                aria-label="Team Name"
+                placeholder="Team Name"
+                className="flex-1 h-12 px-4 bg-bg-tertiary rounded-xl font-headline text-text-primary outline-none border border-accent-primary/50 text-2xl"
               />
             </motion.div>
           ) : (
@@ -338,13 +349,7 @@ export default function Builder() {
           >
             <div className="flex items-center gap-2">
               {formatInfo && (
-                <span
-                  className="h-6 px-2 rounded-full font-micro font-bold uppercase flex items-center"
-                  style={{
-                    backgroundColor: `${getTypeColor('Dragon')}26`,
-                    color: getTypeColor('Dragon'),
-                  }}
-                >
+                <span className="h-6 px-2 rounded-full font-micro font-bold uppercase flex items-center bg-accent-primary/20 text-accent-primary">
                   {formatInfo.name}
                 </span>
               )}
@@ -549,15 +554,11 @@ export default function Builder() {
               onClick={() => handleSelectPokemon(p.name)}
               className="w-full h-14 flex items-center gap-3 px-3 rounded-xl hover:bg-bg-secondary transition-colors text-left touch-target"
             >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${getTypeColor(p.types[0] || 'Normal')}14` }}
-              >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-bg-tertiary">
                 <img
                   src={`https://play.pokemonshowdown.com/sprites/gen5/${p.sprite}.png`}
                   alt={p.name}
-                  className="w-9 h-9 object-contain"
-                  style={{ imageRendering: 'pixelated' }}
+                  className="w-9 h-9 object-contain [image-rendering:pixelated]"
                   loading="lazy"
                 />
               </div>
@@ -566,16 +567,7 @@ export default function Builder() {
               </div>
               <div className="flex gap-1.5">
                 {p.types.map((t) => (
-                  <span
-                    key={t}
-                    className="h-5 px-1.5 rounded-full font-micro font-bold uppercase text-[9px] flex items-center"
-                    style={{
-                      backgroundColor: `${getTypeColor(t)}26`,
-                      color: getTypeColor(t),
-                    }}
-                  >
-                    {t}
-                  </span>
+                  <TypeBadge key={t} type={t} size="sm" />
                 ))}
               </div>
             </motion.button>

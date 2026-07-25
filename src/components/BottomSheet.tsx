@@ -39,10 +39,7 @@ export default function BottomSheet({
   const viewport = useVisualViewport(isOpen);
 
   useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery('');
-      return;
-    }
+    if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -54,9 +51,11 @@ export default function BottomSheet({
   }, [isOpen]);
 
   const handleClose = useCallback(() => {
+    setSearchQuery('');
+    onSearch?.('');
     blurActiveElement();
     onClose();
-  }, [onClose]);
+  }, [onClose, onSearch]);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

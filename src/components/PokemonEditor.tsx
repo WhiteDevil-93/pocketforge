@@ -2,7 +2,7 @@
 // PocketForge — Full-Screen Pokemon Editor
 // ============================================================================
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -36,10 +36,15 @@ import {
   isMegaStone,
   getMegaByStone,
   isChampionsFormatId,
-  isEligibleForChampionsMA,
+  isEligibleForChampionsFormat,
   isChampionsItemLegal,
   getChampionsMovesForSpecies,
 } from '../data';
+import {
+  getPikalyticsData,
+  getPikalyticsRank,
+  getPikalyticsWinrate,
+} from '../data/pikalyticsMeta';
 import {
   calculateAllStats,
   getTotalEVs,
@@ -72,6 +77,8 @@ export default function PokemonEditor({
   onDelete,
   onBack,
 }: PokemonEditorProps) {
+  void _slotIndex;
+
   // ---- Local editing state ----
   const [draft, setDraft] = useState<Pokemon>({ ...pokemon });
   const [expanded, setExpanded] = useState<Record<AccordionSection, boolean>>({
@@ -93,11 +100,13 @@ export default function PokemonEditor({
   // Mega Evolution active toggle (local, not persisted directly)
   const [megaActive, setMegaActive] = useState(pokemon.megaActive || false);
 
-  // Sync draft when pokemon prop changes
-  useEffect(() => {
+  // Sync draft when pokemon prop changes during render
+  const [prevPokemon, setPrevPokemon] = useState(pokemon);
+  if (prevPokemon !== pokemon) {
+    setPrevPokemon(pokemon);
     setDraft({ ...pokemon });
     setMegaActive(pokemon.megaActive || false);
-  }, [pokemon]);
+  }
 
   const dexEntry = useMemo(
     () => getPokemonByName(draft.species),
@@ -222,16 +231,25 @@ export default function PokemonEditor({
   // Filtered lists for bottom sheets
   const isChampions = isChampionsFormatId(formatId || '');
 
+  // Pikalytics data
+  const pikaData = useMemo(() => isChampions && draft.species ? getPikalyticsData(draft.species) : null, [isChampions, draft.species]);
+  const pikaRank = useMemo(() => isChampions && draft.species ? getPikalyticsRank(draft.species) : 0, [isChampions, draft.species]);
+  const pikaWinrate = useMemo(() => isChampions && draft.species ? getPikalyticsWinrate(draft.species) : 0, [isChampions, draft.species]);
+
   const filteredPokemon = useMemo(() => {
     let pool = POKEDEX;
     if (isChampions) {
-      pool = pool.filter((p) => isEligibleForChampionsMA(p.name) || isEligibleForChampionsMA(p.sprite));
+      const fmt = formatId || 'champions-mb';
+      pool = pool.filter(
+        (p) =>
+          isEligibleForChampionsFormat(p.name, fmt) || isEligibleForChampionsFormat(p.sprite, fmt)
+      );
     }
     if (!searchQuery) return pool.slice(0, 50);
     return pool
       .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
       .slice(0, 50);
-  }, [searchQuery, isChampions]);
+  }, [searchQuery, isChampions, formatId]);
 
   const filteredMoves = useMemo(() => {
     if (sheet.type !== 'move') return [];
@@ -565,6 +583,64 @@ export default function PokemonEditor({
                     </p>
                   </motion.button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ===== PIKALYTICS META DATA ===== */}
+          {isChampions && pikaData && (
+            <div className="rounded-2xl bg-bg-secondary border border-border-subtle overflow-hidden">
+              <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-subtitle text-text-primary">Pikalytics</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-primary/10 text-accent-primary">M-B</span>
+                </div>
+                <span className="font-caption text-text-tertiary">#{pikaRank} | {pikaWinrate}% WR</span>
+              </div>
+              <div className="px-4 pb-4 space-y-3">
+                {/* Top Moves */}
+                {pikaData.moves.length > 0 && (
+                  <div>
+                    <span className="font-caption text-text-secondary block mb-1.5">Top Moves</span>
+                    <div className="space-y-1">
+                      {pikaData.moves.slice(0, 5).map((m) => (
+                        <div key={m.name} className="flex items-center gap-2">
+                          <span className="font-body text-text-primary text-sm flex-1">{m.name}</span>
+                          <div className="flex-1 h-2 bg-bg-elevated rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-accent-primary" style={{ width: `${m.usage}%` }} />
+                          </div>
+                          <span className="font-caption text-text-secondary w-12 text-right">{m.usage}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Top Items */}
+                {pikaData.items.length > 0 && (
+                  <div>
+                    <span className="font-caption text-text-secondary block mb-1.5">Top Items</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {pikaData.items.slice(0, 4).map((item) => (
+                        <span key={item.name} className="font-micro text-text-primary px-2 py-1 rounded bg-bg-tertiary border border-border-subtle">
+                          {item.name} <span className="text-text-tertiary">({item.usage}%)</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Top Teammates */}
+                {pikaData.teammates.length > 0 && (
+                  <div>
+                    <span className="font-caption text-text-secondary block mb-1.5">Common Teammates</span>
+                    <div className="flex flex-wrap gap-2">
+                      {pikaData.teammates.slice(0, 5).map((t) => (
+                        <span key={t.species} className="font-micro text-text-primary flex items-center gap-1 px-2 py-1 rounded bg-bg-tertiary">
+                          {t.species}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

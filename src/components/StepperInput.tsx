@@ -2,7 +2,7 @@
 // PocketForge — Stepper Input (EV / Level / IV)
 // ============================================================================
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Minus, Plus } from 'lucide-react';
 
@@ -27,12 +27,14 @@ export default function StepperInput({
 }: StepperInputProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(value));
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setEditValue(String(value));
+  }
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setEditValue(String(value));
-  }, [value]);
 
   const clamp = useCallback(
     (v: number) => Math.max(min, Math.min(max, v)),

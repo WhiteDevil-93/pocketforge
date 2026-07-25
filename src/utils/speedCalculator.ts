@@ -46,9 +46,9 @@ function hasIronBall(pokemon: Pokemon): boolean {
  * Returns 0 if species cannot be resolved.
  */
 export function calculateSpeed(pokemon: Pokemon, modifiers: SpeedModifiers = {}, genNum: number = 9): number {
-  const calcGen = Generations.get(genNum as any);
+  const calcGen = Generations.get(genNum as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9);
   const speciesId = (pokemon.species || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const species = calcGen.species.get(speciesId as any);
+  const species = calcGen.species.get(speciesId as never);
   if (!species || !species.name) return 0;
 
   // Compute raw stats via @smogon/calc
@@ -138,12 +138,12 @@ export function rankTeamBySpeed(
   modifiers: SpeedModifiers = {},
   genNum: number = 9
 ): PokemonWithSpeed[] {
-  const calcGen = Generations.get(genNum as any);
+  const calcGen = Generations.get(genNum as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9);
   const ranked = team.pokemon
     .filter((p) => p.species)
     .map<PokemonWithSpeed>((p) => {
       const speciesId = (p.species || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const species = calcGen.species.get(speciesId as any);
+      const species = calcGen.species.get(speciesId as never);
       const finalSpeed = calculateSpeed(p, modifiers, genNum);
       return {
         pokemon: p,

@@ -17,7 +17,7 @@ export function calculateStat(
   statName: string
 ): number {
   const gen = getGen(9);
-  const statKey = statName.toLowerCase() as any;
+  const statKey = statName.toLowerCase() as Parameters<typeof gen.stats.calc>[0];
   const natureObj = gen.natures.get(nature);
   return gen.stats.calc(statKey, baseStat, iv, ev, level, natureObj);
 }

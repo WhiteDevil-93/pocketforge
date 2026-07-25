@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Plus, Sparkles, Copy, Trash2 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import TypeBadge from './TypeBadge';
-import { getPokemonByName, getTypeColor, getItemSpriteUrl } from '../data';
+import { getPokemonByName, getTypeColor, getItemSpriteUrl, getPikalyticsRank, getPikalyticsWinrate } from '../data';
 import { calculateAllStats } from '../utils';
 import type { Pokemon } from '../types';
 
@@ -95,6 +95,16 @@ export default function PokemonCard({
             {types.map((t) => (
               <TypeBadge key={t} type={t} size="sm" />
             ))}
+            {(() => {
+              const rank = getPikalyticsRank(pokemon.species);
+              const wr = getPikalyticsWinrate(pokemon.species);
+              if (rank === 0) return null;
+              return (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent-primary/10 text-accent-primary">
+                  #{rank} | {wr}% WR
+                </span>
+              );
+            })()}
           </div>
 
           <div className="flex items-center gap-2 mt-1">

@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { getGen } from '../lib/showdown';
+import type { Generation } from '@pkmn/data';
 import type { Move, PokedexEntry } from '../types';
 
 export type AcquisitionMethod = 'Level' | 'TM' | 'Tutor' | 'Breeding' | 'Coverage';
@@ -14,7 +15,7 @@ export interface AnnotatedMove extends Move {
 /**
  * Recursively collect all move IDs and their sources for a Pokémon and its pre-evolutions.
  */
-async function collectMoveSources(speciesName: string, gen: any): Promise<Map<string, string[]>> {
+async function collectMoveSources(speciesName: string, gen: Generation): Promise<Map<string, string[]>> {
   const moveSources = new Map<string, string[]>();
   let current = gen.species.get(speciesName);
 
@@ -35,7 +36,7 @@ async function collectMoveSources(speciesName: string, gen: any): Promise<Map<st
       console.error(`Failed to load learnset for ${current.name}:`, err);
     }
     // Walk up pre-evolution chain
-    current = current.prevo ? gen.species.get(current.prevo) : null;
+    current = current.prevo ? (gen.species.get(current.prevo) ?? undefined) : undefined;
   }
 
   return moveSources;
