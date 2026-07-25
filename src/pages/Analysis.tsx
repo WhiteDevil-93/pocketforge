@@ -27,7 +27,7 @@ import {
   getTeamBalanceScore,
   getCoverageGaps,
 } from '../utils/typeChart';
-import { analyzeTeamSynergy } from '../utils/synergyAnalyzer';
+import { analyzeTeamSynergy, type SynergyReport } from '../utils/synergyAnalyzer';
 import { getPokemonByName } from '../data/pokemonData';
 import { TYPE_NAMES, getEffectiveness } from '../data/typesData';
 import { calculateStat } from '../utils/statCalc';
@@ -635,6 +635,7 @@ interface AnalysisResult {
   suggestions: { type: 'warning' | 'info' | 'success'; title: string; description: string }[];
   weaknesses: { type: string; effectiveness: number; weakCount: number; resistCount: number }[];
   resistances: { type: string; effectiveness: number }[];
+  synergyReport: SynergyReport;
 }
 
 function analyzeTeam(team: Team): AnalysisResult {
@@ -803,6 +804,7 @@ function analyzeTeam(team: Team): AnalysisResult {
     suggestions,
     weaknesses: weaknesses.slice(0, 6),
     resistances: resistances.slice(0, 6),
+    synergyReport,
   };
 }
 
@@ -1016,6 +1018,54 @@ export default function Analysis() {
                         color={role.color}
                         delay={i * 0.06}
                       />
+                    ))}
+                  </div>
+                </AccordionSection>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Type Synergy Cores */}
+          {analysis.synergyReport && (
+            <motion.div variants={itemVariants}>
+              <div className="bg-bg-secondary rounded-2xl border border-border-subtle px-4 mb-3">
+                <AccordionSection title="Type Synergy Cores">
+                  <div className="space-y-2 pb-1">
+                    {analysis.synergyReport.cores.map((core) => (
+                      <div
+                        key={core.name}
+                        className="bg-bg-tertiary rounded-xl p-3 border border-border-subtle flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-text-primary">
+                              {core.name}
+                            </span>
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                core.isComplete
+                                  ? 'bg-success/20 text-success'
+                                  : 'bg-warning/20 text-warning'
+                              }`}
+                            >
+                              {core.isComplete ? 'COMPLETE CORE' : 'INCOMPLETE'}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {core.presentTypes.map((t) => (
+                              <TypeBadge key={t} type={t} size="sm" />
+                            ))}
+                            {core.missingTypes.map((t) => (
+                              <span
+                                key={t}
+                                className="inline-flex items-center h-5 px-2 rounded-full text-[9px] font-bold uppercase tracking-wide border border-dashed border-border-active text-text-tertiary"
+                              >
+                                Missing {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </AccordionSection>

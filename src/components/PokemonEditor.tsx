@@ -17,6 +17,7 @@ import TypeBadge from './TypeBadge';
 import BottomSheet from './BottomSheet';
 import StepperInput from './StepperInput';
 import StatBar from './StatBar';
+import { calculateMinSpeedEVs } from '../utils/evOptimizer';
 import { getSetsForSpecies, type SmogonSet } from '../data/smogonSets';
 import {
   getPokemonByName,
@@ -730,17 +731,39 @@ export default function PokemonEditor({
                     {remainingEVs} EVs
                   </span>
                 </div>
-                <button
-                  onClick={() => {
-                    setDraft((prev) => ({
-                      ...prev,
-                      evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-                    }));
-                  }}
-                  className="font-caption text-danger touch-target px-2 py-1"
-                >
-                  Reset EVs
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const target = prompt('Enter target Speed stat to outspeed (e.g. 150):');
+                      if (target) {
+                        const targetNum = parseInt(target, 10);
+                        if (!isNaN(targetNum)) {
+                          const opt = calculateMinSpeedEVs(draft, targetNum);
+                          if (opt.success) {
+                            updateEV('spe', opt.evsNeeded);
+                            alert(opt.description);
+                          } else {
+                            alert(opt.description);
+                          }
+                        }
+                      }
+                    }}
+                    className="font-caption text-accent-primary touch-target px-2 py-1"
+                  >
+                    Optimize Speed
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDraft((prev) => ({
+                        ...prev,
+                        evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+                      }));
+                    }}
+                    className="font-caption text-danger touch-target px-2 py-1"
+                  >
+                    Reset EVs
+                  </button>
+                </div>
               </div>
 
               {/* Divider */}

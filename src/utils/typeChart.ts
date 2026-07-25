@@ -1,24 +1,27 @@
-// ============================================================================
-// PocketForge — Type Coverage Utilities
-// ============================================================================
-
 import type { Team } from '../types';
 import { getEffectiveness, TYPE_NAMES } from '../data/typesData';
 import { getPokemonByName } from '../data/pokemonData';
+import { getMoveByName } from '../data/movesData';
 
 /**
- * Get offensive type coverage for a single Pokemon's moves
+ * Get offensive type coverage for a list of moves
  */
-export function getMoveCoverage(_moves: string[]): Record<string, boolean> {
-  void _moves;
+export function getMoveCoverage(moves: string[]): Record<string, boolean> {
   const coverage: Record<string, boolean> = {};
   for (const type of TYPE_NAMES) {
     coverage[type] = false;
   }
 
-  // This is a simplified version - would need move data to map moves to types
-  // For now, we assume moves are stored with their types elsewhere
-  // A full implementation would look up each move's type and mark it
+  for (const moveName of moves || []) {
+    const move = getMoveByName(moveName);
+    if (!move || move.category === 'Status' || move.power === 0) continue;
+
+    for (const targetType of TYPE_NAMES) {
+      if (getEffectiveness(move.type, [targetType]) > 1) {
+        coverage[targetType] = true;
+      }
+    }
+  }
 
   return coverage;
 }
