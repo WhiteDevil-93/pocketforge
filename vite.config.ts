@@ -4,9 +4,12 @@ import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
 import { inspectAttr } from 'plugin-inspect-react-code'
 
+const configuredBasePath = process.env.VITE_BASE_PATH ?? '/pocketforge/'
+const basePath = configuredBasePath.endsWith('/') ? configuredBasePath : `${configuredBasePath}/`
+
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/pocketforge/',
+  base: basePath,
   plugins: [
     inspectAttr(),
     react(),
@@ -14,8 +17,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
-        navigateFallback: '/pocketforge/index.html',
+        globPatterns: ['**/*.{js,css,html,ico,svg,json,woff2}'],
+        navigateFallback: `${basePath}index.html`,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
       },
       manifest: {
@@ -26,8 +29,8 @@ export default defineConfig({
         background_color: '#0B1120',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/pocketforge/',
-        scope: '/pocketforge/',
+        start_url: basePath,
+        scope: basePath,
         categories: ['games', 'utilities'],
         icons: [
           {

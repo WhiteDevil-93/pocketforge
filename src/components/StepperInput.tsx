@@ -2,7 +2,7 @@
 // PocketForge — Stepper Input (EV / Level / IV)
 // ============================================================================
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Minus, Plus } from 'lucide-react';
 
@@ -35,28 +35,15 @@ export default function StepperInput({
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const clamp = useCallback(
     (v: number) => Math.max(min, Math.min(max, v)),
     [min, max]
-  );
-
-  const handleDecrement = useCallback(() => {
-    onChange(clamp(value - step));
-  }, [onChange, clamp, value, step]);
-
-  const handleIncrement = useCallback(() => {
-    onChange(clamp(value + step));
-  }, [onChange, clamp, value, step]);
-
-  const startRapid = useCallback(
-    (action: () => void) => {
-      action();
-      timeoutRef.current = setTimeout(() => {
-        intervalRef.current = setInterval(action, 80);
-      }, 400);
-    },
-    []
   );
 
   const stopRapid = useCallback(() => {
@@ -69,6 +56,30 @@ export default function StepperInput({
       intervalRef.current = null;
     }
   }, []);
+
+  const stepBy = useCallback(
+    (delta: number) => {
+      const next = clamp(valueRef.current + delta);
+      valueRef.current = next;
+      onChange(next);
+    },
+    [clamp, onChange]
+  );
+
+  const startRapid = useCallback(
+    (delta: number, e: React.PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      stopRapid();
+      stepBy(delta);
+      timeoutRef.current = setTimeout(() => {
+        intervalRef.current = setInterval(() => stepBy(delta), 80);
+      }, 400);
+    },
+    [stepBy, stopRapid]
+  );
+
+  useEffect(() => stopRapid, [stopRapid]);
 
   const handleEditSubmit = useCallback(() => {
     const parsed = parseInt(editValue, 10);
@@ -100,13 +111,16 @@ export default function StepperInput({
     <div className="flex items-center gap-1">
       {/* Minus button */}
       <motion.button
+        type="button"
         whileTap={{ scale: 0.9 }}
         transition={{ duration: 0.1 }}
-        onClick={handleDecrement}
-        onPointerDown={() => startRapid(handleDecrement)}
+        onPointerDown={(e) => startRapid(-step, e)}
         onPointerUp={stopRapid}
         onPointerLeave={stopRapid}
+        onPointerCancel={stopRapid}
         disabled={value <= min}
+        aria-label="Decrease value"
+        title="Decrease value"
         className={`${btnSize} flex items-center justify-center rounded-lg bg-bg-tertiary border border-border-subtle touch-target disabled:opacity-30 disabled:cursor-not-allowed`}
       >
         <Minus size={iconSize} className="text-text-secondary" />
@@ -128,7 +142,10 @@ export default function StepperInput({
         />
       ) : (
         <button
+          type="button"
           onClick={() => showDirectInput && setIsEditing(true)}
+          aria-label={`Edit value, currently ${value}`}
+          title={showDirectInput ? 'Edit value' : undefined}
           className={`${inputWidth} h-10 flex items-center justify-center bg-bg-tertiary rounded-lg font-stat-number text-text-primary ${showDirectInput ? 'cursor-pointer' : 'cursor-default'}`}
           style={{ fontSize: '14px' }}
         >
@@ -138,13 +155,16 @@ export default function StepperInput({
 
       {/* Plus button */}
       <motion.button
+        type="button"
         whileTap={{ scale: 0.9 }}
         transition={{ duration: 0.1 }}
-        onClick={handleIncrement}
-        onPointerDown={() => startRapid(handleIncrement)}
+        onPointerDown={(e) => startRapid(step, e)}
         onPointerUp={stopRapid}
         onPointerLeave={stopRapid}
+        onPointerCancel={stopRapid}
         disabled={value >= max}
+        aria-label="Increase value"
+        title="Increase value"
         className={`${btnSize} flex items-center justify-center rounded-lg bg-bg-tertiary border border-border-subtle touch-target disabled:opacity-30 disabled:cursor-not-allowed`}
       >
         <Plus size={iconSize} className="text-text-secondary" />

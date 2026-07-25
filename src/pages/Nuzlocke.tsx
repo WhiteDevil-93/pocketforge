@@ -153,22 +153,22 @@ function RunCard({ run, isActive, onSelect, onDelete }: { run: NuzlockeRun; isAc
   const alive = run.encounters.filter((e) => e.status === 'caught').length;
   const dead = run.encounters.filter((e) => e.status === 'dead').length;
   return (
-    <motion.button whileTap={{ scale: 0.98 }} onClick={onSelect}
+    <motion.div whileTap={{ scale: 0.98 }}
       className={`w-full text-left p-4 rounded-2xl border transition-colors ${isActive ? 'bg-accent-primary/10 border-accent-primary/30' : 'bg-bg-secondary border-border-subtle'}`}>
       <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
+        <button type="button" onClick={onSelect} className="flex-1 min-w-0 text-left">
           <p className="text-body font-semibold text-text-primary truncate">{run.name}</p>
           <p className="text-caption text-text-secondary">{game?.name}</p>
           <div className="flex gap-3 mt-1">
             <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={12} /> {alive}</span>
             <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><Skull size={12} /> {dead}</span>
           </div>
-        </div>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="w-9 h-9 flex items-center justify-center rounded-lg touch-target shrink-0">
+        </button>
+        <button type="button" onClick={onDelete} aria-label={`Delete ${run.name}`} title="Delete run" className="w-9 h-9 flex items-center justify-center rounded-lg touch-target shrink-0">
           <Trash2 size={16} className="text-text-tertiary" />
         </button>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 
@@ -618,7 +618,7 @@ export default function Nuzlocke() {
             <h1 className="text-headline font-bold text-text-primary">Nuzlocke</h1>
             <p className="text-caption text-text-secondary">Track your challenge runs</p>
           </div>
-          <button onClick={() => setShowNew(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white text-sm font-medium active:scale-95 transition-transform">
+          <button type="button" onClick={() => setShowNew(true)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white text-sm font-medium active:scale-95 transition-transform">
             <Plus size={16} /> New Run
           </button>
         </div>
@@ -628,7 +628,7 @@ export default function Nuzlocke() {
               <Crosshair size={64} className="text-text-tertiary mb-4" />
               <p className="text-title font-semibold text-text-primary mb-2">No Nuzlocke Runs</p>
               <p className="text-body text-text-secondary mb-4 max-w-xs">Start a new Nuzlocke challenge. Track encounters across 38 games with boss previews and type matchups.</p>
-              <button onClick={() => setShowNew(true)} className="px-4 py-2 rounded-lg bg-accent-primary text-white font-medium">+ Start New Run</button>
+              <button type="button" onClick={() => setShowNew(true)} className="px-4 py-2 rounded-lg bg-accent-primary text-white font-medium">+ Start New Run</button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -678,13 +678,14 @@ export default function Nuzlocke() {
         <div className="flex items-center justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentRun(null)} className="text-text-secondary"><ChevronLeft size={20} /></button>
+              <button type="button" onClick={() => setCurrentRun(null)} aria-label="Back to Nuzlocke runs" title="Back to runs" className="text-text-secondary"><ChevronLeft size={20} /></button>
               <h1 className="text-headline font-bold text-text-primary truncate">{currentRun.name}</h1>
             </div>
             <p className="text-caption text-text-secondary ml-7">{game?.name}</p>
           </div>
           {alive > 0 && (
             <button
+              type="button"
               onClick={handleExportPartyToBuilder}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent-primary/15 text-accent-primary text-xs font-medium hover:bg-accent-primary/25 transition-colors"
             >
@@ -735,7 +736,7 @@ export default function Nuzlocke() {
                   <input type="text" value={routeSearch} onChange={(e) => setRouteSearch(e.target.value)} placeholder="Search routes..."
                     className="w-full h-9 pl-8 pr-3 rounded-lg bg-bg-tertiary border border-border-subtle text-sm text-text-primary placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
                 </div>
-                <button onClick={() => setShowCustom(true)} className="h-9 px-2 rounded-lg bg-bg-tertiary border border-border-subtle text-text-secondary"><Plus size={16} /></button>
+                <button type="button" onClick={() => setShowCustom(true)} aria-label="Add custom location" title="Add custom location" className="h-9 px-2 rounded-lg bg-bg-tertiary border border-border-subtle text-text-secondary"><Plus size={16} /></button>
               </div>
               <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
                 {[

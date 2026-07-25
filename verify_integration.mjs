@@ -1,7 +1,7 @@
-import { importTeamFromPSFormat, exportTeamToPSFormat } from './src/utils/psFormat.js';
-import { getMovepoolForSpecies } from './src/utils/movepoolQuery.js';
-import { calculateSpeed, rankTeamBySpeed } from './src/utils/speedCalculator.js';
-import { calculateDamage } from './src/utils/damageCalc.js';
+import { importTeamFromPSFormat, exportTeamToPSFormat } from './src/utils/psFormat.ts';
+import { getMovepoolForSpecies } from './src/utils/movepoolQuery.ts';
+import { calculateSpeed } from './src/utils/speedCalculator.ts';
+import { calculateDamage } from './src/utils/damageCalc.ts';
 
 // Simple assert helper
 function assert(condition, message) {

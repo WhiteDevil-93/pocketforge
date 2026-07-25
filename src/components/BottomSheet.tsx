@@ -110,7 +110,10 @@ export default function BottomSheet({
             <div className="px-4 pb-3 flex items-center justify-between shrink-0">
               <h2 className="font-headline text-lg text-text-primary">{title}</h2>
               <button
+                type="button"
                 onClick={handleClose}
+                aria-label={`Close ${title}`}
+                title="Close"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-bg-elevated touch-target"
               >
                 <X size={16} className="text-text-secondary" />
@@ -139,6 +142,8 @@ export default function BottomSheet({
                     <button
                       type="button"
                       onClick={handleClearSearch}
+                      aria-label="Clear search"
+                      title="Clear search"
                       className="absolute right-3 top-1/2 -translate-y-1/2 touch-target"
                     >
                       <X size={16} className="text-text-tertiary" />
