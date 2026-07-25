@@ -549,6 +549,28 @@ export default function SettingsPage() {
     window.location.reload();
   }, []);
 
+  // Force update Service Worker & clear precache storage
+  const handleForceUpdateCache = useCallback(async () => {
+    setExportMessage('Clearing app caches and checking for updates...');
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const key of keys) {
+          await caches.delete(key);
+        }
+      }
+    } catch (e) {
+      console.warn('Cache clearing error:', e);
+    }
+    window.location.reload();
+  }, []);
+
   return (
     <div className="min-h-[100dvh] px-4 pb-8">
       <div className="-mx-4 mb-2">
@@ -691,6 +713,15 @@ export default function SettingsPage() {
                 <ChevronRight size={16} className="text-text-tertiary" />
               </label>
             }
+          />
+          <div className="h-px bg-border-subtle mx-4" />
+          <SettingsRow
+            icon={Sparkles}
+            iconColor="#EAB308"
+            label="Check for Updates & Clear Cache"
+            subtitle="Force refresh Service Worker and app cache"
+            rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
+            onClick={handleForceUpdateCache}
           />
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow

@@ -15,6 +15,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,svg,json,woff2}'],
         navigateFallback: `${basePath}index.html`,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
