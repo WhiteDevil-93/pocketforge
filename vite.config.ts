@@ -2,7 +2,6 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
-import { inspectAttr } from 'plugin-inspect-react-code'
 
 const configuredBasePath = process.env.VITE_BASE_PATH ?? '/pocketforge/'
 const basePath = configuredBasePath.endsWith('/') ? configuredBasePath : `${configuredBasePath}/`
@@ -11,7 +10,6 @@ const basePath = configuredBasePath.endsWith('/') ? configuredBasePath : `${conf
 export default defineConfig({
   base: basePath,
   plugins: [
-    inspectAttr(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -60,9 +58,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'pkmn-data': ['@pkmn/dex', '@pkmn/data', '@pkmn/sets'],
-          'smogon-calc': ['@smogon/calc'],
+        manualChunks(id) {
+          if (id.includes('/node_modules/@pkmn/')) {
+            return 'pkmn-data';
+          }
+          if (id.includes('/node_modules/@smogon/calc')) {
+            return 'smogon-calc';
+          }
         },
       },
     },
