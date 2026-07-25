@@ -1,7 +1,6 @@
 // Auto-generated from Pokémon Showdown champions mod — do not edit manually
 // Items with isNonstandard: "Past" in data/mods/champions/items.ts
-// Includes PocketForge M-B patch until Showdown ships Reg M-B
-// Last updated: 2026-06-17T13:21:32.327Z
+// Last updated: 2026-07-25T00:50:47.815Z
 
 export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "abilityshield",
@@ -37,7 +36,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "destinyknot",
   "diveball",
   "dracoplate",
-  "dragalgite",
   "dragonscale",
   "dreadplate",
   "dreamball",
@@ -45,14 +43,12 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "duskball",
   "duskstone",
   "earthplate",
-  "eelektrossite",
   "ejectbutton",
   "ejectpack",
   "electirizer",
   "electricseed",
   "enigmaberry",
   "eviolite",
-  "falinksite",
   "fastball",
   "figyberry",
   "firestone",

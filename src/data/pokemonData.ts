@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-06-17T13:21:30.553Z
+// Last updated: 2026-07-25T00:50:46.894Z
 
 export interface PokedexEntry {
   id: number;
@@ -11758,9 +11758,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 110
     },
     "abilities": [
-      "Intimidate"
+      "Contrary"
     ],
-    "hiddenAbility": "Reckless",
+    "hiddenAbility": "",
     "sprite": "staraptormega",
     "learnset": []
   },
@@ -15939,10 +15939,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 62
     },
     "abilities": [
-      "Poison Point",
-      "Swarm"
+      "Shell Armor"
     ],
-    "hiddenAbility": "Speed Boost",
+    "hiddenAbility": "",
     "sprite": "scolipedemega",
     "learnset": []
   },
@@ -16452,10 +16451,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 68
     },
     "abilities": [
-      "Shed Skin",
-      "Moxie"
+      "Intimidate"
     ],
-    "hiddenAbility": "Intimidate",
+    "hiddenAbility": "",
     "sprite": "scraftymega",
     "learnset": []
   },
@@ -17535,7 +17533,7 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 80
     },
     "abilities": [
-      "Levitate"
+      "Eelevate"
     ],
     "hiddenAbility": "",
     "sprite": "eelektrossmega",
@@ -19460,10 +19458,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 126
     },
     "abilities": [
-      "Rivalry",
-      "Unnerve"
+      "Fire Mane"
     ],
-    "hiddenAbility": "Moxie",
+    "hiddenAbility": "",
     "sprite": "pyroarmega",
     "learnset": []
   },
@@ -20022,10 +20019,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 88
     },
     "abilities": [
-      "Contrary",
-      "Suction Cups"
+      "Contrary"
     ],
-    "hiddenAbility": "Infiltrator",
+    "hiddenAbility": "",
     "sprite": "malamarmega",
     "learnset": []
   },
@@ -20091,10 +20087,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 88
     },
     "abilities": [
-      "Tough Claws",
-      "Sniper"
+      "Tough Claws"
     ],
-    "hiddenAbility": "Pickpocket",
+    "hiddenAbility": "",
     "sprite": "barbaraclemega",
     "learnset": []
   },
@@ -20160,10 +20155,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 44
     },
     "abilities": [
-      "Poison Point",
-      "Poison Touch"
+      "Regenerator"
     ],
-    "hiddenAbility": "Adaptability",
+    "hiddenAbility": "",
     "sprite": "dragalgemega",
     "learnset": []
   },
@@ -25981,9 +25975,9 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 100
     },
     "abilities": [
-      "Battle Armor"
+      "Defiant"
     ],
-    "hiddenAbility": "Defiant",
+    "hiddenAbility": "",
     "sprite": "falinksmega",
     "learnset": []
   },
