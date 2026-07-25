@@ -28,16 +28,49 @@ const mapDexMoveToMoveEntry = (m: any): MoveEntry => {
   };
 };
 
-export const MOVES: MoveEntry[] = Dex.moves.all()
+const toMoveId = (name: string): string =>
+  name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+
+const HIDDEN_POWER_TYPES = [
+  'Bug',
+  'Dark',
+  'Dragon',
+  'Electric',
+  'Fighting',
+  'Fire',
+  'Flying',
+  'Ghost',
+  'Grass',
+  'Ground',
+  'Ice',
+  'Poison',
+  'Psychic',
+  'Rock',
+  'Steel',
+  'Water',
+];
+
+const hiddenPowerVariants: MoveEntry[] = HIDDEN_POWER_TYPES.map((type) => {
+  const move = Dex.moves.get(`Hidden Power ${type}`);
+  return {
+    ...mapDexMoveToMoveEntry(move),
+    id: `hiddenpower${type.toLowerCase()}`,
+  };
+});
+
+export const MOVES: MoveEntry[] = [
+  ...Dex.moves.all()
   .filter(m => m.exists && m.isNonstandard !== 'Custom')
-  .map(mapDexMoveToMoveEntry);
+  .map(mapDexMoveToMoveEntry),
+  ...hiddenPowerVariants,
+];
 
 export const MOVES_BY_ID = new Map(MOVES.map(m => [m.id, m]));
 
 export function getMoveByName(name: string): MoveEntry | undefined {
   if (!name) return undefined;
-  const lowerName = name.toLowerCase().trim();
-  return MOVES.find(m => m.name.toLowerCase() === lowerName || m.id === lowerName);
+  const id = toMoveId(name);
+  return MOVES_BY_ID.get(id) || MOVES.find(m => toMoveId(m.name) === id);
 }
 
 export function searchMoves(query: string): MoveEntry[] {
