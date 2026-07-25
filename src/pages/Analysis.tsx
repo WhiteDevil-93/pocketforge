@@ -812,11 +812,13 @@ export default function Analysis() {
   const navigate = useNavigate();
   const teams = useStore((s) => s.teams);
   const currentTeamId = useStore((s) => s.currentTeamId);
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(currentTeamId || '');
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+
+  const effectiveTeamId = selectedTeamId || currentTeamId || teams[0]?.id || '';
 
   const selectedTeam = useMemo(
-    () => teams.find((t) => t.id === selectedTeamId) || teams[0] || null,
-    [teams, selectedTeamId]
+    () => teams.find((t) => t.id === effectiveTeamId) || teams[0] || null,
+    [teams, effectiveTeamId]
   );
 
   const analysis = useMemo(
@@ -848,7 +850,7 @@ export default function Analysis() {
         <div className="pt-4 pb-2">
           <h1 className="font-display text-text-primary">Team Analysis</h1>
         </div>
-        <TeamSelector teams={teams} selectedId={selectedTeamId} onSelect={setSelectedTeamId} />
+        <TeamSelector teams={teams} selectedId={selectedTeamId || ''} onSelect={setSelectedTeamId} />
         <EmptyState
           icon={BarChart3}
           title="No Pokemon in Team"
