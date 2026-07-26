@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-07-25T19:46:23.715Z
+// Last updated: 2026-07-26T00:54:59.797Z
 
 export interface ItemEntry {
   id: string;
@@ -7,15 +7,15 @@ export interface ItemEntry {
   description: string;
   category: string;
   fling: number;
-  onPlate: unknown;
-  onDrive: unknown;
-  onMemory: unknown;
-  megaStone: unknown;
-  megaEvolves: unknown;
-  zMove: unknown;
-  zMoveType: unknown;
-  zMoveFrom: unknown;
-  naturalGift: unknown;
+  onPlate: any;
+  onDrive: any;
+  onMemory: any;
+  megaStone: any;
+  megaEvolves: any;
+  zMove: any;
+  zMoveType: any;
+  zMoveFrom: any;
+  naturalGift: any;
   isBerry: boolean;
   isGem: boolean;
   isPokeball: boolean;

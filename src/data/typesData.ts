@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-07-25T19:46:23.716Z
+// Last updated: 2026-07-26T00:54:59.798Z
 
 export const TYPE_NAMES = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -9,7 +9,7 @@ export const TYPE_NAMES = [
 
 export type TypeName = typeof TYPE_NAMES[number];
 
-export const TYPE_CHART: Record<string, { damageTaken: Record<string, number> }> = {
+export const TYPE_CHART: Record<string, any> = {
   "bug": {
     "damageTaken": {
       "Bug": 0,
@@ -467,13 +467,9 @@ export const TYPES = Object.keys(TYPE_CHART);
 
 export function getEffectiveness(attackingType: string, defendingTypes: string[]): number {
   let mult = 1;
-  const atkFormatted = attackingType.charAt(0).toUpperCase() + attackingType.slice(1).toLowerCase();
+  const atk = attackingType.toLowerCase();
   for (const def of defendingTypes) {
-    const defKey = def.toLowerCase();
-    const damageMap = TYPE_CHART[defKey]?.damageTaken;
-    if (!damageMap) continue;
-    const dmg = damageMap[atkFormatted] ??
-      Object.entries(damageMap).find(([k]) => k.toLowerCase() === attackingType.toLowerCase())?.[1] ?? 0;
+    const dmg = TYPE_CHART[atk]?.damageTaken[def.toLowerCase()] ?? 0;
     if (dmg === 1) mult *= 2;
     else if (dmg === 2) mult *= 0.5;
     else if (dmg === 3) mult = 0;
