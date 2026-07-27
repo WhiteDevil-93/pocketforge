@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-07-26T00:54:59.794Z
+// Last updated: 2026-07-27T00:54:36.933Z
 
 export interface PokedexEntry {
   id: number;
