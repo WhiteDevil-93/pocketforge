@@ -208,14 +208,9 @@ function MetaSnapshot() {
             </div>
           ))}
         </div>
-        <a
-          href={CHAMPIONS_USAGE_META.sourceUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="block mt-2 text-center text-[10px] text-text-tertiary underline underline-offset-2"
-        >
-          Updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}
-        </a>
+        <p className="mt-2 text-center text-[10px] text-text-tertiary">
+          Bundled snapshot · updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}
+        </p>
       </div>
     </div>
   );

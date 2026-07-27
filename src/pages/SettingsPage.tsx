@@ -560,15 +560,7 @@ function AttributionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           <li>Pokemon Showdown</li>
           <li>Showdown Champions mod ({CHAMPIONS_META.showdownFormat})</li>
           <li>
-            <a
-              href={CHAMPIONS_USAGE_META.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="underline underline-offset-2"
-            >
-              {CHAMPIONS_USAGE_META.sourceName}
-            </a>
-            {' '}({CHAMPIONS_USAGE_META.format})
+            {CHAMPIONS_USAGE_META.sourceName} ({CHAMPIONS_USAGE_META.format})
           </li>
         </ul>
         <p className="text-text-secondary">
@@ -576,6 +568,9 @@ function AttributionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         </p>
         <p className="text-text-secondary">
           Ranked battle snapshot updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}.
+        </p>
+        <p className="text-text-secondary">
+          Competitive snapshots are bundled into PocketForge; using them does not open another site.
         </p>
         <p className="text-text-secondary">Sprites from Pokemon Showdown CDN</p>
         <p className="text-text-secondary">Type icons from Smogon</p>

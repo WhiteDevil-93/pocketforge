@@ -671,14 +671,9 @@ export default function PokemonEditor({
                     </div>
                   </div>
                 )}
-                <a
-                  href={CHAMPIONS_USAGE_META.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-caption text-text-tertiary underline underline-offset-2"
-                >
+                <p className="font-caption text-text-tertiary">
                   Community battle snapshot · updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}
-                </a>
+                </p>
               </div>
             </div>
           )}
