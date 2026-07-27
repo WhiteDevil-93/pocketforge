@@ -8,7 +8,14 @@ import {
   getChampionsUsageRank,
 } from './src/data/championsUsageRankings.ts';
 import { getChampionsUsageData } from './src/data/championsUsageDetails.ts';
-import { calculateAllStats, calculateHP, calculateStat } from './src/utils/statCalc.ts';
+import {
+  calculateAllStats,
+  calculateHP,
+  calculateStat,
+  getRemainingEVs,
+  isValidEVSpread,
+  MAX_TOTAL_EVS,
+} from './src/utils/statCalc.ts';
 import { normalizePokemonData, normalizeTeamData } from './src/lib/teamData.ts';
 import { getEffectiveness } from './src/data/typesData.ts';
 import {
@@ -208,6 +215,12 @@ IVs: 0 Atk
     'Timid',
   );
   assert(calculatedStats.def === 96, `Expected 96 Defense with a 0 IV, got ${calculatedStats.def}`);
+  const legalEVs = { hp: 252, atk: 252, def: 6, spa: 0, spd: 0, spe: 0 };
+  const illegalEVs = { ...legalEVs, def: 7 };
+  assert(MAX_TOTAL_EVS === 510, 'The legal combined EV limit must be 510');
+  assert(getRemainingEVs(legalEVs) === 0, 'A 510 EV spread must have no remaining EVs');
+  assert(isValidEVSpread(legalEVs).valid, 'A 510 EV spread must be valid');
+  assert(!isValidEVSpread(illegalEVs).valid, 'A 511 EV spread must be rejected');
   console.log('✅ Analysis stat calculations are accurate without the battle-engine bundle');
 
   // Test 8: Legacy/imported team normalization

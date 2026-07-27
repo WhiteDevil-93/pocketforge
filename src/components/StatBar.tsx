@@ -15,6 +15,7 @@ interface StatBarProps {
   isMegaActive?: boolean;
   onEVChange?: (value: number) => void;
   onIVChange?: (value: number) => void;
+  maxEV?: number;
   showStepper?: boolean;
   compact?: boolean;
 }
@@ -40,6 +41,7 @@ export default function StatBar({
   isMegaActive,
   onEVChange,
   onIVChange,
+  maxEV = 252,
   showStepper = true,
   compact = false,
 }: StatBarProps) {
@@ -52,7 +54,8 @@ export default function StatBar({
     : calculateStat(baseStat, ev, iv, level, nature, statKey);
 
   const barWidthPercent = Math.min(100, (ev / 252) * 100);
-  const clampEV = (value: number) => Math.max(0, Math.min(252, value));
+  const allowedMaxEV = Math.max(ev, Math.min(252, maxEV));
+  const clampEV = (value: number) => Math.max(0, Math.min(allowedMaxEV, value));
 
   if (compact) {
     return (
@@ -92,8 +95,8 @@ export default function StatBar({
             <div className="w-11 h-8 flex items-center justify-center rounded bg-bg-tertiary font-stat-number text-text-primary text-xs">
               {ev}
             </div>
-            <EVButton label="+1" disabled={ev >= 252} onClick={() => onEVChange(clampEV(ev + 1))} />
-            <EVButton label="+4" disabled={ev >= 252} onClick={() => onEVChange(clampEV(ev + EV_STEP))} />
+            <EVButton label="+1" disabled={ev >= allowedMaxEV} onClick={() => onEVChange(clampEV(ev + 1))} />
+            <EVButton label="+4" disabled={ev >= allowedMaxEV} onClick={() => onEVChange(clampEV(ev + EV_STEP))} />
           </div>
         ) : (
           <div className="w-11 h-8 flex items-center justify-center rounded bg-bg-tertiary font-stat-number text-text-primary text-xs">
@@ -120,8 +123,9 @@ export default function StatBar({
         <Slider
           value={[ev]}
           min={0}
-          max={252}
+          max={Math.max(1, allowedMaxEV)}
           step={1}
+          disabled={allowedMaxEV <= 0}
           onValueChange={([value]) => onEVChange(clampEV(value))}
           className="w-full [&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-track]]:bg-bg-elevated [&_[data-slot=slider-range]]:bg-accent-primary [&_[data-slot=slider-thumb]]:size-5 [&_[data-slot=slider-thumb]]:border-accent-primary [&_[data-slot=slider-thumb]]:bg-white"
           aria-label={`${getStatAbbreviation(statKey)} EV`}

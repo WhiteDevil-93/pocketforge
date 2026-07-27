@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router';
 import {
   Search, Settings, Plus, FolderOpen, ChevronDown,
   Users, AlertTriangle, Check, Zap, BookOpen, Shield,
-  Wrench, Calculator, Crosshair, Heart, Sparkles,
+  Wrench, Calculator, Crosshair, Heart,
   TrendingUp, ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
@@ -96,50 +96,12 @@ function Toast({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }
   );
 }
 
-// ---- Hero banner with gradient ---------------------------------------------
-
-function HeroBanner({ teamCount, onCreate }: { teamCount: number; onCreate: () => void }) {
-  const tips = [
-    "Tap a Pokemon sprite to search its movepool!",
-    "Try the Weakness Analyzer to find team holes.",
-    "Speed Tiers shows who outspeeds who in your format.",
-    "Champions Regulation uses custom learnsets — check them!",
-    "Long-press a team card for copy, delete, and export options.",
-    "The Damage Calc supports spread moves and multiple targets.",
-    "Nuzlocke mode has route encounters for 38 games!",
-    "Ranked Battle Data shows what's popular in Champions Doubles.",
-  ];
-  const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)]);
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl mb-4" style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #0F172A 50%, #1E1B4B 100%)' }}>
-      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #3B82F6 0%, transparent 50%), radial-gradient(circle at 80% 20%, #8B5CF6 0%, transparent 40%)' }} />
-      <div className="relative p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Sparkles size={16} className="text-amber-400" />
-          <span className="text-caption text-amber-400 font-medium">Welcome back, Trainer</span>
-        </div>
-        <h2 className="text-title font-bold text-white mb-1">PocketForge</h2>
-        <p className="text-body text-text-tertiary mb-3">{teamCount} team{teamCount !== 1 ? 's' : ''} saved</p>
-        <div className="flex items-center gap-3">
-          <button onClick={onCreate} className="h-9 px-4 rounded-lg bg-accent-primary text-white text-sm font-medium flex items-center gap-1.5 active:scale-95 transition-transform">
-            <Plus size={16} /> New Team
-          </button>
-          <span className="text-caption text-text-tertiary italic flex items-center gap-1">
-            <Zap size={12} /> {tip}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ---- Quick Actions Grid ----------------------------------------------------
 
 function QuickActions({ navigate }: { navigate: (path: string) => void }) {
   return (
     <div className="mb-5">
-      <h3 className="text-caption font-medium text-text-secondary mb-2.5 uppercase tracking-wider">Quick Actions</h3>
+      <h3 className="text-caption font-medium text-text-secondary mb-2.5 uppercase tracking-wider">Tools</h3>
       <div className="grid grid-cols-3 gap-2">
         {QUICK_ACTIONS.map((action) => (
           <button key={action.label} onClick={() => navigate(action.path)}
@@ -154,46 +116,19 @@ function QuickActions({ navigate }: { navigate: (path: string) => void }) {
   );
 }
 
-// ---- Recent Teams Preview --------------------------------------------------
-
-function RecentTeams({ teams, onTap }: { teams: Team[]; onTap: (id: string) => void }) {
-  const recent = useMemo(() => [...teams].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 4), [teams]);
-  return (
-    <div className="mb-5">
-      <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-caption font-medium text-text-secondary uppercase tracking-wider">Recent Teams</h3>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        {recent.map((team) => (
-          <button key={team.id} onClick={() => onTap(team.id)}
-            className="text-left p-3 rounded-xl bg-bg-secondary border border-border-subtle active:scale-[0.98] transition-transform">
-            <div className="flex items-center gap-1 mb-2">
-              {team.pokemon.slice(0, 3).map((p, i) => (
-                <PokemonSprite key={i} name={p.species} size={28} />
-              ))}
-              {team.pokemon.length > 3 && <span className="text-caption text-text-tertiary">+{team.pokemon.length - 3}</span>}
-            </div>
-            <p className="text-sm font-medium text-text-primary truncate">{team.name}</p>
-            <p className="text-caption text-text-tertiary">{team.format?.replace(/-/g, ' ') || 'Unknown'}</p>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ---- Champions Meta Snapshot -----------------------------------------------
 
 function MetaSnapshot() {
   const top4 = CHAMPIONS_USAGE_TOP_20.slice(0, 4);
   return (
-    <div className="mb-5">
-      <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-caption font-medium text-text-secondary uppercase tracking-wider flex items-center gap-1">
-          <TrendingUp size={12} /> Champions Doubles Rankings
-        </h3>
-      </div>
-      <div className="bg-bg-secondary rounded-xl border border-border-subtle p-3">
+    <details className="mb-5 rounded-xl bg-bg-secondary border border-border-subtle group">
+      <summary className="h-12 px-3 flex items-center gap-2 cursor-pointer list-none">
+        <TrendingUp size={16} className="text-accent-primary" />
+        <span className="text-sm font-medium text-text-primary">Champions Doubles Rankings</span>
+        <span className="ml-auto text-caption text-text-tertiary group-open:hidden">View</span>
+        <ChevronDown size={16} className="text-text-tertiary transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-border-subtle p-3">
         <div className="flex items-center justify-around">
           {top4.map((p, i) => (
             <div key={p.species} className="flex flex-col items-center gap-1">
@@ -212,7 +147,7 @@ function MetaSnapshot() {
           Bundled snapshot · updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}
         </p>
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -411,7 +346,7 @@ export default function Teams() {
 
       {/* Top App Bar */}
       <motion.header className={`sticky top-0 z-40 h-[56px] flex items-center justify-between px-4 transition-colors duration-200 ${isScrolled ? 'bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle' : 'bg-transparent'}`}>
-        <h1 className="font-title text-text-primary">Home</h1>
+        <h1 className="font-title text-text-primary">PocketForge</h1>
         <div className="flex items-center gap-1">
           <button onClick={() => setShowSearch((s) => !s)} className="w-10 h-10 flex items-center justify-center rounded-full touch-target" aria-label="Search teams">
             <Search size={20} className="text-text-secondary" />
@@ -452,42 +387,45 @@ export default function Teams() {
 
       {/* Main Content */}
       <div className="flex-1 px-4 py-3 pb-24">
-        {/* ---- EMPTY STATE ---- */}
-        {isEmpty && (
-          <>
-            <HeroBanner teamCount={0} onCreate={handleCreateTeam} />
-            <QuickActions navigate={navigate} />
-            <MetaSnapshot />
-            <div className="mt-6 flex flex-col items-center text-center">
-              <Users size={48} className="text-text-tertiary mb-3" />
-              <p className="text-body text-text-secondary mb-2">No teams yet</p>
-              <p className="text-caption text-text-tertiary mb-4">Create your first team or explore the tools above</p>
-              <button onClick={handleCreateTeam} className="h-10 px-5 rounded-lg bg-accent-primary text-white text-sm font-medium flex items-center gap-1.5">
-                <Plus size={16} /> Create Team
-              </button>
+        {/* ---- TEAM LIBRARY ---- */}
+        <section aria-labelledby="team-library-title">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 id="team-library-title" className="font-headline text-text-primary">Your Teams</h2>
+              <p className="font-caption text-text-tertiary">
+                {teams.length} saved team{teams.length === 1 ? '' : 's'}
+              </p>
             </div>
-          </>
-        )}
+            <button
+              onClick={handleCreateTeam}
+              className="h-10 px-4 rounded-xl bg-accent-primary text-white text-sm font-medium flex items-center gap-1.5 active:scale-95 transition-transform"
+            >
+              <Plus size={16} /> New Team
+            </button>
+          </div>
 
-        {/* ---- HOME SCREEN (with teams) ---- */}
-        {!isEmpty && !showSearch && activeFormat === 'all' && (
-          <>
-            {/* Hero */}
-            <HeroBanner teamCount={teams.length} onCreate={handleCreateTeam} />
+          {!isEmpty && (
+            <div className="mb-3">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {FORMAT_FILTERS.map((format) => (
+                  <button key={format.id} onClick={() => setActiveFormat(format.id)}
+                    className={`flex-shrink-0 h-[34px] px-3 rounded-full text-xs font-medium transition-colors ${activeFormat === format.id ? 'bg-accent-primary/15 text-accent-primary' : 'bg-bg-secondary text-text-secondary border border-border-subtle'}`}>
+                    {format.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-            {/* Quick Actions */}
-            <QuickActions navigate={navigate} />
-
-            {/* Nuzlocke Progress */}
-            <NuzlockeProgressCard navigate={navigate} />
-
-            {/* Recent Teams */}
-            <RecentTeams teams={teams} onTap={handleTapTeam} />
-
-            {/* Meta Snapshot */}
-            <MetaSnapshot />
-          </>
-        )}
+          {isEmpty && (
+            <div className="rounded-2xl bg-bg-secondary border border-border-subtle px-5 py-8 flex flex-col items-center text-center mb-6">
+              <Users size={42} className="text-text-tertiary mb-3" />
+              <p className="font-subtitle text-text-primary mb-1">Build your first team</p>
+              <p className="font-caption text-text-tertiary max-w-[280px]">
+                Choose a format, add Pokemon, then use analysis to check the result.
+              </p>
+            </div>
+          )}
 
         {/* ---- Search Results ---- */}
         {noSearchResults && (
@@ -496,38 +434,6 @@ export default function Teams() {
             <h2 className="font-headline text-text-primary mb-2">No teams found</h2>
             <p className="font-body text-text-secondary max-w-[280px]">Try adjusting your search or filters.</p>
           </motion.div>
-        )}
-
-        {/* ---- Format Filter Chips (only when searching or filtered) ---- */}
-        {(showSearch || activeFormat !== 'all' || isEmpty) && (
-          <div className="mb-3">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide scroll-snap-x snap-mandatory pb-1">
-              {FORMAT_FILTERS.map((format) => (
-                <button key={format.id} onClick={() => setActiveFormat(format.id)}
-                  className={`flex-shrink-0 scroll-snap-start h-[36px] px-4 rounded-full font-body-medium text-sm transition-colors duration-200 ${activeFormat === format.id ? 'bg-accent-primary/15 text-accent-primary' : 'bg-bg-secondary text-text-secondary'}`}>
-                  {format.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Show format filters when on home with teams too, but below content */}
-        {!isEmpty && !showSearch && activeFormat === 'all' && (
-          <div className="mb-3 mt-2">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-caption font-medium text-text-secondary uppercase tracking-wider">My Teams</h3>
-              <button onClick={() => setShowSearch(true)} className="text-caption text-accent-primary">Search</button>
-            </div>
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-              {FORMAT_FILTERS.map((format) => (
-                <button key={format.id} onClick={() => setActiveFormat(format.id)}
-                  className={`flex-shrink-0 h-[32px] px-3 rounded-full text-xs font-medium transition-colors ${activeFormat === format.id ? 'bg-accent-primary/15 text-accent-primary' : 'bg-bg-secondary text-text-secondary border border-border-subtle'}`}>
-                  {format.label}
-                </button>
-              ))}
-            </div>
-          </div>
         )}
 
         {/* ---- Folder Groupings ---- */}
@@ -556,19 +462,22 @@ export default function Teams() {
         </AnimatePresence>
 
         {/* All folders collapsed hint */}
-        {!isEmpty && !noSearchResults && folderNames.every((f) => !expandedFolders[f]) && (
+        {!isEmpty && !noSearchResults && folderNames.every((f) => (expandedFolders[f] ?? true) === false) && (
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-caption text-text-tertiary text-center py-8">
             Tap a folder to view teams
           </motion.p>
         )}
-      </div>
+        </section>
 
-      {/* FAB */}
-      <motion.button className="fixed z-50 w-[56px] h-[56px] rounded-full bg-accent-primary flex items-center justify-center"
-        style={{ bottom: '88px', right: '16px', boxShadow: '0 4px 20px rgba(59, 130, 246, 0.35)' }}
-        whileTap={{ scale: 0.92 }} transition={springTap} onClick={handleCreateTeam} aria-label="Create new team">
-        <Plus size={24} className="text-white" />
-      </motion.button>
+        {/* ---- SECONDARY HOME CONTENT ---- */}
+        {!showSearch && activeFormat === 'all' && (
+          <section className="mt-6 pt-5 border-t border-border-subtle" aria-label="Tools and activity">
+            <NuzlockeProgressCard navigate={navigate} />
+            <QuickActions navigate={navigate} />
+            <MetaSnapshot />
+          </section>
+        )}
+      </div>
     </div>
   );
 }

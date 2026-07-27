@@ -17,7 +17,7 @@ import {
   Plus,
 } from 'lucide-react';
 import PokemonCard from '../components/PokemonCard';
-import PokemonEditor from '../components/PokemonEditor';
+import PokemonEditor, { type TeammateAddResult } from '../components/PokemonEditor';
 import BottomSheet from '../components/BottomSheet';
 import TypeBadge from '../components/TypeBadge';
 import { useStore } from '../store/useStore';
@@ -34,6 +34,22 @@ import { validateTeam } from '../utils';
 import { getDefaultLevelForFormat } from '../lib/showdown';
 
 const EMPTY_SLOTS = 6;
+
+function createDefaultPokemon(speciesName: string, formatId: string): Partial<Pokemon> | null {
+  const entry = getPokemonByName(speciesName);
+  if (!entry) return null;
+
+  return {
+    species: speciesName,
+    ability: entry.abilities[0] || '',
+    teraType: entry.types[0] || '',
+    level: getDefaultLevelForFormat(formatId),
+    moves: [],
+    evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+    ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+    nature: 'Serious',
+  };
+}
 
 export default function Builder() {
   const { teamId } = useParams<{ teamId?: string }>();
@@ -164,19 +180,8 @@ export default function Builder() {
     (speciesName: string) => {
       if (!team || addingSlotIndex === null) return;
 
-      const entry = getPokemonByName(speciesName);
-      if (!entry) return;
-
-      const newPokemon: Partial<Pokemon> = {
-        species: speciesName,
-        ability: entry.abilities[0] || '',
-        teraType: entry.types[0] || '',
-        level: getDefaultLevelForFormat(team.format),
-        moves: [],
-        evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-        ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
-        nature: 'Serious',
-      };
+      const newPokemon = createDefaultPokemon(speciesName, team.format);
+      if (!newPokemon) return;
 
       // If slot is within existing array, we may need to insert at specific position
       const currentLength = team.pokemon.length;
@@ -192,6 +197,32 @@ export default function Builder() {
       setAddingSlotIndex(null);
     },
     [team, addingSlotIndex, addPokemon]
+  );
+
+  const handleAddSuggestedTeammate = useCallback(
+    (speciesName: string): TeammateAddResult => {
+      if (!team) return 'invalid';
+      if (team.pokemon.length >= EMPTY_SLOTS) return 'full';
+      if (
+        team.pokemon.some(
+          (pokemon) => pokemon.species.toLowerCase() === speciesName.toLowerCase(),
+        )
+      ) {
+        return 'duplicate';
+      }
+      if (
+        isChampionsFormatId(team.format) &&
+        !isEligibleForChampionsFormat(speciesName, team.format)
+      ) {
+        return 'invalid';
+      }
+
+      const newPokemon = createDefaultPokemon(speciesName, team.format);
+      if (!newPokemon) return 'invalid';
+      addPokemon(team.id, newPokemon);
+      return 'added';
+    },
+    [team, addPokemon],
   );
 
   const handleSavePokemon = useCallback(
@@ -469,6 +500,8 @@ export default function Builder() {
             pokemon={team.pokemon[editingSlot]}
             slotIndex={editingSlot}
             formatId={team.format}
+            teamSpecies={team.pokemon.map((pokemon) => pokemon.species)}
+            onAddTeammate={handleAddSuggestedTeammate}
             onSave={handleSavePokemon}
             onDelete={handleDeletePokemon}
             onBack={() => {

@@ -8,6 +8,8 @@ export {
   getNatureMultiplier,
   getTotalEVs,
   getRemainingEVs,
+  MAX_TOTAL_EVS,
+  MAX_STAT_EVS,
   isValidEVSpread,
   calculateAllStats,
   getStatColorClass,

@@ -5,6 +5,10 @@
 import type { EVs, IVs } from '../types';
 import { getNatureByName, getNatureModifier } from '../data/naturesData';
 
+/** Legal cartridge limits for a single Pokemon's EV spread. */
+export const MAX_TOTAL_EVS = 510;
+export const MAX_STAT_EVS = 252;
+
 function safeNumber(value: number, fallback: number): number {
   return Number.isFinite(value) ? value : fallback;
 }
@@ -66,26 +70,26 @@ export function getTotalEVs(evs: EVs): number {
 }
 
 /**
- * Get remaining EVs (max 508 usable, 510 total)
+ * Get remaining EVs (510 total; the final two do not affect a stat)
  */
 export function getRemainingEVs(evs: EVs): number {
-  return 508 - getTotalEVs(evs);
+  return MAX_TOTAL_EVS - getTotalEVs(evs);
 }
 
 /**
- * Check if EV spread is valid (total <= 508, each stat <= 252)
+ * Check if EV spread is valid (total <= 510, each stat <= 252)
  */
 export function isValidEVSpread(evs: EVs): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   const total = getTotalEVs(evs);
 
-  if (total > 508) {
-    errors.push(`Total EVs (${total}) exceed 508`);
+  if (total > MAX_TOTAL_EVS) {
+    errors.push(`Total EVs (${total}) exceed ${MAX_TOTAL_EVS}`);
   }
 
   for (const [stat, value] of Object.entries(evs)) {
-    if (value > 252) {
-      errors.push(`${stat.toUpperCase()} EV (${value}) exceeds 252`);
+    if (value > MAX_STAT_EVS) {
+      errors.push(`${stat.toUpperCase()} EV (${value}) exceeds ${MAX_STAT_EVS}`);
     }
     if (value < 0) {
       errors.push(`${stat.toUpperCase()} EV cannot be negative`);

@@ -11,6 +11,8 @@ import {
   Trash2,
   X,
   Sparkles,
+  Check,
+  Plus,
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
 import TypeBadge from './TypeBadge';
@@ -50,16 +52,22 @@ import {
   calculateAllStats,
   getTotalEVs,
   getRemainingEVs,
+  MAX_TOTAL_EVS,
+  MAX_STAT_EVS,
   getStatAbbreviation,
   getStatColorClass,
 } from '../utils';
 import type { Pokemon, EVs, IVs } from '../types';
 import { springSnappy, transitionFast } from '../lib/motion';
 
+export type TeammateAddResult = 'added' | 'duplicate' | 'full' | 'invalid';
+
 interface PokemonEditorProps {
   pokemon: Pokemon;
   slotIndex: number;
   formatId?: string;
+  teamSpecies?: readonly string[];
+  onAddTeammate?: (species: string) => TeammateAddResult;
   onSave: (updates: Partial<Pokemon>) => void;
   onDelete: () => void;
   onBack: () => void;
@@ -74,6 +82,8 @@ export default function PokemonEditor({
   pokemon,
   slotIndex: _slotIndex,
   formatId,
+  teamSpecies = [],
+  onAddTeammate,
   onSave,
   onDelete,
   onBack,
@@ -94,6 +104,11 @@ export default function PokemonEditor({
     moveIndex?: number;
   }>({ type: null });
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestedMoveToAdd, setSuggestedMoveToAdd] = useState<string | null>(null);
+  const [recommendationFeedback, setRecommendationFeedback] = useState<{
+    message: string;
+    type: 'success' | 'info';
+  } | null>(null);
 
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -146,7 +161,7 @@ export default function PokemonEditor({
 
   const totalEVs = getTotalEVs(draft.evs);
   const remainingEVs = getRemainingEVs(draft.evs);
-  const evValid = totalEVs <= 508;
+  const evValid = totalEVs <= MAX_TOTAL_EVS;
 
   // ---- Update helpers ----
   const updateField = useCallback(<K extends keyof Pokemon>(
@@ -157,11 +172,15 @@ export default function PokemonEditor({
   }, []);
 
   const updateEV = useCallback((stat: keyof EVs, value: number) => {
-    const clamped = Math.max(0, Math.min(252, value));
-    setDraft((prev) => ({
-      ...prev,
-      evs: { ...prev.evs, [stat]: clamped },
-    }));
+    setDraft((prev) => {
+      const otherEVs = getTotalEVs(prev.evs) - prev.evs[stat];
+      const legalMaximum = Math.max(0, Math.min(MAX_STAT_EVS, MAX_TOTAL_EVS - otherEVs));
+      const clamped = Math.max(0, Math.min(legalMaximum, value));
+      return {
+        ...prev,
+        evs: { ...prev.evs, [stat]: clamped },
+      };
+    });
   }, []);
 
   const updateIV = useCallback((stat: keyof IVs, value: number) => {
@@ -308,6 +327,55 @@ export default function PokemonEditor({
     },
     [sheet.moveIndex, updateMove]
   );
+
+  const showRecommendationFeedback = useCallback(
+    (message: string, type: 'success' | 'info' = 'success') => {
+      setRecommendationFeedback({ message, type });
+    },
+    [],
+  );
+
+  const handleSuggestedMove = useCallback((moveName: string) => {
+    if (draft.moves.some((move) => move.toLowerCase() === moveName.toLowerCase())) {
+      showRecommendationFeedback(`${moveName} is already in this moveset.`, 'info');
+      return;
+    }
+
+    const currentMoves = draft.moves.filter(Boolean);
+    if (currentMoves.length < 4) {
+      setDraft((prev) => ({ ...prev, moves: [...prev.moves.filter(Boolean), moveName] }));
+      showRecommendationFeedback(`${moveName} added to the moveset.`);
+      return;
+    }
+
+    setSuggestedMoveToAdd(moveName);
+  }, [draft.moves, showRecommendationFeedback]);
+
+  const handleSuggestedItem = useCallback((itemName: string) => {
+    if (isChampions && !isChampionsItemLegal(itemName)) {
+      showRecommendationFeedback(`${itemName} is not legal in this format.`, 'info');
+      return;
+    }
+    updateField('item', itemName);
+    showRecommendationFeedback(`${itemName} equipped.`);
+  }, [isChampions, showRecommendationFeedback, updateField]);
+
+  const handleSuggestedTeammate = useCallback((species: string) => {
+    if (!onAddTeammate) {
+      showRecommendationFeedback('Open this Pokemon from a saved team to add teammates.', 'info');
+      return;
+    }
+    const result = onAddTeammate(species);
+    if (result === 'added') {
+      showRecommendationFeedback(`${species} added to your team.`);
+    } else if (result === 'duplicate') {
+      showRecommendationFeedback(`${species} is already on your team.`, 'info');
+    } else if (result === 'full') {
+      showRecommendationFeedback('Your team already has six Pokemon.', 'info');
+    } else {
+      showRecommendationFeedback(`${species} is unavailable in this format.`, 'info');
+    }
+  }, [onAddTeammate, showRecommendationFeedback]);
 
   const primaryTypeColor = getTypeColor(types[0] || 'Normal');
 
@@ -604,19 +672,50 @@ export default function PokemonEditor({
                 <span className="font-caption text-text-tertiary">#{usageRank} ranked</span>
               </div>
               <div className="px-4 pb-4 space-y-3">
+                <p className="font-caption text-text-tertiary">
+                  Tap a recommendation to apply it.
+                </p>
+                {recommendationFeedback && (
+                  <div
+                    role="status"
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 font-caption ${
+                      recommendationFeedback.type === 'success'
+                        ? 'bg-success/10 text-success'
+                        : 'bg-accent-primary/10 text-accent-primary'
+                    }`}
+                  >
+                    {recommendationFeedback.type === 'success' ? <Check size={14} /> : <Sparkles size={14} />}
+                    <span>{recommendationFeedback.message}</span>
+                    <button
+                      type="button"
+                      onClick={() => setRecommendationFeedback(null)}
+                      className="ml-auto p-1"
+                      aria-label="Dismiss message"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
                 {/* Top Moves */}
                 {usageData.moves.length > 0 && (
                   <div>
                     <span className="font-caption text-text-secondary block mb-1.5">Top Moves</span>
                     <div className="space-y-1">
                       {usageData.moves.slice(0, 5).map((m) => (
-                        <div key={m.name} className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          key={m.name}
+                          onClick={() => handleSuggestedMove(m.name)}
+                          className="w-full min-h-10 flex items-center gap-2 rounded-lg px-2 -mx-2 text-left hover:bg-bg-tertiary active:bg-bg-elevated transition-colors"
+                          aria-label={`Add suggested move ${m.name}`}
+                        >
+                          <Plus size={14} className="text-accent-primary shrink-0" />
                           <span className="font-body text-text-primary text-sm flex-1">{m.name}</span>
                           <div className="flex-1 h-2 bg-bg-elevated rounded-full overflow-hidden">
                             <div className="h-full rounded-full bg-accent-primary" style={{ width: `${m.usage}%` }} />
                           </div>
                           <span className="font-caption text-text-secondary w-12 text-right">{m.usage}%</span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -627,9 +726,19 @@ export default function PokemonEditor({
                     <span className="font-caption text-text-secondary block mb-1.5">Top Items</span>
                     <div className="flex flex-wrap gap-1.5">
                       {usageData.items.slice(0, 4).map((item) => (
-                        <span key={item.name} className="font-micro text-text-primary px-2 py-1 rounded bg-bg-tertiary border border-border-subtle">
+                        <button
+                          type="button"
+                          key={item.name}
+                          onClick={() => handleSuggestedItem(item.name)}
+                          className={`font-micro px-2 py-1.5 rounded border transition-colors ${
+                            draft.item === item.name
+                              ? 'text-accent-primary bg-accent-primary/10 border-accent-primary/30'
+                              : 'text-text-primary bg-bg-tertiary border-border-subtle'
+                          }`}
+                          aria-label={`Equip suggested item ${item.name}`}
+                        >
                           {item.name} <span className="text-text-tertiary">({item.usage}%)</span>
-                        </span>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -640,9 +749,22 @@ export default function PokemonEditor({
                     <span className="font-caption text-text-secondary block mb-1.5">Common Teammates</span>
                     <div className="flex flex-wrap gap-2">
                       {usageData.teammates.slice(0, 5).map((t) => (
-                        <span key={t.species} className="font-micro text-text-primary flex items-center gap-1 px-2 py-1 rounded bg-bg-tertiary">
+                        <button
+                          type="button"
+                          key={t.species}
+                          onClick={() => handleSuggestedTeammate(t.species)}
+                          className={`font-micro flex items-center gap-1 px-2 py-1.5 rounded border ${
+                            teamSpecies.some((species) => species.toLowerCase() === t.species.toLowerCase())
+                              ? 'text-success bg-success/10 border-success/20'
+                              : 'text-text-primary bg-bg-tertiary border-border-subtle'
+                          }`}
+                          aria-label={`Add suggested teammate ${t.species}`}
+                        >
+                          {teamSpecies.some((species) => species.toLowerCase() === t.species.toLowerCase())
+                            ? <Check size={12} />
+                            : <Plus size={12} />}
                           {t.species}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -653,9 +775,19 @@ export default function PokemonEditor({
                       <span className="font-caption text-text-secondary block mb-1.5">Abilities</span>
                       <div className="space-y-1">
                         {usageData.abilities.slice(0, 3).map((ability) => (
-                          <div key={ability.name} className="font-micro text-text-primary">
+                          <button
+                            type="button"
+                            key={ability.name}
+                            onClick={() => {
+                              updateField('ability', ability.name);
+                              showRecommendationFeedback(`${ability.name} selected.`);
+                            }}
+                            className={`block w-full text-left rounded px-1.5 py-1 font-micro ${
+                              draft.ability === ability.name ? 'text-accent-primary bg-accent-primary/10' : 'text-text-primary'
+                            }`}
+                          >
                             {ability.name} <span className="text-text-tertiary">{ability.usage}%</span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -663,9 +795,19 @@ export default function PokemonEditor({
                       <span className="font-caption text-text-secondary block mb-1.5">Natures</span>
                       <div className="space-y-1">
                         {usageData.natures.slice(0, 3).map((nature) => (
-                          <div key={nature.name} className="font-micro text-text-primary">
+                          <button
+                            type="button"
+                            key={nature.name}
+                            onClick={() => {
+                              updateField('nature', nature.name);
+                              showRecommendationFeedback(`${nature.name} nature selected.`);
+                            }}
+                            className={`block w-full text-left rounded px-1.5 py-1 font-micro ${
+                              draft.nature === nature.name ? 'text-accent-primary bg-accent-primary/10' : 'text-text-primary'
+                            }`}
+                          >
                             {nature.name} <span className="text-text-tertiary">{nature.usage}%</span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -731,7 +873,7 @@ export default function PokemonEditor({
             title="Stats & EVs"
             expanded={expanded.stats}
             onToggle={() => toggleAccordion('stats')}
-            rightLabel={`${totalEVs}/508`}
+            rightLabel={`${totalEVs}/${MAX_TOTAL_EVS}`}
           >
             <div className="space-y-2 pt-2">
               {STAT_NAMES.map((stat) => (
@@ -746,6 +888,7 @@ export default function PokemonEditor({
                   isMegaActive={megaActive}
                   onEVChange={(v) => updateEV(stat, v)}
                   onIVChange={(v) => updateIV(stat, v)}
+                  maxEV={Math.min(MAX_STAT_EVS, draft.evs[stat] + Math.max(0, remainingEVs))}
                 />
               ))}
 
@@ -1106,6 +1249,39 @@ export default function PokemonEditor({
               </div>
             </button>
           ))}
+        </div>
+      </BottomSheet>
+
+      {/* Suggested Move Replacement */}
+      <BottomSheet
+        isOpen={suggestedMoveToAdd !== null}
+        onClose={() => setSuggestedMoveToAdd(null)}
+        title={`Add ${suggestedMoveToAdd || 'suggested move'}`}
+        showSearch={false}
+      >
+        <div className="space-y-3 pt-1">
+          <p className="font-body text-text-secondary">
+            All four move slots are full. Choose the move to replace.
+          </p>
+          <div className="space-y-2">
+            {draft.moves.slice(0, 4).map((move, index) => (
+              <button
+                type="button"
+                key={`${move}-${index}`}
+                onClick={() => {
+                  if (!suggestedMoveToAdd) return;
+                  const replacement = suggestedMoveToAdd;
+                  updateMove(index, replacement);
+                  setSuggestedMoveToAdd(null);
+                  showRecommendationFeedback(`${move} replaced with ${replacement}.`);
+                }}
+                className="w-full h-12 px-3 rounded-xl bg-bg-tertiary border border-border-subtle flex items-center justify-between text-left"
+              >
+                <span className="font-body text-text-primary">{move}</span>
+                <span className="font-caption text-accent-primary">Replace</span>
+              </button>
+            ))}
+          </div>
         </div>
       </BottomSheet>
 

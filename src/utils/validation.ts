@@ -3,7 +3,7 @@
 // ============================================================================
 
 import type { Team, Pokemon, ValidationResult } from '../types';
-import { getTotalEVs } from './statCalc';
+import { getTotalEVs, MAX_TOTAL_EVS } from './statCalc';
 import { getPokemonByName } from '../data/pokemonData';
 import { FORMATS } from '../data/formatsData';
 import {
@@ -48,8 +48,8 @@ function validatePokemonEVs(pokemon: Pokemon, index: number, formatId?: string):
   const errors: string[] = [];
   const totalEVs = getTotalEVs(pokemon.evs);
 
-  if (totalEVs > 508) {
-    errors.push(`Pokemon #${index + 1} (${pokemon.species}): Total EVs (${totalEVs}) exceed 508`);
+  if (totalEVs > MAX_TOTAL_EVS) {
+    errors.push(`Pokemon #${index + 1} (${pokemon.species}): Total EVs (${totalEVs}) exceed ${MAX_TOTAL_EVS}`);
   }
 
   for (const [stat, value] of Object.entries(pokemon.evs)) {
