@@ -5,16 +5,15 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router';
 import Layout from './components/Layout';
-import Onboarding from './pages/Onboarding';
-import Teams from './pages/Teams';
-import Builder from './pages/Builder';
 import { useStore } from './store/useStore';
-import { Teams as ShowdownTeams } from '@pkmn/sets';
 import { DEFAULT_FORMAT } from './data/formatsData';
-import { getDefaultLevelForFormat } from './lib/showdown';
+import { getDefaultLevelForFormat } from './lib/format';
 import { HOME_PATH } from './lib/routes';
 
-// Lazy loaded pages to optimize initial bundle size
+// Every page is route-split so specialist data and calculators only load when used.
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const Teams = lazy(() => import('./pages/Teams'));
+const Builder = lazy(() => import('./pages/Builder'));
 const Calculator = lazy(() => import('./pages/Calculator'));
 const Nuzlocke = lazy(() => import('./pages/Nuzlocke'));
 const SpeedTierList = lazy(() => import('./pages/SpeedTierList'));
@@ -40,10 +39,17 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
  */
 function PageLoader() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60dvh] gap-3 animate-fade-in">
-      <div className="w-10 h-10 rounded-full border-[3px] border-accent-primary/10 border-t-accent-primary animate-spin" />
+    <div
+      className="flex min-h-[60dvh] flex-col items-center justify-center gap-3 animate-fade-in"
+      role="status"
+      aria-live="polite"
+    >
+      <div
+        className="h-10 w-10 animate-spin rounded-full border-[3px] border-accent-primary/10 border-t-accent-primary"
+        aria-hidden="true"
+      />
       <span className="font-body-medium text-text-secondary text-xs tracking-wider uppercase">
-        Loading Section...
+        Loading section…
       </span>
     </div>
   );
@@ -73,10 +79,16 @@ export default function App() {
     };
 
     const urlTeam = getPackedTeamFromUrl();
-    if (urlTeam) {
+    if (!urlTeam) return;
+
+    let cancelled = false;
+
+    const loadSharedTeam = async () => {
       try {
+        // This parser is several megabytes; only fetch it for an actual shared team.
+        const { Teams: ShowdownTeams } = await import('@pkmn/sets');
         const unpackedSets = ShowdownTeams.unpackTeam(urlTeam.team);
-        if (unpackedSets && unpackedSets.team && unpackedSets.team.length > 0) {
+        if (!cancelled && unpackedSets?.team?.length) {
           const pokemon = unpackedSets.team.map((mon) => ({
             id: crypto.randomUUID(),
             species: mon.species || '',
@@ -128,7 +140,13 @@ export default function App() {
       } catch (err) {
         console.error('Failed to unpack shared team from URL:', err);
       }
-    }
+    };
+
+    void loadSharedTeam();
+
+    return () => {
+      cancelled = true;
+    };
   }, [importTeam, navigate]);
 
   return (

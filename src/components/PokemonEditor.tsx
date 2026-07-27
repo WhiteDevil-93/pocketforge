@@ -42,10 +42,10 @@ import {
   getChampionsMovesForSpecies,
 } from '../data';
 import {
-  getPikalyticsData,
-  getPikalyticsRank,
-  getPikalyticsWinrate,
-} from '../data/pikalyticsMeta';
+  CHAMPIONS_USAGE_META,
+  getChampionsUsageRank,
+} from '../data/championsUsageRankings';
+import { getChampionsUsageData } from '../data/championsUsageDetails';
 import {
   calculateAllStats,
   getTotalEVs,
@@ -232,10 +232,15 @@ export default function PokemonEditor({
   // Filtered lists for bottom sheets
   const isChampions = isChampionsFormatId(formatId || '');
 
-  // Pikalytics data
-  const pikaData = useMemo(() => isChampions && draft.species ? getPikalyticsData(draft.species) : null, [isChampions, draft.species]);
-  const pikaRank = useMemo(() => isChampions && draft.species ? getPikalyticsRank(draft.species) : 0, [isChampions, draft.species]);
-  const pikaWinrate = useMemo(() => isChampions && draft.species ? getPikalyticsWinrate(draft.species) : 0, [isChampions, draft.species]);
+  // Static competitive snapshot generated at build time for GitHub Pages/offline use.
+  const usageData = useMemo(
+    () => isChampions && draft.species ? getChampionsUsageData(draft.species) : undefined,
+    [isChampions, draft.species],
+  );
+  const usageRank = useMemo(
+    () => isChampions && draft.species ? getChampionsUsageRank(draft.species) : 0,
+    [isChampions, draft.species],
+  );
 
   const filteredPokemon = useMemo(() => {
     let pool = POKEDEX;
@@ -588,23 +593,23 @@ export default function PokemonEditor({
             </div>
           )}
 
-          {/* ===== PIKALYTICS META DATA ===== */}
-          {isChampions && pikaData && (
+          {/* ===== CHAMPIONS RANKED BATTLE DATA ===== */}
+          {isChampions && usageData && (
             <div className="rounded-2xl bg-bg-secondary border border-border-subtle overflow-hidden">
               <div className="px-4 pt-3 pb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-subtitle text-text-primary">Pikalytics</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-primary/10 text-accent-primary">M-B</span>
+                  <span className="font-subtitle text-text-primary">Ranked Battle Data</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-primary/10 text-accent-primary">Doubles</span>
                 </div>
-                <span className="font-caption text-text-tertiary">#{pikaRank} | {pikaWinrate}% WR</span>
+                <span className="font-caption text-text-tertiary">#{usageRank} ranked</span>
               </div>
               <div className="px-4 pb-4 space-y-3">
                 {/* Top Moves */}
-                {pikaData.moves.length > 0 && (
+                {usageData.moves.length > 0 && (
                   <div>
                     <span className="font-caption text-text-secondary block mb-1.5">Top Moves</span>
                     <div className="space-y-1">
-                      {pikaData.moves.slice(0, 5).map((m) => (
+                      {usageData.moves.slice(0, 5).map((m) => (
                         <div key={m.name} className="flex items-center gap-2">
                           <span className="font-body text-text-primary text-sm flex-1">{m.name}</span>
                           <div className="flex-1 h-2 bg-bg-elevated rounded-full overflow-hidden">
@@ -617,11 +622,11 @@ export default function PokemonEditor({
                   </div>
                 )}
                 {/* Top Items */}
-                {pikaData.items.length > 0 && (
+                {usageData.items.length > 0 && (
                   <div>
                     <span className="font-caption text-text-secondary block mb-1.5">Top Items</span>
                     <div className="flex flex-wrap gap-1.5">
-                      {pikaData.items.slice(0, 4).map((item) => (
+                      {usageData.items.slice(0, 4).map((item) => (
                         <span key={item.name} className="font-micro text-text-primary px-2 py-1 rounded bg-bg-tertiary border border-border-subtle">
                           {item.name} <span className="text-text-tertiary">({item.usage}%)</span>
                         </span>
@@ -630,11 +635,11 @@ export default function PokemonEditor({
                   </div>
                 )}
                 {/* Top Teammates */}
-                {pikaData.teammates.length > 0 && (
+                {usageData.teammates.length > 0 && (
                   <div>
                     <span className="font-caption text-text-secondary block mb-1.5">Common Teammates</span>
                     <div className="flex flex-wrap gap-2">
-                      {pikaData.teammates.slice(0, 5).map((t) => (
+                      {usageData.teammates.slice(0, 5).map((t) => (
                         <span key={t.species} className="font-micro text-text-primary flex items-center gap-1 px-2 py-1 rounded bg-bg-tertiary">
                           {t.species}
                         </span>
@@ -642,6 +647,38 @@ export default function PokemonEditor({
                     </div>
                   </div>
                 )}
+                {(usageData.abilities.length > 0 || usageData.natures.length > 0) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="font-caption text-text-secondary block mb-1.5">Abilities</span>
+                      <div className="space-y-1">
+                        {usageData.abilities.slice(0, 3).map((ability) => (
+                          <div key={ability.name} className="font-micro text-text-primary">
+                            {ability.name} <span className="text-text-tertiary">{ability.usage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-caption text-text-secondary block mb-1.5">Natures</span>
+                      <div className="space-y-1">
+                        {usageData.natures.slice(0, 3).map((nature) => (
+                          <div key={nature.name} className="font-micro text-text-primary">
+                            {nature.name} <span className="text-text-tertiary">{nature.usage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <a
+                  href={CHAMPIONS_USAGE_META.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-caption text-text-tertiary underline underline-offset-2"
+                >
+                  Community battle snapshot · updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}
+                </a>
               </div>
             </div>
           )}

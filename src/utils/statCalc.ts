@@ -3,10 +3,14 @@
 // ============================================================================
 
 import type { EVs, IVs } from '../types';
-import { getGen } from '../lib/showdown';
+import { getNatureByName, getNatureModifier } from '../data/naturesData';
+
+function safeNumber(value: number, fallback: number): number {
+  return Number.isFinite(value) ? value : fallback;
+}
 
 /**
- * Calculate a non-HP stat value using @pkmn/data engine
+ * Calculate a non-HP stat using the standard in-game formula.
  */
 export function calculateStat(
   baseStat: number,
@@ -16,10 +20,14 @@ export function calculateStat(
   nature: string,
   statName: string
 ): number {
-  const gen = getGen(9);
-  const statKey = statName.toLowerCase() as Parameters<typeof gen.stats.calc>[0];
-  const natureObj = gen.natures.get(nature);
-  return gen.stats.calc(statKey, baseStat, iv, ev, level, natureObj);
+  const normalizedBase = safeNumber(baseStat, 0);
+  const normalizedIV = safeNumber(iv, 31);
+  const normalizedEV = safeNumber(ev, 0);
+  const normalizedLevel = safeNumber(level, 100);
+  const baseValue = Math.floor(
+    ((2 * normalizedBase + normalizedIV + Math.floor(normalizedEV / 4)) * normalizedLevel) / 100,
+  ) + 5;
+  return Math.floor(baseValue * getNatureMultiplier(nature, statName));
 }
 
 /**
@@ -31,20 +39,23 @@ export function calculateHP(
   iv: number,
   level: number
 ): number {
-  const gen = getGen(9);
-  return gen.stats.calc('hp', baseHP, iv, ev, level);
+  const normalizedBase = safeNumber(baseHP, 0);
+  if (normalizedBase === 1) return 1;
+
+  const normalizedIV = safeNumber(iv, 31);
+  const normalizedEV = safeNumber(ev, 0);
+  const normalizedLevel = safeNumber(level, 100);
+  return Math.floor(
+    ((2 * normalizedBase + normalizedIV + Math.floor(normalizedEV / 4)) * normalizedLevel) / 100,
+  ) + normalizedLevel + 10;
 }
 
 /**
  * Get nature multiplier for a stat (delegates to @pkmn/data)
  */
 export function getNatureMultiplier(nature: string, stat: string): number {
-  const gen = getGen(9);
-  const natureObj = gen.natures.get(nature);
-  if (!natureObj) return 1.0;
-  if (natureObj.plus === stat.toLowerCase()) return 1.1;
-  if (natureObj.minus === stat.toLowerCase()) return 0.9;
-  return 1.0;
+  const natureData = getNatureByName(nature || 'Serious');
+  return natureData ? getNatureModifier(natureData, stat) : 1;
 }
 
 /**
@@ -97,10 +108,10 @@ export function calculateAllStats(
   return {
     hp: calculateHP(baseStats.hp, evs.hp, ivs.hp, level),
     atk: calculateStat(baseStats.atk, evs.atk, ivs.atk, level, nature, "atk"),
-    def: calculateStat(baseStats.def, evs.def, evs.def, level, nature, "def"),
-    spa: calculateStat(baseStats.spa, evs.spa, evs.spa, level, nature, "spa"),
-    spd: calculateStat(baseStats.spd, evs.spd, evs.spd, level, nature, "spd"),
-    spe: calculateStat(baseStats.spe, evs.spe, evs.spe, level, nature, "spe"),
+    def: calculateStat(baseStats.def, evs.def, ivs.def, level, nature, "def"),
+    spa: calculateStat(baseStats.spa, evs.spa, ivs.spa, level, nature, "spa"),
+    spd: calculateStat(baseStats.spd, evs.spd, ivs.spd, level, nature, "spd"),
+    spe: calculateStat(baseStats.spe, evs.spe, ivs.spe, level, nature, "spe"),
   };
 }
 

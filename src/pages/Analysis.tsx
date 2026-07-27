@@ -2,8 +2,8 @@
 // PocketForge — Team Analysis Dashboard
 // ============================================================================
 
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, useMemo, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
@@ -812,11 +812,16 @@ function analyzeTeam(team: Team): AnalysisResult {
 
 export default function Analysis() {
   const navigate = useNavigate();
+  const { teamId: routeTeamId } = useParams<{ teamId?: string }>();
   const teams = useStore((s) => s.teams);
   const currentTeamId = useStore((s) => s.currentTeamId);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const setCurrentTeam = useStore((s) => s.setCurrentTeam);
 
-  const effectiveTeamId = selectedTeamId || currentTeamId || teams[0]?.id || '';
+  const effectiveTeamId =
+    (routeTeamId && teams.some((team) => team.id === routeTeamId) ? routeTeamId : '') ||
+    currentTeamId ||
+    teams[0]?.id ||
+    '';
 
   const selectedTeam = useMemo(
     () => teams.find((t) => t.id === effectiveTeamId) || teams[0] || null,
@@ -827,6 +832,11 @@ export default function Analysis() {
     () => (selectedTeam ? analyzeTeam(selectedTeam) : null),
     [selectedTeam]
   );
+
+  const handleTeamSelect = useCallback((teamId: string) => {
+    setCurrentTeam(teamId);
+    navigate(`/analysis/${teamId}`, { replace: true });
+  }, [navigate, setCurrentTeam]);
 
   // No teams at all
   if (teams.length === 0) {
@@ -852,7 +862,7 @@ export default function Analysis() {
         <div className="pt-4 pb-2">
           <h1 className="font-display text-text-primary">Team Analysis</h1>
         </div>
-        <TeamSelector teams={teams} selectedId={selectedTeamId || ''} onSelect={setSelectedTeamId} />
+        <TeamSelector teams={teams} selectedId={selectedTeam?.id || ''} onSelect={handleTeamSelect} />
         <EmptyState
           icon={BarChart3}
           title="No Pokemon in Team"
@@ -873,7 +883,7 @@ export default function Analysis() {
       </div>
 
       {/* Team Selector */}
-      <TeamSelector teams={teams} selectedId={selectedTeam?.id || ''} onSelect={setSelectedTeamId} />
+      <TeamSelector teams={teams} selectedId={selectedTeam?.id || ''} onSelect={handleTeamSelect} />
 
       {/* Team Header */}
       <div className="mb-4">
@@ -1184,7 +1194,10 @@ function TeamSelector({
   return (
     <div className="relative mb-4 z-20">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className="flex items-center justify-between w-full h-12 px-4 bg-bg-secondary rounded-xl border border-border-subtle touch-target"
       >
         <span className="font-body text-text-primary truncate">
@@ -1206,9 +1219,13 @@ function TeamSelector({
               transition={{ duration: 0.2, ease: easeSmooth }}
               className="absolute top-full left-0 right-0 mt-1 bg-bg-elevated rounded-xl border border-border-subtle shadow-xl z-20 overflow-hidden max-h-64 overflow-y-auto"
             >
+              <div role="listbox" aria-label="Teams">
               {teams.map((team) => (
                 <button
                   key={team.id}
+                  type="button"
+                  role="option"
+                  aria-selected={team.id === selectedId}
                   onClick={() => {
                     onSelect(team.id);
                     setOpen(false);
@@ -1234,6 +1251,7 @@ function TeamSelector({
                   )}
                 </button>
               ))}
+              </div>
             </motion.div>
           </>
         )}

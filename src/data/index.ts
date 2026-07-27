@@ -3,7 +3,8 @@
 // ============================================================================
 
 // Pokemon data
-export { POKEDEX, getPokemonByName, getPokemonById, searchPokemon, getPokemonByType, getSpriteUrl, getAllPokemonNames } from './pokemonData';
+export { POKEDEX, getPokemonByName, getPokemonById, searchPokemon, getPokemonByType, getAllPokemonNames } from './pokemonData';
+export { getSpriteUrl } from './sprites';
 
 // Moves data
 export { MOVES, getMoveByName, searchMoves, getMovesByType, getMovesForPokemon, getAllMoveNames } from './movesData';
@@ -33,8 +34,17 @@ export {
   normalizeSlug,
 } from './championsLegality';
 
-// Pikalytics usage data
-export { PIKALYTICS_TOP_20, PIKALYTICS_TEAM_CORES, PIKALYTICS_DETAILS, getPikalyticsData, getPikalyticsRank, getPikalyticsWinrate } from './pikalyticsMeta';
+// Current Pokémon Champions ranked battle data
+export {
+  CHAMPIONS_USAGE_META,
+  CHAMPIONS_USAGE_RANKINGS,
+  CHAMPIONS_USAGE_TOP_20,
+  getChampionsUsageRank,
+} from './championsUsageRankings';
+export {
+  CHAMPIONS_USAGE_DETAILS_META,
+  getChampionsUsageData,
+} from './championsUsageDetails';
 
 // Mega Evolution data
 export { MEGA_DATA, getMegaByStone, getMegaByBase, isMegaStone, getAllMegaStones } from './megaData';

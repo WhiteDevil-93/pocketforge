@@ -24,7 +24,10 @@ export default function BottomNav() {
   const activeIndex = TABS.findIndex((tab) => tab.match(currentPath));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-bg-tertiary/95 backdrop-blur-xl border-t border-border-subtle pb-safe">
+    <nav
+      aria-label="Primary navigation"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-bg-tertiary/95 backdrop-blur-xl border-t border-border-subtle pb-safe"
+    >
       <div className="relative h-space-16 max-w-lg mx-auto grid grid-cols-5">
         {activeIndex >= 0 && (
           <motion.div
@@ -58,6 +61,7 @@ export default function BottomNav() {
               >
                 <Icon
                   size={24}
+                  aria-hidden="true"
                   strokeWidth={isActive ? 2.5 : 1.5}
                   className={isActive ? 'text-accent-primary' : 'text-text-tertiary'}
                 />

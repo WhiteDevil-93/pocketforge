@@ -19,14 +19,140 @@ import {
   ChevronRight,
   AlertTriangle,
   Sparkles,
+  SlidersHorizontal,
+  Wrench,
+  BarChart3,
+  Calculator,
+  Shield,
+  Zap,
+  Search,
+  Share2,
+  HeartPulse,
+  TrendingUp,
+  FolderOpen,
 } from 'lucide-react';
 import BottomSheet from '../components/BottomSheet';
 import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
 import { FORMATS, getFormatById } from '../data/formatsData';
 import { CHAMPIONS_META } from '../data/championsLegality';
+import { CHAMPIONS_USAGE_META } from '../data/championsUsageRankings';
+import { checkForAppUpdate } from '../lib/pwaUpdate';
 
 const easeSmooth = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
+
+type SettingsTab = 'preferences' | 'features';
+
+interface FeatureDefinition {
+  title: string;
+  description: string;
+  category: 'Build' | 'Analyze' | 'Tools';
+  icon: React.ElementType;
+  color: string;
+  path?: string;
+  badge?: string;
+}
+
+const FEATURES: FeatureDefinition[] = [
+  {
+    title: 'Team Library',
+    description: 'Create, search, filter, duplicate, organize, and export teams from one home screen.',
+    category: 'Build',
+    icon: FolderOpen,
+    color: '#3B82F6',
+    path: '/teams',
+  },
+  {
+    title: 'Team Builder',
+    description: 'Configure species, moves, items, abilities, natures, levels, EVs, IVs, Tera types, and Mega Evolution.',
+    category: 'Build',
+    icon: Wrench,
+    color: '#8B5CF6',
+    path: '/builder',
+  },
+  {
+    title: 'Champions Ranked Insights',
+    description: 'See current Doubles rank plus popular moves, items, teammates, abilities, and natures inside the editor.',
+    category: 'Build',
+    icon: TrendingUp,
+    color: '#06B6D4',
+    path: '/builder',
+    badge: 'New',
+  },
+  {
+    title: 'Custom Formats',
+    description: 'Create reusable rulesets and restricted rosters for teams outside the built-in formats.',
+    category: 'Build',
+    icon: SlidersHorizontal,
+    color: '#EAB308',
+    path: '/custom-formats',
+  },
+  {
+    title: 'Team Analysis',
+    description: 'Review team score, offensive coverage, defensive synergy, roles, speed benchmarks, EV plans, and suggestions.',
+    category: 'Analyze',
+    icon: BarChart3,
+    color: '#22C55E',
+    path: '/analysis',
+    badge: 'Updated',
+  },
+  {
+    title: 'Weakness Analyzer',
+    description: 'Find shared weaknesses and see which teammates resist or are immune to each attacking type.',
+    category: 'Analyze',
+    icon: Shield,
+    color: '#EF4444',
+    path: '/weakness-analyzer',
+  },
+  {
+    title: 'Speed Tiers',
+    description: 'Compare calculated Speed across a team and common benchmark conditions.',
+    category: 'Analyze',
+    icon: Zap,
+    color: '#EC4899',
+    path: '/speed-tiers',
+  },
+  {
+    title: 'Damage Calculator',
+    description: 'Calculate damage ranges with levels, EVs, IVs, items, abilities, weather, terrain, screens, and field effects.',
+    category: 'Tools',
+    icon: Calculator,
+    color: '#10B981',
+    path: '/calc',
+  },
+  {
+    title: 'Movepool Explorer',
+    description: 'Search legal moves and acquisition methods, including inherited pre-evolution moves.',
+    category: 'Tools',
+    icon: Search,
+    color: '#F59E0B',
+    path: '/movepool',
+  },
+  {
+    title: 'Import, Export & Share',
+    description: 'Move teams between PocketForge and Pokémon Showdown, download backups, or generate share links.',
+    category: 'Tools',
+    icon: Share2,
+    color: '#14B8A6',
+    path: '/import-export',
+  },
+  {
+    title: 'Nuzlocke Tracker',
+    description: 'Track runs, routes, encounters, party status, deaths, and game progress separately from competitive teams.',
+    category: 'Tools',
+    icon: HeartPulse,
+    color: '#F43F5E',
+    path: '/nuzlocke',
+  },
+  {
+    title: 'Offline PWA & Updates',
+    description: 'Install PocketForge, work offline, and receive new deployments without uninstalling or clearing saved data.',
+    category: 'Tools',
+    icon: WifiOff,
+    color: '#22C55E',
+    badge: 'Automatic',
+  },
+];
 
 // ---- Toggle Switch Component -----------------------------------------------
 
@@ -95,11 +221,110 @@ function SettingsRow({
 
 // ---- Section Header --------------------------------------------------------
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({ title, id }: { title: string; id?: string }) {
   return (
-    <h3 className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider px-4 pt-6 pb-2">
+    <h3
+      id={id}
+      className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider px-4 pt-6 pb-2"
+    >
       {title}
     </h3>
+  );
+}
+
+function FeaturesPanel({ onOpen }: { onOpen: (path: string) => void }) {
+  const categories: FeatureDefinition['category'][] = ['Build', 'Analyze', 'Tools'];
+
+  return (
+    <motion.div
+      key="features"
+      id="settings-features-panel"
+      role="tabpanel"
+      aria-labelledby="settings-features-tab"
+      initial={{ opacity: 0, x: 8 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -8 }}
+      transition={{ duration: 0.2, ease: easeSmooth }}
+    >
+      <div className="mt-4 rounded-2xl border border-accent-primary/20 bg-accent-primary/5 p-4">
+        <div className="flex items-start gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-primary/15">
+            <Sparkles size={20} className="text-accent-primary" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="font-subtitle text-text-primary">Everything in PocketForge</h2>
+            <p className="mt-1 text-[12px] leading-relaxed text-text-secondary">
+              Choose a feature below to open it. Competitive snapshots and the app shell are bundled
+              for GitHub Pages, so the core tools remain available offline.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {categories.map((category) => (
+        <section key={category} aria-labelledby={`features-${category.toLowerCase()}`}>
+          <SectionHeader title={category} id={`features-${category.toLowerCase()}`} />
+          <div className="grid gap-2 sm:grid-cols-2">
+            {FEATURES.filter((feature) => feature.category === category).map((feature) => {
+              const Icon = feature.icon;
+              const content = (
+                <>
+                  <div
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+                    style={{ backgroundColor: `${feature.color}18` }}
+                  >
+                    <Icon size={20} style={{ color: feature.color }} aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-text-primary">{feature.title}</h3>
+                      {feature.badge && (
+                        <span
+                          className="rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                          style={{ color: feature.color, backgroundColor: `${feature.color}18` }}
+                        >
+                          {feature.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">
+                      {feature.description}
+                    </p>
+                  </div>
+                  {feature.path && (
+                    <ChevronRight size={17} className="shrink-0 text-text-tertiary" aria-hidden="true" />
+                  )}
+                </>
+              );
+
+              return feature.path ? (
+                <button
+                  key={feature.title}
+                  type="button"
+                  onClick={() => onOpen(feature.path!)}
+                  className="flex min-h-24 items-start gap-3 rounded-2xl border border-border-subtle bg-bg-secondary p-3 text-left transition-colors active:bg-bg-tertiary"
+                  aria-label={`Open ${feature.title}`}
+                >
+                  {content}
+                </button>
+              ) : (
+                <div
+                  key={feature.title}
+                  className="flex min-h-24 items-start gap-3 rounded-2xl border border-border-subtle bg-bg-secondary p-3"
+                >
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+
+      <p className="mt-6 px-4 text-center text-[10px] leading-relaxed text-text-tertiary">
+        Ranked data is a community snapshot, not a live win-rate feed. Team recommendations are
+        decision support and should be reviewed for your format and strategy.
+      </p>
+    </motion.div>
   );
 }
 
@@ -305,9 +530,23 @@ function AttributionModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           <li>Smogon University</li>
           <li>Pokemon Showdown</li>
           <li>Showdown Champions mod ({CHAMPIONS_META.showdownFormat})</li>
+          <li>
+            <a
+              href={CHAMPIONS_USAGE_META.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2"
+            >
+              {CHAMPIONS_USAGE_META.sourceName}
+            </a>
+            {' '}({CHAMPIONS_USAGE_META.format})
+          </li>
         </ul>
         <p className="text-text-secondary">
           Champions regulation data last synced {new Date(CHAMPIONS_META.updatedAt).toLocaleDateString()}.
+        </p>
+        <p className="text-text-secondary">
+          Ranked battle snapshot updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}.
         </p>
         <p className="text-text-secondary">Sprites from Pokemon Showdown CDN</p>
         <p className="text-text-secondary">Type icons from Smogon</p>
@@ -397,8 +636,11 @@ export default function SettingsPage() {
   const settings = useStore((s) => s.settings);
   const teams = useStore((s) => s.teams);
   const customFormats = useStore((s) => s.customFormats);
+  const currentTeamId = useStore((s) => s.currentTeamId);
+  const setCurrentTeam = useStore((s) => s.setCurrentTeam);
   const updateSettings = useStore((s) => s.updateSettings);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('preferences');
 
   // Sheet/modal states
   const [formatSheetOpen, setFormatSheetOpen] = useState(false);
@@ -549,32 +791,88 @@ export default function SettingsPage() {
     window.location.reload();
   }, []);
 
-  // Force update Service Worker & clear precache storage
+  // Check the app-scoped Service Worker without deleting user data or origin caches.
   const handleForceUpdateCache = useCallback(async () => {
-    setExportMessage('Clearing app caches and checking for updates...');
+    setExportMessage('Checking for the latest app version...');
     try {
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const registration of registrations) {
-          await registration.unregister();
-        }
-      }
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        for (const key of keys) {
-          await caches.delete(key);
-        }
+      const result = await checkForAppUpdate();
+      if (result === 'updated') {
+        setExportMessage('Update installed. Reloading...');
+      } else if (result === 'current') {
+        setExportMessage('PocketForge is already up to date.');
+      } else if (result === 'offline') {
+        setExportMessage('Connect to the internet to check for updates.');
+      } else {
+        setExportMessage('Updates are unavailable in this browser.');
       }
     } catch (e) {
-      console.warn('Cache clearing error:', e);
+      console.warn('App update check failed:', e);
+      setExportMessage('Could not check for updates. Please try again.');
     }
-    window.location.reload();
+    setTimeout(() => setExportMessage(''), 3000);
   }, []);
+
+  const handleFeatureOpen = useCallback((path: string) => {
+    const teamId = currentTeamId && teams.some((team) => team.id === currentTeamId)
+      ? currentTeamId
+      : teams[0]?.id;
+
+    if (path === '/builder') {
+      if (!teamId) {
+        navigate('/teams');
+        return;
+      }
+      setCurrentTeam(teamId);
+      navigate(`/builder/${teamId}`);
+      return;
+    }
+
+    if (path === '/analysis' && teamId) {
+      setCurrentTeam(teamId);
+      navigate(`/analysis/${teamId}`);
+      return;
+    }
+
+    navigate(path);
+  }, [currentTeamId, navigate, setCurrentTeam, teams]);
 
   return (
     <div className="min-h-[100dvh] px-4 pb-8">
       <div className="-mx-4 mb-2">
         <PageHeader title="Settings" />
+      </div>
+
+      <div
+        className="mb-3 grid grid-cols-2 rounded-xl border border-border-subtle bg-bg-secondary p-1"
+        role="tablist"
+        aria-label="Settings sections"
+      >
+        {([
+          { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+          { id: 'features', label: 'Features', icon: Sparkles },
+        ] as const).map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              id={`settings-${tab.id}-tab`}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`settings-${tab.id}-panel`}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex min-h-10 items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-accent-primary text-white shadow-sm'
+                  : 'text-text-secondary active:bg-bg-tertiary'
+              }`}
+            >
+              <Icon size={16} aria-hidden="true" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Offline Indicator */}
@@ -609,10 +907,19 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence mode="wait" initial={false}>
+      {activeTab === 'features' ? (
+        <FeaturesPanel onOpen={handleFeatureOpen} />
+      ) : (
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: easeSmooth }}
+        key="preferences"
+        id="settings-preferences-panel"
+        role="tabpanel"
+        aria-labelledby="settings-preferences-tab"
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: 8 }}
+        transition={{ duration: 0.2, ease: easeSmooth }}
       >
         {/* Appearance Section */}
         <SectionHeader title="Appearance" />
@@ -718,8 +1025,8 @@ export default function SettingsPage() {
           <SettingsRow
             icon={Sparkles}
             iconColor="#EAB308"
-            label="Check for Updates & Clear Cache"
-            subtitle="Force refresh Service Worker and app cache"
+            label="Check for App Update"
+            subtitle="Install the latest version without clearing data"
             rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
             onClick={handleForceUpdateCache}
           />
@@ -795,6 +1102,8 @@ export default function SettingsPage() {
           PocketForge is an unofficial fan project for personal use.
         </p>
       </motion.div>
+      )}
+      </AnimatePresence>
 
       {/* Sheets & Modals */}
       <FormatPickerSheet

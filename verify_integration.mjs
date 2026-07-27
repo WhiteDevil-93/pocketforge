@@ -2,6 +2,14 @@ import { importTeamFromPSFormat, exportTeamToPSFormat } from './src/utils/psForm
 import { getMovepoolForSpecies } from './src/utils/movepoolQuery.ts';
 import { calculateSpeed } from './src/utils/speedCalculator.ts';
 import { calculateDamage } from './src/utils/damageCalc.ts';
+import {
+  CHAMPIONS_USAGE_META,
+  CHAMPIONS_USAGE_RANKINGS,
+  getChampionsUsageRank,
+} from './src/data/championsUsageRankings.ts';
+import { getChampionsUsageData } from './src/data/championsUsageDetails.ts';
+import { calculateAllStats, calculateHP, calculateStat } from './src/utils/statCalc.ts';
+import { normalizePokemonData, normalizeTeamData } from './src/lib/teamData.ts';
 
 // Simple assert helper
 function assert(condition, message) {
@@ -135,6 +143,54 @@ IVs: 0 Atk
   assert(dmgResult.koChance.includes('3HKO') || dmgResult.koChance.includes('2HKO') || dmgResult.koChance.includes('chance'), `Expected 3HKO, got ${dmgResult.koChance}`);
 
   console.log(`✅ Focus Blast vs Chansey: ${dmgResult.minDamage}-${dmgResult.maxDamage} HP (${dmgResult.minPercent.toFixed(1)}% - ${dmgResult.maxPercent.toFixed(1)}%) - ${dmgResult.koChance}`);
+
+  // Test 5: Static Champions usage snapshot
+  console.log('Testing Champions ranked battle snapshot...');
+  assert(CHAMPIONS_USAGE_META.format === 'Doubles', 'Champions usage format must be Doubles');
+  assert(CHAMPIONS_USAGE_RANKINGS.length >= 100, 'Champions rankings snapshot is unexpectedly small');
+  assert(
+    new Set(CHAMPIONS_USAGE_RANKINGS.map((entry) => entry.rank)).size === CHAMPIONS_USAGE_RANKINGS.length,
+    'Champions rankings contain duplicate ranks',
+  );
+  assert(getChampionsUsageRank('Garchomp') > 0, 'Garchomp is missing from Champions rankings');
+  const garchompUsage = getChampionsUsageData('Garchomp');
+  assert(garchompUsage?.moves.length, 'Garchomp detailed usage data is missing');
+  assert(
+    garchompUsage.moves.every((entry) => entry.usage >= 0 && entry.usage <= 100),
+    'Champions move usage values must be percentages',
+  );
+  console.log(`✅ Champions snapshot loaded: ${CHAMPIONS_USAGE_RANKINGS.length} ranked, ${CHAMPIONS_USAGE_META.detailedPokemonCount} detailed`);
+
+  // Test 6: Lightweight stat calculations used by Analysis
+  console.log('Testing Analysis stat calculations...');
+  assert(calculateStat(110, 252, 31, 50, 'Timid', 'spe') === 178, 'Timid Gengar Speed should be 178');
+  assert(calculateHP(60, 0, 31, 50) === 135, 'Gengar HP should be 135');
+  assert(calculateHP(1, 252, 31, 100) === 1, 'Shedinja HP must remain 1');
+  const calculatedStats = calculateAllStats(
+    { hp: 60, atk: 65, def: 60, spa: 130, spd: 75, spe: 110 },
+    { hp: 0, atk: 0, def: 252, spa: 252, spd: 0, spe: 252 },
+    { hp: 31, atk: 31, def: 0, spa: 31, spd: 31, spe: 31 },
+    50,
+    'Timid',
+  );
+  assert(calculatedStats.def === 96, `Expected 96 Defense with a 0 IV, got ${calculatedStats.def}`);
+  console.log('✅ Analysis stat calculations are accurate without the battle-engine bundle');
+
+  // Test 7: Legacy/imported team normalization
+  console.log('Testing saved-team normalization...');
+  const recoveredPokemon = normalizePokemonData({
+    species: 'Garchomp',
+    evs: { spe: 252 },
+  });
+  assert(recoveredPokemon.evs.hp === 0 && recoveredPokemon.evs.spe === 252, 'Partial EVs were not normalized');
+  assert(recoveredPokemon.ivs.spe === 31, 'Missing IVs were not restored');
+  assert(Array.isArray(recoveredPokemon.moves), 'Missing moves were not restored');
+  const recoveredTeam = normalizeTeamData({
+    name: 'Legacy Team',
+    pokemon: [recoveredPokemon],
+  });
+  assert(recoveredTeam.format.length > 0 && recoveredTeam.pokemon.length === 1, 'Legacy team was not normalized');
+  console.log('✅ Legacy and imported teams are normalized for Analysis');
 
   console.log('🎉 ALL INTEGRATION TESTS PASSED!');
 }

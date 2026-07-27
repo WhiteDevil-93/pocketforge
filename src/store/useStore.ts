@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Team, Pokemon, AppSettings, CustomFormat } from '../types';
 import { DEFAULT_FORMAT } from '../data/formatsData';
-import { getDefaultLevelForFormat } from '../lib/showdown';
+import { normalizePokemonData, normalizeTeamData } from '../lib/teamData';
 
 // ---- Default data -----------------------------------------------------------
 
@@ -15,21 +15,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultFormat: DEFAULT_FORMAT,
   hasCompletedOnboarding: false,
 };
-
-const emptyPokemon = (): Pokemon => ({
-  id: crypto.randomUUID(),
-  species: '',
-  level: getDefaultLevelForFormat(DEFAULT_FORMAT),
-  gender: '',
-  shiny: false,
-  ability: '',
-  item: '',
-  teraType: '',
-  moves: [],
-  evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-  ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
-  nature: 'Serious',
-});
 
 // ---- Helper functions -------------------------------------------------------
 
@@ -168,11 +153,7 @@ export const useStore = create<StoreState>()(
         const team = get().teams.find(t => t.id === teamId);
         if (!team || team.pokemon.length >= 6) return;
 
-        const newPokemon: Pokemon = {
-          ...emptyPokemon(),
-          ...pokemon,
-          id: pokemon?.id || crypto.randomUUID(),
-        };
+        const newPokemon = normalizePokemonData(pokemon, team.format);
 
         set(state => ({
           teams: state.teams.map(t =>
@@ -246,11 +227,9 @@ export const useStore = create<StoreState>()(
           name: teamData.name || 'Imported Team',
           format: teamData.format || get().settings.defaultFormat || DEFAULT_FORMAT,
           folder: teamData.folder || 'My Teams',
-          pokemon: (teamData.pokemon || []).map(p => ({
-            ...emptyPokemon(),
-            ...p,
-            id: p.id || crypto.randomUUID(),
-          })),
+          pokemon: (teamData.pokemon || []).map((pokemon) =>
+            normalizePokemonData(pokemon, teamData.format || get().settings.defaultFormat)
+          ),
           createdAt: now,
           updatedAt: now,
           isValid: false,
@@ -326,6 +305,22 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'pocketforge-storage',
+      version: 1,
+      migrate: (persistedState) => {
+        const persisted =
+          persistedState && typeof persistedState === 'object'
+            ? persistedState as Partial<StoreState>
+            : {};
+        return {
+          ...persisted,
+          teams: Array.isArray(persisted.teams)
+            ? persisted.teams.map((team) => normalizeTeamData(team))
+            : [],
+          folders: Array.isArray(persisted.folders) ? persisted.folders : ['My Teams', 'VGC', 'Smogon'],
+          settings: { ...DEFAULT_SETTINGS, ...(persisted.settings ?? {}) },
+          customFormats: Array.isArray(persisted.customFormats) ? persisted.customFormats : [],
+        };
+      },
       partialize: (state) => ({
         teams: state.teams,
         folders: state.folders,

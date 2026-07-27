@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone, BarChart3, ArrowLeftRight, ChevronDown, Gamepad2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { getFormatsGrouped, DEFAULT_FORMAT, getFormatById } from '../data';
+import { getFormatsGrouped, DEFAULT_FORMAT, getFormatById } from '../data/formatsData';
 import type { Format } from '../types';
 
 const FEATURES = [
@@ -98,8 +98,8 @@ function FormatPicker({
 
   const filteredGroups = Object.entries(grouped)
     .sort(([a], [b]) => groupOrder(b) - groupOrder(a))
-    .map(([gen, formats]) => ({
-      generation: parseInt(gen),
+    .map(([label, formats]) => ({
+      label,
       formats: formats.filter(f =>
         f.name.toLowerCase().includes(searchQuery.toLowerCase())
       ),
@@ -110,7 +110,10 @@ function FormatPicker({
     <div className="relative">
       {/* Trigger button */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
         className="flex items-center justify-between w-full h-12 px-4 bg-bg-secondary rounded-card-md border border-border-subtle"
       >
         <div className="flex items-center gap-3">
@@ -142,6 +145,9 @@ function FormatPicker({
 
             {/* Sheet */}
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="format-picker-title"
               className="fixed bottom-0 left-0 right-0 z-50 bg-bg-tertiary rounded-t-sheet max-h-[70vh] overflow-y-auto"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -154,7 +160,7 @@ function FormatPicker({
               </div>
 
               <div className="px-4 pb-2">
-                <h3 className="font-headline text-text-primary mb-3">Select Format</h3>
+                <h3 id="format-picker-title" className="font-headline text-text-primary mb-3">Select Format</h3>
 
                 {/* Search */}
                 <input
@@ -166,11 +172,11 @@ function FormatPicker({
                 />
               </div>
 
-              {filteredGroups.map(({ generation, formats }) => (
-                <div key={generation}>
+              {filteredGroups.map(({ label, formats }) => (
+                <div key={label}>
                   <div className="sticky top-0 px-4 py-2 bg-bg-tertiary/95 backdrop-blur border-b border-border-subtle">
                     <span className="font-caption text-text-secondary uppercase tracking-wider">
-                      Generation {generation}
+                      {label}
                     </span>
                   </div>
                   {formats.map((format: Format) => (

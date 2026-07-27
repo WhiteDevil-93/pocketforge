@@ -6,10 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
+    "check": "npm run lint && npm run verify && npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
     "update-data": "node scripts/update-from-showdown.mjs",
+    "update-usage": "node scripts/update-champions-usage.mjs",
     "verify": "node --import tsx verify_integration.mjs"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

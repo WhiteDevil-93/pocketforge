@@ -3,6 +3,25 @@ import { HashRouter } from 'react-router'
 import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
+import AppErrorBoundary from './components/AppErrorBoundary.tsx'
+
+const UPDATE_INTERVAL_MS = 15 * 60 * 1000;
+
+// Chrome normally reloads through Workbox when an updated worker activates.
+// This browser-level fallback covers installed-window and external update cases.
+let isReloadingForUpdate = false;
+if ('serviceWorker' in navigator) {
+  let hasActiveController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hasActiveController) {
+      hasActiveController = true;
+      return;
+    }
+    if (isReloadingForUpdate) return;
+    isReloadingForUpdate = true;
+    window.location.reload();
+  });
+}
 
 const updateSW = registerSW({
   immediate: true,
@@ -19,19 +38,24 @@ const updateSW = registerSW({
             console.warn('SW update check failed:', e);
           }
         }
-      }, 30 * 1000);
+      }, UPDATE_INTERVAL_MS);
     }
   },
 });
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && navigator.onLine) {
-    navigator.serviceWorker?.getRegistration().then((r) => r?.update());
+    navigator.serviceWorker
+      ?.getRegistration(import.meta.env.BASE_URL)
+      .then((registration) => registration?.update())
+      .catch((error) => console.warn('SW update check failed:', error));
   }
 });
 
 createRoot(document.getElementById('root')!).render(
-  <HashRouter>
-    <App />
-  </HashRouter>,
+  <AppErrorBoundary>
+    <HashRouter>
+      <App />
+    </HashRouter>
+  </AppErrorBoundary>,
 )

@@ -2,7 +2,7 @@
 // PocketForge — Type Badge Component
 // ============================================================================
 
-import { getTypeColor } from '../data';
+import { getTypeColor } from '../data/typesData';
 
 interface TypeBadgeProps {
   type: string;

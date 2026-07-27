@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { useState, useCallback } from 'react';
-import { getSpriteUrl } from '../data';
+import { getSpriteUrl } from '../data/sprites';
 
 interface PokemonSpriteProps {
   name: string;

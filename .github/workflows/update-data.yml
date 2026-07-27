@@ -31,6 +31,11 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Fetch Champions ranked battle snapshot
+        run: node scripts/update-champions-usage.mjs
+        env:
+          NODE_ENV: production
+
       - name: Check for changes
         id: diff
         run: |
@@ -48,7 +53,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: auto-update Pokemon Showdown data [$(date -u +%Y-%m-%d)]"
+          git commit -m "chore: auto-update competitive Pokemon data [$(date -u +%Y-%m-%d)]"
           git push origin HEAD:${{ github.ref_name }}
 
       - name: Trigger deployment

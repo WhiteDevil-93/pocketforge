@@ -253,19 +253,12 @@ export function getPokemonByType(type: string): PokedexEntry[] {
   );
 }
 
-export function getSpriteUrl(name: string, animated = false): string {
-  const normalized = name.toLowerCase().trim().replace(/\\s+/g, '').replace(/[^a-z0-9-]/g, '');
-  if (animated) {
-    return \`https://play.pokemonshowdown.com/sprites/ani/\${normalized}.gif\`;
-  }
-  return \`https://play.pokemonshowdown.com/sprites/gen5/\${normalized}.png\`;
-}
-
 export function getAllPokemonNames(): string[] {
   return POKEDEX.map(p => p.name);
 }
 
 export function getViablePokemon(_format?: string): PokedexEntry[] {
+  void _format;
   return POKEDEX;
 }
 `;

@@ -91,16 +91,30 @@
   body {
     background: radial-gradient(ellipse at 50% 0%, #111827 0%, #0A0E1A 100%);
     min-height: 100dvh;
+    margin: 0;
   }
 
-  /* Hide scrollbar for webkit browsers */
-  ::-webkit-scrollbar {
-    display: none;
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
   }
 
   html {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    scrollbar-color: var(--border-active) var(--bg-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-secondary);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    color: var(--text-primary);
+    background: rgba(59, 130, 246, 0.4);
   }
 }
 
@@ -221,5 +235,28 @@
   /* Safe area bottom padding */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .scrollbar-hide {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

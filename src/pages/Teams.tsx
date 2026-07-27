@@ -17,7 +17,10 @@ import type { Team } from '../types';
 import SearchInput from '../components/SearchInput';
 import TeamCard from '../components/TeamCard';
 import PokemonSprite from '../components/PokemonSprite';
-import { PIKALYTICS_TOP_20 } from '../data/pikalyticsMeta';
+import {
+  CHAMPIONS_USAGE_META,
+  CHAMPIONS_USAGE_TOP_20,
+} from '../data/championsUsageRankings';
 
 // ---- Format filter options -------------------------------------------------
 
@@ -38,7 +41,7 @@ const FORMAT_FILTERS = [
 const QUICK_ACTIONS = [
   { label: 'Builder', icon: Wrench, path: '/builder', color: '#3B82F6', bg: '#3B82F608', border: '#3B82F620' },
   { label: 'Nuzlocke', icon: Crosshair, path: '/nuzlocke', color: '#8B5CF6', bg: '#8B5CF608', border: '#8B5CF620' },
-  { label: 'Calc', icon: Calculator, path: '/damage-calc', color: '#10B981', bg: '#10B98108', border: '#10B98120' },
+  { label: 'Calc', icon: Calculator, path: '/calc', color: '#10B981', bg: '#10B98108', border: '#10B98120' },
   { label: 'Movepool', icon: BookOpen, path: '/movepool', color: '#F59E0B', bg: '#F59E0B08', border: '#F59E0B20' },
   { label: 'Speed Tiers', icon: Zap, path: '/speed-tiers', color: '#EC4899', bg: '#EC489908', border: '#EC489920' },
   { label: 'Weakness', icon: Shield, path: '/weakness-analyzer', color: '#EF4444', bg: '#EF444408', border: '#EF444420' },
@@ -103,7 +106,7 @@ function HeroBanner({ teamCount, onCreate }: { teamCount: number; onCreate: () =
     "Long-press a team card for copy, delete, and export options.",
     "The Damage Calc supports spread moves and multiple targets.",
     "Nuzlocke mode has route encounters for 38 games!",
-    "Pikalytics data shows what's popular in Champions M-B.",
+    "Ranked Battle Data shows what's popular in Champions Doubles.",
   ];
   const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)]);
 
@@ -181,12 +184,12 @@ function RecentTeams({ teams, onTap }: { teams: Team[]; onTap: (id: string) => v
 // ---- Champions Meta Snapshot -----------------------------------------------
 
 function MetaSnapshot() {
-  const top4 = PIKALYTICS_TOP_20.slice(0, 4);
+  const top4 = CHAMPIONS_USAGE_TOP_20.slice(0, 4);
   return (
     <div className="mb-5">
       <div className="flex items-center justify-between mb-2.5">
         <h3 className="text-caption font-medium text-text-secondary uppercase tracking-wider flex items-center gap-1">
-          <TrendingUp size={12} /> Champions M-B Meta
+          <TrendingUp size={12} /> Champions Doubles Rankings
         </h3>
       </div>
       <div className="bg-bg-secondary rounded-xl border border-border-subtle p-3">
@@ -200,10 +203,18 @@ function MetaSnapshot() {
                 </span>
               </div>
               <span className="text-xs font-medium text-text-primary">{p.species}</span>
-              <span className="text-[10px] text-text-tertiary">{p.winrate}% WR</span>
+              <span className="text-[10px] text-text-tertiary">Rank #{p.rank}</span>
             </div>
           ))}
         </div>
+        <a
+          href={CHAMPIONS_USAGE_META.sourceUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="block mt-2 text-center text-[10px] text-text-tertiary underline underline-offset-2"
+        >
+          Updated {new Date(CHAMPIONS_USAGE_META.sourceUpdatedAt).toLocaleDateString()}
+        </a>
       </div>
     </div>
   );
