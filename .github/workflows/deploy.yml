@@ -50,6 +50,7 @@ jobs:
         run: npm run build
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_APP_COMMIT: ${{ github.sha }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

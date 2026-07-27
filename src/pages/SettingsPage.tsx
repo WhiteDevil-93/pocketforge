@@ -2,7 +2,7 @@
 // PocketForge — Settings Page
 // ============================================================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -34,10 +34,16 @@ import {
 import BottomSheet from '../components/BottomSheet';
 import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
+import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import { FORMATS, getFormatById } from '../data/formatsData';
 import { CHAMPIONS_META } from '../data/championsLegality';
 import { CHAMPIONS_USAGE_META } from '../data/championsUsageRankings';
 import { checkForAppUpdate } from '../lib/pwaUpdate';
+import {
+  APP_STORAGE_KEY,
+  LEGACY_NUZLOCKE_STORAGE_KEYS,
+  NUZLOCKE_STORAGE_KEY,
+} from '../lib/storage';
 
 const easeSmooth = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
 
@@ -165,6 +171,10 @@ function ToggleSwitch({
 }) {
   return (
     <button
+      type="button"
+      role="switch"
+      aria-checked={value}
+      aria-label="Toggle dark mode"
       onClick={() => onChange(!value)}
       className="relative w-[52px] h-[28px] rounded-full transition-colors duration-200 shrink-0"
       style={{ backgroundColor: value ? '#3B82F6' : '#1E293B' }}
@@ -199,14 +209,8 @@ function SettingsRow({
   danger?: boolean;
   disabled?: boolean;
 }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`flex items-center w-full h-14 px-4 text-left transition-colors ${
-        disabled ? 'opacity-50 cursor-not-allowed' : 'active:bg-bg-tertiary'
-      } ${danger ? 'border-l-[3px] border-l-danger/50' : ''}`}
-    >
+  const content = (
+    <>
       <Icon size={22} style={{ color: iconColor }} className="shrink-0 mr-3" />
       <div className="flex-1 min-w-0">
         <span className={`text-sm block ${danger ? 'text-danger' : 'text-text-primary'}`}>
@@ -215,6 +219,24 @@ function SettingsRow({
         {subtitle && <span className="text-[11px] text-text-secondary">{subtitle}</span>}
       </div>
       {rightElement && <div className="shrink-0 ml-2">{rightElement}</div>}
+    </>
+  );
+  const className = `flex items-center w-full h-14 px-4 text-left transition-colors ${
+    disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'active:bg-bg-tertiary' : ''
+  } ${danger ? 'border-l-[3px] border-l-danger/50' : ''}`;
+
+  if (!onClick) {
+    return <div className={className}>{content}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={className}
+    >
+      {content}
     </button>
   );
 }
@@ -450,11 +472,13 @@ function ClearDataDialog({
   onClose,
   onConfirm,
   teamCount,
+  nuzlockeRunCount,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   teamCount: number;
+  nuzlockeRunCount: number;
 }) {
   const [confirmText, setConfirmText] = useState('');
   const isConfirmed = confirmText === 'DELETE';
@@ -467,7 +491,8 @@ function ClearDataDialog({
         <div className="flex items-start gap-3">
           <AlertTriangle size={22} className="text-warning shrink-0 mt-0.5" />
           <p className="text-sm text-text-primary leading-relaxed">
-            This will permanently delete all your teams and settings. This action cannot be undone.
+            This will permanently delete all teams, custom formats, settings, and Nuzlocke runs.
+            This action cannot be undone.
           </p>
         </div>
 
@@ -475,6 +500,10 @@ function ClearDataDialog({
           <div className="flex justify-between text-sm">
             <span className="text-text-secondary">Teams</span>
             <span className="text-text-primary font-jetbrains-mono">{teamCount}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-text-secondary">Nuzlocke runs</span>
+            <span className="text-text-primary font-jetbrains-mono">{nuzlockeRunCount}</span>
           </div>
         </div>
 
@@ -635,6 +664,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const settings = useStore((s) => s.settings);
   const teams = useStore((s) => s.teams);
+  const nuzlockeRunCount = useNuzlockeStore((s) => s.runs.length);
   const customFormats = useStore((s) => s.customFormats);
   const currentTeamId = useStore((s) => s.currentTeamId);
   const setCurrentTeam = useStore((s) => s.setCurrentTeam);
@@ -651,6 +681,7 @@ export default function SettingsPage() {
 
   // Export state
   const [exportMessage, setExportMessage] = useState('');
+  const restoreInputRef = useRef<HTMLInputElement>(null);
 
   // Theme
   const isDark = settings.theme === 'dark';
@@ -741,13 +772,13 @@ export default function SettingsPage() {
 
   // Export Full Backup
   const handleExportAllData = useCallback(() => {
-    const pfStorage = localStorage.getItem('pocketforge-storage');
-    const nuzlockeStorage = localStorage.getItem('pocketforge-nuzlocke-storage');
+    const pfStorage = localStorage.getItem(APP_STORAGE_KEY);
+    const nuzlockeStorage = localStorage.getItem(NUZLOCKE_STORAGE_KEY);
     const fullBackup = {
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
-      store: pfStorage ? JSON.parse(pfStorage) : null,
-      nuzlocke: nuzlockeStorage ? JSON.parse(nuzlockeStorage) : null,
+      store: pfStorage,
+      nuzlocke: nuzlockeStorage,
     };
     const blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -762,18 +793,32 @@ export default function SettingsPage() {
 
   // Import Full Backup
   const handleImportAllData = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-        if (json.store) {
-          localStorage.setItem('pocketforge-storage', typeof json.store === 'string' ? json.store : JSON.stringify(json.store));
+        const store = typeof json.store === 'string' ? JSON.parse(json.store) : json.store;
+        const nuzlocke = typeof json.nuzlocke === 'string'
+          ? JSON.parse(json.nuzlocke)
+          : json.nuzlocke;
+
+        if (!store || typeof store !== 'object' || !store.state) {
+          throw new Error('Backup is missing PocketForge data');
         }
-        if (json.nuzlocke) {
-          localStorage.setItem('pocketforge-nuzlocke-storage', typeof json.nuzlocke === 'string' ? json.nuzlocke : JSON.stringify(json.nuzlocke));
+
+        localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(store));
+        if (nuzlocke) {
+          if (typeof nuzlocke !== 'object' || !nuzlocke.state) {
+            throw new Error('Backup contains invalid Nuzlocke data');
+          }
+          localStorage.setItem(NUZLOCKE_STORAGE_KEY, JSON.stringify(nuzlocke));
+        } else {
+          localStorage.removeItem(NUZLOCKE_STORAGE_KEY);
         }
+        for (const key of LEGACY_NUZLOCKE_STORAGE_KEYS) localStorage.removeItem(key);
         setExportMessage('Backup restored! Reloading app...');
         setTimeout(() => window.location.reload(), 1200);
       } catch {
@@ -781,13 +826,17 @@ export default function SettingsPage() {
         setTimeout(() => setExportMessage(''), 3000);
       }
     };
+    reader.onloadend = () => {
+      input.value = '';
+    };
     reader.readAsText(file);
   }, []);
 
   // Clear all data
   const handleClearAll = useCallback(() => {
-    localStorage.removeItem('pocketforge-storage');
-    localStorage.removeItem('pocketforge-nuzlocke-storage');
+    localStorage.removeItem(APP_STORAGE_KEY);
+    localStorage.removeItem(NUZLOCKE_STORAGE_KEY);
+    for (const key of LEGACY_NUZLOCKE_STORAGE_KEYS) localStorage.removeItem(key);
     window.location.reload();
   }, []);
 
@@ -1009,17 +1058,15 @@ export default function SettingsPage() {
             iconColor="#10B981"
             label="Restore Full Backup"
             subtitle="Restore teams & Nuzlocke runs (.json)"
-            rightElement={
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept=".json"
-                  className="hidden"
-                  onChange={handleImportAllData}
-                />
-                <ChevronRight size={16} className="text-text-tertiary" />
-              </label>
-            }
+            rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
+            onClick={() => restoreInputRef.current?.click()}
+          />
+          <input
+            ref={restoreInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImportAllData}
           />
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow
@@ -1050,7 +1097,8 @@ export default function SettingsPage() {
             icon={Info}
             iconColor="#94A3B8"
             label="Version"
-            rightElement={<span className="text-sm text-text-secondary">1.0.0</span>}
+            subtitle={`Build ${__APP_COMMIT__.slice(0, 7)}`}
+            rightElement={<span className="text-sm text-text-secondary">{__APP_VERSION__}</span>}
           />
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow
@@ -1118,6 +1166,7 @@ export default function SettingsPage() {
         onClose={() => setClearDialogOpen(false)}
         onConfirm={handleClearAll}
         teamCount={teams.length}
+        nuzlockeRunCount={nuzlockeRunCount}
       />
 
       <AttributionModal

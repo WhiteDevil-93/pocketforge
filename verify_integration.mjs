@@ -10,6 +10,12 @@ import {
 import { getChampionsUsageData } from './src/data/championsUsageDetails.ts';
 import { calculateAllStats, calculateHP, calculateStat } from './src/utils/statCalc.ts';
 import { normalizePokemonData, normalizeTeamData } from './src/lib/teamData.ts';
+import { getEffectiveness } from './src/data/typesData.ts';
+import {
+  getTeamDefensiveCoverage,
+  getTeamOffensiveCoverage,
+} from './src/utils/typeChart.ts';
+import { analyzeTeamWeaknesses } from './src/utils/weaknessAnalyzer.ts';
 
 // Simple assert helper
 function assert(condition, message) {
@@ -161,7 +167,35 @@ IVs: 0 Atk
   );
   console.log(`✅ Champions snapshot loaded: ${CHAMPIONS_USAGE_RANKINGS.length} ranked, ${CHAMPIONS_USAGE_META.detailedPokemonCount} detailed`);
 
-  // Test 6: Lightweight stat calculations used by Analysis
+  // Test 6: Type effectiveness and team analysis
+  console.log('Testing Analysis type effectiveness...');
+  assert(getEffectiveness('Fire', ['Grass']) === 2, 'Fire must be super-effective against Grass');
+  assert(getEffectiveness('fire', ['Grass', 'Steel']) === 4, 'Fire must be 4x against Grass/Steel');
+  assert(getEffectiveness('Electric', ['Ground']) === 0, 'Ground must be immune to Electric');
+  assert(getEffectiveness('Ice', ['Dragon', 'Flying']) === 4, 'Ice must be 4x against Dragon/Flying');
+  assert(getEffectiveness('Fighting', ['Ghost']) === 0, 'Ghost must be immune to Fighting');
+  assert(getEffectiveness('Water', ['Water', 'Dragon']) === 0.25, 'Water must be 0.25x against Water/Dragon');
+
+  const analysisTeam = normalizeTeamData({
+    name: 'Analysis Regression Team',
+    pokemon: [
+      { species: 'Garchomp', moves: ['Earthquake', 'Dragon Claw'] },
+      { species: 'Charizard', moves: ['Flamethrower', 'Air Slash'] },
+    ],
+  });
+  const defensiveCoverage = getTeamDefensiveCoverage(analysisTeam);
+  assert(defensiveCoverage.Ice.weak === 1, 'Garchomp must register as weak to Ice');
+  assert(defensiveCoverage.Ground.immune === 1, 'Charizard must register as immune to Ground');
+  const offensiveCoverage = getTeamOffensiveCoverage(analysisTeam);
+  assert(offensiveCoverage.Steel, 'Fire or Ground STAB must cover Steel');
+  const weaknessAnalysis = analyzeTeamWeaknesses(analysisTeam);
+  assert(
+    weaknessAnalysis.weaknesses.some((row) => row.type === 'Ice' && row.weakMembers.includes('Garchomp')),
+    'Weakness Analysis must identify Garchomp as weak to Ice',
+  );
+  console.log('✅ Type coverage, immunities, and weakness analysis are accurate');
+
+  // Test 7: Lightweight stat calculations used by Analysis
   console.log('Testing Analysis stat calculations...');
   assert(calculateStat(110, 252, 31, 50, 'Timid', 'spe') === 178, 'Timid Gengar Speed should be 178');
   assert(calculateHP(60, 0, 31, 50) === 135, 'Gengar HP should be 135');
@@ -176,7 +210,7 @@ IVs: 0 Atk
   assert(calculatedStats.def === 96, `Expected 96 Defense with a 0 IV, got ${calculatedStats.def}`);
   console.log('✅ Analysis stat calculations are accurate without the battle-engine bundle');
 
-  // Test 7: Legacy/imported team normalization
+  // Test 8: Legacy/imported team normalization
   console.log('Testing saved-team normalization...');
   const recoveredPokemon = normalizePokemonData({
     species: 'Garchomp',

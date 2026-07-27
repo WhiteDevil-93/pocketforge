@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { springTap, transitionFast } from '../lib/motion';
 import { useStore } from '../store/useStore';
+import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import type { Team } from '../types';
 import SearchInput from '../components/SearchInput';
 import TeamCard from '../components/TeamCard';
@@ -222,31 +223,18 @@ function MetaSnapshot() {
 
 // ---- Nuzlocke Progress Card ------------------------------------------------
 
-interface NuzlockeEncounter {
-  status: string;
-}
-interface NuzlockeRun {
-  id: string;
-  name: string;
-  encounters?: NuzlockeEncounter[];
-}
-
 function NuzlockeProgressCard({ navigate }: { navigate: (path: string) => void }) {
-  // We'll read from localStorage directly since the store might not be available
-  const [runData] = useState(() => {
-    try {
-      const raw = localStorage.getItem('nuzlocke-storage');
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      const runs: NuzlockeRun[] = data.state?.runs || [];
-      if (runs.length === 0) return null;
-      const currentRun = runs.find((r) => r.id === data.state?.currentRunId) || runs[0];
-      const alive = currentRun.encounters?.filter((e) => e.status === 'caught').length || 0;
-      const dead = currentRun.encounters?.filter((e) => e.status === 'dead').length || 0;
-      const total = currentRun.encounters?.length || 0;
-      return { name: currentRun.name, alive, dead, total };
-    } catch { return null; }
-  });
+  const runs = useNuzlockeStore((state) => state.runs);
+  const currentRunId = useNuzlockeStore((state) => state.currentRunId);
+  const currentRun = runs.find((run) => run.id === currentRunId) || runs[0];
+  const runData = currentRun
+    ? {
+        name: currentRun.name,
+        alive: currentRun.encounters.filter((encounter) => encounter.status === 'caught').length,
+        dead: currentRun.encounters.filter((encounter) => encounter.status === 'dead').length,
+        total: currentRun.encounters.length,
+      }
+    : null;
 
   if (!runData) return null;
 

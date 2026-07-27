@@ -4,6 +4,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { NUZLOCKE_STORAGE_KEY } from '../lib/storage';
 
 export interface NuzlockeEncounter {
   routeId: string;
@@ -81,6 +82,6 @@ export const useNuzlockeStore = create<NuzlockeState>()(
       updateTeraRaid: (runId, routeId, updates) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: r.teraRaids.map((t) => t.routeId === routeId ? { ...t, ...updates } : t) } : r) })),
       removeTeraRaid: (runId, routeId) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: r.teraRaids.filter((t) => t.routeId !== routeId) } : r) })),
     }),
-    { name: 'pocketforge-nuzlocke', partialize: (state) => ({ runs: state.runs, currentRunId: state.currentRunId }) }
+    { name: NUZLOCKE_STORAGE_KEY, partialize: (state) => ({ runs: state.runs, currentRunId: state.currentRunId }) }
   )
 );

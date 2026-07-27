@@ -11,6 +11,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: basePath,
+    define: {
+      __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '1.0.0'),
+      __APP_COMMIT__: JSON.stringify(process.env.VITE_APP_COMMIT ?? 'local'),
+    },
     plugins: [
       react(),
       VitePWA({

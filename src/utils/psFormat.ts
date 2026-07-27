@@ -155,7 +155,9 @@ export function importTeamFromPSFormat(text: string): Partial<Team> {
     }
   } catch (err) {
     console.error('Failed to import Showdown team:', err);
-    throw new Error(err instanceof Error ? err.message : 'Invalid Showdown format');
+    throw new Error(err instanceof Error ? err.message : 'Invalid Showdown format', {
+      cause: err,
+    });
   }
 
   return team;

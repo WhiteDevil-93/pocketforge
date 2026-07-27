@@ -705,17 +705,17 @@ function analyzeTeam(team: Team): AnalysisResult {
   for (const type of TYPE_NAMES) {
     const stats = defensive[type];
     if (!stats) continue;
-    const teamSize = team.pokemon.length;
-    if (teamSize === 0) continue;
-
     // Calculate average effectiveness
     let totalMult = 0;
+    let validPokemonCount = 0;
     for (const p of team.pokemon) {
       const dexEntry = getPokemonByName(p.species);
       if (!dexEntry) continue;
       totalMult += getEffectiveness(type, dexEntry.types);
+      validPokemonCount++;
     }
-    const avgMult = totalMult / teamSize;
+    if (validPokemonCount === 0) continue;
+    const avgMult = totalMult / validPokemonCount;
 
     if (avgMult > 1) {
       weaknesses.push({
@@ -741,10 +741,14 @@ function analyzeTeam(team: Team): AnalysisResult {
       (t) => gaps.uncoveredTypes.includes(t)
     );
     if (importantTypes.length > 0) {
+      const targetType = importantTypes[0];
+      const counterTypes = TYPE_NAMES.filter(
+        (attackingType) => getEffectiveness(attackingType, [targetType]) > 1
+      );
       suggestions.push({
         type: 'warning',
-        title: `Add ${importantTypes[0]} coverage`,
-        description: `Your team can't hit ${importantTypes.join(', ')} types super-effectively. Consider adding a Pokemon with ${importantTypes[0]}-type STAB moves.`,
+        title: `Add coverage for ${targetType}`,
+        description: `Your team can't hit ${importantTypes.join(', ')} types super-effectively. Consider attacks such as ${counterTypes.slice(0, 3).join(', ')} against ${targetType}.`,
       });
     }
   }

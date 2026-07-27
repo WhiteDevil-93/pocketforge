@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware';
 import type { Team, Pokemon, AppSettings, CustomFormat } from '../types';
 import { DEFAULT_FORMAT } from '../data/formatsData';
 import { normalizePokemonData, normalizeTeamData } from '../lib/teamData';
+import { APP_STORAGE_KEY } from '../lib/storage';
 
 // ---- Default data -----------------------------------------------------------
 
@@ -304,7 +305,7 @@ export const useStore = create<StoreState>()(
       },
     }),
     {
-      name: 'pocketforge-storage',
+      name: APP_STORAGE_KEY,
       version: 1,
       migrate: (persistedState) => {
         const persisted =

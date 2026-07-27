@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -62,10 +61,3 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: auto-update competitive Pokemon data [$(date -u +%Y-%m-%d)]"
           git push origin HEAD:${{ github.ref_name }}
-
-      - name: Trigger deployment
-        if: steps.diff.outputs.changed == 'true'
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: deploy.yml
-          token: ${{ secrets.GITHUB_TOKEN }}
