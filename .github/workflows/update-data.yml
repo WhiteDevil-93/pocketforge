@@ -25,6 +25,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Fetch & transform Showdown data
         run: node scripts/update-from-showdown.mjs
@@ -35,6 +39,9 @@ jobs:
         run: node scripts/update-champions-usage.mjs
         env:
           NODE_ENV: production
+
+      - name: Validate generated data
+        run: npm run check
 
       - name: Check for changes
         id: diff

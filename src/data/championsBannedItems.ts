@@ -1,6 +1,6 @@
 // Auto-generated from Pokémon Showdown champions mod — do not edit manually
 // Items with isNonstandard: "Past" in data/mods/champions/items.ts
-// Last updated: 2026-07-27T00:54:38.014Z
+// Last updated: 2026-07-27T09:01:42.989Z
 
 export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "abilityshield",

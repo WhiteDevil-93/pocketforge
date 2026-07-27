@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-07-27T00:54:36.933Z
+// Last updated: 2026-07-27T09:01:41.292Z
 
 export interface PokedexEntry {
   id: number;
@@ -30397,5 +30397,6 @@ export function getAllPokemonNames(): string[] {
 }
 
 export function getViablePokemon(_format?: string): PokedexEntry[] {
+  void _format;
   return POKEDEX;
 }

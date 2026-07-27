@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-07-27T00:54:36.935Z
+// Last updated: 2026-07-27T09:01:41.295Z
 
 export interface MoveEntry {
   id: string;
@@ -11451,6 +11451,7 @@ export function getMovesByType(type: string): MoveEntry[] {
 }
 
 export function getMovesForPokemon(_pokemonName: string): MoveEntry[] {
+  void _pokemonName;
   return MOVES;
 }
 

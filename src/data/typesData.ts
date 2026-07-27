@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-07-27T00:54:36.937Z
+// Last updated: 2026-07-27T09:01:41.297Z
 
 export const TYPE_NAMES = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
@@ -9,7 +9,11 @@ export const TYPE_NAMES = [
 
 export type TypeName = typeof TYPE_NAMES[number];
 
-export const TYPE_CHART: Record<string, any> = {
+export interface TypeChartEntry {
+  damageTaken: Record<string, number>;
+}
+
+export const TYPE_CHART: Record<string, TypeChartEntry> = {
   "bug": {
     "damageTaken": {
       "Bug": 0,

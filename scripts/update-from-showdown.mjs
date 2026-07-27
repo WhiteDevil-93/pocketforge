@@ -305,6 +305,7 @@ export function getMovesByType(type: string): MoveEntry[] {
 }
 
 export function getMovesForPokemon(_pokemonName: string): MoveEntry[] {
+  void _pokemonName;
   return MOVES;
 }
 
@@ -324,15 +325,15 @@ export interface ItemEntry {
   description: string;
   category: string;
   fling: number;
-  onPlate: any;
-  onDrive: any;
-  onMemory: any;
-  megaStone: any;
-  megaEvolves: any;
-  zMove: any;
-  zMoveType: any;
-  zMoveFrom: any;
-  naturalGift: any;
+  onPlate: unknown;
+  onDrive: unknown;
+  onMemory: unknown;
+  megaStone: unknown;
+  megaEvolves: unknown;
+  zMove: unknown;
+  zMoveType: unknown;
+  zMoveFrom: unknown;
+  naturalGift: unknown;
   isBerry: boolean;
   isGem: boolean;
   isPokeball: boolean;
@@ -375,7 +376,11 @@ export const TYPE_NAMES = [
 
 export type TypeName = typeof TYPE_NAMES[number];
 
-export const TYPE_CHART: Record<string, any> = ${JSON.stringify(typechart, null, 2)};
+export interface TypeChartEntry {
+  damageTaken: Record<string, number>;
+}
+
+export const TYPE_CHART: Record<string, TypeChartEntry> = ${JSON.stringify(typechart, null, 2)};
 
 export const TYPES = Object.keys(TYPE_CHART);
 
