@@ -1,11 +1,11 @@
 // Auto-generated from Pokémon Showdown config/formats.ts — do not edit manually
-// Last updated: 2026-07-31T00:52:33.337Z
+// Last updated: 2026-08-01T00:52:54.769Z
 
 export const CHAMPIONS_META = {
   formatId: 'champions-mb',
   regulationName: 'Regulation M-B',
   showdownFormat: '[Gen 9 Champions] VGC 2026 Reg M-B',
-  updatedAt: '2026-07-31T00:52:33.337Z',
+  updatedAt: '2026-08-01T00:52:54.769Z',
   rosterCount: 310,
   rosterCountMa: 310,
   bannedItemCount: 181,
