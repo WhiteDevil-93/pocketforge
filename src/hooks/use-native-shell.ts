@@ -28,7 +28,7 @@ export function useNativeShell() {
         if (cancelled) return;
 
         // The app is dark-first (#0B1120), so the status bar needs light content.
-        await StatusBar.setStyle({ style: Style.Dark });
+        await StatusBar.setStyle({ style: Style.Light });
         await StatusBar.setBackgroundColor({ color: '#0B1120' });
         await SplashScreen.hide();
       } catch (error) {
