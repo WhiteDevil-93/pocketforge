@@ -9,6 +9,7 @@ import { useStore } from './store/useStore';
 import { DEFAULT_FORMAT } from './data/formatsData';
 import { getDefaultLevelForFormat } from './lib/format';
 import { HOME_PATH } from './lib/routes';
+import { useNativeShell } from './hooks/use-native-shell';
 
 // Every page is route-split so specialist data and calculators only load when used.
 const Onboarding = lazy(() => import('./pages/Onboarding'));
@@ -58,6 +59,9 @@ function PageLoader() {
 export default function App() {
   const navigate = useNavigate();
   const importTeam = useStore((s) => s.importTeam);
+
+  // Android status bar, splash screen, and hardware back button. No-ops in the browser.
+  useNativeShell();
 
   useEffect(() => {
     const getPackedTeamFromUrl = () => {
