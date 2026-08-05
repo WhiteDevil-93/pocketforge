@@ -37,6 +37,35 @@ After loading the deployed site (or a production preview), use your browser’s 
 
 Installed copies check for updates when opened, when returning to the foreground, and periodically while online. A new service worker reloads the app once after taking control. You can also use **Settings → Check for App Update**; it preserves teams and does not require uninstalling the PWA or clearing Chrome data.
 
+### Build the Android app
+
+PocketForge also ships as a native Android shell (Capacitor) that reuses the same React app.
+
+```bash
+npm run build:android   # build web assets with the Android target + sync into android/
+npm run android:apk     # the above, then assemble a debug APK
+```
+
+The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`; install it with
+`adb install -r <path>` or copy it to the device. `npm run android` opens the project in
+Android Studio instead.
+
+Requires JDK 21 and the Android SDK (platform 36, build-tools 36). CI can build it for you
+instead — run the **Build Android APK** workflow from the Actions tab and download the
+artifact.
+
+The Android build differs from the web build in exactly two ways, both driven by
+`VITE_BUILD_TARGET=android` in `vite.config.ts`: the base path is `/` rather than
+`/pocketforge/`, and the service worker is disabled (the shell serves its own assets and
+updates arrive via the APK). `npm run build` and the Pages deployment are unaffected.
+
+Notes on the app build:
+
+- Teams live in the WebView's localStorage, separate from the browser PWA's storage. Move
+  teams across with **Import / Export**.
+- Sprites and web fonts still load from the network, so they fall back offline — same as the
+  browser build, minus the service worker cache.
+
 ### Refresh Pokémon / Champions data
 
 Pull the latest Showdown dex and Champions regulation whitelists:
@@ -67,6 +96,9 @@ Runs import/export, movepool, speed, and damage calc smoke tests.
 |---------|-------------|
 | `npm run dev` | Start Vite dev server on port 3000 |
 | `npm run build` | Typecheck + production build to `dist/` |
+| `npm run build:android` | Build web assets for the Android shell and `cap sync` |
+| `npm run android` | Build for Android and open Android Studio |
+| `npm run android:apk` | Build for Android and assemble a debug APK |
 | `npm run typecheck` | Run TypeScript checks without producing a bundle |
 | `npm run check` | Run lint, integration verification, and production build |
 | `npm run preview` | Serve the production build locally |
@@ -84,6 +116,7 @@ Runs import/export, movepool, speed, and damage calc smoke tests.
 - **Analysis** — type coverage, speed tiers, Champions eligibility card
 - **Calculator** — `@smogon/calc` damage rolls
 - **Offline PWA** — service worker via `vite-plugin-pwa`
+- **Android app** — Capacitor shell wrapping the same React app
 
 ## Deployment
 
@@ -95,6 +128,7 @@ Ensure **Settings → Pages → Build and deployment → Source** is set to **Gi
 ## Tech stack
 
 - React 19 + TypeScript + Vite 7
+- Capacitor 8 (Android shell)
 - `@pkmn/dex`, `@pkmn/data`, `@pkmn/sets`, `@smogon/calc`
 - Zustand + localStorage persistence
 - Tailwind CSS + Framer Motion

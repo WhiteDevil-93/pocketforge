@@ -6,7 +6,9 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // `android` holds the generated Capacitor project, including build intermediates and
+  // vendored bridge scripts that are not ours to lint.
+  globalIgnores(['dist', 'android']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
