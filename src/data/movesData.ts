@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-08-04T00:50:49.506Z
+// Last updated: 2026-08-05T00:46:34.221Z
 
 export interface MoveEntry {
   id: string;
