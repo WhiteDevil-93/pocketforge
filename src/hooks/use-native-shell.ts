@@ -27,8 +27,11 @@ export function useNativeShell() {
         ]);
         if (cancelled) return;
 
-        // The app is dark-first (#0B1120), so the status bar needs light content.
-        await StatusBar.setStyle({ style: Style.Light });
+        // Confusingly named: Style.Dark means "light content, for dark backgrounds" —
+        // see the plugin's own Android implementation, setAppearanceLightStatusBars(!style.equals("DARK")).
+        // The app is dark-first (#0B1120), so this is the one we want; Style.Light renders
+        // dark icons and would be invisible here.
+        await StatusBar.setStyle({ style: Style.Dark });
         await StatusBar.setBackgroundColor({ color: '#0B1120' });
         await SplashScreen.hide();
       } catch (error) {
