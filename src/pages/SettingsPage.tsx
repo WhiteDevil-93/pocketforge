@@ -39,6 +39,7 @@ import { FORMATS, getFormatById } from '../data/formatsData';
 import { CHAMPIONS_META } from '../data/championsLegality';
 import { CHAMPIONS_USAGE_META } from '../data/championsUsageRankings';
 import { checkForAppUpdate } from '../lib/pwaUpdate';
+import { isNativeApp } from '../lib/platform';
 import {
   APP_STORAGE_KEY,
   LEGACY_NUZLOCKE_STORAGE_KEYS,
@@ -1063,15 +1064,21 @@ export default function SettingsPage() {
             className="hidden"
             onChange={handleImportAllData}
           />
-          <div className="h-px bg-border-subtle mx-4" />
-          <SettingsRow
-            icon={Sparkles}
-            iconColor="#EAB308"
-            label="Check for App Update"
-            subtitle="Install the latest version without clearing data"
-            rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
-            onClick={handleForceUpdateCache}
-          />
+          {/* Service-worker updates only exist in the browser build; the Android app
+              updates by installing a new APK. */}
+          {!isNativeApp() && (
+            <>
+              <div className="h-px bg-border-subtle mx-4" />
+              <SettingsRow
+                icon={Sparkles}
+                iconColor="#EAB308"
+                label="Check for App Update"
+                subtitle="Install the latest version without clearing data"
+                rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
+                onClick={handleForceUpdateCache}
+              />
+            </>
+          )}
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow
             icon={Trash2}

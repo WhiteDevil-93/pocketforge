@@ -24,6 +24,7 @@ import { importTeamFromPSFormat, exportTeamToPSFormat } from '../utils';
 import type { Team } from '../types';
 import { Teams, Team as ShowdownTeam } from '@pkmn/sets';
 import { getDexForFormat } from '../lib/showdown';
+import { getShareBaseUrl } from '../lib/platform';
 import { DEFAULT_FORMAT } from '../data/formatsData';
 
 // ---- Sample teams for one-click import -------------------------------------
@@ -371,7 +372,7 @@ export default function ImportExport() {
       const genDex = getDexForFormat(selectedTeam.format);
       const showdownTeam = new ShowdownTeam(sets, genDex);
       const packed = Teams.packTeam(showdownTeam);
-      const shareUrl = `${window.location.origin}${window.location.pathname}?team=${encodeURIComponent(packed)}#/teams`;
+      const shareUrl = `${getShareBaseUrl()}?team=${encodeURIComponent(packed)}#/teams`;
 
       await navigator.clipboard.writeText(shareUrl);
       setShareLinkCopied(true);

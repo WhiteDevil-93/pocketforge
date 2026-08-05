@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PocketForge</string>
+    <string name="title_activity_main">PocketForge</string>
+    <string name="package_name">com.whitedevil93.pocketforge</string>
+    <string name="custom_url_scheme">com.whitedevil93.pocketforge</string>
+</resources>

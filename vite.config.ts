@@ -5,8 +5,13 @@ import { VitePWA } from "vite-plugin-pwa"
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const defaultBasePath = mode === 'development' ? '/' : '/pocketforge/'
-  const configuredBasePath = process.env.VITE_BASE_PATH ?? defaultBasePath
+  // The Android shell (Capacitor) serves assets from the root of its own local server and
+  // ships updates inside the APK, so it needs a '/' base and no service worker. The GitHub
+  // Pages build is unaffected — `npm run build` never sets VITE_BUILD_TARGET.
+  const isAndroidBuild = process.env.VITE_BUILD_TARGET === 'android'
+
+  const defaultBasePath = mode === 'development' || isAndroidBuild ? '/' : '/pocketforge/'
+  const configuredBasePath = isAndroidBuild ? '/' : process.env.VITE_BASE_PATH ?? defaultBasePath
   const basePath = configuredBasePath.endsWith('/') ? configuredBasePath : `${configuredBasePath}/`
 
   return {
@@ -18,6 +23,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
+        // A service worker inside the Capacitor WebView fights the shell's asset serving,
+        // and app updates arrive via the APK rather than Workbox.
+        disable: isAndroidBuild,
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg'],
         workbox: {
