@@ -15,6 +15,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   defaultFormat: DEFAULT_FORMAT,
   hasCompletedOnboarding: false,
+  aiEnabled: false,
+  ollamaApiKey: '',
+  ollamaModel: 'gemma4:cloud',
 };
 
 // ---- Helper functions -------------------------------------------------------

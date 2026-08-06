@@ -183,6 +183,12 @@ export interface AppSettings {
   theme: 'dark' | 'light';
   defaultFormat: string;
   hasCompletedOnboarding: boolean;
+  /** Whether the Ollama Cloud AI assistant is enabled. */
+  aiEnabled: boolean;
+  /** Ollama Cloud API key (ollama.com/settings/keys). Stored locally, sent only to ollama.com. */
+  ollamaApiKey: string;
+  /** Ollama Cloud model tag, e.g. "gemma4:cloud". */
+  ollamaModel: string;
 }
 
 export interface AppState {
