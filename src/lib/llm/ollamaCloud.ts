@@ -18,6 +18,10 @@ import { getToolByName, toOllamaToolSchema } from './tools';
 const CHAT_URL = 'https://ollama.com/api/chat';
 const MAX_TOOL_ITERATIONS = 5;
 const TOOL_TIMEOUT_MS = 15_000;
+// Overall ceiling for one sendMessage call, covering every streamed reply and tool
+// round trip together — protects against Ollama Cloud accepting the request and then
+// stalling before the first chunk, which would otherwise hang the chat forever.
+const REQUEST_TIMEOUT_MS = 90_000;
 
 interface WireToolCall {
   function: { name: string; arguments: Record<string, unknown> };
@@ -90,11 +94,20 @@ async function* streamChatOnce(
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
-        yield JSON.parse(trimmed) as WireChunk;
+        try {
+          yield JSON.parse(trimmed) as WireChunk;
+        } catch {
+          // Skip a keep-alive or partially-framed line rather than losing the whole
+          // reply — the tokens already streamed would otherwise be thrown away too.
+        }
       }
     }
     if (buffer.trim()) {
-      yield JSON.parse(buffer.trim()) as WireChunk;
+      try {
+        yield JSON.parse(buffer.trim()) as WireChunk;
+      } catch {
+        // Trailing partial chunk — ignore.
+      }
     }
   } finally {
     reader.releaseLock();
@@ -105,14 +118,17 @@ async function runToolCall(call: ToolCall, ctx: ToolContext): Promise<unknown> {
   const tool = getToolByName(call.name);
   if (!tool) return { error: `Unknown tool "${call.name}".` };
 
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error(`Tool "${call.name}" timed out.`)), TOOL_TIMEOUT_MS);
+    timer = setTimeout(() => reject(new Error(`Tool "${call.name}" timed out.`)), TOOL_TIMEOUT_MS);
   });
 
   try {
     return await Promise.race([Promise.resolve(tool.handler(call.arguments, ctx)), timeout]);
   } catch (error) {
     return { error: error instanceof Error ? error.message : String(error) };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -145,8 +161,14 @@ export async function sendMessage({
   }
 
   const controller = new AbortController();
+  if (signal?.aborted) {
+    // The 'abort' event only fires on the *transition* to aborted — if the caller's
+    // signal was already tripped before we got here, listening for it would wait forever.
+    controller.abort();
+  }
   const abort = () => controller.abort();
   signal?.addEventListener('abort', abort);
+  const overallTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let messages = [...history];
 
@@ -165,10 +187,15 @@ export async function sendMessage({
         }
 
         if (chunk.message?.tool_calls?.length) {
-          toolCalls = chunk.message.tool_calls.map((c) => ({
-            name: c.function.name,
-            arguments: c.function.arguments,
-          }));
+          // Ollama can split one turn's tool calls across multiple streamed chunks —
+          // accumulate rather than replace, or earlier calls in the same turn are lost.
+          toolCalls = [
+            ...toolCalls,
+            ...chunk.message.tool_calls.map((c) => ({
+              name: c.function.name,
+              arguments: c.function.arguments,
+            })),
+          ];
         }
       }
 
@@ -198,6 +225,7 @@ export async function sendMessage({
     onEvent({ type: 'error', message });
     throw error;
   } finally {
+    clearTimeout(overallTimeout);
     signal?.removeEventListener('abort', abort);
   }
 }

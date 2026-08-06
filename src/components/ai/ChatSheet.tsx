@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, Loader2, Send, User, Wrench } from 'lucide-react';
+import { Bot, Loader2, Send, Square, User, Wrench } from 'lucide-react';
 import BottomSheet from '../BottomSheet';
 import { useStore } from '../../store/useStore';
 import { sendMessage } from '../../lib/llm/ollamaCloud';
@@ -37,7 +37,10 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isConfigured = settings.aiEnabled && settings.ollamaApiKey.trim().length > 0;
+  const isConfigured =
+    settings.aiEnabled &&
+    settings.ollamaApiKey.trim().length > 0 &&
+    settings.ollamaModel.trim().length > 0;
 
   const displayMessages = useMemo(
     () =>
@@ -52,7 +55,9 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [displayMessages.length, streamingText]);
 
-  // Cancel any in-flight request if the sheet is closed mid-stream.
+  // Cancel any in-flight request if the sheet is closed mid-stream. The onEvent
+  // handler in handleSend already ignores abort-triggered errors (checking
+  // controller.signal.aborted), so there's no stale error state to clear here.
   useEffect(() => {
     if (!isOpen) abortRef.current?.abort();
   }, [isOpen]);
@@ -87,7 +92,9 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
         onEvent: (event) => {
           if (event.type === 'token') setStreamingText((t) => t + event.text);
           else if (event.type === 'toolCall') setToolActivity((a) => [...a, event.name]);
-          else if (event.type === 'error') setError(event.message);
+          // A user-initiated cancel (closing the sheet, tapping stop) surfaces here as
+          // an abort "error" — that's not a failure worth showing, just report real ones.
+          else if (event.type === 'error' && !controller.signal.aborted) setError(event.message);
         },
       });
       setHistory(updated);
@@ -160,7 +167,10 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
                   <div className="w-7 h-7 rounded-full bg-accent-primary/15 flex items-center justify-center shrink-0">
                     <Bot size={14} className="text-accent-primary" />
                   </div>
-                  <div className="max-w-[80%] rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm bg-bg-tertiary text-text-primary space-y-1.5">
+                  <div
+                    aria-live="polite"
+                    className="max-w-[80%] rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm bg-bg-tertiary text-text-primary space-y-1.5"
+                  >
                     {toolActivity.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {toolActivity.map((name, i) => (
@@ -184,7 +194,7 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
               )}
 
               {error && (
-                <p className="text-[12px] text-danger text-center px-4 py-2">{error}</p>
+                <p role="alert" className="text-[12px] text-danger text-center px-4 py-2">{error}</p>
               )}
             </div>
 
@@ -203,15 +213,27 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
                 className="flex-1 resize-none max-h-24 h-11 py-2.5 px-4 bg-bg-tertiary rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/50 border border-border-subtle"
                 style={{ fontSize: '16px' }}
               />
-              <button
-                type="button"
-                onClick={() => void handleSend()}
-                disabled={!input.trim() || isStreaming}
-                aria-label="Send message"
-                className="w-11 h-11 shrink-0 rounded-xl bg-accent-primary text-white flex items-center justify-center disabled:opacity-40 touch-target"
-              >
-                <Send size={18} />
-              </button>
+              {isStreaming ? (
+                <button
+                  type="button"
+                  onClick={() => abortRef.current?.abort()}
+                  aria-label="Stop generating"
+                  title="Stop generating"
+                  className="w-11 h-11 shrink-0 rounded-xl bg-bg-tertiary border border-border-subtle text-text-primary flex items-center justify-center touch-target"
+                >
+                  <Square size={16} fill="currentColor" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void handleSend()}
+                  disabled={!input.trim()}
+                  aria-label="Send message"
+                  className="w-11 h-11 shrink-0 rounded-xl bg-accent-primary text-white flex items-center justify-center disabled:opacity-40 touch-target"
+                >
+                  <Send size={18} />
+                </button>
+              )}
             </div>
           </>
         )}
