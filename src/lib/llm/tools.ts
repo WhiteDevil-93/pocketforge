@@ -9,6 +9,8 @@
 import type { Pokemon, Team } from '../../types';
 import { getPokemonByName } from '../../data/pokemonData';
 import { getMoveByName } from '../../data/movesData';
+import { getMegaByStone, isMegaStone } from '../../data/megaData';
+import { getChampionsMovesForSpecies, isChampionsFormatId } from '../../data/championsLegality';
 import {
   calculateDamage,
   getDefaultCalcPokemon,
@@ -24,10 +26,18 @@ import { getCoverageGaps, getTeamBalanceScore } from '../../utils/typeChart';
 import { analyzeTeamWeaknesses, suggestCoverageMoves } from '../../utils/weaknessAnalyzer';
 import { explainEVSpread } from '../../utils/evExplainer';
 import { getMovepoolForSpecies } from '../../utils/movepoolQuery';
+import { getDefaultLevelForFormat } from '../format';
+import { getCalcGenForFormat } from '../showdown';
 import type { ToolContext, ToolDefinition } from './types';
 
 const WEATHERS: Weather[] = ['none', 'sun', 'rain', 'sand', 'snow', 'harsh-sun', 'heavy-rain'];
 const TERRAINS: Terrain[] = ['none', 'electric', 'grassy', 'psychic', 'misty'];
+
+/** Tool-call arguments are declared as JSON-Schema booleans, but not every backend is strict
+ *  about sending an actual boolean back — accept true, "true", and "1" defensively. */
+function isTruthyFlag(value: unknown): boolean {
+  return value === true || value === 'true' || value === '1';
+}
 
 // ---- Resolution helpers ------------------------------------------------------
 
@@ -38,11 +48,24 @@ function findTeamMember(team: Team | null, nameOrNickname: string): Pokemon | un
   );
 }
 
+/** Resolves a team member's active Mega form (PocketForge models Mega state as
+ *  megaActive + a Mega Stone equipped as the held item — see PokemonEditor.tsx). */
+function resolveMega(member: Pokemon | undefined) {
+  if (!member?.megaActive || !member.item || !isMegaStone(member.item)) return undefined;
+  return getMegaByStone(member.item);
+}
+
 /** A Pokemon (team-member shape) for calculateSpeed/outspeeds: real spread if on the
- *  active team, otherwise a level-100 neutral-nature 0 EV / 31 IV baseline. */
+ *  active team, otherwise a neutral-nature 0 EV / 31 IV baseline at the format's
+ *  standard level (50 for Champions/VGC-style formats, 100 otherwise). When Mega
+ *  Evolution is active, points calculateSpeed at the Mega's own species entry so its
+ *  real base Speed and ability are used, rather than the base form's. */
 function resolveSpeedSubject(team: Team | null, nameOrNickname: string): Pokemon | { error: string } {
   const member = findTeamMember(team, nameOrNickname);
-  if (member) return member;
+  if (member) {
+    const mega = resolveMega(member);
+    return mega ? { ...member, species: mega.megaName, ability: mega.ability } : member;
+  }
 
   const dex = getPokemonByName(nameOrNickname);
   if (!dex) return { error: `Unknown species "${nameOrNickname}".` };
@@ -50,7 +73,7 @@ function resolveSpeedSubject(team: Team | null, nameOrNickname: string): Pokemon
   return {
     id: 'generic',
     species: dex.name,
-    level: 100,
+    level: getDefaultLevelForFormat(team?.format),
     gender: '',
     shiny: false,
     ability: '',
@@ -63,34 +86,56 @@ function resolveSpeedSubject(team: Team | null, nameOrNickname: string): Pokemon
   };
 }
 
-/** A CalcPokemon for calculateDamage: real spread if on the active team, otherwise
- *  the app's own default build (getDefaultCalcPokemon) with real species data. */
+/** A CalcPokemon for calculateDamage: real spread if on the active team, otherwise the
+ *  app's own default build (getDefaultCalcPokemon) with real species data at the
+ *  format's standard level. Resolves the team member FIRST so a nickname (which the
+ *  dex has never heard of) still works, and swaps in Mega stats/typing/ability when
+ *  Mega Evolution is active.
+ *
+ *  Deliberately never sets teraType here: calculateDamage applies a defender's
+ *  teraType unconditionally (unlike the attacker's, which it gates behind the
+ *  explicit useTera flag), so populating it for both sides would silently
+ *  Terastallize the defender on every query. The calculate_damage handler applies
+ *  the attacker's real teraType itself, only when useTera is requested. */
 function resolveCalcSubject(team: Team | null, nameOrNickname: string): CalcPokemon | { error: string } {
-  const dex = getPokemonByName(nameOrNickname);
+  const member = findTeamMember(team, nameOrNickname);
+  const dex = getPokemonByName(member?.species ?? nameOrNickname);
   if (!dex) return { error: `Unknown species "${nameOrNickname}".` };
 
-  const member = findTeamMember(team, nameOrNickname);
+  const mega = resolveMega(member);
   const base = getDefaultCalcPokemon();
 
   return {
     ...base,
-    name: dex.name,
-    baseStats: dex.baseStats,
-    types: dex.types,
+    name: mega?.megaName ?? dex.name,
+    baseStats: mega?.baseStats ?? dex.baseStats,
+    types: mega ? mega.types.filter((t): t is string => Boolean(t)) : dex.types,
+    level: member?.level ?? getDefaultLevelForFormat(team?.format),
     ...(member && {
-      level: member.level,
       evs: member.evs,
       ivs: member.ivs,
       nature: member.nature,
-      ability: member.ability,
+      ability: mega?.ability ?? member.ability,
       item: member.item || '',
-      teraType: member.teraType,
     }),
   };
 }
 
 function requireTeam(ctx: ToolContext): Team | { error: string } {
   return ctx.team ?? { error: 'No team is currently open in the app.' };
+}
+
+/** Only forward a weather/terrain string if it's one calculateSpeed/calculateDamage actually
+ *  recognize — an out-of-schema value should silently no-op rather than reach the calculator. */
+function resolveWeather(value: unknown): Weather | undefined {
+  return typeof value === 'string' && (WEATHERS as string[]).includes(value)
+    ? (value as Weather)
+    : undefined;
+}
+function resolveTerrain(value: unknown): Terrain | undefined {
+  return typeof value === 'string' && (TERRAINS as string[]).includes(value)
+    ? (value as Terrain)
+    : undefined;
 }
 
 // ---- Tool definitions ---------------------------------------------------------
@@ -190,8 +235,8 @@ export const TOOLS: ToolDefinition[] = [
       type: 'object',
       properties: {
         species: { type: 'string', description: 'Species or nickname to calculate Speed for.' },
-        tailwind: { type: 'string', description: '"true" if Tailwind is active on its side.' },
-        paralyzed: { type: 'string', description: '"true" if the Pokemon is paralyzed.' },
+        tailwind: { type: 'boolean', description: 'Whether Tailwind is active on its side.' },
+        paralyzed: { type: 'boolean', description: 'Whether the Pokemon is paralyzed.' },
         weather: { type: 'string', description: 'Active weather.', enum: WEATHERS },
         terrain: { type: 'string', description: 'Active terrain.', enum: TERRAINS },
       },
@@ -200,12 +245,16 @@ export const TOOLS: ToolDefinition[] = [
     handler: (args, ctx) => {
       const subject = resolveSpeedSubject(ctx.team, String(args.species));
       if ('error' in subject) return subject;
-      const speed = calculateSpeed(subject, {
-        tailwindActive: args.tailwind === 'true',
-        paralyzed: args.paralyzed === 'true',
-        weather: typeof args.weather === 'string' ? args.weather : undefined,
-        terrain: typeof args.terrain === 'string' ? args.terrain : undefined,
-      });
+      const speed = calculateSpeed(
+        subject,
+        {
+          tailwindActive: isTruthyFlag(args.tailwind),
+          paralyzed: isTruthyFlag(args.paralyzed),
+          weather: resolveWeather(args.weather),
+          terrain: resolveTerrain(args.terrain),
+        },
+        getCalcGenForFormat(ctx.team?.format)
+      );
       return { species: subject.species, speed };
     },
   },
@@ -224,7 +273,13 @@ export const TOOLS: ToolDefinition[] = [
         move: { type: 'string', description: 'Move name, e.g. "Ice Beam".' },
         weather: { type: 'string', description: 'Active weather.', enum: WEATHERS },
         terrain: { type: 'string', description: 'Active terrain.', enum: TERRAINS },
-        useTera: { type: 'string', description: '"true" if the attacker has Terastallized.' },
+        useTera: { type: 'boolean', description: 'Whether the attacker has Terastallized.' },
+        isSpreadMove: {
+          type: 'boolean',
+          description:
+            'Whether this hits multiple targets in a doubles/Champions battle (e.g. Earthquake, ' +
+            'Rock Slide, Dazzling Gleam with both opposing slots filled) — spread moves deal reduced damage.',
+        },
       },
       required: ['attacker', 'defender', 'move'],
     },
@@ -245,20 +300,43 @@ export const TOOLS: ToolDefinition[] = [
       };
 
       const field = getDefaultField();
-      if (typeof args.weather === 'string' && (WEATHERS as string[]).includes(args.weather)) {
-        field.weather = args.weather as Weather;
-      }
-      if (typeof args.terrain === 'string' && (TERRAINS as string[]).includes(args.terrain)) {
-        field.terrain = args.terrain as Terrain;
+      const weather = resolveWeather(args.weather);
+      const terrain = resolveTerrain(args.terrain);
+      if (weather) field.weather = weather;
+      if (terrain) field.terrain = terrain;
+
+      // calculateDamage applies a defender's teraType unconditionally (see
+      // resolveCalcSubject's doc comment), so the attacker's real Tera type is only
+      // attached here, and only when useTera was actually requested.
+      const useTera = isTruthyFlag(args.useTera);
+      if (useTera) {
+        const attackerMember = findTeamMember(ctx.team, String(args.attacker));
+        if (attackerMember?.teraType) attacker.teraType = attackerMember.teraType;
       }
 
-      const result = calculateDamage(attacker, defender, move, field, false, args.useTera === 'true');
+      const result = calculateDamage(
+        attacker,
+        defender,
+        move,
+        field,
+        isTruthyFlag(args.isSpreadMove),
+        useTera,
+        getCalcGenForFormat(ctx.team?.format)
+      );
+      // effectivenessLabel is derived from raw type matchups alone, so it can say
+      // "super effective" even when an ability (Levitate, Flash Fire, ...) negated the
+      // hit entirely. Flag that mismatch rather than reporting a misleading label.
+      const effectiveness =
+        result.maxPercent === 0 && result.effectivenessLabel !== 'no effect'
+          ? `${result.effectivenessLabel} by type, but the actual damage was 0% — an ability likely negated it`
+          : result.effectivenessLabel;
+
       return {
         move: move.name,
         minPercent: result.minPercent,
         maxPercent: result.maxPercent,
         koChance: result.koChance,
-        effectiveness: result.effectivenessLabel,
+        effectiveness,
         isStab: result.isStab,
       };
     },
@@ -289,6 +367,7 @@ export const TOOLS: ToolDefinition[] = [
     name: 'get_legal_moves',
     description:
       "List moves a species can actually learn (including inherited pre-evolution moves), " +
+      'restricted to the active format\'s legal movepool when it\'s a Champions regulation, ' +
       'optionally filtered by a search query. Use before suggesting a moveset change.',
     parameters: {
       type: 'object',
@@ -298,13 +377,26 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: async (args) => {
+    handler: async (args, ctx) => {
       const moves = await getMovepoolForSpecies(String(args.species));
+      const format = ctx.team?.format;
+      const scoped = isChampionsFormatId(format ?? '')
+        ? (() => {
+            const legal = new Set(getChampionsMovesForSpecies(String(args.species)).map((m) => m.toLowerCase()));
+            return moves.filter((m) => legal.has(m.name.toLowerCase()));
+          })()
+        : moves;
       const query = typeof args.query === 'string' ? args.query.toLowerCase() : '';
-      const filtered = query ? moves.filter((m) => m.name.toLowerCase().includes(query)) : moves;
-      return filtered
-        .slice(0, 30)
-        .map((m) => ({ name: m.name, type: m.type, category: m.category, power: m.power }));
+      const filtered = query ? scoped.filter((m) => m.name.toLowerCase().includes(query)) : scoped;
+      // Flag truncation explicitly — a model reading a bare list of 30 has no way to tell
+      // it's incomplete, and could wrongly claim a real move doesn't exist.
+      return {
+        totalMatches: filtered.length,
+        truncated: filtered.length > 30,
+        moves: filtered
+          .slice(0, 30)
+          .map((m) => ({ name: m.name, type: m.type, category: m.category, power: m.power })),
+      };
     },
   },
 ];

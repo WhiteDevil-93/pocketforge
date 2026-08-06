@@ -299,6 +299,58 @@ IVs: 0 Atk
   );
   assert(dmgUnknownMove.error, 'calculate_damage must error on an unknown move');
 
+  // Regression: resolveCalcSubject originally looked up the dex before checking team
+  // membership, so a nickname (which the dex has never heard of) always failed.
+  const nicknameTeam = normalizeTeamData({
+    name: 'Nickname Test Team',
+    pokemon: [
+      { species: 'Garchomp', nickname: 'Landy', moves: ['Earthquake'] },
+      { species: 'Charizard', moves: ['Flamethrower'] },
+    ],
+  });
+  const nicknameCtx = { team: nicknameTeam };
+  const nicknameSpeedResult = getToolByName('calculate_speed').handler({ species: 'Landy' }, nicknameCtx);
+  assert(
+    typeof nicknameSpeedResult.speed === 'number' && nicknameSpeedResult.speed > 0,
+    'calculate_speed must resolve a nickname to the matching team member',
+  );
+  const nicknameDamageResult = getToolByName('calculate_damage').handler(
+    { attacker: 'Landy', defender: 'Charizard', move: 'Earthquake' },
+    nicknameCtx,
+  );
+  assert(
+    typeof nicknameDamageResult.minPercent === 'number' && !nicknameDamageResult.error,
+    'calculate_damage must resolve a nickname to the matching team member',
+  );
+
+  // Regression: resolveCalcSubject/resolveSpeedSubject originally ignored megaActive
+  // entirely, always calculating off the base form's stats and ability.
+  const megaTeam = normalizeTeamData({
+    name: 'Mega Test Team',
+    pokemon: [
+      { species: 'Aerodactyl', item: 'Aerodactylite', megaActive: true, moves: ['Rock Slide'] },
+      { species: 'Chansey', moves: ['Seismic Toss'] },
+    ],
+  });
+  const baseTeam = normalizeTeamData({
+    name: 'Base Test Team',
+    pokemon: [{ species: 'Aerodactyl', moves: ['Rock Slide'] }],
+  });
+  const megaSpeedResult = getToolByName('calculate_speed').handler({ species: 'Aerodactyl' }, { team: megaTeam });
+  const baseSpeedResult = getToolByName('calculate_speed').handler({ species: 'Aerodactyl' }, { team: baseTeam });
+  assert(
+    megaSpeedResult.speed > baseSpeedResult.speed,
+    `Mega Aerodactyl (150 base Speed) must be faster than base Aerodactyl (130 base Speed), got ${megaSpeedResult.speed} vs ${baseSpeedResult.speed}`,
+  );
+  const megaDamageResult = getToolByName('calculate_damage').handler(
+    { attacker: 'Aerodactyl', defender: 'Chansey', move: 'Rock Slide' },
+    { team: megaTeam },
+  );
+  assert(
+    typeof megaDamageResult.minPercent === 'number' && !megaDamageResult.error,
+    'calculate_damage must resolve an active Mega without erroring',
+  );
+
   const lookupResult = getToolByName('lookup_pokemon').handler({ species: 'Garchomp' }, toolCtx);
   assert(lookupResult.types.includes('Dragon'), "lookup_pokemon must return Garchomp's types");
 
@@ -307,9 +359,11 @@ IVs: 0 Atk
     toolCtx,
   );
   assert(
-    movesResult.some((m) => m.name.toLowerCase() === 'earthquake'),
+    movesResult.moves.some((m) => m.name.toLowerCase() === 'earthquake'),
     'get_legal_moves must find Earthquake for Garchomp',
   );
+  assert(typeof movesResult.totalMatches === 'number', 'get_legal_moves must report totalMatches');
+  assert(typeof movesResult.truncated === 'boolean', 'get_legal_moves must report truncated');
 
   console.log(`✅ AI tool registry verified: ${TOOLS.length} tools, schemas valid, calculators wired correctly`);
 
