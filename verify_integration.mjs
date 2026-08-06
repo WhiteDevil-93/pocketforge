@@ -409,6 +409,50 @@ IVs: 0 Atk
 
   console.log('✅ Persisted-settings merge backfills missing AI settings without crashing');
 
+  // Test 11: lookup_pokemon must scope typing to the active format's generation —
+  // Clefairy is Normal-type before Gen 6, Normal/Fairy from Gen 6 onward.
+  console.log('Testing lookup_pokemon generation scoping...');
+  const gen9Lookup = getToolByName('lookup_pokemon').handler(
+    { species: 'Clefairy' },
+    { team: { format: 'gen9ou' } },
+  );
+  assert(gen9Lookup.types.includes('Fairy'), 'lookup_pokemon must report Fairy typing for a Gen 9 team');
+  const gen5Lookup = getToolByName('lookup_pokemon').handler(
+    { species: 'Clefairy' },
+    { team: { format: 'gen5ou' } },
+  );
+  assert(
+    !gen5Lookup.types.includes('Fairy'),
+    'lookup_pokemon must NOT report Fairy typing for a Gen 5 team (Fairy type did not exist yet)',
+  );
+  console.log('✅ lookup_pokemon resolves species data for the active generation');
+
+  // Test 12: calculate_damage's defender Tera flag. Without it, a defender's real
+  // Tera type must never apply (the earlier fix for the unconditional-Tera bug);
+  // with it, the defender's own configured Tera type must actually be used.
+  console.log('Testing calculate_damage defender Terastallization flag...');
+  const teraTeam = normalizeTeamData({
+    name: 'Defender Tera Test Team',
+    pokemon: [
+      { species: 'Pikachu', moves: ['Thunderbolt'] },
+      { species: 'Chansey', teraType: 'Water', moves: ['Soft-Boiled'] },
+    ],
+  });
+  const teraCtx = { team: teraTeam };
+  const withoutDefenderTera = getToolByName('calculate_damage').handler(
+    { attacker: 'Pikachu', defender: 'Chansey', move: 'Thunderbolt' },
+    teraCtx,
+  );
+  const withDefenderTera = getToolByName('calculate_damage').handler(
+    { attacker: 'Pikachu', defender: 'Chansey', move: 'Thunderbolt', isDefenderTerastallized: true },
+    teraCtx,
+  );
+  assert(
+    withoutDefenderTera.maxPercent !== withDefenderTera.maxPercent,
+    'isDefenderTerastallized must change the outcome (Electric vs Normal-type Chansey is neutral, vs Water-Tera Chansey is super-effective)',
+  );
+  console.log('✅ calculate_damage only Terastallizes the defender when explicitly requested');
+
   console.log('🎉 ALL INTEGRATION TESTS PASSED!');
 }
 
