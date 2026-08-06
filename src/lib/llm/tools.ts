@@ -230,7 +230,8 @@ export const TOOLS: ToolDefinition[] = [
     description:
       "Calculate a Pokemon's real final Speed stat, accounting for item, ability, and field " +
       'modifiers. Uses the real spread if the species is on the active team, otherwise a neutral ' +
-      'level 100 baseline. Never estimate a speed value yourself — always call this.',
+      "baseline at the active format's standard level (returned alongside the speed — don't " +
+      'assume level 100). Never estimate a speed value yourself — always call this.',
     parameters: {
       type: 'object',
       properties: {
@@ -255,7 +256,7 @@ export const TOOLS: ToolDefinition[] = [
         },
         getCalcGenForFormat(ctx.team?.format)
       );
-      return { species: subject.species, speed };
+      return { species: subject.species, level: subject.level, speed };
     },
   },
 
@@ -378,8 +379,8 @@ export const TOOLS: ToolDefinition[] = [
       required: ['species'],
     },
     handler: async (args, ctx) => {
-      const moves = await getMovepoolForSpecies(String(args.species));
       const format = ctx.team?.format;
+      const moves = await getMovepoolForSpecies(String(args.species), getCalcGenForFormat(format));
       const scoped = isChampionsFormatId(format ?? '')
         ? (() => {
             const legal = new Set(getChampionsMovesForSpecies(String(args.species)).map((m) => m.toLowerCase()));

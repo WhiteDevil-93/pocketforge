@@ -154,7 +154,10 @@ export async function sendMessage({
   onEvent,
   signal,
 }: SendMessageOptions): Promise<ChatMessage[]> {
-  if (!apiKey.trim()) {
+  // Trimmed once here rather than trusting every save site — a key copy-pasted with a
+  // trailing newline would pass a non-empty check but fail Ollama's exact-match auth.
+  apiKey = apiKey.trim();
+  if (!apiKey) {
     const message = 'No Ollama Cloud API key is set. Add one in Settings → AI Assistant.';
     onEvent({ type: 'error', message });
     throw new Error(message);

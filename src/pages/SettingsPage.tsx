@@ -615,7 +615,7 @@ function AiAssistantForm({
 
   const commit = () => {
     updateSettings({
-      ollamaApiKey: keyDraft,
+      ollamaApiKey: keyDraft.trim(),
       ollamaModel: modelDraft.trim() || 'gemma4:cloud',
     });
   };
@@ -635,7 +635,7 @@ function AiAssistantForm({
             type={showKey ? 'text' : 'password'}
             value={keyDraft}
             onChange={(e) => setKeyDraft(e.target.value)}
-            onBlur={() => updateSettings({ ollamaApiKey: keyDraft })}
+            onBlur={() => updateSettings({ ollamaApiKey: keyDraft.trim() })}
             placeholder="Paste your key"
             autoComplete="off"
             autoCapitalize="off"

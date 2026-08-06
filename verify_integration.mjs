@@ -24,6 +24,7 @@ import {
 } from './src/utils/typeChart.ts';
 import { analyzeTeamWeaknesses } from './src/utils/weaknessAnalyzer.ts';
 import { TOOLS, getToolByName, toOllamaToolSchema } from './src/lib/llm/tools.ts';
+import { useStore, mergeStoreState } from './src/store/useStore.ts';
 
 // Simple assert helper
 function assert(condition, message) {
@@ -366,6 +367,47 @@ IVs: 0 Atk
   assert(typeof movesResult.truncated === 'boolean', 'get_legal_moves must report truncated');
 
   console.log(`✅ AI tool registry verified: ${TOOLS.length} tools, schemas valid, calculators wired correctly`);
+
+  // Test 10: Persisted-settings merge. Regression for a crash that would have hit
+  // every existing install: zustand's persist middleware only runs `migrate` when the
+  // persisted version differs from the configured one. Every existing user was
+  // already at version 1, so without bumping to version 2 AND a custom `merge`,
+  // `settings` would be replaced wholesale by the old persisted object (missing
+  // aiEnabled/ollamaApiKey/ollamaModel) and the first `settings.ollamaApiKey.trim()`
+  // call in Settings would throw on undefined.
+  console.log('Testing persisted-settings merge...');
+  const currentState = useStore.getState();
+
+  const oldPersistedState = {
+    teams: [],
+    folders: ['My Teams'],
+    settings: { theme: 'dark', defaultFormat: 'champions-mb', hasCompletedOnboarding: true },
+    customFormats: [],
+  };
+  const mergedForOldUser = mergeStoreState(oldPersistedState, currentState);
+  assert(
+    typeof mergedForOldUser.settings.ollamaApiKey === 'string',
+    'merge must backfill ollamaApiKey for a pre-AI-feature settings object',
+  );
+  assert(
+    typeof mergedForOldUser.settings.ollamaModel === 'string' && mergedForOldUser.settings.ollamaModel.length > 0,
+    'merge must backfill ollamaModel for a pre-AI-feature settings object',
+  );
+  assert(
+    mergedForOldUser.settings.hasCompletedOnboarding === true,
+    "merge must preserve the old user's existing settings values, not just backfill new ones",
+  );
+
+  // Simulates restoring a Full App Backup where ollamaApiKey was deliberately redacted.
+  const redactedSettings = { ...currentState.settings, ollamaApiKey: 'should-be-overwritten' };
+  delete redactedSettings.ollamaApiKey;
+  const mergedAfterRestore = mergeStoreState({ ...oldPersistedState, settings: redactedSettings }, currentState);
+  assert(
+    mergedAfterRestore.settings.ollamaApiKey === '',
+    'merge must backfill a redacted ollamaApiKey rather than leaving it undefined',
+  );
+
+  console.log('✅ Persisted-settings merge backfills missing AI settings without crashing');
 
   console.log('🎉 ALL INTEGRATION TESTS PASSED!');
 }
