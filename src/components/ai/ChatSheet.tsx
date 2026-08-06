@@ -36,6 +36,9 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Mirrors streamingText synchronously — state read inside the catch block below
+  // would be stale (captured when handleSend started, not updated by onEvent since).
+  const streamingTextRef = useRef('');
 
   const isConfigured =
     settings.aiEnabled &&
@@ -69,6 +72,7 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
     setInput('');
     setError(null);
     setStreamingText('');
+    streamingTextRef.current = '';
     setToolActivity([]);
     setIsStreaming(true);
 
@@ -90,7 +94,10 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
         ctx: { team },
         signal: controller.signal,
         onEvent: (event) => {
-          if (event.type === 'token') setStreamingText((t) => t + event.text);
+          if (event.type === 'token') {
+            streamingTextRef.current += event.text;
+            setStreamingText((t) => t + event.text);
+          }
           else if (event.type === 'toolCall') setToolActivity((a) => [...a, event.name]);
           // A user-initiated cancel (closing the sheet, tapping stop) surfaces here as
           // an abort "error" — that's not a failure worth showing, just report real ones.
@@ -99,8 +106,12 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
       });
       setHistory(updated);
     } catch {
-      // Error already captured via onEvent above; base history (with the user's
-      // message) is kept so they don't lose what they typed.
+      // Only keep the partial reply when the user actually tapped stop — a real
+      // network/tool error already surfaces via the error banner, and appending a
+      // truncated assistant message alongside it would be misleading.
+      if (controller.signal.aborted && streamingTextRef.current) {
+        setHistory((h) => [...h, { role: 'assistant', content: streamingTextRef.current }]);
+      }
     } finally {
       setStreamingText('');
       setToolActivity([]);

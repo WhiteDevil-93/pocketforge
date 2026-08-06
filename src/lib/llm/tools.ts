@@ -25,7 +25,7 @@ import { validateTeam } from '../../utils/validation';
 import { getCoverageGaps, getTeamBalanceScore } from '../../utils/typeChart';
 import { analyzeTeamWeaknesses, suggestCoverageMoves } from '../../utils/weaknessAnalyzer';
 import { explainEVSpread } from '../../utils/evExplainer';
-import { getMovepoolForSpecies } from '../../utils/movepoolQuery';
+import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
 import { getDefaultLevelForFormat } from '../format';
 import { getCalcGenForFormat } from '../showdown';
 import type { ToolContext, ToolDefinition } from './types';
@@ -94,9 +94,10 @@ function resolveSpeedSubject(team: Team | null, nameOrNickname: string): Pokemon
  *
  *  Deliberately never sets teraType here: calculateDamage applies a defender's
  *  teraType unconditionally (unlike the attacker's, which it gates behind the
- *  explicit useTera flag), so populating it for both sides would silently
- *  Terastallize the defender on every query. The calculate_damage handler applies
- *  the attacker's real teraType itself, only when useTera is requested. */
+ *  explicit useTera flag), so populating it for either side by default would
+ *  silently Terastallize them on every query. The calculate_damage handler applies
+ *  each side's real teraType itself, only when its useTera / isDefenderTerastallized
+ *  flag is requested. */
 function resolveCalcSubject(team: Team | null, nameOrNickname: string): CalcPokemon | { error: string } {
   const member = findTeamMember(team, nameOrNickname);
   const dex = getPokemonByName(member?.species ?? nameOrNickname);
@@ -275,6 +276,10 @@ export const TOOLS: ToolDefinition[] = [
         weather: { type: 'string', description: 'Active weather.', enum: WEATHERS },
         terrain: { type: 'string', description: 'Active terrain.', enum: TERRAINS },
         useTera: { type: 'boolean', description: 'Whether the attacker has Terastallized.' },
+        isDefenderTerastallized: {
+          type: 'boolean',
+          description: "Whether the defender has Terastallized (uses the defender's own configured Tera type).",
+        },
         isSpreadMove: {
           type: 'boolean',
           description:
@@ -307,12 +312,16 @@ export const TOOLS: ToolDefinition[] = [
       if (terrain) field.terrain = terrain;
 
       // calculateDamage applies a defender's teraType unconditionally (see
-      // resolveCalcSubject's doc comment), so the attacker's real Tera type is only
-      // attached here, and only when useTera was actually requested.
+      // resolveCalcSubject's doc comment), so both sides' real Tera types are only
+      // attached here, and only when the corresponding flag was actually requested.
       const useTera = isTruthyFlag(args.useTera);
       if (useTera) {
         const attackerMember = findTeamMember(ctx.team, String(args.attacker));
         if (attackerMember?.teraType) attacker.teraType = attackerMember.teraType;
+      }
+      if (isTruthyFlag(args.isDefenderTerastallized)) {
+        const defenderMember = findTeamMember(ctx.team, String(args.defender));
+        if (defenderMember?.teraType) defender.teraType = defenderMember.teraType;
       }
 
       const result = calculateDamage(
@@ -345,14 +354,16 @@ export const TOOLS: ToolDefinition[] = [
 
   {
     name: 'lookup_pokemon',
-    description: "Get a Pokemon's types, base stats, and abilities.",
+    description:
+      "Get a Pokemon's types, base stats, and abilities for the active team's generation " +
+      '(typing and stats can differ in older formats — e.g. Clefairy is Normal-type before Gen 6).',
     parameters: {
       type: 'object',
       properties: { species: { type: 'string', description: 'Species name.' } },
       required: ['species'],
     },
-    handler: (args) => {
-      const dex = getPokemonByName(String(args.species));
+    handler: (args, ctx) => {
+      const dex = getPokedexEntry(String(args.species), getCalcGenForFormat(ctx.team?.format));
       if (!dex) return { error: `Unknown species "${args.species}".` };
       return {
         name: dex.name,
