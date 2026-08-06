@@ -33,6 +33,10 @@ export interface ToolContext {
   /** Ollama Cloud API key, forwarded only to tools that make outbound requests
    *  (web_search, web_fetch) — sent nowhere except ollama.com. */
   apiKey?: string;
+  /** The sendMessage call's own abort signal (user stop, overall timeout) — forwarded so a
+   *  network-backed tool can cancel its request rather than letting it run to completion
+   *  after the result would just be discarded anyway. */
+  signal?: AbortSignal;
 }
 
 export interface ToolDefinition {

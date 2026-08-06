@@ -376,7 +376,7 @@ IVs: 0 Atk
   const originalFetch = globalThis.fetch;
   const fetchCalls = [];
   globalThis.fetch = async (url, init) => {
-    fetchCalls.push({ url, body: JSON.parse(init.body) });
+    fetchCalls.push({ url, headers: init.headers, body: JSON.parse(init.body) });
     if (url === 'https://ollama.com/api/web_search') {
       return {
         ok: true,
@@ -408,6 +408,10 @@ IVs: 0 Atk
     assert(fetchCalls[0].url === 'https://ollama.com/api/web_search', 'web_search must call the search endpoint');
     assert(fetchCalls[0].body.query === 'Champions Regulation M-B ruling', 'web_search must forward the query');
     assert(fetchCalls[0].body.max_results === 5, 'web_search must default max_results to 5');
+    assert(
+      fetchCalls[0].headers.Authorization === 'Bearer test-key',
+      'web_search must send the API key as a Bearer token',
+    );
 
     const fetchResult = await getToolByName('web_fetch').handler(
       { url: 'https://example.com/page' },
@@ -416,6 +420,10 @@ IVs: 0 Atk
     assert(fetchResult.title === 'Example Page', 'web_fetch must return the mocked title');
     assert(fetchResult.truncated === true, 'web_fetch must flag truncation for long pages');
     assert(fetchResult.content.length <= 6001, 'web_fetch must truncate long page content');
+    assert(
+      fetchCalls[1].headers.Authorization === 'Bearer test-key',
+      'web_fetch must send the API key as a Bearer token',
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }

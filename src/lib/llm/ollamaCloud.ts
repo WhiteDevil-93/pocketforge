@@ -174,9 +174,11 @@ export async function sendMessage({
   const overallTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let messages = [...history];
-  // web_search/web_fetch need the API key to call ollama.com's web API — forwarded here
-  // rather than requiring every caller of sendMessage to include it in ctx themselves.
-  const toolCtx: ToolContext = { ...ctx, apiKey };
+  // web_search/web_fetch need the API key to call ollama.com's web API, and this request's
+  // own abort signal so a user stop / overall timeout cancels an in-flight web request
+  // instead of leaving it running for no reason — forwarded here rather than requiring
+  // every caller of sendMessage to include them in ctx themselves.
+  const toolCtx: ToolContext = { ...ctx, apiKey, signal: controller.signal };
 
   try {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {

@@ -47,18 +47,40 @@ function truncate(text: string, limit: number): string {
   return text.length > limit ? `${text.slice(0, limit)}…` : text;
 }
 
+/** Combines two abort signals without requiring AbortSignal.any — this app's minSdk 24
+ *  Android target can run on WebViews old enough not to have it. */
+function combineAbortSignals(a: AbortSignal, b: AbortSignal): AbortSignal {
+  const controller = new AbortController();
+  if (a.aborted || b.aborted) {
+    controller.abort();
+  } else {
+    const onAbort = () => controller.abort();
+    a.addEventListener('abort', onAbort, { once: true });
+    b.addEventListener('abort', onAbort, { once: true });
+  }
+  return controller.signal;
+}
+
 /** Shared POST helper for the web_search/web_fetch tools — aborts on its own timeout
  *  (rather than relying solely on runToolCall's race) so a stalled request doesn't keep
- *  running in the background after the tool call has already "timed out" upstream. */
-async function callOllamaWebApi(url: string, apiKey: string, body: Record<string, unknown>): Promise<unknown> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), WEB_REQUEST_TIMEOUT_MS);
+ *  running in the background after the tool call has already "timed out" upstream, and
+ *  also honors the caller's own signal so a user-initiated stop cancels it immediately
+ *  instead of leaving it running for up to WEB_REQUEST_TIMEOUT_MS regardless. */
+async function callOllamaWebApi(
+  url: string,
+  apiKey: string,
+  body: Record<string, unknown>,
+  callerSignal?: AbortSignal
+): Promise<unknown> {
+  const timeoutController = new AbortController();
+  const timer = setTimeout(() => timeoutController.abort(), WEB_REQUEST_TIMEOUT_MS);
+  const signal = callerSignal ? combineAbortSignals(callerSignal, timeoutController.signal) : timeoutController.signal;
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify(body),
-      signal: controller.signal,
+      signal,
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
@@ -484,7 +506,7 @@ export const TOOLS: ToolDefinition[] = [
         ? Math.min(Math.max(Math.trunc(requested), 1), MAX_SEARCH_RESULTS)
         : DEFAULT_SEARCH_RESULTS;
 
-      const data = await callOllamaWebApi(WEB_SEARCH_URL, ctx.apiKey, { query, max_results: maxResults });
+      const data = await callOllamaWebApi(WEB_SEARCH_URL, ctx.apiKey, { query, max_results: maxResults }, ctx.signal);
       if (isWebApiError(data)) return data;
 
       const rawResults = (data as { results?: unknown }).results;
@@ -519,7 +541,7 @@ export const TOOLS: ToolDefinition[] = [
       const url = String(args.url ?? '').trim();
       if (!url) return { error: 'A URL is required.' };
 
-      const data = await callOllamaWebApi(WEB_FETCH_URL, ctx.apiKey, { url });
+      const data = await callOllamaWebApi(WEB_FETCH_URL, ctx.apiKey, { url }, ctx.signal);
       if (isWebApiError(data)) return data;
 
       const page = data as { title?: string; content?: string };
