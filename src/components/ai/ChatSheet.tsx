@@ -106,10 +106,10 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
       });
       setHistory(updated);
     } catch {
-      // Error already captured via onEvent above. If the user stopped generation
-      // partway through, keep what had already streamed in rather than discarding
-      // it — tapping stop should behave like "keep this", not "throw it away".
-      if (streamingTextRef.current) {
+      // Only keep the partial reply when the user actually tapped stop — a real
+      // network/tool error already surfaces via the error banner, and appending a
+      // truncated assistant message alongside it would be misleading.
+      if (controller.signal.aborted && streamingTextRef.current) {
         setHistory((h) => [...h, { role: 'assistant', content: streamingTextRef.current }]);
       }
     } finally {
