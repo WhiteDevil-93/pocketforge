@@ -2,7 +2,7 @@
 // PocketForge — Settings Page
 // ============================================================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -38,7 +38,11 @@ import {
 } from 'lucide-react';
 import BottomSheet from '../components/BottomSheet';
 import PageHeader from '../components/PageHeader';
-import ChatSheet from '../components/ai/ChatSheet';
+// Lazy-loaded: ChatSheet statically reaches ollamaCloud.ts and the full tool
+// registry (calculators, movepool queries, mega/champions data). Every Settings
+// visit would otherwise pull that in even when AI is disabled and chat is never
+// opened, defeating the route-level code-splitting the rest of the app relies on.
+const ChatSheet = lazy(() => import('../components/ai/ChatSheet'));
 import type { AppSettings } from '../types';
 import { useStore } from '../store/useStore';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
@@ -835,6 +839,10 @@ export default function SettingsPage() {
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [aiSheetOpen, setAiSheetOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  // Once true, stays true for the rest of the session — gates whether the
+  // lazy-loaded ChatSheet chunk has been fetched at all, independent of chatOpen's
+  // subsequent open/close toggling (which drives its slide in/out animation).
+  const [hasOpenedChat, setHasOpenedChat] = useState(false);
   const [showOfflineToast, setShowOfflineToast] = useState(false);
 
   // Export state
@@ -1218,7 +1226,10 @@ export default function SettingsPage() {
                 : 'Enable and add an API key first'
             }
             rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
-            onClick={() => setChatOpen(true)}
+            onClick={() => {
+              setHasOpenedChat(true);
+              setChatOpen(true);
+            }}
             disabled={!settings.aiEnabled || !hasAiConfig}
           />
         </div>
@@ -1401,7 +1412,11 @@ export default function SettingsPage() {
         updateSettings={updateSettings}
       />
 
-      <ChatSheet isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      {hasOpenedChat && (
+        <Suspense fallback={null}>
+          <ChatSheet isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+        </Suspense>
+      )}
 
       <CreditsModal
         isOpen={creditsOpen}
