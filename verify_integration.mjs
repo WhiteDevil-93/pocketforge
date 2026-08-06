@@ -23,6 +23,7 @@ import {
   getTeamOffensiveCoverage,
 } from './src/utils/typeChart.ts';
 import { analyzeTeamWeaknesses } from './src/utils/weaknessAnalyzer.ts';
+import { TOOLS, getToolByName, toOllamaToolSchema } from './src/lib/llm/tools.ts';
 
 // Simple assert helper
 function assert(condition, message) {
@@ -238,6 +239,79 @@ IVs: 0 Atk
   });
   assert(recoveredTeam.format.length > 0 && recoveredTeam.pokemon.length === 1, 'Legacy team was not normalized');
   console.log('✅ Legacy and imported teams are normalized for Analysis');
+
+  // Test 9: AI tool registry (Ollama Cloud assistant) — no network involved, this
+  // only checks that each tool handler is wired correctly to its underlying util.
+  console.log('Testing AI tool registry...');
+  const toolNames = TOOLS.map((t) => t.name);
+  assert(new Set(toolNames).size === toolNames.length, 'Tool names must be unique');
+
+  const schema = toOllamaToolSchema();
+  assert(schema.length === TOOLS.length, 'Tool schema count must match registry');
+  assert(
+    schema.every((t) => t.type === 'function' && typeof t.function.name === 'string'),
+    'Tool schema must be OpenAI-compatible function entries',
+  );
+
+  const toolCtx = { team: analysisTeam };
+
+  const activeTeamResult = getToolByName('get_active_team').handler({}, toolCtx);
+  assert(activeTeamResult.pokemon.length === 2, 'get_active_team must report both team members');
+  assert(activeTeamResult.pokemon[0].species === 'Garchomp', 'get_active_team species mismatch');
+
+  const analyzeResult = getToolByName('analyze_team').handler({}, toolCtx);
+  assert(typeof analyzeResult.balanceScore === 'number', 'analyze_team must return a balance score');
+  assert(
+    analyzeResult.sharedWeaknesses.some((w) => w.type === 'Ice' && w.weakMembers.includes('Garchomp')),
+    'analyze_team must surface the Ice weakness already verified above',
+  );
+
+  const validateResult = await getToolByName('validate_team').handler({}, toolCtx);
+  assert(typeof validateResult.isValid === 'boolean', 'validate_team must return isValid');
+
+  const evResult = getToolByName('explain_evs').handler({ species: 'Garchomp' }, toolCtx);
+  assert(evResult.role, 'explain_evs must return a role for a team member');
+  const evMissing = getToolByName('explain_evs').handler({ species: 'Pikachu' }, toolCtx);
+  assert(evMissing.error, 'explain_evs must error for a species not on the team');
+
+  const speedResult = getToolByName('calculate_speed').handler({ species: 'Garchomp' }, toolCtx);
+  assert(
+    typeof speedResult.speed === 'number' && speedResult.speed > 0,
+    'calculate_speed must return a positive number for a team member',
+  );
+  const genericSpeedResult = getToolByName('calculate_speed').handler({ species: 'Gengar' }, { team: null });
+  assert(
+    typeof genericSpeedResult.speed === 'number' && genericSpeedResult.speed > 0,
+    'calculate_speed must resolve a species not on any team',
+  );
+
+  const dmgToolResult = getToolByName('calculate_damage').handler(
+    { attacker: 'Charizard', defender: 'Garchomp', move: 'Flamethrower' },
+    toolCtx,
+  );
+  assert(
+    typeof dmgToolResult.minPercent === 'number' && dmgToolResult.minPercent >= 0,
+    'calculate_damage tool must return a damage percent',
+  );
+  const dmgUnknownMove = getToolByName('calculate_damage').handler(
+    { attacker: 'Charizard', defender: 'Garchomp', move: 'Not A Real Move' },
+    toolCtx,
+  );
+  assert(dmgUnknownMove.error, 'calculate_damage must error on an unknown move');
+
+  const lookupResult = getToolByName('lookup_pokemon').handler({ species: 'Garchomp' }, toolCtx);
+  assert(lookupResult.types.includes('Dragon'), "lookup_pokemon must return Garchomp's types");
+
+  const movesResult = await getToolByName('get_legal_moves').handler(
+    { species: 'Garchomp', query: 'earthquake' },
+    toolCtx,
+  );
+  assert(
+    movesResult.some((m) => m.name.toLowerCase() === 'earthquake'),
+    'get_legal_moves must find Earthquake for Garchomp',
+  );
+
+  console.log(`✅ AI tool registry verified: ${TOOLS.length} tools, schemas valid, calculators wired correctly`);
 
   console.log('🎉 ALL INTEGRATION TESTS PASSED!');
 }
