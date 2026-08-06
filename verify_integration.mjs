@@ -366,7 +366,60 @@ IVs: 0 Atk
   assert(typeof movesResult.totalMatches === 'number', 'get_legal_moves must report totalMatches');
   assert(typeof movesResult.truncated === 'boolean', 'get_legal_moves must report truncated');
 
+  assert(TOOLS.length === 10, `Expected 10 tools (8 calculators + web_search + web_fetch), got ${TOOLS.length}`);
+
   console.log(`✅ AI tool registry verified: ${TOOLS.length} tools, schemas valid, calculators wired correctly`);
+
+  // Test 9b: web_search / web_fetch — Ollama's hosted web API, reusing the chat API key.
+  // Stubs global.fetch so this stays offline like every other check in this file.
+  console.log('Testing web_search / web_fetch tools...');
+  const originalFetch = globalThis.fetch;
+  const fetchCalls = [];
+  globalThis.fetch = async (url, init) => {
+    fetchCalls.push({ url, body: JSON.parse(init.body) });
+    if (url === 'https://ollama.com/api/web_search') {
+      return {
+        ok: true,
+        json: async () => ({
+          results: [
+            { title: 'Regulation M-B ruling', url: 'https://example.com/reg-mb', content: 'x'.repeat(2000) },
+          ],
+        }),
+      };
+    }
+    if (url === 'https://ollama.com/api/web_fetch') {
+      return { ok: true, json: async () => ({ title: 'Example Page', content: 'y'.repeat(7000) }) };
+    }
+    throw new Error(`Unexpected fetch to ${url}`);
+  };
+
+  try {
+    const noKeyResult = await getToolByName('web_search').handler({ query: 'test' }, { team: null });
+    assert(noKeyResult.error, 'web_search must error without an API key');
+    assert(fetchCalls.length === 0, 'web_search must not call fetch without an API key');
+
+    const searchResult = await getToolByName('web_search').handler(
+      { query: 'Champions Regulation M-B ruling' },
+      { team: null, apiKey: 'test-key' },
+    );
+    assert(searchResult.results.length === 1, 'web_search must return the mocked result');
+    assert(searchResult.results[0].url === 'https://example.com/reg-mb', 'web_search must pass through the result URL');
+    assert(searchResult.results[0].content.length <= 1001, 'web_search must truncate long snippets');
+    assert(fetchCalls[0].url === 'https://ollama.com/api/web_search', 'web_search must call the search endpoint');
+    assert(fetchCalls[0].body.query === 'Champions Regulation M-B ruling', 'web_search must forward the query');
+    assert(fetchCalls[0].body.max_results === 5, 'web_search must default max_results to 5');
+
+    const fetchResult = await getToolByName('web_fetch').handler(
+      { url: 'https://example.com/page' },
+      { team: null, apiKey: 'test-key' },
+    );
+    assert(fetchResult.title === 'Example Page', 'web_fetch must return the mocked title');
+    assert(fetchResult.truncated === true, 'web_fetch must flag truncation for long pages');
+    assert(fetchResult.content.length <= 6001, 'web_fetch must truncate long page content');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  console.log('✅ web_search / web_fetch call the Ollama Cloud web API correctly and truncate long content');
 
   // Test 10: Persisted-settings merge. Regression for a crash that would have hit
   // every existing install: zustand's persist middleware only runs `migrate` when the

@@ -141,7 +141,7 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
                   <Bot size={28} className="text-text-tertiary" />
                   <p className="text-[12px] text-text-secondary leading-relaxed">
                     Ask about {team ? `"${team.name}"` : 'your team'} — weaknesses, a damage roll,
-                    speed comparisons, or whether a set is legal.
+                    speed comparisons, whether a set is legal, or search the web for current rulings.
                   </p>
                 </div>
               )}

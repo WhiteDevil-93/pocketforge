@@ -30,6 +30,9 @@ export interface ToolParameterSchema {
 export interface ToolContext {
   /** The team currently open in the app, if any. Tools ground themselves in this. */
   team: import('../../types').Team | null;
+  /** Ollama Cloud API key, forwarded only to tools that make outbound requests
+   *  (web_search, web_fetch) — sent nowhere except ollama.com. */
+  apiKey?: string;
 }
 
 export interface ToolDefinition {

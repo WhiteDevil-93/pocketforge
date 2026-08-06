@@ -174,6 +174,9 @@ export async function sendMessage({
   const overallTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let messages = [...history];
+  // web_search/web_fetch need the API key to call ollama.com's web API — forwarded here
+  // rather than requiring every caller of sendMessage to include it in ctx themselves.
+  const toolCtx: ToolContext = { ...ctx, apiKey };
 
   try {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
@@ -213,7 +216,7 @@ export async function sendMessage({
 
       for (const call of toolCalls) {
         onEvent({ type: 'toolCall', name: call.name });
-        const result = await runToolCall(call, ctx);
+        const result = await runToolCall(call, toolCtx);
         onEvent({ type: 'toolResult', name: call.name, result });
         messages = [
           ...messages,
