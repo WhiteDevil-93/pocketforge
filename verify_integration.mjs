@@ -23,6 +23,8 @@ import {
   getTeamOffensiveCoverage,
 } from './src/utils/typeChart.ts';
 import { analyzeTeamWeaknesses } from './src/utils/weaknessAnalyzer.ts';
+import { TOOLS, getToolByName, toOllamaToolSchema } from './src/lib/llm/tools.ts';
+import { useStore, mergeStoreState } from './src/store/useStore.ts';
 
 // Simple assert helper
 function assert(condition, message) {
@@ -238,6 +240,174 @@ IVs: 0 Atk
   });
   assert(recoveredTeam.format.length > 0 && recoveredTeam.pokemon.length === 1, 'Legacy team was not normalized');
   console.log('✅ Legacy and imported teams are normalized for Analysis');
+
+  // Test 9: AI tool registry (Ollama Cloud assistant) — no network involved, this
+  // only checks that each tool handler is wired correctly to its underlying util.
+  console.log('Testing AI tool registry...');
+  const toolNames = TOOLS.map((t) => t.name);
+  assert(new Set(toolNames).size === toolNames.length, 'Tool names must be unique');
+
+  const schema = toOllamaToolSchema();
+  assert(schema.length === TOOLS.length, 'Tool schema count must match registry');
+  assert(
+    schema.every((t) => t.type === 'function' && typeof t.function.name === 'string'),
+    'Tool schema must be OpenAI-compatible function entries',
+  );
+
+  const toolCtx = { team: analysisTeam };
+
+  const activeTeamResult = getToolByName('get_active_team').handler({}, toolCtx);
+  assert(activeTeamResult.pokemon.length === 2, 'get_active_team must report both team members');
+  assert(activeTeamResult.pokemon[0].species === 'Garchomp', 'get_active_team species mismatch');
+
+  const analyzeResult = getToolByName('analyze_team').handler({}, toolCtx);
+  assert(typeof analyzeResult.balanceScore === 'number', 'analyze_team must return a balance score');
+  assert(
+    analyzeResult.sharedWeaknesses.some((w) => w.type === 'Ice' && w.weakMembers.includes('Garchomp')),
+    'analyze_team must surface the Ice weakness already verified above',
+  );
+
+  const validateResult = await getToolByName('validate_team').handler({}, toolCtx);
+  assert(typeof validateResult.isValid === 'boolean', 'validate_team must return isValid');
+
+  const evResult = getToolByName('explain_evs').handler({ species: 'Garchomp' }, toolCtx);
+  assert(evResult.role, 'explain_evs must return a role for a team member');
+  const evMissing = getToolByName('explain_evs').handler({ species: 'Pikachu' }, toolCtx);
+  assert(evMissing.error, 'explain_evs must error for a species not on the team');
+
+  const speedResult = getToolByName('calculate_speed').handler({ species: 'Garchomp' }, toolCtx);
+  assert(
+    typeof speedResult.speed === 'number' && speedResult.speed > 0,
+    'calculate_speed must return a positive number for a team member',
+  );
+  const genericSpeedResult = getToolByName('calculate_speed').handler({ species: 'Gengar' }, { team: null });
+  assert(
+    typeof genericSpeedResult.speed === 'number' && genericSpeedResult.speed > 0,
+    'calculate_speed must resolve a species not on any team',
+  );
+
+  const dmgToolResult = getToolByName('calculate_damage').handler(
+    { attacker: 'Charizard', defender: 'Garchomp', move: 'Flamethrower' },
+    toolCtx,
+  );
+  assert(
+    typeof dmgToolResult.minPercent === 'number' && dmgToolResult.minPercent >= 0,
+    'calculate_damage tool must return a damage percent',
+  );
+  const dmgUnknownMove = getToolByName('calculate_damage').handler(
+    { attacker: 'Charizard', defender: 'Garchomp', move: 'Not A Real Move' },
+    toolCtx,
+  );
+  assert(dmgUnknownMove.error, 'calculate_damage must error on an unknown move');
+
+  // Regression: resolveCalcSubject originally looked up the dex before checking team
+  // membership, so a nickname (which the dex has never heard of) always failed.
+  const nicknameTeam = normalizeTeamData({
+    name: 'Nickname Test Team',
+    pokemon: [
+      { species: 'Garchomp', nickname: 'Landy', moves: ['Earthquake'] },
+      { species: 'Charizard', moves: ['Flamethrower'] },
+    ],
+  });
+  const nicknameCtx = { team: nicknameTeam };
+  const nicknameSpeedResult = getToolByName('calculate_speed').handler({ species: 'Landy' }, nicknameCtx);
+  assert(
+    typeof nicknameSpeedResult.speed === 'number' && nicknameSpeedResult.speed > 0,
+    'calculate_speed must resolve a nickname to the matching team member',
+  );
+  const nicknameDamageResult = getToolByName('calculate_damage').handler(
+    { attacker: 'Landy', defender: 'Charizard', move: 'Earthquake' },
+    nicknameCtx,
+  );
+  assert(
+    typeof nicknameDamageResult.minPercent === 'number' && !nicknameDamageResult.error,
+    'calculate_damage must resolve a nickname to the matching team member',
+  );
+
+  // Regression: resolveCalcSubject/resolveSpeedSubject originally ignored megaActive
+  // entirely, always calculating off the base form's stats and ability.
+  const megaTeam = normalizeTeamData({
+    name: 'Mega Test Team',
+    pokemon: [
+      { species: 'Aerodactyl', item: 'Aerodactylite', megaActive: true, moves: ['Rock Slide'] },
+      { species: 'Chansey', moves: ['Seismic Toss'] },
+    ],
+  });
+  const baseTeam = normalizeTeamData({
+    name: 'Base Test Team',
+    pokemon: [{ species: 'Aerodactyl', moves: ['Rock Slide'] }],
+  });
+  const megaSpeedResult = getToolByName('calculate_speed').handler({ species: 'Aerodactyl' }, { team: megaTeam });
+  const baseSpeedResult = getToolByName('calculate_speed').handler({ species: 'Aerodactyl' }, { team: baseTeam });
+  assert(
+    megaSpeedResult.speed > baseSpeedResult.speed,
+    `Mega Aerodactyl (150 base Speed) must be faster than base Aerodactyl (130 base Speed), got ${megaSpeedResult.speed} vs ${baseSpeedResult.speed}`,
+  );
+  const megaDamageResult = getToolByName('calculate_damage').handler(
+    { attacker: 'Aerodactyl', defender: 'Chansey', move: 'Rock Slide' },
+    { team: megaTeam },
+  );
+  assert(
+    typeof megaDamageResult.minPercent === 'number' && !megaDamageResult.error,
+    'calculate_damage must resolve an active Mega without erroring',
+  );
+
+  const lookupResult = getToolByName('lookup_pokemon').handler({ species: 'Garchomp' }, toolCtx);
+  assert(lookupResult.types.includes('Dragon'), "lookup_pokemon must return Garchomp's types");
+
+  const movesResult = await getToolByName('get_legal_moves').handler(
+    { species: 'Garchomp', query: 'earthquake' },
+    toolCtx,
+  );
+  assert(
+    movesResult.moves.some((m) => m.name.toLowerCase() === 'earthquake'),
+    'get_legal_moves must find Earthquake for Garchomp',
+  );
+  assert(typeof movesResult.totalMatches === 'number', 'get_legal_moves must report totalMatches');
+  assert(typeof movesResult.truncated === 'boolean', 'get_legal_moves must report truncated');
+
+  console.log(`✅ AI tool registry verified: ${TOOLS.length} tools, schemas valid, calculators wired correctly`);
+
+  // Test 10: Persisted-settings merge. Regression for a crash that would have hit
+  // every existing install: zustand's persist middleware only runs `migrate` when the
+  // persisted version differs from the configured one. Every existing user was
+  // already at version 1, so without bumping to version 2 AND a custom `merge`,
+  // `settings` would be replaced wholesale by the old persisted object (missing
+  // aiEnabled/ollamaApiKey/ollamaModel) and the first `settings.ollamaApiKey.trim()`
+  // call in Settings would throw on undefined.
+  console.log('Testing persisted-settings merge...');
+  const currentState = useStore.getState();
+
+  const oldPersistedState = {
+    teams: [],
+    folders: ['My Teams'],
+    settings: { theme: 'dark', defaultFormat: 'champions-mb', hasCompletedOnboarding: true },
+    customFormats: [],
+  };
+  const mergedForOldUser = mergeStoreState(oldPersistedState, currentState);
+  assert(
+    typeof mergedForOldUser.settings.ollamaApiKey === 'string',
+    'merge must backfill ollamaApiKey for a pre-AI-feature settings object',
+  );
+  assert(
+    typeof mergedForOldUser.settings.ollamaModel === 'string' && mergedForOldUser.settings.ollamaModel.length > 0,
+    'merge must backfill ollamaModel for a pre-AI-feature settings object',
+  );
+  assert(
+    mergedForOldUser.settings.hasCompletedOnboarding === true,
+    "merge must preserve the old user's existing settings values, not just backfill new ones",
+  );
+
+  // Simulates restoring a Full App Backup where ollamaApiKey was deliberately redacted.
+  const redactedSettings = { ...currentState.settings, ollamaApiKey: 'should-be-overwritten' };
+  delete redactedSettings.ollamaApiKey;
+  const mergedAfterRestore = mergeStoreState({ ...oldPersistedState, settings: redactedSettings }, currentState);
+  assert(
+    mergedAfterRestore.settings.ollamaApiKey === '',
+    'merge must backfill a redacted ollamaApiKey rather than leaving it undefined',
+  );
+
+  console.log('✅ Persisted-settings merge backfills missing AI settings without crashing');
 
   console.log('🎉 ALL INTEGRATION TESTS PASSED!');
 }

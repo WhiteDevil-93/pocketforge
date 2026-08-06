@@ -15,6 +15,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   defaultFormat: DEFAULT_FORMAT,
   hasCompletedOnboarding: false,
+  aiEnabled: false,
+  ollamaApiKey: '',
+  ollamaModel: 'gemma4:cloud',
 };
 
 // ---- Helper functions -------------------------------------------------------
@@ -25,7 +28,7 @@ function generateId(): string {
 
 // ---- Store interface --------------------------------------------------------
 
-interface StoreState {
+export interface StoreState {
   // Data
   teams: Team[];
   folders: string[];
@@ -65,6 +68,27 @@ interface StoreState {
   addCustomFormat: (format: Omit<CustomFormat, "id" | "createdAt">) => void;
   updateCustomFormat: (id: string, updates: Partial<CustomFormat>) => void;
   deleteCustomFormat: (id: string) => void;
+}
+
+// ---- Persist merge -----------------------------------------------------------
+
+/**
+ * Zustand's default `merge` is a shallow `{ ...current, ...persisted }`, which
+ * replaces `settings` wholesale rather than backfilling missing fields — the same
+ * gap `migrate` closes, but `migrate` only runs on a version mismatch. This closes
+ * it unconditionally, so a settings key that's missing for any reason (an older
+ * install matching the current version after some future update, or a Full App
+ * Backup restore where a field was deliberately redacted) still gets a usable
+ * default instead of `undefined`. Exported standalone so it can be verified without
+ * touching zustand/localStorage — see verify_integration.mjs.
+ */
+export function mergeStoreState(persistedState: unknown, currentState: StoreState): StoreState {
+  const persisted = (persistedState ?? {}) as Partial<StoreState>;
+  return {
+    ...currentState,
+    ...persisted,
+    settings: { ...currentState.settings, ...(persisted.settings ?? {}) },
+  };
 }
 
 // ---- Store implementation ---------------------------------------------------
@@ -306,7 +330,14 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: APP_STORAGE_KEY,
-      version: 1,
+      // Bumped for the new AI settings fields. Zustand only runs `migrate` when the
+      // persisted version differs from this one — every existing install is still at
+      // 1, so without this bump they'd skip migrate entirely and fall through to the
+      // default `merge`, which shallow-replaces `settings` wholesale with whatever was
+      // persisted (missing aiEnabled/ollamaApiKey/ollamaModel), crashing the first
+      // `.trim()` call on Settings. Confirmed by reading node_modules/zustand's
+      // persist middleware directly, not assumed.
+      version: 2,
       migrate: (persistedState) => {
         const persisted =
           persistedState && typeof persistedState === 'object'
@@ -322,6 +353,7 @@ export const useStore = create<StoreState>()(
           customFormats: Array.isArray(persisted.customFormats) ? persisted.customFormats : [],
         };
       },
+      merge: (persistedState, currentState) => mergeStoreState(persistedState, currentState as StoreState),
       partialize: (state) => ({
         teams: state.teams,
         folders: state.folders,
