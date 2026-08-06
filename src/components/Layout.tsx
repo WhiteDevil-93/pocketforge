@@ -34,7 +34,11 @@ export default function Layout({ children }: LayoutProps) {
           tabIndex={-1}
           className={`flex-1 ${showNav ? 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))]' : ''}`}
         >
-          <AnimatePresence initial={false}>
+          {/* mode="wait" lets the outgoing page fully exit before the next one mounts.
+              Without it, both pages are mounted and fading at once — on a WebView that's
+              slow enough to render the overlap, this shows as a visible jump/flicker
+              since neither page is absolutely positioned during the crossfade. */}
+          <AnimatePresence initial={false} mode="wait">
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0 }}

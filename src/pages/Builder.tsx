@@ -57,6 +57,9 @@ export default function Builder() {
 
   // Store
   const teams = useStore((s) => s.teams);
+  const currentTeamId = useStore((s) => s.currentTeamId);
+  const setCurrentTeam = useStore((s) => s.setCurrentTeam);
+  const createTeam = useStore((s) => s.createTeam);
   const updateTeam = useStore((s) => s.updateTeam);
   const updatePokemon = useStore((s) => s.updatePokemon);
   const addPokemon = useStore((s) => s.addPokemon);
@@ -65,6 +68,22 @@ export default function Builder() {
 
   // Find team
   const team = teams.find((t) => t.id === teamId);
+
+  // The bottom-nav Builder tab links to bare /builder with no team id — land on the
+  // current team, the most recent one, or create a fresh one, so the tab always lets
+  // you build instead of dead-ending on an empty state.
+  useEffect(() => {
+    if (teamId) return;
+    if (teams.length === 0) {
+      const newId = createTeam('New Team');
+      setCurrentTeam(newId);
+      navigate(`/builder/${newId}`, { replace: true });
+      return;
+    }
+    const fallbackId =
+      currentTeamId && teams.some((t) => t.id === currentTeamId) ? currentTeamId : teams[0].id;
+    navigate(`/builder/${fallbackId}`, { replace: true });
+  }, [teamId, currentTeamId, teams, navigate, createTeam, setCurrentTeam]);
 
   // Local state
   const [editingName, setEditingName] = useState(false);
