@@ -581,87 +581,128 @@ function AiAssistantSheet({
   settings: AppSettings;
   updateSettings: (updates: Partial<AppSettings>) => void;
 }) {
-  const [showKey, setShowKey] = useState(false);
-
   if (!isOpen) return null;
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="AI Assistant" showSearch={false}>
-      <div className="space-y-5">
-        <p className="text-sm text-text-secondary leading-relaxed">
-          Runs on <span className="text-text-primary">Ollama Cloud</span> — the model calls
-          PocketForge's own calculators for damage, speed, and team analysis, so the numbers it
-          gives you stay accurate. Requires an internet connection.
-        </p>
+      {/* Keyed so every open starts from a fresh draft reading the current settings —
+          the fields commit on blur/Done rather than on every keystroke (see below),
+          so this component's own state needs to be reset each time it's reopened. */}
+      <AiAssistantForm
+        key={isOpen ? 'open' : 'closed'}
+        settings={settings}
+        updateSettings={updateSettings}
+        onDone={onClose}
+      />
+    </BottomSheet>
+  );
+}
 
-        <div>
-          <label className="text-[11px] text-text-secondary block mb-1.5">Ollama API key</label>
-          <div className="relative">
-            <input
-              type={showKey ? 'text' : 'password'}
-              value={settings.ollamaApiKey}
-              onChange={(e) => updateSettings({ ollamaApiKey: e.target.value })}
-              placeholder="Paste your key"
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              className="w-full h-12 pl-4 pr-11 bg-bg-tertiary rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/50 border border-border-subtle font-jetbrains-mono"
-            />
-            <button
-              type="button"
-              onClick={() => setShowKey((v) => !v)}
-              aria-label={showKey ? 'Hide API key' : 'Show API key'}
-              title={showKey ? 'Hide API key' : 'Show API key'}
-              className="absolute right-3 top-1/2 -translate-y-1/2 touch-target text-text-tertiary"
-            >
-              {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-          <p className="text-[11px] text-text-tertiary mt-1.5">
-            Create one at ollama.com/settings/keys. It's stored only on this device and sent
-            only to ollama.com.
-          </p>
-        </div>
+function AiAssistantForm({
+  settings,
+  updateSettings,
+  onDone,
+}: {
+  settings: AppSettings;
+  updateSettings: (updates: Partial<AppSettings>) => void;
+  onDone: () => void;
+}) {
+  const [showKey, setShowKey] = useState(false);
+  // Local drafts so typing doesn't rewrite the entire persisted store (including every
+  // team) on each keystroke — committed to settings on blur and when closing.
+  const [keyDraft, setKeyDraft] = useState(settings.ollamaApiKey);
+  const [modelDraft, setModelDraft] = useState(settings.ollamaModel);
 
-        <div>
-          <label className="text-[11px] text-text-secondary block mb-1.5">Cloud model</label>
+  const commit = () => {
+    updateSettings({
+      ollamaApiKey: keyDraft,
+      ollamaModel: modelDraft.trim() || 'gemma4:cloud',
+    });
+  };
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-text-secondary leading-relaxed">
+        Runs on <span className="text-text-primary">Ollama Cloud</span> — the model calls
+        PocketForge's own calculators for damage, speed, and team analysis, so the numbers it
+        gives you stay accurate. Requires an internet connection.
+      </p>
+
+      <div>
+        <label className="text-[11px] text-text-secondary block mb-1.5">Ollama API key</label>
+        <div className="relative">
           <input
-            type="text"
-            value={settings.ollamaModel}
-            onChange={(e) => updateSettings({ ollamaModel: e.target.value })}
-            placeholder="gemma4:cloud"
+            type={showKey ? 'text' : 'password'}
+            value={keyDraft}
+            onChange={(e) => setKeyDraft(e.target.value)}
+            onBlur={() => updateSettings({ ollamaApiKey: keyDraft })}
+            placeholder="Paste your key"
             autoComplete="off"
             autoCapitalize="off"
             spellCheck={false}
-            className="w-full h-12 px-4 bg-bg-tertiary rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/50 border border-border-subtle font-jetbrains-mono"
+            className="w-full h-12 pl-4 pr-11 bg-bg-tertiary rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/50 border border-border-subtle font-jetbrains-mono"
           />
-          <div className="flex flex-wrap gap-2 mt-2">
-            {QUICK_OLLAMA_MODELS.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => updateSettings({ ollamaModel: tag })}
-                className={`h-8 px-3 rounded-full text-[11px] font-jetbrains-mono border transition-colors touch-target ${
-                  settings.ollamaModel === tag
-                    ? 'bg-accent-primary/15 border-accent-primary/50 text-accent-primary'
-                    : 'bg-bg-tertiary border-border-subtle text-text-secondary'
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowKey((v) => !v)}
+            aria-label={showKey ? 'Hide API key' : 'Show API key'}
+            title={showKey ? 'Hide API key' : 'Show API key'}
+            className="absolute right-3 top-1/2 -translate-y-1/2 touch-target text-text-tertiary"
+          >
+            {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full h-12 rounded-xl text-sm font-medium bg-accent-primary text-white touch-target"
-        >
-          Done
-        </button>
+        <p className="text-[11px] text-text-tertiary mt-1.5">
+          Create one at ollama.com/settings/keys. It's stored on this device and sent only to
+          ollama.com — Full App Backup exports leave it out, so re-enter it after restoring one.
+        </p>
       </div>
-    </BottomSheet>
+
+      <div>
+        <label className="text-[11px] text-text-secondary block mb-1.5">Cloud model</label>
+        <input
+          type="text"
+          value={modelDraft}
+          onChange={(e) => setModelDraft(e.target.value)}
+          onBlur={() => updateSettings({ ollamaModel: modelDraft.trim() || 'gemma4:cloud' })}
+          placeholder="gemma4:cloud"
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          className="w-full h-12 px-4 bg-bg-tertiary rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary/50 border border-border-subtle font-jetbrains-mono"
+        />
+        <div className="flex flex-wrap gap-2 mt-2">
+          {QUICK_OLLAMA_MODELS.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => {
+                setModelDraft(tag);
+                updateSettings({ ollamaModel: tag });
+              }}
+              className={`h-8 px-3 rounded-full text-[11px] font-jetbrains-mono border transition-colors touch-target ${
+                modelDraft === tag
+                  ? 'bg-accent-primary/15 border-accent-primary/50 text-accent-primary'
+                  : 'bg-bg-tertiary border-border-subtle text-text-secondary'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          commit();
+          onDone();
+        }}
+        className="w-full h-12 rounded-xl text-sm font-medium bg-accent-primary text-white touch-target"
+      >
+        Done
+      </button>
+    </div>
   );
 }
 
@@ -781,6 +822,9 @@ export default function SettingsPage() {
   const currentTeamId = useStore((s) => s.currentTeamId);
   const setCurrentTeam = useStore((s) => s.setCurrentTeam);
   const updateSettings = useStore((s) => s.updateSettings);
+  // Matches ChatSheet's own configured-check — a whitespace-only key/model should
+  // read as "not configured" everywhere, not just where the actual request is sent.
+  const hasAiConfig = settings.ollamaApiKey.trim().length > 0 && settings.ollamaModel.trim().length > 0;
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [activeTab, setActiveTab] = useState<SettingsTab>('preferences');
 
@@ -888,10 +932,25 @@ export default function SettingsPage() {
   const handleExportAllData = useCallback(() => {
     const pfStorage = localStorage.getItem(APP_STORAGE_KEY);
     const nuzlockeStorage = localStorage.getItem(NUZLOCKE_STORAGE_KEY);
+
+    // A backup is meant to be shared or transferred between devices — the Ollama API
+    // key is not, so it's stripped here rather than trusting every export site to
+    // remember to omit it.
+    let redactedStore = pfStorage;
+    if (pfStorage) {
+      try {
+        const parsed = JSON.parse(pfStorage);
+        if (parsed?.state?.settings) delete parsed.state.settings.ollamaApiKey;
+        redactedStore = JSON.stringify(parsed);
+      } catch {
+        // Malformed persisted state shouldn't block the export — fall back to raw.
+      }
+    }
+
     const fullBackup = {
       version: 2,
       exportedAt: new Date().toISOString(),
-      store: pfStorage,
+      store: redactedStore,
       nuzlocke: nuzlockeStorage,
     };
     const blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json' });
@@ -1144,7 +1203,7 @@ export default function SettingsPage() {
             icon={Key}
             iconColor="#8B5CF6"
             label="API Key & Model"
-            subtitle={settings.ollamaApiKey ? `Configured · ${settings.ollamaModel}` : 'Not configured'}
+            subtitle={hasAiConfig ? `Configured · ${settings.ollamaModel}` : 'Not configured'}
             rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
             onClick={() => setAiSheetOpen(true)}
           />
@@ -1154,13 +1213,13 @@ export default function SettingsPage() {
             iconColor="#8B5CF6"
             label="Chat"
             subtitle={
-              settings.aiEnabled && settings.ollamaApiKey
+              settings.aiEnabled && hasAiConfig
                 ? 'Ask about your team'
                 : 'Enable and add an API key first'
             }
             rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
             onClick={() => setChatOpen(true)}
-            disabled={!settings.aiEnabled || !settings.ollamaApiKey}
+            disabled={!settings.aiEnabled || !hasAiConfig}
           />
         </div>
 
