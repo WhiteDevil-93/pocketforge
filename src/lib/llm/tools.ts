@@ -33,6 +33,71 @@ import type { ToolContext, ToolDefinition } from './types';
 const WEATHERS: Weather[] = ['none', 'sun', 'rain', 'sand', 'snow', 'harsh-sun', 'heavy-rain'];
 const TERRAINS: Terrain[] = ['none', 'electric', 'grassy', 'psychic', 'misty'];
 
+// Ollama's hosted search/fetch REST API — documented at https://docs.ollama.com/capabilities/web-search.
+// Authenticated with the same API key as chat, so no separate credential is needed.
+const WEB_SEARCH_URL = 'https://ollama.com/api/web_search';
+const WEB_FETCH_URL = 'https://ollama.com/api/web_fetch';
+const WEB_REQUEST_TIMEOUT_MS = 10_000;
+const MAX_SEARCH_RESULTS = 10;
+const DEFAULT_SEARCH_RESULTS = 5;
+const SEARCH_SNIPPET_LIMIT = 1000;
+const FETCH_CONTENT_LIMIT = 6000;
+
+function truncate(text: string, limit: number): string {
+  return text.length > limit ? `${text.slice(0, limit)}…` : text;
+}
+
+/** Combines two abort signals without requiring AbortSignal.any — this app's minSdk 24
+ *  Android target can run on WebViews old enough not to have it. */
+function combineAbortSignals(a: AbortSignal, b: AbortSignal): AbortSignal {
+  const controller = new AbortController();
+  if (a.aborted || b.aborted) {
+    controller.abort();
+  } else {
+    const onAbort = () => controller.abort();
+    a.addEventListener('abort', onAbort, { once: true });
+    b.addEventListener('abort', onAbort, { once: true });
+  }
+  return controller.signal;
+}
+
+/** Shared POST helper for the web_search/web_fetch tools — aborts on its own timeout
+ *  (rather than relying solely on runToolCall's race) so a stalled request doesn't keep
+ *  running in the background after the tool call has already "timed out" upstream, and
+ *  also honors the caller's own signal so a user-initiated stop cancels it immediately
+ *  instead of leaving it running for up to WEB_REQUEST_TIMEOUT_MS regardless. */
+async function callOllamaWebApi(
+  url: string,
+  apiKey: string,
+  body: Record<string, unknown>,
+  callerSignal?: AbortSignal
+): Promise<unknown> {
+  const timeoutController = new AbortController();
+  const timer = setTimeout(() => timeoutController.abort(), WEB_REQUEST_TIMEOUT_MS);
+  const signal = callerSignal ? combineAbortSignals(callerSignal, timeoutController.signal) : timeoutController.signal;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+      signal,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      return { error: `Web request failed (${res.status} ${res.statusText})${text ? `: ${text}` : ''}` };
+    }
+    return await res.json();
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function isWebApiError(data: unknown): data is { error: string } {
+  return typeof data === 'object' && data !== null && 'error' in data;
+}
+
 /** Tool-call arguments are declared as JSON-Schema booleans, but not every backend is strict
  *  about sending an actual boolean back — accept true, "true", and "1" defensively. */
 function isTruthyFlag(value: unknown): boolean {
@@ -408,6 +473,83 @@ export const TOOLS: ToolDefinition[] = [
         moves: filtered
           .slice(0, 30)
           .map((m) => ({ name: m.name, type: m.type, category: m.category, power: m.power })),
+      };
+    },
+  },
+
+  {
+    name: 'web_search',
+    description:
+      'Search the live web — for tournament rulings, patch notes, recent tier lists, or anything ' +
+      "not covered by this app's own data. Prefer the dedicated tools (calculate_damage, " +
+      'calculate_speed, validate_team, lookup_pokemon, etc.) for game mechanics and the active ' +
+      'team — never use this as a substitute for those. Returns titles, URLs, and short excerpts; ' +
+      'cite the source URL when you use a result.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query.' },
+        maxResults: {
+          type: 'number',
+          description: `Number of results to return (1-${MAX_SEARCH_RESULTS}, default ${DEFAULT_SEARCH_RESULTS}).`,
+        },
+      },
+      required: ['query'],
+    },
+    handler: async (args, ctx) => {
+      if (!ctx.apiKey) return { error: 'No Ollama Cloud API key is available for web search.' };
+      const query = String(args.query ?? '').trim();
+      if (!query) return { error: 'A search query is required.' };
+
+      const requested = Number(args.maxResults);
+      const maxResults = Number.isFinite(requested)
+        ? Math.min(Math.max(Math.trunc(requested), 1), MAX_SEARCH_RESULTS)
+        : DEFAULT_SEARCH_RESULTS;
+
+      const data = await callOllamaWebApi(WEB_SEARCH_URL, ctx.apiKey, { query, max_results: maxResults }, ctx.signal);
+      if (isWebApiError(data)) return data;
+
+      const rawResults = (data as { results?: unknown }).results;
+      const results = Array.isArray(rawResults) ? rawResults : [];
+      return {
+        results: results.slice(0, maxResults).map((r) => {
+          const result = r as { title?: string; url?: string; content?: string };
+          return {
+            title: result.title ?? '',
+            url: result.url ?? '',
+            content: truncate(result.content ?? '', SEARCH_SNIPPET_LIMIT),
+          };
+        }),
+      };
+    },
+  },
+
+  {
+    name: 'web_fetch',
+    description:
+      "Fetch and read a specific web page's content — use when the user gives a URL directly, or " +
+      'to read the full text of a promising web_search result.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'Full page URL, including https://.' },
+      },
+      required: ['url'],
+    },
+    handler: async (args, ctx) => {
+      if (!ctx.apiKey) return { error: 'No Ollama Cloud API key is available for web access.' };
+      const url = String(args.url ?? '').trim();
+      if (!url) return { error: 'A URL is required.' };
+
+      const data = await callOllamaWebApi(WEB_FETCH_URL, ctx.apiKey, { url }, ctx.signal);
+      if (isWebApiError(data)) return data;
+
+      const page = data as { title?: string; content?: string };
+      const content = page.content ?? '';
+      return {
+        title: page.title ?? '',
+        content: truncate(content, FETCH_CONTENT_LIMIT),
+        truncated: content.length > FETCH_CONTENT_LIMIT,
       };
     },
   },
