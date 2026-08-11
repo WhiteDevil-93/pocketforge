@@ -1,0 +1,87 @@
+{
+  "info": {
+    "metagame": "gen9championsvgc2026regmb",
+    "cutoff": 1630,
+    "cutoff deviation": 0,
+    "team type": null,
+    "number of battles": 1764686
+  },
+  "data": {
+    "Kingambit": {
+      "Raw count": 917610,
+      "Viability Ceiling": [917610, 91, 82, 64],
+      "Abilities": {
+        "defiant": 86837.2,
+        "supremeoverlord": 926.8,
+        "pressure": 9.2
+      },
+      "Items": {
+        "blackglasses": 33006.6,
+        "chopleberry": 20683.0,
+        "focussash": 16691.2,
+        "lifeorb": 12883.2,
+        "occaberry": 2615.2
+      },
+      "Spreads": {
+        "Adamant:32/32/0/0/2/0": 12926.2,
+        "Adamant:2/32/0/0/0/32": 8744.0,
+        "Brave:32/32/0/0/2/0": 5084.0,
+        "Adamant:32/32/0/0/0/2": 3964.0
+      },
+      "Moves": {
+        "suckerpunch": 87505.6,
+        "kowtowcleave": 86332.7,
+        "ironhead": 59720.9,
+        "protect": 59367.9,
+        "lowkick": 33809.3
+      },
+      "Tera Types": {
+        "dark": 32003.2,
+        "flying": 18422.1
+      },
+      "Happiness": {},
+      "Teammates": {
+        "Garchomp": 33040.4,
+        "Basculegion": 28198.4,
+        "Charizard-Mega-Y": 24762.0,
+        "Sneasler": 23242.9,
+        "Whimsicott": 22146.0
+      },
+      "Checks and Counters": {
+        "Malamar-Mega": { "n": 61.8, "p": 0.6956, "d": 0.0585 },
+        "Klefki": { "n": 28.4, "p": 0.6708, "d": 0.0881 },
+        "Azumarill": { "n": 20.8, "p": 0.5909, "d": 0.1078 },
+        "Camerupt-Mega": { "n": 136.5, "p": 0.5806, "d": 0.0422 }
+      },
+      "usage": 0.3383723
+    },
+    "Incineroar": {
+      "Raw count": 823456,
+      "Viability Ceiling": [823456, 90, 80, 62],
+      "Abilities": {
+        "intimidate": 823456.0
+      },
+      "Items": {
+        "shucaberry": 42100.0,
+        "leftovers": 18200.0
+      },
+      "Spreads": {
+        "Careful:12/0/4/0/252/0": 12000.0
+      },
+      "Moves": {
+        "partingshot": 310000.0,
+        "flareblitz": 290000.0,
+        "fakeout": 280000.0
+      },
+      "Tera Types": {},
+      "Happiness": {},
+      "Teammates": {
+        "Garchomp": 150000.0
+      },
+      "Checks and Counters": {
+        "Primarina": { "n": 50.0, "p": 0.52, "d": 0.07 }
+      },
+      "usage": 0.3146995
+    }
+  }
+}
