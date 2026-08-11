@@ -2,6 +2,11 @@ ext {
     minSdkVersion = 24
     compileSdkVersion = 36
     targetSdkVersion = 36
+    // Pinned explicitly, matching this file's habit of pinning every version.
+    // Same NDK the upstream llama.cpp examples/llama.android pins (r29).
+    ndkVersion = '29.0.13113456'
+    // KGP 2.3.x: Gradle 7.6.3-9.0.0, AGP 8.2.2-9.0.0 (verified against kotlinlang.org).
+    kotlinVersion = '2.3.10'
     androidxActivityVersion = '1.11.0'
     androidxAppCompatVersion = '1.7.1'
     androidxCoordinatorLayoutVersion = '1.3.0'

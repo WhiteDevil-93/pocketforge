@@ -7,8 +7,9 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   // `android` holds the generated Capacitor project, including build intermediates and
-  // vendored bridge scripts that are not ours to lint.
-  globalIgnores(['dist', 'android']),
+  // vendored bridge scripts that are not ours to lint. Same for `third_party` (vendored
+  // llama.cpp source, which ships its own upstream JS tooling).
+  globalIgnores(['dist', 'android', 'third_party']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
