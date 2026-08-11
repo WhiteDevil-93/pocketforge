@@ -256,4 +256,93 @@ class LocalLlmPlugin : Plugin() {
     }
 
     private external fun nativePing(): String
+
+    // ------------------------------------------------------------------
+    // Phase 2: server lifecycle — start/stop/status bridged to LocalLlmService.
+    // The service owns all state; the plugin only translates PluginCall ↔ Service.
+    // Never block the plugin-call thread on model load — startServer returns
+    // immediately with state 'loading' and lets serverStatusChanged events /
+    // polling convey readiness.
+    // ------------------------------------------------------------------
+
+    override fun load() {
+        super.load()
+        LocalLlmService.statusListener = { state, port, error ->
+            val data = JSObject().apply {
+                put("state", state)
+                if (port != null) put("port", port)
+                if (error != null) put("error", error)
+            }
+            notifyListeners("serverStatusChanged", data)
+        }
+    }
+
+    private fun statusToJSObject(snapshot: Map<String, Any?>): JSObject {
+        return JSObject().apply {
+            put("state", snapshot["state"] as? String ?: "stopped")
+            (snapshot["port"] as? Int)?.let { put("port", it) }
+            (snapshot["error"] as? String)?.let { put("error", it) }
+        }
+    }
+
+    @PluginMethod
+    fun startServer(call: PluginCall) {
+        val ctx = context
+        if (ctx == null) {
+            call.reject("Plugin context unavailable")
+            return
+        }
+        var modelPath = call.getString("modelPath")
+        if (modelPath.isNullOrBlank()) {
+            val filesDir = ctx.filesDir
+            val discovered = filesDir.listFiles()?.firstOrNull { it.name.endsWith(".gguf", ignoreCase = true) }
+            if (discovered != null) modelPath = discovered.absolutePath
+        }
+        if (modelPath.isNullOrBlank()) {
+            val err = JSObject().apply {
+                put("state", "error")
+                put("error", "No model imported — modelPath is required and no .gguf found in app storage")
+            }
+            call.resolve(err)
+            return
+        }
+        val file = java.io.File(modelPath)
+        if (!file.exists() || !file.isFile) {
+            val err = JSObject().apply {
+                put("state", "error")
+                put("error", "Model file not found: $modelPath")
+            }
+            call.resolve(err)
+            return
+        }
+        LocalLlmService.statusListener = { state, port, error ->
+            val data = JSObject().apply {
+                put("state", state)
+                if (port != null) put("port", port)
+                if (error != null) put("error", error)
+            }
+            notifyListeners("serverStatusChanged", data)
+        }
+        LocalLlmService.start(ctx, modelPath)
+        val snapshot = LocalLlmService.getStatusSnapshot()
+        call.resolve(statusToJSObject(snapshot))
+    }
+
+    @PluginMethod
+    fun stopServer(call: PluginCall) {
+        val ctx = context
+        if (ctx != null) {
+            LocalLlmService.stop(ctx)
+        } else {
+            try { activity?.let { LocalLlmService.stop(it) } } catch (_: Exception) {}
+        }
+        val snapshot = LocalLlmService.getStatusSnapshot()
+        call.resolve(statusToJSObject(snapshot))
+    }
+
+    @PluginMethod
+    fun getServerStatus(call: PluginCall) {
+        val snapshot = LocalLlmService.getStatusSnapshot()
+        call.resolve(statusToJSObject(snapshot))
+    }
 }
