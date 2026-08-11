@@ -183,12 +183,18 @@ export interface AppSettings {
   theme: 'dark' | 'light';
   defaultFormat: string;
   hasCompletedOnboarding: boolean;
-  /** Whether the Ollama Cloud AI assistant is enabled. */
+  /** Whether the AI assistant is enabled. */
   aiEnabled: boolean;
   /** Ollama Cloud API key (ollama.com/settings/keys). Stored locally, sent only to ollama.com. */
   ollamaApiKey: string;
   /** Ollama Cloud model tag, e.g. "gemma4:cloud". */
   ollamaModel: string;
+  /** Which LLM backend the AI assistant uses. */
+  aiBackend: 'ollamaCloud' | 'localLlamaCpp';
+  /** Absolute path of the imported GGUF model in app-private storage. Empty string = not imported. */
+  localModelPath: string;
+  /** Display name of the imported GGUF model. Empty string = not imported. */
+  localModelName: string;
 }
 
 export interface AppState {

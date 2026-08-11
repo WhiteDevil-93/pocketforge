@@ -435,7 +435,10 @@ IVs: 0 Atk
   // already at version 1, so without bumping to version 2 AND a custom `merge`,
   // `settings` would be replaced wholesale by the old persisted object (missing
   // aiEnabled/ollamaApiKey/ollamaModel) and the first `settings.ollamaApiKey.trim()`
-  // call in Settings would throw on undefined.
+  // call in Settings would throw on undefined. The same reasoning now applies to the
+  // local llama.cpp backend fields (aiBackend/localModelPath/localModelName, added in
+  // the version 2→3 bump): installs persisted at version 2 have no such keys, and
+  // merge must backfill them exactly like it backfills the AI fields.
   console.log('Testing persisted-settings merge...');
   const currentState = useStore.getState();
 
@@ -455,20 +458,66 @@ IVs: 0 Atk
     'merge must backfill ollamaModel for a pre-AI-feature settings object',
   );
   assert(
+    mergedForOldUser.settings.aiBackend === 'ollamaCloud',
+    'merge must backfill aiBackend to ollamaCloud for a settings object missing it',
+  );
+  assert(
+    typeof mergedForOldUser.settings.localModelPath === 'string' && mergedForOldUser.settings.localModelPath === '',
+    'merge must backfill localModelPath to empty string for a settings object missing it',
+  );
+  assert(
+    typeof mergedForOldUser.settings.localModelName === 'string' && mergedForOldUser.settings.localModelName === '',
+    'merge must backfill localModelName to empty string for a settings object missing it',
+  );
+  assert(
     mergedForOldUser.settings.hasCompletedOnboarding === true,
     "merge must preserve the old user's existing settings values, not just backfill new ones",
+  );
+
+  // Simulates a version-2-era persisted state: AI fields present, but the local
+  // llama.cpp backend fields not yet introduced. Must behave identically to the
+  // full-absence case above.
+  const v2EraPersistedState = {
+    ...oldPersistedState,
+    settings: {
+      theme: 'dark',
+      defaultFormat: 'champions-mb',
+      hasCompletedOnboarding: true,
+      aiEnabled: false,
+      ollamaApiKey: 'v2-key',
+      ollamaModel: 'gemma4:cloud',
+    },
+  };
+  const mergedForV2User = mergeStoreState(v2EraPersistedState, currentState);
+  assert(
+    mergedForV2User.settings.aiBackend === 'ollamaCloud',
+    'merge must backfill aiBackend for a version-2-era persisted settings object',
+  );
+  assert(
+    mergedForV2User.settings.localModelPath === '' && mergedForV2User.settings.localModelName === '',
+    'merge must backfill localModelPath/localModelName for a version-2-era persisted settings object',
+  );
+  assert(
+    mergedForV2User.settings.ollamaApiKey === 'v2-key',
+    "merge must preserve the version-2-era user's existing ollamaApiKey",
   );
 
   // Simulates restoring a Full App Backup where ollamaApiKey was deliberately redacted.
   const redactedSettings = { ...currentState.settings, ollamaApiKey: 'should-be-overwritten' };
   delete redactedSettings.ollamaApiKey;
+  delete redactedSettings.localModelPath;
+  delete redactedSettings.localModelName;
   const mergedAfterRestore = mergeStoreState({ ...oldPersistedState, settings: redactedSettings }, currentState);
   assert(
     mergedAfterRestore.settings.ollamaApiKey === '',
     'merge must backfill a redacted ollamaApiKey rather than leaving it undefined',
   );
+  assert(
+    mergedAfterRestore.settings.localModelPath === '' && mergedAfterRestore.settings.localModelName === '',
+    'merge must backfill redacted local model fields rather than leaving them undefined',
+  );
 
-  console.log('✅ Persisted-settings merge backfills missing AI settings without crashing');
+  console.log('✅ Persisted-settings merge backfills missing AI/local-backend settings without crashing');
 
   // Test 11: lookup_pokemon must scope typing to the active format's generation —
   // Clefairy is Normal-type before Gen 6, Normal/Fairy from Gen 6 onward.
