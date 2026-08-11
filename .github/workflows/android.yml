@@ -61,6 +61,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Verify integrations
+        run: npm run verify
+
       - name: Build web assets and sync to Android
         run: npm run build:android
 
