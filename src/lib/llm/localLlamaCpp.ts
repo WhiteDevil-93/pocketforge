@@ -187,6 +187,12 @@ export async function sendMessage({
         }
       });
 
+      // The native request can't be cancelled mid-flight, so an aborted stream still
+      // resolves here — bail out so the loop mirrors ollamaCloud's abort semantics
+      // (no tool execution, no history mutation) instead of continuing with a
+      // truncated turn.
+      if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+
       const accumulatedByIndex: ToolCall[] = deltaAccumulator
         .filter((d) => d.name.length > 0 || d.argumentsRaw.length > 0)
         .map((d) => ({
