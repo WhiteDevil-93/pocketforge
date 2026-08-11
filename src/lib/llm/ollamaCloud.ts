@@ -13,11 +13,11 @@
 // ============================================================================
 
 import type { ChatMessage, LlmStreamEvent, ToolCall, ToolContext } from './types';
-import { getToolByName, toOllamaToolSchema } from './tools';
+import { toOllamaToolSchema } from './tools';
+import { runToolCall } from './toolRunner';
 
 const CHAT_URL = 'https://ollama.com/api/chat';
 const MAX_TOOL_ITERATIONS = 5;
-const TOOL_TIMEOUT_MS = 15_000;
 // Overall ceiling for one sendMessage call, covering every streamed reply and tool
 // round trip together — protects against Ollama Cloud accepting the request and then
 // stalling before the first chunk, which would otherwise hang the chat forever.
@@ -111,24 +111,6 @@ async function* streamChatOnce(
     }
   } finally {
     reader.releaseLock();
-  }
-}
-
-async function runToolCall(call: ToolCall, ctx: ToolContext): Promise<unknown> {
-  const tool = getToolByName(call.name);
-  if (!tool) return { error: `Unknown tool "${call.name}".` };
-
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`Tool "${call.name}" timed out.`)), TOOL_TIMEOUT_MS);
-  });
-
-  try {
-    return await Promise.race([Promise.resolve(tool.handler(call.arguments, ctx)), timeout]);
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : String(error) };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

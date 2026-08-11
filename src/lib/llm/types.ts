@@ -1,5 +1,6 @@
 // ============================================================================
-// PocketForge — Shared types for the Ollama Cloud AI assistant
+// PocketForge — Shared types for the AI assistant backends
+// (Ollama Cloud and the on-device llama.cpp server)
 // ============================================================================
 
 export type ChatRole = 'system' | 'user' | 'assistant' | 'tool';
