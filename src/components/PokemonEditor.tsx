@@ -17,6 +17,7 @@ import {
 import PokemonSprite from './PokemonSprite';
 import TypeBadge from './TypeBadge';
 import BottomSheet from './BottomSheet';
+import BattleDataPanel from './battle-data/BattleDataPanel';
 import StepperInput from './StepperInput';
 import StatBar from './StatBar';
 import { calculateMinSpeedEVs } from '../utils/evOptimizer';
@@ -819,6 +820,13 @@ export default function PokemonEditor({
               </div>
             </div>
           )}
+
+          {/* ===== BATTLE DATA (Smogon snapshot) ===== */}
+          <BattleDataPanel
+            pokemon={draft.species}
+            appFormatId={formatId}
+            defaultOpen
+          />
 
           {/* ===== MOVES ===== */}
           <Accordion
