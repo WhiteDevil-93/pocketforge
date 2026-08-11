@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-08-10T00:31:55.042Z
+// Last updated: 2026-08-11T00:30:02.993Z
 
 export const TYPE_NAMES = [
   "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
