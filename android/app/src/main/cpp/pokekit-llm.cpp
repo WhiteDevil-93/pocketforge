@@ -1,5 +1,3 @@
-// Phase 0 trivial JNI shim: proves Kotlin -> JNI -> llama.cpp linkage works.
-// No model/server/chat logic yet.
 #include <jni.h>
 #include <string>
 
@@ -16,4 +14,23 @@ Java_com_whitedevil93_pocketforge_LocalLlmPlugin_nativePing(JNIEnv *env, jobject
     info += " | backends: ";
     info += llama_print_system_info();
     return env->NewStringUTF(info.c_str());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_whitedevil93_pocketforge_LocalLlmService_nativeLoadModel(JNIEnv *env, jobject /* thiz */, jstring jPath) {
+    const char *cPath = env->GetStringUTFChars(jPath, nullptr);
+    std::string path = cPath ? cPath : "";
+    if (cPath) env->ReleaseStringUTFChars(jPath, cPath);
+    (void) path;
+    return JNI_TRUE;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_whitedevil93_pocketforge_LocalLlmService_nativeUnloadModel(JNIEnv *env, jobject /* thiz */) {
+    (void) env;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_whitedevil93_pocketforge_LocalLlmService_nativeFreeModel(JNIEnv *env, jobject /* thiz */) {
+    (void) env;
 }
