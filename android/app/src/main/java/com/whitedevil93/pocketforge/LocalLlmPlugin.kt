@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -14,9 +15,17 @@ import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
+import java.nio.charset.StandardCharsets
+import java.util.TreeMap
 import kotlin.math.roundToInt
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Native bridge for the on-device llama.cpp backend.
@@ -33,6 +42,8 @@ class LocalLlmPlugin : Plugin() {
             System.loadLibrary("pokekit-llm")
         }
 
+        private const val TAG = "LocalLlmPlugin"
+
         /** Must match the [ActivityCallback]-annotated method name. */
         private const val PICK_MODEL_CALLBACK = "onPickModelResult"
 
@@ -44,6 +55,27 @@ class LocalLlmPlugin : Plugin() {
 
         /** 256 KiB streaming buffer — never buffer the whole (multi-GB) file. */
         private const val COPY_BUFFER_SIZE = 256 * 1024
+
+        /** How long to wait for the local llama-server to accept the connection. */
+        private const val CONNECT_TIMEOUT_MS = 10_000
+
+        /** Read timeout between SSE chunks — tokens keep arriving while the model
+         *  generates, so this only trips if the server truly stalls mid-turn. */
+        private const val READ_TIMEOUT_MS = 300_000
+
+        /** Absolute ceiling for one chatOnce stream, protecting against a server that
+         *  accepts the request and then never emits [DONE]. */
+        private const val STREAM_BUDGET_MS = 600_000
+    }
+
+    /** Accumulates one OpenAI tool call across the streamed chunks that fragment it.
+     *  OpenAI keys fragments by ARRAY POSITION in delta.tool_calls, so one logical
+     *  call's name/argument JSON arrives spread over many SSE chunks — appending by
+     *  index reassembles them. */
+    private class ToolCallAccumulator {
+        var id: String? = null
+        val name = StringBuilder()
+        val arguments = StringBuilder()
     }
 
     @PluginMethod
@@ -344,5 +376,196 @@ class LocalLlmPlugin : Plugin() {
     fun getServerStatus(call: PluginCall) {
         val snapshot = LocalLlmService.getStatusSnapshot()
         call.resolve(statusToJSObject(snapshot))
+    }
+
+    // ------------------------------------------------------------------
+    // Phase 3: chat — one non-blocking HTTP+SSE round-trip per model turn.
+    //
+    // TypeScript owns the multi-turn tool-calling loop; this method only POSTs an
+    // OpenAI-shaped { messages, tools, stream: true } to the local llama-server,
+    // parses the SSE stream, and re-emits normalized events to JS while resolving
+    // the call with the fully-assembled assistant message on [DONE].
+    // ------------------------------------------------------------------
+
+    @PluginMethod
+    fun chatOnce(call: PluginCall) {
+        val activity = getActivity()
+        if (activity == null) {
+            call.reject("Plugin activity is unavailable")
+            return
+        }
+        if (LocalLlmService.state != "ready" || LocalLlmService.port == null) {
+            call.reject("Local LLM server is not ready — start it from Settings first")
+            return
+        }
+        val messages = call.getArray("messages")
+        if (messages == null) {
+            call.reject("messages is required")
+            return
+        }
+        val tools = call.getArray("tools")
+        val requestId = call.getString("requestId") ?: ""
+
+        val body = JSObject().apply {
+            put("messages", messages)
+            if (tools != null) put("tools", tools)
+            put("stream", true)
+        }
+
+        // Never block the plugin-call (main) thread — a model turn can take minutes.
+        Thread({
+            try {
+                val port = LocalLlmService.port
+                    ?: throw IllegalStateException("Server stopped while the request was in flight")
+                val conn = URL("http://127.0.0.1:$port/v1/chat/completions")
+                    .openConnection() as HttpURLConnection
+                try {
+                    conn.requestMethod = "POST"
+                    conn.setRequestProperty("Content-Type", "application/json")
+                    conn.setRequestProperty("Accept", "text/event-stream")
+                    conn.connectTimeout = CONNECT_TIMEOUT_MS
+                    conn.readTimeout = READ_TIMEOUT_MS
+                    conn.doOutput = true
+                    val bodyBytes = body.toString().toByteArray(StandardCharsets.UTF_8)
+                    conn.setFixedLengthStreamingMode(bodyBytes.size)
+                    conn.outputStream.use { out ->
+                        out.write(bodyBytes)
+                        out.flush()
+                    }
+
+                    val code = conn.responseCode
+                    if (code !in 200..299) {
+                        val errorText = conn.errorStream
+                            ?.bufferedReader(StandardCharsets.UTF_8)
+                            ?.use { it.readText() }
+                            .orEmpty()
+                        throw IllegalStateException(
+                            "Local LLM request failed ($code)" +
+                                if (errorText.isNotBlank()) ": $errorText" else ""
+                        )
+                    }
+
+                    // OpenAI fragments a single tool call across many chunks KEYED BY
+                    // ARRAY POSITION in delta.tool_calls — accumulate by index rather
+                    // than replacing, or earlier calls in the same turn are lost.
+                    // TreeMap keeps the assembled calls in index order regardless of
+                    // the order the fragments arrive in.
+                    val toolCallsByIndex = TreeMap<Int, ToolCallAccumulator>()
+                    val content = StringBuilder()
+                    val startedAt = System.currentTimeMillis()
+                    var done = false
+
+                    val reader = BufferedReader(
+                        InputStreamReader(conn.inputStream, StandardCharsets.UTF_8)
+                    )
+                    while (!done) {
+                        val line = reader.readLine() ?: break
+                        if (!line.startsWith("data:")) continue
+                        val payload = line.removePrefix("data:").trim()
+                        if (payload.isEmpty()) continue
+                        Log.i(TAG, "chatOnce SSE: $payload")
+                        if (payload == "[DONE]") {
+                            done = true
+                            break
+                        }
+                        val chunk = try {
+                            JSONObject(payload)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "chatOnce: skipping unparsable SSE chunk: ${e.message}")
+                            continue
+                        }
+                        if (chunk.has("error")) {
+                            throw IllegalStateException(
+                                "Local LLM stream error: ${chunk.opt("error")}"
+                            )
+                        }
+                        val delta = chunk.optJSONArray("choices")?.optJSONObject(0)
+                            ?.optJSONObject("delta")
+                        if (delta == null) continue
+
+                        val text = delta.optString("content")
+                        if (text.isNotEmpty()) {
+                            content.append(text)
+                            emitChatEvent(activity, requestId) {
+                                put("type", "token")
+                                put("text", text)
+                            }
+                        }
+
+                        val toolCalls = delta.optJSONArray("tool_calls") ?: continue
+                        for (i in 0 until toolCalls.length()) {
+                            val tc = toolCalls.optJSONObject(i) ?: continue
+                            val fn = tc.optJSONObject("function")
+                            val nameDelta = fn?.optString("name").orEmpty()
+                            val argumentsDelta = fn?.optString("arguments").orEmpty()
+                            val idDelta = tc.optString("id")
+
+                            val acc = toolCallsByIndex.getOrPut(i) { ToolCallAccumulator() }
+                            if (idDelta.isNotEmpty()) acc.id = idDelta
+                            if (nameDelta.isNotEmpty()) acc.name.append(nameDelta)
+                            if (argumentsDelta.isNotEmpty()) acc.arguments.append(argumentsDelta)
+
+                            // Normalized delta re-emitted to JS — localLlamaCpp.ts
+                            // accumulates these same fragments by index as they stream.
+                            emitChatEvent(activity, requestId) {
+                                put("type", "toolCallDelta")
+                                put("index", i)
+                                put("name", nameDelta)
+                                put("argumentsDelta", argumentsDelta)
+                                if (idDelta.isNotEmpty()) put("id", idDelta)
+                            }
+                        }
+
+                        if (System.currentTimeMillis() - startedAt > STREAM_BUDGET_MS) {
+                            throw IllegalStateException(
+                                "Local LLM request exceeded the ${STREAM_BUDGET_MS / 1000}s streaming budget"
+                            )
+                        }
+                    }
+
+                    val assembledToolCalls = JSONArray()
+                    for ((_, acc) in toolCallsByIndex) {
+                        assembledToolCalls.put(
+                            JSObject().apply {
+                                acc.id?.let { put("id", it) }
+                                put("type", "function")
+                                put(
+                                    "function",
+                                    JSObject().apply {
+                                        put("name", acc.name.toString())
+                                        put("arguments", acc.arguments.toString())
+                                    }
+                                )
+                            }
+                        )
+                    }
+
+                    val result = JSObject().apply {
+                        put("role", "assistant")
+                        put("content", content.toString())
+                        if (assembledToolCalls.length() > 0) put("tool_calls", assembledToolCalls)
+                    }
+                    activity.runOnUiThread { call.resolve(result) }
+                } finally {
+                    conn.disconnect()
+                }
+            } catch (e: Exception) {
+                val message = e.message ?: "Local LLM chat request failed"
+                Log.e(TAG, "chatOnce failed", e)
+                activity.runOnUiThread { call.reject(message) }
+            }
+        }, "llm-chat-once").start()
+    }
+
+    /** Emits one normalized chatOnceEvent to JS, tagged with the originating
+     *  requestId so concurrent turns can filter out events they don't own. */
+    private fun emitChatEvent(activity: Activity, requestId: String, fill: JSObject.() -> Unit) {
+        activity.runOnUiThread {
+            val data = JSObject().apply {
+                put("requestId", requestId)
+                fill()
+            }
+            notifyListeners("chatOnceEvent", data)
+        }
     }
 }

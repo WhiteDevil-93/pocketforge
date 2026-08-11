@@ -570,3 +570,12 @@ export function toOllamaToolSchema() {
     },
   }));
 }
+
+/** Tool schema for the on-device llama.cpp backend: the Ollama schema minus the
+ *  Ollama-Cloud-hosted web tools (web_search/web_fetch). Those have no local
+ *  equivalent and need an API key the local backend never has, so advertising
+ *  them to a local model would only produce calls that always fail. */
+export function toLocalToolSchema() {
+  const webOnlyTools = new Set(['web_search', 'web_fetch']);
+  return toOllamaToolSchema().filter((tool) => !webOnlyTools.has(tool.function.name));
+}
