@@ -35,6 +35,9 @@ import {
   Eye,
   EyeOff,
   MessageCircle,
+  Cpu,
+  HardDrive,
+  Loader2,
 } from 'lucide-react';
 import BottomSheet from '../components/BottomSheet';
 import PageHeader from '../components/PageHeader';
@@ -51,6 +54,9 @@ import { CHAMPIONS_META } from '../data/championsLegality';
 import { CHAMPIONS_USAGE_META } from '../data/championsUsageRankings';
 import { checkForAppUpdate } from '../lib/pwaUpdate';
 import { isNativeApp } from '../lib/platform';
+// Type-only: the native module itself is imported dynamically behind isNativeApp()
+// so the web/PWA bundle never pulls the Capacitor plugin registration in.
+import type { LocalLlmServerStatus, ModelImportProgress } from '../lib/native/localLlm';
 import {
   APP_STORAGE_KEY,
   LEGACY_NUZLOCKE_STORAGE_KEYS,
@@ -58,6 +64,14 @@ import {
 } from '../lib/storage';
 
 const easeSmooth = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
+
+/** Human-readable byte size (B/KB/MB/GB) for the on-device model import UI. */
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
 
 type SettingsTab = 'preferences' | 'features';
 
@@ -826,9 +840,23 @@ export default function SettingsPage() {
   const currentTeamId = useStore((s) => s.currentTeamId);
   const setCurrentTeam = useStore((s) => s.setCurrentTeam);
   const updateSettings = useStore((s) => s.updateSettings);
+  // On-device llama.cpp UI state (native only — the browser build never renders it).
+  const [importProgress, setImportProgress] = useState<ModelImportProgress | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importedModelSize, setImportedModelSize] = useState<number | null>(null);
+  const [serverStatus, setServerStatus] = useState<LocalLlmServerStatus | null>(null);
   // Matches ChatSheet's own configured-check — a whitespace-only key/model should
   // read as "not configured" everywhere, not just where the actual request is sent.
-  const hasAiConfig = settings.ollamaApiKey.trim().length > 0 && settings.ollamaModel.trim().length > 0;
+  // Backend-aware: the local llama.cpp path needs an imported model (and a live
+  // server on-device), never an API key; the cloud path keeps the key+model check.
+  const isLocalBackend = settings.aiBackend === 'localLlamaCpp';
+  // Native-only controls (import row, server row) only exist in the Android shell.
+  const localUiActive = isNativeApp() && isLocalBackend;
+  const localModelReady = settings.localModelPath.trim().length > 0;
+  const localServerReady = isNativeApp() ? serverStatus?.state === 'ready' : false;
+  const hasAiConfig = isLocalBackend
+    ? localModelReady && (!isNativeApp() || localServerReady)
+    : settings.ollamaApiKey.trim().length > 0 && settings.ollamaModel.trim().length > 0;
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [activeTab, setActiveTab] = useState<SettingsTab>('preferences');
 
@@ -881,6 +909,61 @@ export default function SettingsPage() {
       return () => clearTimeout(t);
     }
   }, [showOfflineToast]);
+
+  // On-device model import progress (native only). Subscribed for the page's
+  // lifetime; progress events only fire while an import is actually running.
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    let cancelled = false;
+    let remove: (() => void) | undefined;
+    void (async () => {
+      const { addModelImportProgressListener } = await import('../lib/native/localLlm');
+      if (cancelled) return;
+      const handle = await addModelImportProgressListener((progress) => {
+        if (!cancelled) setImportProgress(progress);
+      });
+      if (cancelled) {
+        void handle.remove();
+        return;
+      }
+      remove = () => void handle.remove();
+    })();
+    return () => {
+      cancelled = true;
+      remove?.();
+    };
+  }, []);
+
+  // Track the on-device llama-server's live state (native + local backend only).
+  // No-ops in the browser — the native module is imported dynamically so the
+  // web/PWA bundle never pulls it in (same convention as ChatSheet).
+  useEffect(() => {
+    if (!isNativeApp() || !isLocalBackend) return;
+    let cancelled = false;
+    let remove: (() => void) | undefined;
+    void (async () => {
+      const { getServerStatus, addServerStatusChangedListener } = await import(
+        '../lib/native/localLlm'
+      );
+      if (cancelled) return;
+      const apply = (status: LocalLlmServerStatus) => {
+        if (!cancelled) setServerStatus(status);
+      };
+      const handle = await addServerStatusChangedListener(apply);
+      if (cancelled) {
+        void handle.remove();
+        return;
+      }
+      remove = () => void handle.remove();
+      // Snapshot first — serverStatusChanged only fires on transitions, so a server
+      // already ready before Settings opened would otherwise never surface.
+      void getServerStatus().then(apply).catch(() => {});
+    })();
+    return () => {
+      cancelled = true;
+      remove?.();
+    };
+  }, [isLocalBackend]);
 
   // Export all teams
   const handleExport = useCallback(() => {
@@ -943,12 +1026,17 @@ export default function SettingsPage() {
 
     // A backup is meant to be shared or transferred between devices — the Ollama API
     // key is not, so it's stripped here rather than trusting every export site to
-    // remember to omit it.
+    // remember to omit it. Same for the on-device model path/name: not a secret, but
+    // a stale device-local path on another phone is just broken.
     let redactedStore = pfStorage;
     if (pfStorage) {
       try {
         const parsed = JSON.parse(pfStorage);
-        if (parsed?.state?.settings) delete parsed.state.settings.ollamaApiKey;
+        if (parsed?.state?.settings) {
+          delete parsed.state.settings.ollamaApiKey;
+          delete parsed.state.settings.localModelPath;
+          delete parsed.state.settings.localModelName;
+        }
         redactedStore = JSON.stringify(parsed);
       } catch {
         // Malformed persisted state shouldn't block the export — fall back to raw.
@@ -1041,6 +1129,52 @@ export default function SettingsPage() {
     }
     setTimeout(() => setExportMessage(''), 3000);
   }, []);
+
+  // On-device model import: SAF picker → app-private storage (native only). The
+  // result commits straight to settings on completion — no local draft needed.
+  const handleImportModel = useCallback(async () => {
+    if (!isNativeApp() || isImporting) return;
+    setIsImporting(true);
+    setImportProgress(null);
+    try {
+      const { pickModelFile } = await import('../lib/native/localLlm');
+      const result = await pickModelFile();
+      setImportedModelSize(result.size);
+      updateSettings({ localModelPath: result.path, localModelName: result.name });
+    } catch {
+      // SAF picker cancelled or the copy failed — leave any previous model untouched.
+    } finally {
+      setIsImporting(false);
+    }
+  }, [isImporting, updateSettings]);
+
+  // Server start/stop are explicit user actions only — the service never boots
+  // implicitly from Settings (the chat sheet expects it already running).
+  const handleStartServer = useCallback(async () => {
+    if (!isNativeApp() || !localModelReady) return;
+    const { startServer } = await import('../lib/native/localLlm');
+    // Resolves immediately with 'loading'; readiness arrives via the
+    // serverStatusChanged listener. A failure still lands as an error status.
+    await startServer(settings.localModelPath).catch(() => {});
+  }, [localModelReady, settings.localModelPath]);
+
+  const handleStopServer = useCallback(async () => {
+    if (!isNativeApp()) return;
+    const { stopServer } = await import('../lib/native/localLlm');
+    await stopServer().catch(() => {});
+  }, []);
+
+  const serverStatusLabel = !serverStatus
+    ? 'Checking…'
+    : serverStatus.state === 'ready'
+      ? serverStatus.port != null
+        ? `Ready · port ${serverStatus.port}`
+        : 'Ready'
+      : serverStatus.state === 'loading'
+        ? 'Loading model…'
+        : serverStatus.state === 'error'
+          ? serverStatus.error || 'Error'
+          : 'Stopped';
 
   const handleFeatureOpen = useCallback((path: string) => {
     const teamId = currentTeamId && teams.some((team) => team.id === currentTeamId)
@@ -1197,7 +1331,11 @@ export default function SettingsPage() {
             icon={Bot}
             iconColor="#8B5CF6"
             label="Enable AI Assistant"
-            subtitle="Chat and coaching via Ollama Cloud"
+            subtitle={
+              localUiActive
+                ? 'Chat and coaching on-device (llama.cpp)'
+                : 'Chat and coaching via Ollama Cloud'
+            }
             rightElement={
               <ToggleSwitch
                 value={settings.aiEnabled}
@@ -1208,22 +1346,157 @@ export default function SettingsPage() {
           />
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow
-            icon={Key}
+            icon={Bot}
             iconColor="#8B5CF6"
-            label="API Key & Model"
-            subtitle={hasAiConfig ? `Configured · ${settings.ollamaModel}` : 'Not configured'}
-            rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
-            onClick={() => setAiSheetOpen(true)}
+            label="Backend"
+            subtitle={isLocalBackend ? 'On-device (llama.cpp)' : 'Ollama Cloud'}
+            rightElement={
+              <div
+                className="flex items-center rounded-lg bg-bg-tertiary p-0.5"
+                role="radiogroup"
+                aria-label="AI backend"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={!isLocalBackend}
+                  onClick={() => updateSettings({ aiBackend: 'ollamaCloud' })}
+                  className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors touch-target ${
+                    !isLocalBackend
+                      ? 'bg-accent-primary text-white'
+                      : 'text-text-secondary active:bg-bg-elevated'
+                  }`}
+                >
+                  Ollama Cloud
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={isLocalBackend}
+                  onClick={() => updateSettings({ aiBackend: 'localLlamaCpp' })}
+                  disabled={!isNativeApp()}
+                  className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors touch-target ${
+                    isLocalBackend
+                      ? 'bg-accent-primary text-white'
+                      : 'text-text-secondary active:bg-bg-elevated'
+                  } ${!isNativeApp() ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  title={isNativeApp() ? undefined : 'On-device AI requires the Android app'}
+                >
+                  On-device
+                </button>
+              </div>
+            }
           />
+          {localUiActive ? (
+            <>
+              <div className="h-px bg-border-subtle mx-4" />
+              <SettingsRow
+                icon={HardDrive}
+                iconColor="#8B5CF6"
+                label="Import model"
+                subtitle={
+                  isImporting
+                    ? 'Importing…'
+                    : localModelReady
+                      ? settings.localModelName
+                      : 'No model imported'
+                }
+                rightElement={
+                  isImporting ? (
+                    <Loader2 size={16} className="animate-spin text-accent-primary" />
+                  ) : (
+                    <ChevronRight size={16} className="text-text-tertiary" />
+                  )
+                }
+                onClick={handleImportModel}
+                disabled={isImporting}
+              />
+              {isImporting && importProgress && (
+                <div className="px-4 pb-3">
+                  <div className="w-full h-1 bg-bg-elevated rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-accent-primary"
+                      animate={{ width: `${importProgress.percent}%` }}
+                      transition={{ ease: 'easeOut', duration: 0.2 }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-text-tertiary mt-1.5 font-jetbrains-mono">
+                    {formatBytes(importProgress.bytesCopied)} /{' '}
+                    {formatBytes(importProgress.totalBytes)}
+                  </p>
+                </div>
+              )}
+              {!isImporting && localModelReady && (
+                <div className="px-4 pb-3 -mt-1">
+                  <p className="text-[10px] text-text-tertiary font-jetbrains-mono break-all">
+                    {importedModelSize != null && `${formatBytes(importedModelSize)} · `}
+                    {settings.localModelPath}
+                  </p>
+                </div>
+              )}
+              <div className="h-px bg-border-subtle mx-4" />
+              <div className="flex items-center w-full min-h-14 px-4">
+                <Cpu size={22} style={{ color: '#8B5CF6' }} className="shrink-0 mr-3" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm block text-text-primary">On-device server</span>
+                  <span className="text-[11px] text-text-secondary">{serverStatusLabel}</span>
+                </div>
+                <div className="shrink-0 ml-2">
+                  {serverStatus?.state === 'ready' ? (
+                    <button
+                      type="button"
+                      onClick={handleStopServer}
+                      className="h-8 px-3 rounded-full text-[11px] font-medium border border-danger/40 text-danger bg-danger/10 touch-target"
+                    >
+                      Stop
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleStartServer}
+                      disabled={!localModelReady}
+                      className={`h-8 px-3 rounded-full text-[11px] font-medium border transition-colors touch-target ${
+                        localModelReady
+                          ? 'border-accent-primary/50 text-accent-primary bg-accent-primary/10'
+                          : 'border-border-subtle text-text-tertiary cursor-not-allowed'
+                      }`}
+                    >
+                      Start
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="h-px bg-border-subtle mx-4" />
+              <SettingsRow
+                icon={Key}
+                iconColor="#8B5CF6"
+                label="API Key & Model"
+                subtitle={hasAiConfig ? `Configured · ${settings.ollamaModel}` : 'Not configured'}
+                rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
+                onClick={() => setAiSheetOpen(true)}
+              />
+            </>
+          )}
           <div className="h-px bg-border-subtle mx-4" />
           <SettingsRow
             icon={MessageCircle}
             iconColor="#8B5CF6"
             label="Chat"
             subtitle={
-              settings.aiEnabled && hasAiConfig
-                ? 'Ask about your team'
-                : 'Enable and add an API key first'
+              !settings.aiEnabled
+                ? 'Enable AI Assistant first'
+                : isLocalBackend
+                  ? hasAiConfig
+                    ? 'Ask about your team'
+                    : localModelReady
+                      ? 'Start the on-device server first'
+                      : 'Import a model first'
+                  : hasAiConfig
+                    ? 'Ask about your team'
+                    : 'Enable and add an API key first'
             }
             rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
             onClick={() => {

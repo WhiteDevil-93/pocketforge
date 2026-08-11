@@ -72,6 +72,8 @@ export interface LocalLlmPlugin {
   ping(): Promise<{ message: string; nativeInfo: string }>;
   pickModelFile(): Promise<PickModelResult>;
   chatOnce(options: ChatOnceOptions): Promise<ChatOnceResult>;
+  startServer(options: { modelPath?: string }): Promise<LocalLlmServerStatus>;
+  stopServer(): Promise<LocalLlmServerStatus>;
   getServerStatus(): Promise<LocalLlmServerStatus>;
   addListener(
     eventName: 'modelImportProgress',
@@ -117,6 +119,20 @@ export function addChatOnceEventListener(
 
 export function getServerStatus(): Promise<LocalLlmServerStatus> {
   return localLlm.getServerStatus();
+}
+
+/**
+ * Starts the foreground llama-server with the imported model. Resolves
+ * immediately with a 'loading' status; readiness arrives via
+ * serverStatusChanged / getServerStatus once the model finishes loading.
+ */
+export function startServer(modelPath: string): Promise<LocalLlmServerStatus> {
+  return localLlm.startServer({ modelPath });
+}
+
+/** Stops the foreground llama-server and frees the loaded model from memory. */
+export function stopServer(): Promise<LocalLlmServerStatus> {
+  return localLlm.stopServer();
 }
 
 export function addServerStatusChangedListener(
