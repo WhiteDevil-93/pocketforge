@@ -124,6 +124,24 @@ export interface RankedMatchup {
   spriteUrl: string;
 }
 
+/**
+ * Derived 'Winning Moves' / 'Losing Moves' lists.
+ *
+ * Smogon monthly dumps do NOT expose per-move win/loss correlation, so these
+ * lists are empty unless `available` is true. Every value must come straight
+ * from the parsed dump — when the heuristic cannot be computed honestly,
+ * `available` is `false` and `method` explains why, so the UI can render an
+ * explicit 'Not enough data' state instead of fabricated numbers.
+ */
+export interface MatchupMoves {
+  /** True when the derivation below produced real, dump-backed lists. */
+  available: boolean;
+  /** How the lists were derived (or why they are empty / flagged). */
+  method: string;
+  winningMoves: RankedMove[];
+  losingMoves: RankedMove[];
+}
+
 /** The full competitive profile for one Pokémon in one format. */
 export interface BattleData {
   pokemon: string;
@@ -139,6 +157,8 @@ export interface BattleData {
   spreads: RankedSpread[];
   teammates: RankedTeammate[];
   checksAndCounters: RankedMatchup[];
+  /** Derived winning/losing move lists (empty + flagged when unavailable). */
+  matchupMoves: MatchupMoves;
   lastUpdated: string;
 }
 
