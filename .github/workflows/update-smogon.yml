@@ -1,0 +1,61 @@
+name: Update Smogon Stats
+
+on:
+  schedule:
+    - cron: '0 3 2 * *'  # Monthly, 2nd at 03:00 UTC (Smogon publishes the prior month on the 1st)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Smogon parser self-test
+        run: npm run update-smogon:selftest
+
+      - name: Fetch & parse Smogon monthly stats snapshot
+        run: node scripts/fetch-smogon-stats.mjs
+        env:
+          NODE_ENV: production
+
+      - name: Validate generated data
+        run: npm run check
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git add src/data/generated/smogonStats.ts
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No Smogon stats changes detected."
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Smogon stats changes detected."
+          fi
+
+      - name: Commit & push if changed
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: auto-update Smogon stats snapshot [$(date -u +%Y-%m)]"
+          git push origin HEAD:${{ github.ref_name }}
