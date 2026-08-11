@@ -18,6 +18,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   aiEnabled: false,
   ollamaApiKey: '',
   ollamaModel: 'gemma4:cloud',
+  aiBackend: 'ollamaCloud',
+  localModelPath: '',
+  localModelName: '',
 };
 
 // ---- Helper functions -------------------------------------------------------
@@ -330,14 +333,15 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: APP_STORAGE_KEY,
-      // Bumped for the new AI settings fields. Zustand only runs `migrate` when the
-      // persisted version differs from this one — every existing install is still at
-      // 1, so without this bump they'd skip migrate entirely and fall through to the
-      // default `merge`, which shallow-replaces `settings` wholesale with whatever was
-      // persisted (missing aiEnabled/ollamaApiKey/ollamaModel), crashing the first
-      // `.trim()` call on Settings. Confirmed by reading node_modules/zustand's
-      // persist middleware directly, not assumed.
-      version: 2,
+      // Bumped for the new AI settings fields (v1→v2), then again for the local
+      // llama.cpp backend fields aiBackend/localModelPath/localModelName (v2→v3).
+      // Zustand only runs `migrate` when the persisted version differs from this
+      // one — every existing install is still at 2, so without this bump they'd
+      // skip migrate entirely and fall through to the default `merge`, which
+      // shallow-replaces `settings` wholesale with whatever was persisted (missing
+      // the new fields), crashing the first access on them. Confirmed by reading
+      // node_modules/zustand's persist middleware directly, not assumed.
+      version: 3,
       migrate: (persistedState) => {
         const persisted =
           persistedState && typeof persistedState === 'object'

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The on-device llama-server listens on a plain-HTTP loopback socket that the
+     LocalLlmPlugin must POST chat requests to. Android 9+ blocks cleartext by
+     default, so permit it ONLY for 127.0.0.1/localhost — never the open internet. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

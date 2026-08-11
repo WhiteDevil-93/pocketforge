@@ -23,8 +23,11 @@ import {
   getTeamOffensiveCoverage,
 } from './src/utils/typeChart.ts';
 import { analyzeTeamWeaknesses } from './src/utils/weaknessAnalyzer.ts';
-import { TOOLS, getToolByName, toOllamaToolSchema } from './src/lib/llm/tools.ts';
+import { TOOLS, getToolByName, toOllamaToolSchema, toLocalToolSchema } from './src/lib/llm/tools.ts';
+import { buildSystemPrompt, SYSTEM_PROMPT } from './src/lib/llm/systemPrompt.ts';
+import { sendMessage as localSendMessage } from './src/lib/llm/localLlamaCpp.ts';
 import { useStore, mergeStoreState } from './src/store/useStore.ts';
+import { readFileSync } from 'node:fs';
 
 // Simple assert helper
 function assert(condition, message) {
@@ -435,7 +438,10 @@ IVs: 0 Atk
   // already at version 1, so without bumping to version 2 AND a custom `merge`,
   // `settings` would be replaced wholesale by the old persisted object (missing
   // aiEnabled/ollamaApiKey/ollamaModel) and the first `settings.ollamaApiKey.trim()`
-  // call in Settings would throw on undefined.
+  // call in Settings would throw on undefined. The same reasoning now applies to the
+  // local llama.cpp backend fields (aiBackend/localModelPath/localModelName, added in
+  // the version 2→3 bump): installs persisted at version 2 have no such keys, and
+  // merge must backfill them exactly like it backfills the AI fields.
   console.log('Testing persisted-settings merge...');
   const currentState = useStore.getState();
 
@@ -455,20 +461,66 @@ IVs: 0 Atk
     'merge must backfill ollamaModel for a pre-AI-feature settings object',
   );
   assert(
+    mergedForOldUser.settings.aiBackend === 'ollamaCloud',
+    'merge must backfill aiBackend to ollamaCloud for a settings object missing it',
+  );
+  assert(
+    typeof mergedForOldUser.settings.localModelPath === 'string' && mergedForOldUser.settings.localModelPath === '',
+    'merge must backfill localModelPath to empty string for a settings object missing it',
+  );
+  assert(
+    typeof mergedForOldUser.settings.localModelName === 'string' && mergedForOldUser.settings.localModelName === '',
+    'merge must backfill localModelName to empty string for a settings object missing it',
+  );
+  assert(
     mergedForOldUser.settings.hasCompletedOnboarding === true,
     "merge must preserve the old user's existing settings values, not just backfill new ones",
+  );
+
+  // Simulates a version-2-era persisted state: AI fields present, but the local
+  // llama.cpp backend fields not yet introduced. Must behave identically to the
+  // full-absence case above.
+  const v2EraPersistedState = {
+    ...oldPersistedState,
+    settings: {
+      theme: 'dark',
+      defaultFormat: 'champions-mb',
+      hasCompletedOnboarding: true,
+      aiEnabled: false,
+      ollamaApiKey: 'v2-key',
+      ollamaModel: 'gemma4:cloud',
+    },
+  };
+  const mergedForV2User = mergeStoreState(v2EraPersistedState, currentState);
+  assert(
+    mergedForV2User.settings.aiBackend === 'ollamaCloud',
+    'merge must backfill aiBackend for a version-2-era persisted settings object',
+  );
+  assert(
+    mergedForV2User.settings.localModelPath === '' && mergedForV2User.settings.localModelName === '',
+    'merge must backfill localModelPath/localModelName for a version-2-era persisted settings object',
+  );
+  assert(
+    mergedForV2User.settings.ollamaApiKey === 'v2-key',
+    "merge must preserve the version-2-era user's existing ollamaApiKey",
   );
 
   // Simulates restoring a Full App Backup where ollamaApiKey was deliberately redacted.
   const redactedSettings = { ...currentState.settings, ollamaApiKey: 'should-be-overwritten' };
   delete redactedSettings.ollamaApiKey;
+  delete redactedSettings.localModelPath;
+  delete redactedSettings.localModelName;
   const mergedAfterRestore = mergeStoreState({ ...oldPersistedState, settings: redactedSettings }, currentState);
   assert(
     mergedAfterRestore.settings.ollamaApiKey === '',
     'merge must backfill a redacted ollamaApiKey rather than leaving it undefined',
   );
+  assert(
+    mergedAfterRestore.settings.localModelPath === '' && mergedAfterRestore.settings.localModelName === '',
+    'merge must backfill redacted local model fields rather than leaving them undefined',
+  );
 
-  console.log('✅ Persisted-settings merge backfills missing AI settings without crashing');
+  console.log('✅ Persisted-settings merge backfills missing AI/local-backend settings without crashing');
 
   // Test 11: lookup_pokemon must scope typing to the active format's generation —
   // Clefairy is Normal-type before Gen 6, Normal/Fairy from Gen 6 onward.
@@ -513,6 +565,122 @@ IVs: 0 Atk
     'isDefenderTerastallized must change the outcome (Electric vs Normal-type Chansey is neutral, vs Water-Tera Chansey is super-effective)',
   );
   console.log('✅ calculate_damage only Terastallizes the defender when explicitly requested');
+
+  // Test 13: on-device (localLlamaCpp) tool schema + system-prompt gating.
+  // The local backend has no API key, so Ollama's hosted web tools must never be
+  // advertised to the local model, and the system prompt must match — otherwise
+  // the model would be told to call tools that can never run. Pure functions,
+  // no hardware or network involved.
+  console.log('Testing on-device tool schema + prompt gating...');
+  const localSchema = toLocalToolSchema();
+  const localNames = localSchema.map((t) => t.function.name);
+  assert(
+    localSchema.length === TOOLS.length - 2,
+    `Local schema must advertise ${TOOLS.length - 2} tools (web tools excluded), got ${localSchema.length}`,
+  );
+  assert(!localNames.includes('web_search'), 'Local schema must not advertise web_search');
+  assert(!localNames.includes('web_fetch'), 'Local schema must not advertise web_fetch');
+  for (const name of [
+    'get_active_team',
+    'analyze_team',
+    'validate_team',
+    'explain_evs',
+    'calculate_speed',
+    'calculate_damage',
+    'lookup_pokemon',
+    'get_legal_moves',
+  ]) {
+    assert(localNames.includes(name), `Local schema must keep ${name}`);
+  }
+  assert(
+    localSchema.every(
+      (t) => t.type === 'function' && typeof t.function.name === 'string' && t.function.parameters,
+    ),
+    'Local schema entries must be OpenAI-compatible function entries',
+  );
+  for (const name of localNames) {
+    assert(getToolByName(name), `Local schema advertises ${name}, but it is missing from the registry`);
+  }
+
+  const localPrompt = buildSystemPrompt({ includeWebTools: false });
+  assert(
+    !localPrompt.includes('web_search') && !localPrompt.includes('web_fetch'),
+    'Local system prompt must not mention the web tools',
+  );
+  assert(SYSTEM_PROMPT.includes('web_search'), 'Ollama Cloud system prompt must keep the web tools guidance');
+  assert(localPrompt.includes('Never calculate damage'), 'Local system prompt must keep the tools-first rule');
+
+  // Importing the local chat client outside the native shell must not pull the
+  // Capacitor bridge at module scope — the native module stays a dynamic import.
+  assert(typeof localSendMessage === 'function', 'localLlamaCpp sendMessage must be importable outside the native shell');
+
+  console.log(`✅ Local tool schema advertises ${localSchema.length} calculators (web tools excluded) and the prompt matches`);
+
+  // Test 14: on-device native wiring consistency (static checks).
+  // gradle assembleDebug (.github/workflows/android.yml) proves the native module
+  // COMPILES; these checks prove the pieces are actually wired together —
+  // cross-file name matches that a successful build does NOT enforce (a mismatched
+  // Capacitor plugin name compiles fine and then fails silently at runtime).
+  // Reads the real source files; no device, emulator, or Android SDK involved.
+  console.log('Testing on-device native wiring consistency (static)...');
+  const readRepoFile = (relPath) => readFileSync(new URL(relPath, import.meta.url), 'utf8');
+
+  const mainActivity = readRepoFile('./android/app/src/main/java/com/whitedevil93/pocketforge/MainActivity.java');
+  assert(
+    mainActivity.includes('registerPlugin(LocalLlmPlugin.class)'),
+    'MainActivity must register LocalLlmPlugin with the Capacitor bridge',
+  );
+
+  const pluginKt = readRepoFile('./android/app/src/main/java/com/whitedevil93/pocketforge/LocalLlmPlugin.kt');
+  assert(
+    pluginKt.includes('@CapacitorPlugin(name = "LocalLlm")'),
+    'Kotlin plugin must declare the CapacitorPlugin name "LocalLlm"',
+  );
+
+  const localLlmTs = readRepoFile('./src/lib/native/localLlm.ts');
+  assert(
+    localLlmTs.includes("registerPlugin<LocalLlmPlugin>('LocalLlm')"),
+    'TS bridge must register the plugin under the same "LocalLlm" name',
+  );
+
+  // Every method the TS bridge calls must exist on the Kotlin side, and vice versa.
+  for (const method of ['ping', 'pickModelFile', 'chatOnce', 'startServer', 'stopServer', 'getServerStatus']) {
+    assert(pluginKt.includes(`fun ${method}(`), `LocalLlmPlugin.kt must implement ${method}`);
+    assert(localLlmTs.includes(`${method}(`), `localLlm.ts bridge must expose ${method}`);
+  }
+  // Event names must match across the bridge (Kotlin notifyListeners ↔ TS addListener).
+  for (const event of ['modelImportProgress', 'chatOnceEvent', 'serverStatusChanged']) {
+    assert(pluginKt.includes(`notifyListeners("${event}"`), `LocalLlmPlugin.kt must emit the "${event}" event`);
+    assert(localLlmTs.includes(`'${event}'`), `localLlm.ts bridge must subscribe to the "${event}" event`);
+  }
+
+  // Native library name must match across System.loadLibrary and the CMake target.
+  assert(pluginKt.includes('System.loadLibrary("pokekit-llm")'), 'Plugin must load the pokekit-llm native library');
+  const cmake = readRepoFile('./android/app/src/main/cpp/CMakeLists.txt');
+  assert(cmake.includes('add_library(pokekit-llm SHARED'), 'CMake must build the pokekit-llm shared library');
+
+  // Foreground service + permissions the on-device server depends on.
+  const manifest = readRepoFile('./android/app/src/main/AndroidManifest.xml');
+  assert(manifest.includes('android:name=".LocalLlmService"'), 'Manifest must declare LocalLlmService');
+  assert(
+    manifest.includes('android:foregroundServiceType="specialUse"'),
+    'LocalLlmService must be a specialUse foreground service',
+  );
+  assert(manifest.includes('FOREGROUND_SERVICE_SPECIAL_USE'), 'Manifest must request FOREGROUND_SERVICE_SPECIAL_USE');
+  assert(manifest.includes('POST_NOTIFICATIONS'), 'Manifest must request POST_NOTIFICATIONS for the server notification');
+
+  // Cleartext HTTP must stay permitted for the loopback server only.
+  const netConfig = readRepoFile('./android/app/src/main/res/xml/network_security_config.xml');
+  assert(
+    netConfig.includes('127.0.0.1') && netConfig.includes('cleartextTrafficPermitted="true"'),
+    'Cleartext must be permitted for the loopback llama-server',
+  );
+
+  // Only arm64-v8a is supported (Galaxy S25 Ultra).
+  const appGradle = readRepoFile('./android/app/build.gradle');
+  assert(appGradle.includes("abiFilters 'arm64-v8a'"), 'Gradle must restrict ABIs to arm64-v8a');
+
+  console.log('✅ On-device native wiring is consistent (plugin name, methods, events, lib, service, ABI)');
 
   console.log('🎉 ALL INTEGRATION TESTS PASSED!');
 }

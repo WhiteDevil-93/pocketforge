@@ -26,6 +26,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # llama.cpp is vendored as a git submodule (third_party/llama.cpp)
+          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,11 +45,24 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # setup-android@v3 does NOT install NDK/CMake by default; the native
+      # build (llama.cpp) needs them explicitly.
+      - name: Install NDK and CMake
+        run: |
+          sdkmanager --install \
+            "platforms;android-36" \
+            "build-tools;35.0.0" \
+            "ndk;29.0.13113456" \
+            "cmake;3.31.6"
+
       - name: Install dependencies
         run: npm ci
 
       - name: Lint
         run: npm run lint
+
+      - name: Verify integrations
+        run: npm run verify
 
       - name: Build web assets and sync to Android
         run: npm run build:android
