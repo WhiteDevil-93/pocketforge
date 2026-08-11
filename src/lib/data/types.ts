@@ -92,6 +92,8 @@ export interface RankedSpread {
   rank: number;
   nature: string;
   evs: EvSpread;
+  /** Compact EV spread string from the dump, e.g. '252 HP / 252 Atk / 4 Def'. */
+  evsText: string | null;
   usagePercent: number;
 }
 
