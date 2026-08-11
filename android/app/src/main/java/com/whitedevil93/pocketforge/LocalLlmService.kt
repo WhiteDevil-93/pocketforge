@@ -49,6 +49,10 @@ class LocalLlmService : Service() {
         }
 
         fun start(ctx: Context, modelPath: String) {
+            if (state == "ready" || state == "loading") {
+                Log.i(TAG, "already $state, ignoring start")
+                return
+            }
             transition("loading", null, null)
             val intent = Intent(ctx, LocalLlmService::class.java).apply {
                 action = ACTION_START
