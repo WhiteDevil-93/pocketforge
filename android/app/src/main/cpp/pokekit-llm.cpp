@@ -3,7 +3,9 @@
 
 #include <atomic>
 #include <cstdint>
+#include <fstream>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <unordered_set>
@@ -24,6 +26,71 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+// ---------------------------------------------------------------------------
+// Phase 6c tuning knobs (chat template + tool-call parser). Verification
+// prep: docs/local-llm-verification.md Section 3. See resolve_chat_template_override()
+// and apply_parser_format_override() below.
+//
+// kChatTemplateOverride - what common_chat_templates_init(model, ...) receives
+// as its override. Accepted values at the pinned tag (b10362, common/chat.cpp):
+//   ""                     -> the model's embedded template
+//                            (tokenizer.chat_template metadata), the default
+//   "chatml"               -> built-in chatml Jinja source (special-cased
+//                            inside common_chat_templates_init)
+//   a file path            -> the file is read and its contents used as the
+//                            Jinja template source (mirrors --chat-template-file;
+//                            the C API itself does NOT read files)
+//   any other non-empty    -> used verbatim as a raw Jinja template source
+//
+// NOTE: built-in template NAMES (e.g. "gemma") are NOT resolved by the Jinja
+// path at this tag - only the legacy llama_chat_apply_template path resolves
+// them. To force the stock Gemma template, export its Jinja source to a file
+// and point this constant at it (e.g. the models/templates/*.jinja files
+// shipped in third_party/llama.cpp). One-line change to flip.
+static const char * kChatTemplateOverride = "";
+
+// kParserFormatOverride - single tunable spot for tool-call parsing in
+// nativeGenerate. common_chat_templates_apply produces the parser params
+// (PEG arena + format) and llama-server feeds them straight into
+// common_chat_parse; this generation path does the same. If the default
+// parser misses well-formed model output, switch the mapper here:
+//   kParserFormatFromApply            -> keep whatever apply() produced
+//                                        (recommended default; for the
+//                                        Gemma-2 autoparser path this is
+//                                        COMMON_CHAT_FORMAT_PEG_NATIVE)
+//   COMMON_CHAT_FORMAT_PEG_NATIVE     -> generic PEG AST -> message mapping
+//   COMMON_CHAT_FORMAT_PEG_GEMMA4     -> Gemma-4 style mapping
+//   COMMON_CHAT_FORMAT_PEG_MINIMAX_M3 -> MiniMax-M3 style mapping
+//   COMMON_CHAT_FORMAT_CONTENT_ONLY   -> pure content parser, no tool-call
+//                                        extraction (also clears the PEG
+//                                        arena, which is what actually selects
+//                                        the pure content parser)
+// The non-CONTENT_ONLY formats keep apply()'s arena and only change the
+// AST -> message mapper. To select a whole different PEG parser, change the
+// template/inputs instead - do NOT hand-roll parsing here.
+static const common_chat_format kParserFormatFromApply = COMMON_CHAT_FORMAT_COUNT;
+static const common_chat_format kParserFormatOverride = kParserFormatFromApply;
+
+// Host-side pre-check for template regressions (no phone needed). Build the
+// pinned llama.cpp llama-server on a dev machine and POST one chat completion
+// with a tools array against the same GGUF; chat-template and tool-parser
+// behaviour reproduces identically there:
+//
+//   cd third_party/llama.cpp
+//   cmake -B build -DLLAMA_CURL=OFF && cmake --build build --target llama-server -j
+//   ./build/bin/llama-server -m /path/to/vgc_gemma2.gguf --jinja --host 127.0.0.1 --port 18080
+//   curl -s http://127.0.0.1:18080/v1/chat/completions -H 'Content-Type: application/json' -d '{
+//     "messages": [{"role":"user","content":"How hard does Focus Blast hit Chansey?"}],
+//     "tools": [{"type":"function","function":{"name":"calculate_damage","description":"Compute a damage roll","parameters":{"type":"object","properties":{}}}}],
+//     "tool_choice": "auto", "stream": true
+//   }'
+//   # template regressions reproduce identically; --chat-template-file
+//   # <templatePath> is the server-side equivalent of kChatTemplateOverride.
+// The model file is not available in this sandbox, so this was documented
+// instead of executed (see also docs/local-llm-verification.md Section 3).
+
+// ---------------------------------------------------------------------------
 
 // Real llama.cpp session state. One instance per successful nativeLoadModel.
 // The generation bead (Phase 6b) runs decode on a worker thread while holding
@@ -343,6 +410,110 @@ static std::string tool_calls_to_json(const std::vector<common_chat_tool_call> &
     return arr.dump();
 }
 
+// Resolves kChatTemplateOverride to the string passed to
+// common_chat_templates_init. "" stays "" (the model's embedded template is
+// used). A non-empty value is first tried as a file path (the contents become
+// the Jinja template source, mirroring --chat-template-file); if the file
+// cannot be read the value is passed through verbatim (so "chatml" and raw
+// Jinja sources keep working).
+static std::string resolve_chat_template_override() {
+    if (kChatTemplateOverride == nullptr || kChatTemplateOverride[0] == '\0') {
+        return "";
+    }
+    std::ifstream file(kChatTemplateOverride);
+    if (file) {
+        std::ostringstream ss;
+        ss << file.rdbuf();
+        return ss.str();
+    }
+    LOGW("resolve_chat_template_override: not a readable file, using value verbatim: %s", kChatTemplateOverride);
+    return kChatTemplateOverride;
+}
+
+// Overrides parser_params.format with kParserFormatOverride unless it is set
+// to the kParserFormatFromApply sentinel. COMMON_CHAT_FORMAT_CONTENT_ONLY also
+// clears the PEG arena - common_chat_parse uses the pure content parser only
+// when the arena is empty - and disables tool-call extraction. Everything else
+// keeps apply()'s arena and only changes the AST -> message mapper.
+static void apply_parser_format_override(common_chat_parser_params & parser_params) {
+    if (kParserFormatOverride == kParserFormatFromApply) {
+        return;
+    }
+    LOGI("apply_parser_format_override: switching parser format from %s to %s",
+         common_chat_format_name(parser_params.format), common_chat_format_name(kParserFormatOverride));
+    parser_params.format = kParserFormatOverride;
+    if (kParserFormatOverride == COMMON_CHAT_FORMAT_CONTENT_ONLY) {
+        parser_params.parser = common_peg_arena();
+        parser_params.parse_tool_calls = false;
+    }
+}
+
+// Cuts a long diagnostic string (e.g. an embedded Jinja template) down to the
+// first max_len characters with a marker, so logcat lines stay readable.
+static std::string truncate_for_log(const std::string & s, size_t max_len = 2048) {
+    if (s.size() <= max_len) {
+        return s;
+    }
+    return s.substr(0, max_len) + "...<truncated, full length " + std::to_string(s.size()) + ">";
+}
+
+// Chat-template diagnostics logged at model load (Phase 6c). Logs the override
+// in use, whether the embedded template was used, the template source(s)
+// actually in use, the model's raw tokenizer.chat_template metadata, and - for
+// a representative tool-calling request - the common_chat_format chosen by
+// common_chat_templates_apply and whether it produced a grammar. The
+// representative apply is diagnostic-only: it cannot fail the load.
+static void log_chat_template_diagnostics(const LlmSession * session) {
+    const bool was_explicit = common_chat_templates_was_explicit(session->tmpls.get());
+    const std::string source = common_chat_templates_source(session->tmpls.get());
+    const std::string source_tool_use = common_chat_templates_source(session->tmpls.get(), "tool_use");
+
+    LOGI("nativeLoadModel: chat template override=%s", truncate_for_log(resolve_chat_template_override()).c_str());
+    LOGI("nativeLoadModel: chat template was_explicit=%d", was_explicit ? 1 : 0);
+    LOGI("nativeLoadModel: chat template source=%s", truncate_for_log(source).c_str());
+    if (!source_tool_use.empty() && source_tool_use != source) {
+        LOGI("nativeLoadModel: chat template source (tool_use)=%s", truncate_for_log(source_tool_use).c_str());
+    }
+
+    char meta_buf[8192];
+    const int meta_len = llama_model_meta_val_str(session->model, "tokenizer.chat_template", meta_buf, sizeof(meta_buf));
+    if (meta_len >= 0) {
+        LOGI("nativeLoadModel: model tokenizer.chat_template=%s",
+             truncate_for_log(std::string(meta_buf, meta_len)).c_str());
+    } else {
+        LOGW("nativeLoadModel: model tokenizer.chat_template not found in metadata");
+    }
+
+    try {
+        common_chat_templates_inputs inputs;
+        common_chat_msg user_msg;
+        user_msg.role = "user";
+        user_msg.content = "How hard does Focus Blast hit Chansey?";
+        inputs.messages = { user_msg };
+        nlohmann::ordered_json fn = nlohmann::ordered_json::object();
+        fn["type"] = "function";
+        nlohmann::ordered_json f = nlohmann::ordered_json::object();
+        f["name"] = "calculate_damage";
+        f["description"] = "Compute a damage roll";
+        f["parameters"] = nlohmann::ordered_json::object({
+            {"type", "object"},
+            {"properties", nlohmann::ordered_json::object()},
+        });
+        fn["function"] = std::move(f);
+        inputs.tools = common_chat_tools_parse_oaicompat(nlohmann::ordered_json::array({fn}));
+        inputs.tool_choice = COMMON_CHAT_TOOL_CHOICE_AUTO;
+        inputs.add_generation_prompt = true;
+        inputs.use_jinja = true;
+
+        const common_chat_params chat_params = common_chat_templates_apply(session->tmpls.get(), inputs);
+        LOGI("nativeLoadModel: representative apply format=%s grammar=%s",
+             common_chat_format_name(chat_params.format),
+             chat_params.grammar.empty() ? "empty" : "present");
+    } catch (const std::exception & e) {
+        LOGW("nativeLoadModel: representative chat template apply failed (diagnostic only): %s", e.what());
+    }
+}
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_whitedevil93_pocketforge_LocalLlmPlugin_nativePing(JNIEnv *env, jobject /* thiz */) {
     std::string info = "pokekit-llm JNI shim OK | llama.cpp tag: ";
@@ -419,13 +590,19 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeLoadModel(JNIEnv * env, 
             return 0;
         }
 
-        // Empty override = the model's own embedded template first.
-        session->tmpls = common_chat_templates_init(session->model, "");
+        // "" (kChatTemplateOverride default) = the model's own embedded
+        // template first; see resolve_chat_template_override() for the
+        // accepted override values.
+        session->tmpls = common_chat_templates_init(session->model, resolve_chat_template_override());
         if (!session->tmpls) {
             LOGE("nativeLoadModel: failed to init chat templates");
             teardown_session(handle, true);
             return 0;
         }
+
+        // Phase 6c diagnostics: which template is actually in use and what the
+        // representative tool-calling request maps to (format + grammar).
+        log_chat_template_diagnostics(session);
 
         LOGI("nativeLoadModel: session ready, handle=%lld", static_cast<long long>(handle));
         return handle;
@@ -573,12 +750,14 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
         }
 
         // Parser params feed both the partial (streaming) and the final parse.
-        // Derive from apply()'s output exactly like llama-server does.
+        // Derive from apply()'s output exactly like llama-server does, then
+        // apply the single tunable parser-selection knob (Phase 6c).
         common_chat_parser_params parser_params(chat_params);
         parser_params.parse_tool_calls = !inputs.tools.empty();
         if (!chat_params.parser.empty()) {
             parser_params.parser.load(chat_params.parser);
         }
+        apply_parser_format_override(parser_params);
 
         // Serialize overlapping requests: the whole decode loop (and cleanup)
         // holds generateMutex so concurrent /v1/chat/completions requests queue
@@ -610,11 +789,12 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
             if (llama_decode(session->ctx, batch) != 0) {
                 throw std::runtime_error("llama_decode failed");
             }
-            const llama_token tok = llama_sampler_sample(smpl, session->ctx, -1);
+            // Non-const so it can be passed to llama_batch_get_one (which takes
+            // llama_token *); the batch only reads the token.
+            llama_token tok = llama_sampler_sample(smpl, session->ctx, -1);
             if (llama_vocab_is_eog(vocab, tok)) {
                 break;
             }
-
             char buf[256];
             const int n = llama_token_to_piece(vocab, tok, buf, sizeof(buf), 0, true);
             if (n < 0) {
