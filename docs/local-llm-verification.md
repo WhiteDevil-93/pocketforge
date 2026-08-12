@@ -39,21 +39,35 @@ What is real and wired as of this writing:
 - Settings: backend switch, import row, server start/stop row, backup redaction
   (`SettingsPage.tsx`).
 
-What is **not** real yet — the inference engine itself:
+What the engine does now (Phases 6a–6c):
 
-- `LocalLlmService` currently serves a **health-only HTTP stub** (every path
-  answers `{"status":"ok"}`); `nativeLoadModel` in `pokekit-llm.cpp` is a no-op.
-  Nothing answers `/v1/chat/completions` with SSE yet.
+- `nativeLoadModel` really loads the GGUF into a llama.cpp session (returns a
+  handle, 0 on failure); `nativeUnloadModel`/`nativeFreeModel` release it.
+  The fake `Thread.sleep(400)` loading delay is gone — loading now takes real
+  time (multi-GB model into RAM on the `llm-model-load` thread; the UI must
+  stay responsive and the notification shows "Loading").
+- `nativeGenerate` runs real llama.cpp decode/sample on a worker thread and
+  streams SSE via JNI callbacks (`LocalLlmPlugin.kt` → TS).
+- `nativeCancel` aborts an in-flight generation (early exit, partial reply
+  kept, no error banner).
+- `handleClient` reads the request body and answers `/v1/chat/completions`
+  with real token/tool-call deltas + `[DONE]` (`LocalLlmService.kt`).
+- Phase 6c added chat-template/tool-parser diagnostics + tuning knobs — the
+  logcat keys to watch and the override knobs are wired into
+  [Section 3](#3-chat-template-round-trip-top-priority) below.
 
-Consequence for this checklist: sections [1](#1-model-import-saf), [2](#2-foreground-service-start),
-[5](#5-streaming-ux-stop--memory) (abort/memory parts), [6](#6-backend-switching--gating), and
-[7](#7-backupexport-hygiene) can pass on the current build. Sections
-[3](#3-chat-template-round-trip-top-priority) and [4](#4-tool-call-correctness) — and token streaming in
-section 5 — require the real engine behind the service (either llama.cpp linked
-in-process or a spawned `llama-server`), plus the physical device. Until then,
-a chat turn against the stub resolves with an **empty** assistant message
-(the stub's non-SSE response is skipped by the parser) — that is expected, not
-a chat-template failure.
+Consequence for this checklist: the inference engine itself is no longer the
+gate. Everything that exercises inference must still be run on the **physical
+Galaxy S25 Ultra with `vgc_gemma2.gguf`** — CI proves the JS-visible contract
+and that the native engine compiles into the APK (see
+[What CI covers](#what-ci-covers-automated-checks)), but it cannot prove
+inference correctness on device. Sections
+[1](#1-model-import-saf), [2](#2-foreground-service-start),
+[6](#6-backend-switching--gating), and [7](#7-backupexport-hygiene) already
+passed against the scaffolding and are unaffected by the engine replacement;
+[3](#3-chat-template-round-trip-top-priority), [4](#4-tool-call-correctness),
+and the streaming parts of [5](#5-streaming-ux-stop--memory) are the remaining
+hardware pass.
 
 ---
 
@@ -64,7 +78,9 @@ a chat-template failure.
 2. `vgc_gemma2.gguf` available to the SAF picker (e.g. in Downloads) and
    ~3 GB free app storage.
 3. A team open in the Builder (needed for the tool-calling tests).
-4. `adb logcat -s LocalLlmPlugin LocalLlmService` running in a side terminal.
+4. `adb logcat -s LocalLlmPlugin LocalLlmService pokekit-llm` running in a side
+   terminal (`pokekit-llm` carries the native Phase 6c diagnostics — see
+   [Section 3](#3-chat-template-round-trip-top-priority)).
 
 ---
 
@@ -117,7 +133,7 @@ Negative checks:
 3. While loading, scroll/switch tabs in the app.
    - **Expect:** UI stays fully responsive — the load runs on the
      `llm-model-load` thread, never the main thread.
-4. Loopback probe (works on the current stub, no model output needed):
+4. Loopback probe (no model output needed):
    ```sh
    adb forward tcp:18080 tcp:<N>
    curl -s http://127.0.0.1:18080/health
@@ -136,10 +152,10 @@ Negative checks:
 
 ## 3. Chat-template round-trip (top priority)
 
-**Requires the real inference engine (see "Current state" above) + device.**
-Open question carried over from Phase 3: does `llama-server --jinja`
-round-trip this Gemma-2 fine-tune's chat/tool-call template out of the box, or
-does it need a `--chat-template-file` override?
+**Requires the physical device + model (the engine is real — see "Current
+state" above).** Open question carried over from Phase 3: does the engine's
+Jinja path round-trip this Gemma-2 fine-tune's chat/tool-call template out of
+the box, or does it need the `kChatTemplateOverride` fallback (below)?
 
 With the server `ready` and a team open in the Builder:
 
@@ -155,63 +171,91 @@ With the server `ready` and a team open in the Builder:
      damage`), the tool result comes back, and the model answers using it.
    - **Fail means:**
      - no tool call at all for an obvious calculator question → template did
-       not convey the tool schema (check `--jinja` / template file);
+       not convey the tool schema (check the `pokekit-llm` diagnostics under
+       "Where the tuning knobs live" below);
      - malformed tool calls (empty arguments, unknown tool names) → the TS
        side tolerates this (`parseToolCallArguments` returns `{}` and the
        handler reports the missing parameter), but it means the model's
        tool-call format isn't being parsed — go to the override procedure.
 
-### Where the server args are configured
+### Where the tuning knobs live (Phase 6c diagnostics)
 
-There is currently **no spawned `llama-server` process**: the service listens
-via the embedded stub. When the real engine lands, it is configured from:
-
-- `android/app/src/main/java/com/whitedevil93/pocketforge/LocalLlmService.kt`
-  — `handleStart()` owns the model path and the chosen port; this is where the
-  engine (in-process llama.cpp or a spawned `llama-server` binary) must be
-  started, and therefore where its args live.
-- `android/app/src/main/cpp/pokekit-llm.cpp` — `nativeLoadModel`/
-  `nativeUnloadModel`/`nativeFreeModel` JNI entry points.
-
-Whatever serves `/v1/chat/completions` must speak OpenAI SSE (`data:` chunks,
+The engine runs in-process (there is **no spawned `llama-server` process**):
+`LocalLlmService.kt` owns the model path + port and drives
+`nativeLoadModel`/`nativeUnloadModel`/`nativeFreeModel`, and `pokekit-llm.cpp`
+runs decode/sample in `nativeGenerate` and serves `/v1/chat/completions`.
+Whatever serves that endpoint must speak OpenAI SSE (`data:` chunks,
 `delta.content` / `delta.tool_calls` by index, `[DONE]` terminator) — that is
 the exact contract `LocalLlmPlugin.chatOnce` parses.
 
-### If `--jinja` doesn't work: `--chat-template-file` override
+Diagnostics and knobs are all in `android/app/src/main/cpp/pokekit-llm.cpp`:
 
-If the engine is launched as a `llama-server` process, args are passed at
-spawn time in `LocalLlmService.handleStart`:
+- **Logcat tag `pokekit-llm`.** At model load, `nativeLoadModel` logs the
+  template source (INFO; a WARN if the metadata key is missing):
+  - `nativeLoadModel: chat template override=…` — the override value in use
+  - `nativeLoadModel: chat template was_explicit=0|1` — the
+    `common_chat_templates_was_explicit` result: `1` means the override
+    supplied the template explicitly, `0` means the model's embedded
+    `tokenizer.chat_template` metadata was used
+  - `nativeLoadModel: chat template source=…` / `chat template source
+    (tool_use)=…` — where the template came from
+  - `nativeLoadModel: model tokenizer.chat_template=…` — the GGUF's raw
+    embedded Jinja (truncated to 2048 chars)
+  - `nativeLoadModel: representative apply format=… grammar=…` — the
+    `common_chat_format` that `common_chat_templates_apply` chose for a
+    representative tool-calling request, and whether it produced a grammar
+- **Chat-template override knob — `kChatTemplateOverride`** (top-of-file
+  constant). `""` (default) uses the model's embedded template; a file path
+  reads that file's contents as the Jinja source (the `--chat-template-file`
+  equivalent); `"chatml"` selects the built-in chatml source; any other
+  non-empty string is used verbatim as raw Jinja. One-line change, rebuild,
+  reinstall.
+- **Parser-selection knob — `kParserFormatOverride`** (same file). Default
+  `kParserFormatFromApply` keeps whatever `apply()` produced (for the
+  Gemma-2 autoparser path that is `COMMON_CHAT_FORMAT_PEG_NATIVE`);
+  alternatives are `COMMON_CHAT_FORMAT_PEG_GEMMA4`,
+  `COMMON_CHAT_FORMAT_PEG_MINIMAX_M3`, and `COMMON_CHAT_FORMAT_CONTENT_ONLY`
+  (pure content parser, no tool-call extraction). Only change this if the
+  default parser misses well-formed model output; do not hand-roll parsing.
 
-```text
-# built-in Jinja template from the GGUF metadata (default expectation)
-llama-server -m <modelPath> --host 127.0.0.1 --port <port> --jinja
+### If the template round-trip fails: `kChatTemplateOverride` (fallback path)
 
-# override: ship/import a known-good tool template and point at it instead
-llama-server -m <modelPath> --host 127.0.0.1 --port <port> \
-  --chat-template-file <templatePath>
-```
+If a chat turn shows literal template artifacts or the tool schema is not
+conveyed, force a known-good template via the `kChatTemplateOverride`
+constant in `pokekit-llm.cpp`:
+
+1. Export a known-good template to a file in app-private storage next to the
+   model (the same `filesDir` import path is the natural home). For the stock
+   Gemma template, the `models/templates/*.jinja` files shipped in
+   `third_party/llama.cpp` are a starting point.
+2. Point the constant at it: `kChatTemplateOverride = "<path>";` — a file
+   path is read and its contents used as the Jinja template source (mirrors
+   `llama-server --chat-template-file <templatePath>`).
+3. Rebuild + reinstall, reload the model, and re-check logcat: `chat template
+   override=<path>` with `chat template was_explicit=1` confirms the override
+   took effect.
 
 Notes:
 
 - The template inside `vgc_gemma2.gguf` lives in its GGUF metadata
-  (`tokenizer.chat_template`); `--jinja` renders it with the bundled minja
+  (`tokenizer.chat_template`); the engine renders it with the bundled minja
   engine. Extract it to inspect what the model was actually fine-tuned with.
-- Keep the override file in app-private storage next to the model (same
-  `filesDir` import path is the natural home).
 - Tool-call *parsing* (turning the model's raw text back into
-  `tool_calls`) is a separate knob — check the pinned llama.cpp tag's
-  `llama-server --help` for its tool-parser options; a template fix alone may
-  not be enough for a custom fine-tune.
-- Cheap pre-check without the phone: run the pinned llama.cpp `llama-server`
-  on a dev machine with the same GGUF and POST one chat completion with a
-  `tools` array. Template regressions reproduce identically there.
+  `tool_calls`) is a separate knob — `kParserFormatOverride` in the same file
+  (see "Where the tuning knobs live" above); a template fix alone may not be
+  enough for a custom fine-tune.
+- Cheap pre-check without the phone: build the pinned llama.cpp `llama-server`
+  on a dev machine, run it with the same GGUF, and POST one chat completion
+  with a `tools` array. Template regressions reproduce identically there
+  (recipe in the `pokekit-llm.cpp` header comment).
 
 ---
 
 ## 4. Tool-call correctness
 
-**Requires the real engine + device.** The one rule that matters: **the model
-must never do arithmetic — every number comes from the TS calculators.**
+**Requires the physical device + model (the engine is real).** The one rule
+that matters: **the model must never do arithmetic — every number comes from
+the TS calculators.**
 
 1. Ask for a damage roll between two Pokemon that are also in the app's
    Calculator page (e.g. your team member vs a common wall).
@@ -235,11 +279,11 @@ must never do arithmetic — every number comes from the TS calculators.**
 
 1. With the server ready, send a longer question and watch the reply.
    - **Expect:** tokens stream in progressively (not one block at the end).
-   *(On the current stub this step shows the empty-reply behaviour described
-   in "Current state"; re-run once the engine lands.)*
 2. While streaming, tap the **stop** (square) button.
    - **Expect:** streaming stops immediately, the partial reply is kept as a
      message, and **no error banner** appears (abort is not an error).
+   - How it works now: Stop → `nativeCancel` → early exit in `nativeGenerate`
+     (partial reply kept, no error banner).
 3. Send another message and close the chat sheet mid-stream (drag down).
    - **Expect:** the in-flight request is aborted (nothing keeps updating in
      the background), and reopening the sheet works normally — no stuck
@@ -250,12 +294,13 @@ must never do arithmetic — every number comes from the TS calculators.**
      defect in the current behaviour.
 4. Settings → AI Assistant → **Stop**.
    - **Expect:** notification disappears, status shows `Stopped`, logcat
-     shows `handleStop`. Memory: `adb shell dumpsys meminfo
+     shows `handleStop`; a generation in flight is aborted (Stop →
+     `nativeCancel` → early exit, partial reply kept, no error banner).
+     Memory: `adb shell dumpsys meminfo
      com.whitedevil93.pocketforge` before Stop vs after — the working set
-     must drop by (most of) the loaded model's footprint.
-   - On the current stub the model is never actually loaded, so the delta is
-     ~0 — re-verify the drop once the engine lands (`nativeUnloadModel`/
-     `nativeFreeModel` are currently no-ops).
+     must drop by (most of) the loaded model's footprint. This is the
+     Phase 6a lifecycle proof: `nativeUnloadModel`/`nativeFreeModel` release
+     the loaded session on stop.
 5. Battery/thermal sanity during a few minutes of continuous chat — expect
      sustained generation without the app being killed by the system while
      the foreground notification is up.
@@ -349,7 +394,11 @@ Hardware-free, deterministic, run by `npm run check` locally and by
 - `.github/workflows/android.yml` (manual dispatch) runs `npm run lint`,
   `npm run verify`, `npm run build:android`, then `./gradlew assembleDebug` —
   proves the Kotlin plugin, the Java bridge registration, and the vendored
-  llama.cpp native module all compile into a real arm64-v8a APK.
+  llama.cpp native module all compile into a real arm64-v8a APK. This covers
+  the real native engine (`nativeLoadModel`/`nativeGenerate`/`nativeCancel`)
+  compiling into the APK via `./gradlew assembleDebug` — a compile gate only.
+  CI does **not** cover inference correctness: that is device-only, which is
+  what this checklist verifies.
 
 Everything above this line in the document is **not** covered by CI and
 **must** be run on the Galaxy S25 Ultra with `vgc_gemma2.gguf`.
