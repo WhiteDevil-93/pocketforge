@@ -12,7 +12,9 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStream
 import java.net.InetAddress
@@ -20,6 +22,17 @@ import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.nio.charset.StandardCharsets
+
+/**
+ * Streaming callback invoked from nativeGenerate on the HTTP worker thread.
+ * Each invocation is written to the client as ONE SSE frame by the service.
+ */
+interface GenerationCallback {
+    fun onToken(piece: String)
+    fun onToolCallDelta(index: Int, nameDelta: String, argsDelta: String)
+    fun onDone(content: String, toolCallsJson: String)
+    fun onError(message: String)
+}
 
 class LocalLlmService : Service() {
 
@@ -110,6 +123,7 @@ class LocalLlmService : Service() {
         isStopping = true
         stopHttpServer()
         interruptLoad()
+        nativeCancel(nativeHandle)
         nativeUnloadModel(nativeHandle)
         nativeFreeModel(nativeHandle)
         nativeHandle = 0
@@ -199,6 +213,10 @@ class LocalLlmService : Service() {
         isStopping = true
         interruptLoad()
         stopHttpServer()
+        // Abort any in-flight generation: nativeCancel only flips the atomic
+        // flag, the decode loop observes it between tokens and exits, then
+        // unload/free (which take the same mutex) can proceed safely.
+        nativeCancel(nativeHandle)
         nativeUnloadModel(nativeHandle)
         nativeFreeModel(nativeHandle)
         nativeHandle = 0
@@ -297,36 +315,152 @@ class LocalLlmService : Service() {
                 s.soTimeout = 5000
                 val reader = BufferedReader(InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8))
                 val requestLine = reader.readLine() ?: return
+                // PITFALL: the reader buffers ahead, so the request body MUST be
+                // read from this same BufferedReader - reading the raw InputStream
+                // afterwards would lose the buffered bytes.
+                var contentLength = 0
                 var line: String?
-                while (reader.readLine().also { line = it } != null && line!!.isNotEmpty()) {}
-                val path = requestLine.split(" ").getOrNull(1) ?: "/"
-                val body: String
-                val statusLine: String
-                when {
-                    path == "/health" || path == "/v1/health" -> {
-                        body = """{"status":"ok"}"""
-                        statusLine = "HTTP/1.1 200 OK"
-                    }
-                    path == "/" -> {
-                        body = """{"status":"ok","service":"PocketForge LLM"}"""
-                        statusLine = "HTTP/1.1 200 OK"
-                    }
-                    else -> {
-                        body = """{"status":"ok"}"""
-                        statusLine = "HTTP/1.1 200 OK"
+                while (reader.readLine().also { line = it } != null && line!!.isNotEmpty()) {
+                    val header = line!!
+                    if (header.startsWith("Content-Length:", ignoreCase = true)) {
+                        contentLength = header.substringAfter(':').trim().toIntOrNull() ?: 0
                     }
                 }
-                val bodyBytes = body.toByteArray(StandardCharsets.UTF_8)
-                val header = "$statusLine\r\nContent-Type: application/json\r\nContent-Length: ${bodyBytes.size}\r\nConnection: close\r\n\r\n"
+                val path = requestLine.split(" ").getOrNull(1) ?: "/"
                 val out: OutputStream = s.getOutputStream()
-                out.write(header.toByteArray(StandardCharsets.UTF_8))
-                out.write(bodyBytes)
+                when {
+                    path == "/v1/chat/completions" -> handleChatCompletions(reader, contentLength, out)
+                    path == "/health" || path == "/v1/health" -> {
+                        writeJsonResponse(out, "HTTP/1.1 200 OK", """{"status":"ok"}""")
+                    }
+                    path == "/" -> {
+                        writeJsonResponse(out, "HTTP/1.1 200 OK", """{"status":"ok","service":"PocketForge LLM"}""")
+                    }
+                    else -> {
+                        writeJsonResponse(out, "HTTP/1.1 404 Not Found", """{"error":"not found"}""")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "handleClient error: ${e.message}")
+            }
+        }
+    }
+
+    private fun writeJsonResponse(out: OutputStream, statusLine: String, body: String) {
+        val bodyBytes = body.toByteArray(StandardCharsets.UTF_8)
+        val header = "$statusLine\r\nContent-Type: application/json\r\n" +
+            "Content-Length: ${bodyBytes.size}\r\nConnection: close\r\n\r\n"
+        out.write(header.toByteArray(StandardCharsets.UTF_8))
+        out.write(bodyBytes)
+        out.flush()
+    }
+
+    /**
+     * Reads exactly [contentLength] BYTES of request body from [reader].
+     * Content-Length counts bytes, not chars: a JSON body with multi-byte UTF-8
+     * decodes to fewer chars than bytes, and counting chars instead would block
+     * past the end of the body (the client keeps the connection open awaiting
+     * the response). Counting encoded bytes lands exactly on the body boundary.
+     */
+    private fun readRequestBody(reader: BufferedReader, contentLength: Int): String {
+        if (contentLength <= 0) return ""
+        val raw = ByteArrayOutputStream(contentLength)
+        val tmp = CharArray(4096)
+        var receivedBytes = 0
+        while (receivedBytes < contentLength) {
+            val n = reader.read(tmp)
+            if (n == -1) break
+            val chunk = String(tmp, 0, n).toByteArray(StandardCharsets.UTF_8)
+            val take = minOf(chunk.size, contentLength - receivedBytes)
+            raw.write(chunk, 0, take)
+            receivedBytes += take
+            if (take < chunk.size) break
+        }
+        return raw.toString(StandardCharsets.UTF_8.name())
+    }
+
+    private fun handleChatCompletions(reader: BufferedReader, contentLength: Int, out: OutputStream) {
+        if (nativeHandle == 0L) {
+            writeJsonResponse(out, "HTTP/1.1 500 Internal Server Error", """{"error":"model not loaded"}""")
+            return
+        }
+        val body = readRequestBody(reader, contentLength)
+        // Streaming response: no Content-Length; each callback writes one frame.
+        val header = "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n"
+        out.write(header.toByteArray(StandardCharsets.UTF_8))
+        out.flush()
+
+        val callback = object : GenerationCallback {
+            override fun onToken(piece: String) {
+                if (!writeSse(out, """{"choices":[{"delta":{"content":"${jsonEscape(piece)}"}}]}""")) {
+                    nativeCancel(nativeHandle)
+                }
+            }
+
+            override fun onToolCallDelta(index: Int, nameDelta: String, argsDelta: String) {
+                val frame = """{"choices":[{"delta":{"tool_calls":[{"index":$index,""" +
+                    """"function":{"name":"${jsonEscape(nameDelta)}","arguments":"${jsonEscape(argsDelta)}"}}]}}]}"""
+                if (!writeSse(out, frame)) {
+                    nativeCancel(nativeHandle)
+                }
+            }
+
+            override fun onDone(content: String, toolCallsJson: String) {
+                Log.i(TAG, "generation done: content=${content.length} chars, toolCalls=$toolCallsJson")
+                writeSse(out, "[DONE]")
                 out.flush()
+            }
+
+            override fun onError(message: String) {
+                Log.e(TAG, "generation error: $message")
+                writeSse(out, """{"error":"${jsonEscape(message)}"}""")
+                out.flush()
+            }
+        }
+        try {
+            nativeGenerate(nativeHandle, body, callback)
+        } catch (e: Throwable) {
+            // Last-resort guard: never let a JNI escape crash the process.
+            Log.e(TAG, "nativeGenerate threw", e)
+            try {
+                writeSse(out, """{"error":"${jsonEscape(e.message ?: "nativeGenerate failed")}"}""")
             } catch (_: Exception) {}
+        }
+    }
+
+    /** Writes one SSE frame ("data: <payload>\r\n\r\n") and flushes. Returns
+     *  false when the client disconnected (the caller then cancels generation). */
+    private fun writeSse(out: OutputStream, payload: String): Boolean {
+        return try {
+            val frame = "data: $payload\r\n\r\n"
+            out.write(frame.toByteArray(StandardCharsets.UTF_8))
+            out.flush()
+            true
+        } catch (e: IOException) {
+            Log.w(TAG, "client disconnected: ${e.message}")
+            false
+        }
+    }
+
+    /** JSON-escapes a string for embedding in an SSE data payload. */
+    private fun jsonEscape(s: String): String = buildString(s.length + 16) {
+        for (c in s) {
+            when (c) {
+                '"' -> append("\\\"")
+                '\\' -> append("\\\\")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                '\b' -> append("\\b")
+                '\u000C' -> append("\\f")
+                else -> if (c < ' ') append("\\u%04x".format(c.code)) else append(c)
+            }
         }
     }
 
     private external fun nativeLoadModel(path: String): Long
     private external fun nativeUnloadModel(handle: Long)
     private external fun nativeFreeModel(handle: Long)
+    private external fun nativeGenerate(handle: Long, requestBodyJson: String, callback: GenerationCallback)
+    private external fun nativeCancel(handle: Long)
 }
