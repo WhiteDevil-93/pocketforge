@@ -38,6 +38,8 @@ class LocalLlmService : Service() {
             private set
         @Volatile var error: String? = null
             private set
+        @Volatile var nativeHandle: Long = 0
+            private set
 
         var statusListener: ((String, Int?, String?) -> Unit)? = null
 
@@ -108,6 +110,9 @@ class LocalLlmService : Service() {
         isStopping = true
         stopHttpServer()
         interruptLoad()
+        nativeUnloadModel(nativeHandle)
+        nativeFreeModel(nativeHandle)
+        nativeHandle = 0
         transition("stopped", null, null)
         super.onDestroy()
     }
@@ -135,7 +140,6 @@ class LocalLlmService : Service() {
             try {
                 val chosenPort = findFreePort()
                 Log.i(TAG, "model load starting for $modelPath on port $chosenPort")
-                Thread.sleep(400)
                 if (isStopping || Thread.currentThread().isInterrupted) {
                     transition("stopped", null, null)
                     stopSelf()
@@ -144,14 +148,15 @@ class LocalLlmService : Service() {
                 if (file.length() < 1024 * 1024) {
                     throw IllegalStateException("Model file too small (${file.length()} bytes)")
                 }
-                try {
-                    nativeLoadModel(modelPath)
-                } catch (e: UnsatisfiedLinkError) {
-                    Log.w(TAG, "nativeLoadModel not linked, using stub: ${e.message}")
-                } catch (e: Exception) {
-                    Log.w(TAG, "nativeLoadModel stub threw: ${e.message}")
+                val handle = nativeLoadModel(modelPath)
+                if (handle == 0L) {
+                    throw IllegalStateException("Native model load failed for $modelPath")
                 }
+                nativeHandle = handle
                 if (isStopping || Thread.currentThread().isInterrupted) {
+                    nativeUnloadModel(nativeHandle)
+                    nativeFreeModel(nativeHandle)
+                    nativeHandle = 0
                     transition("stopped", null, null)
                     stopSelf()
                     return@Thread
@@ -159,6 +164,9 @@ class LocalLlmService : Service() {
                 startHttpServer(chosenPort)
                 if (isStopping) {
                     stopHttpServer()
+                    nativeUnloadModel(nativeHandle)
+                    nativeFreeModel(nativeHandle)
+                    nativeHandle = 0
                     transition("stopped", null, null)
                     stopSelf()
                     return@Thread
@@ -168,11 +176,16 @@ class LocalLlmService : Service() {
                 Log.i(TAG, "ready on port $chosenPort")
             } catch (e: InterruptedException) {
                 Log.i(TAG, "load interrupted")
+                nativeUnloadModel(nativeHandle)
+                nativeFreeModel(nativeHandle)
+                nativeHandle = 0
                 transition("stopped", null, null)
                 stopSelf()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.e(TAG, "load failed", e)
-                try { nativeUnloadModel() } catch (_: Exception) {}
+                nativeUnloadModel(nativeHandle)
+                nativeFreeModel(nativeHandle)
+                nativeHandle = 0
                 stopHttpServer()
                 transition("error", null, e.message ?: "Failed to load model")
                 updateNotification()
@@ -186,8 +199,9 @@ class LocalLlmService : Service() {
         isStopping = true
         interruptLoad()
         stopHttpServer()
-        try { nativeUnloadModel() } catch (_: Exception) {}
-        try { nativeFreeModel() } catch (_: Exception) {}
+        nativeUnloadModel(nativeHandle)
+        nativeFreeModel(nativeHandle)
+        nativeHandle = 0
         transition("stopped", null, null)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -312,7 +326,7 @@ class LocalLlmService : Service() {
         }
     }
 
-    private external fun nativeLoadModel(path: String): Boolean
-    private external fun nativeUnloadModel()
-    private external fun nativeFreeModel()
+    private external fun nativeLoadModel(path: String): Long
+    private external fun nativeUnloadModel(handle: Long)
+    private external fun nativeFreeModel(handle: Long)
 }
