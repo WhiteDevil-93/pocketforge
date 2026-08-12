@@ -688,6 +688,8 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
                     }
                 }
             }
+
+            batch = llama_batch_get_one(&tok, 1);
         }
 
         // Final parse with is_partial=false: authoritative content + tool_calls.
