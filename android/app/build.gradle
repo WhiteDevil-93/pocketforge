@@ -34,9 +34,17 @@ android {
                 arguments "-DLLAMA_OPENSSL=OFF"
 
                 arguments "-DGGML_NATIVE=OFF"
-                arguments "-DGGML_BACKEND_DL=ON"
-                arguments "-DGGML_CPU_ALL_VARIANTS=ON"
                 arguments "-DGGML_LLAMAFILE=OFF"
+
+                // GGML_BACKEND_DL / GGML_CPU_ALL_VARIANTS must stay OFF on Android.
+                // They build each backend as a CMake MODULE (dlopen-only, never
+                // linked into libggml.so) and suppress the GGML_USE_CPU define, so
+                // ggml's registry constructor skips ggml_backend_cpu_reg() and starts
+                // EMPTY. Registering then depends on ggml_backend_load_all(), which
+                // searches get_executable_path() — /system/bin under the zygote, not
+                // the APK's lib/arm64 dir — so it finds nothing and every model load
+                // fails. Off, the CPU backend is target_link_libraries'd into ggml
+                // and statically registered, which is what pokekit-llm.cpp assumes.
             }
         }
     }
