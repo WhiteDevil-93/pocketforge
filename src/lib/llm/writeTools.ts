@@ -19,12 +19,13 @@ import { TYPE_NAMES } from '../../data/typesData';
 import { getChampionsMovesForSpecies, isChampionsFormatId, isEligibleForChampionsFormat } from '../../data/championsLegality';
 import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
 import { getCalcGenForFormat } from '../showdown';
+import { MAX_TOTAL_EVS, MAX_STAT_EVS } from '../../utils/statCalc';
 import type { EVs, Pokemon, Team } from '../../types';
 import type { ToolDefinition } from './types';
 
-/** Per-stat EV ceiling and the total budget, matching validation.ts. */
-const MAX_EV_PER_STAT = 252;
-const MAX_EV_TOTAL = 508;
+/** Per-stat EV ceiling matches statCalc. */
+const MAX_EV_PER_STAT = MAX_STAT_EVS;
+const MAX_EV_TOTAL = MAX_TOTAL_EVS;
 const MAX_TEAM_SIZE = 6;
 const MAX_MOVES = 4;
 
@@ -344,7 +345,7 @@ const POKEMON_FIELDS = {
   },
   evs: {
     type: 'object',
-    description: 'EV spread, e.g. {"atk":252,"spe":252,"hp":4}. Max 252 per stat, 508 total.',
+    description: 'EV spread, e.g. {"atk":252,"spe":252,"hp":4}. Max 252 per stat, 510 total.',
   },
   ivs: {
     type: 'object',

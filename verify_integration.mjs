@@ -428,8 +428,8 @@ IVs: 0 Atk
     { species: 'Dragonite', evs: { hp: 252, atk: 252, spe: 252 } },
     {},
   );
-  assert(!overBudget.ok, 'add_pokemon must reject an EV spread over 508');
-  assert(/508/.test(overBudget.error), 'EV rejection must name the 508 limit');
+  assert(!overBudget.ok, 'add_pokemon must reject an EV spread over 510');
+  assert(/510/.test(overBudget.error), 'EV rejection must name the 510 limit');
 
   // A fabricated ability must be refused, listing the real ones.
   const badAbility = await getToolByName('add_pokemon').handler(
