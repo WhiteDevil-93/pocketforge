@@ -545,6 +545,19 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeLoadModel(JNIEnv * env, 
         // Idempotent, safe to call on every load (e.g. service restarts).
         llama_backend_init();
 
+        // An empty registry means the build linked ggml without a statically
+        // registered backend (GGML_BACKEND_DL=ON builds them as dlopen-only
+        // MODULEs that never reach the APK). llama_model_load_from_file would
+        // fail further in with a far less obvious message, so stop here.
+        const size_t n_reg = ggml_backend_reg_count();
+        const size_t n_dev = ggml_backend_dev_count();
+        LOGI("nativeLoadModel: ggml backends=%zu devices=%zu", n_reg, n_dev);
+        if (n_dev == 0) {
+            LOGE("nativeLoadModel: no ggml backend registered — check that "
+                 "GGML_BACKEND_DL/GGML_CPU_ALL_VARIANTS are OFF in build.gradle");
+            return 0;
+        }
+
         session = new (std::nothrow) LlmSession();
         if (session == nullptr) {
             LOGE("nativeLoadModel: out of memory");
