@@ -62,6 +62,34 @@ function getGenForFormat(formatId: string | undefined): number {
   return getCalcGenForFormat(formatId);
 }
 
+/**
+ * Check if a species (potentially a form) is eligible for Champions.
+ * If the form itself isn't eligible, try the base form (e.g., Gourgeist-Super → Gourgeist).
+ */
+function isChampionsEligible(species: string, formatId: string): boolean {
+  if (isEligibleForChampionsFormat(species, formatId)) return true;
+  // Try base form if this is a form (has a dash)
+  if (species.includes('-')) {
+    const base = species.split('-')[0];
+    return isEligibleForChampionsFormat(base, formatId);
+  }
+  return false;
+}
+
+/**
+ * Get Champions moves for a species, falling back to base form if needed.
+ * For forms like Gourgeist-Super, use Gourgeist's movepool if Super isn't defined.
+ */
+function getChampionsMovesWithFallback(species: string): string[] {
+  let moves = getChampionsMovesForSpecies(species);
+  // If no moves found and this is a form, try the base form
+  if (moves.length === 0 && species.includes('-')) {
+    const base = species.split('-')[0];
+    moves = getChampionsMovesForSpecies(base);
+  }
+  return moves;
+}
+
 function isError(value: unknown): value is { error: string } {
   return typeof value === 'object' && value !== null && 'error' in value;
 }
@@ -123,7 +151,7 @@ async function validateMoves(
   const pool = await getMovepoolForSpecies(species, gen);
   const scoped = isChampionsFormatId(format ?? '')
     ? (() => {
-        const legal = new Set(getChampionsMovesForSpecies(species).map((m) => m.toLowerCase()));
+        const legal = new Set(getChampionsMovesWithFallback(species).map((m) => m.toLowerCase()));
         return pool.filter((m) => legal.has(m.name.toLowerCase()));
       })()
     : pool;
@@ -427,7 +455,7 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       const entry = resolveSpecies(args.species, gen);
       if (isError(entry)) return fail(entry.error);
 
-      if (isChampionsFormatId(team.format) && !isEligibleForChampionsFormat(entry.name, team.format)) {
+      if (isChampionsFormatId(team.format) && !isChampionsEligible(entry.name, team.format)) {
         return fail(`"${entry.name}" is not in the Champions roster for this regulation.`);
       }
 
