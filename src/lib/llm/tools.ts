@@ -7,6 +7,7 @@
 // ============================================================================
 
 import type { Pokemon, Team } from '../../types';
+import { useStore } from '../../store/useStore';
 import { getPokemonByName } from '../../data/pokemonData';
 import { getMoveByName } from '../../data/movesData';
 import { getMegaByStone, isMegaStone } from '../../data/megaData';
@@ -29,7 +30,7 @@ import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuer
 import { getDefaultLevelForFormat } from '../format';
 import { getCalcGenForFormat } from '../showdown';
 import { WRITE_TOOLS } from './writeTools';
-import type { ToolContext, ToolDefinition } from './types';
+import type { ToolDefinition } from './types';
 
 const WEATHERS: Weather[] = ['none', 'sun', 'rain', 'sand', 'snow', 'harsh-sun', 'heavy-rain'];
 const TERRAINS: Terrain[] = ['none', 'electric', 'grassy', 'psychic', 'misty'];
@@ -188,8 +189,25 @@ function resolveCalcSubject(team: Team | null, nameOrNickname: string): CalcPoke
   };
 }
 
-function requireTeam(ctx: ToolContext): Team | { error: string } {
-  return ctx.team ?? { error: 'No team is currently open in the app.' };
+/**
+ * Get the active team from the live store.
+ * Read tools use this instead of ctx.team (which is a stale snapshot from turn start)
+ * so that after create_team mutations, read tools see the newly active team.
+ */
+function getLiveActiveTeam(): Team | { error: string } {
+  const { teams, currentTeamId } = useStore.getState();
+  const team = teams.find((t) => t.id === currentTeamId) ?? null;
+  return team ?? { error: 'No team is currently open in the app.' };
+}
+
+/**
+ * Get the active team's format from the live store (or undefined if no team open).
+ * Used by tools that need format context but don't need the full team.
+ */
+function getLiveActiveTeamFormat(): string | undefined {
+  const { teams, currentTeamId } = useStore.getState();
+  const team = teams.find((t) => t.id === currentTeamId);
+  return team?.format;
 }
 
 /** Only forward a weather/terrain string if it's one calculateSpeed/calculateDamage actually
@@ -214,8 +232,8 @@ export const TOOLS: ToolDefinition[] = [
       "Get the user's currently open team: format, and each member's species, level, item, " +
       'ability, nature, Tera type, and moves. Call this first in any conversation about "my team".',
     parameters: { type: 'object', properties: {} },
-    handler: (_args, ctx) => {
-      const team = requireTeam(ctx);
+    handler: (_args, _ctx) => {
+      const team = getLiveActiveTeam();
       if ('error' in team) return team;
       return {
         name: team.name,
@@ -240,8 +258,8 @@ export const TOOLS: ToolDefinition[] = [
       'Run the real type-coverage and weakness analysis on the active team: shared weaknesses, ' +
       'offensive coverage gaps, and a 0-100 balance score. Use this for coaching questions.',
     parameters: { type: 'object', properties: {} },
-    handler: (_args, ctx) => {
-      const team = requireTeam(ctx);
+    handler: (_args, _ctx) => {
+      const team = getLiveActiveTeam();
       if ('error' in team) return team;
       const weaknesses = analyzeTeamWeaknesses(team);
       const gaps = getCoverageGaps(team);
@@ -264,8 +282,8 @@ export const TOOLS: ToolDefinition[] = [
       'Check the active team against its format\'s legality rules (species clause, item clause, ' +
       'level caps, Champions whitelists, etc). Use before telling the user a team is tournament-legal.',
     parameters: { type: 'object', properties: {} },
-    handler: async (_args, ctx) => {
-      const team = requireTeam(ctx);
+    handler: async (_args, _ctx) => {
+      const team = getLiveActiveTeam();
       if ('error' in team) return team;
       return validateTeam(team);
     },
@@ -283,8 +301,8 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: (args, ctx) => {
-      const team = requireTeam(ctx);
+    handler: (args, _ctx) => {
+      const team = getLiveActiveTeam();
       if ('error' in team) return team;
       const member = findTeamMember(team, String(args.species));
       if (!member) return { error: `"${args.species}" is not on the active team.` };
@@ -310,9 +328,12 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: (args, ctx) => {
-      const subject = resolveSpeedSubject(ctx.team, String(args.species));
+    handler: (args) => {
+      const liveTeam = getLiveActiveTeam();
+      const teamArg = 'error' in liveTeam ? null : liveTeam;
+      const subject = resolveSpeedSubject(teamArg, String(args.species));
       if ('error' in subject) return subject;
+      const format = getLiveActiveTeamFormat();
       const speed = calculateSpeed(
         subject,
         {
@@ -321,7 +342,7 @@ export const TOOLS: ToolDefinition[] = [
           weather: resolveWeather(args.weather),
           terrain: resolveTerrain(args.terrain),
         },
-        getCalcGenForFormat(ctx.team?.format)
+        getCalcGenForFormat(format)
       );
       return { species: subject.species, level: subject.level, speed };
     },
@@ -355,10 +376,12 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['attacker', 'defender', 'move'],
     },
-    handler: (args, ctx) => {
-      const attacker = resolveCalcSubject(ctx.team, String(args.attacker));
+    handler: (args) => {
+      const liveTeam = getLiveActiveTeam();
+      const teamArg = 'error' in liveTeam ? null : liveTeam;
+      const attacker = resolveCalcSubject(teamArg, String(args.attacker));
       if ('error' in attacker) return attacker;
-      const defender = resolveCalcSubject(ctx.team, String(args.defender));
+      const defender = resolveCalcSubject(teamArg, String(args.defender));
       if ('error' in defender) return defender;
 
       const moveEntry = getMoveByName(String(args.move));
@@ -382,14 +405,15 @@ export const TOOLS: ToolDefinition[] = [
       // attached here, and only when the corresponding flag was actually requested.
       const useTera = isTruthyFlag(args.useTera);
       if (useTera) {
-        const attackerMember = findTeamMember(ctx.team, String(args.attacker));
+        const attackerMember = findTeamMember(teamArg, String(args.attacker));
         if (attackerMember?.teraType) attacker.teraType = attackerMember.teraType;
       }
       if (isTruthyFlag(args.isDefenderTerastallized)) {
-        const defenderMember = findTeamMember(ctx.team, String(args.defender));
+        const defenderMember = findTeamMember(teamArg, String(args.defender));
         if (defenderMember?.teraType) defender.teraType = defenderMember.teraType;
       }
 
+      const format = getLiveActiveTeamFormat();
       const result = calculateDamage(
         attacker,
         defender,
@@ -397,7 +421,7 @@ export const TOOLS: ToolDefinition[] = [
         field,
         isTruthyFlag(args.isSpreadMove),
         useTera,
-        getCalcGenForFormat(ctx.team?.format)
+        getCalcGenForFormat(format)
       );
       // effectivenessLabel is derived from raw type matchups alone, so it can say
       // "super effective" even when an ability (Levitate, Flash Fire, ...) negated the
@@ -428,8 +452,9 @@ export const TOOLS: ToolDefinition[] = [
       properties: { species: { type: 'string', description: 'Species name.' } },
       required: ['species'],
     },
-    handler: (args, ctx) => {
-      const dex = getPokedexEntry(String(args.species), getCalcGenForFormat(ctx.team?.format));
+    handler: (args) => {
+      const format = getLiveActiveTeamFormat();
+      const dex = getPokedexEntry(String(args.species), getCalcGenForFormat(format));
       if (!dex) return { error: `Unknown species "${args.species}".` };
       return {
         name: dex.name,
@@ -455,8 +480,8 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: async (args, ctx) => {
-      const format = ctx.team?.format;
+    handler: async (args) => {
+      const format = getLiveActiveTeamFormat();
       const moves = await getMovepoolForSpecies(String(args.species), getCalcGenForFormat(format));
       const scoped = isChampionsFormatId(format ?? '')
         ? (() => {
