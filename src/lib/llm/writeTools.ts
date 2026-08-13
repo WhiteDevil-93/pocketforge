@@ -16,7 +16,7 @@
 import { useStore } from '../../store/useStore';
 import { getAllNatureNames } from '../../data/naturesData';
 import { TYPE_NAMES } from '../../data/typesData';
-import { getChampionsMovesForSpecies, isChampionsFormatId } from '../../data/championsLegality';
+import { getChampionsMovesForSpecies, isChampionsFormatId, isEligibleForChampionsFormat } from '../../data/championsLegality';
 import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
 import { getCalcGenForFormat } from '../showdown';
 import type { EVs, Pokemon, Team } from '../../types';
@@ -47,6 +47,17 @@ function activeTeam(): Team | { error: string } {
     return { error: 'No team is open. Call create_team first, or ask which team to work on.' };
   }
   return team;
+}
+
+/** Resolve format to its generation, accounting for custom formats. */
+function getGenForFormat(formatId: string | undefined): number {
+  if (!formatId) return 9;
+  // Check if it's a custom format (id starts with 'custom-')
+  if (formatId.startsWith('custom-')) {
+    const customFormat = useStore.getState().customFormats.find((f) => f.id === formatId);
+    return customFormat?.generation ?? 9;
+  }
+  return getCalcGenForFormat(formatId);
 }
 
 function isError(value: unknown): value is { error: string } {
@@ -252,7 +263,7 @@ async function buildPatch(
   species: string,
   format: string | undefined
 ): Promise<Partial<Pokemon> | { error: string; extra?: Record<string, unknown> }> {
-  const gen = getCalcGenForFormat(format);
+  const gen = getGenForFormat(format);
   const entry = getPokedexEntry(species, gen);
   if (!entry) return { error: `"${species}" is not a species in this generation.` };
 
@@ -362,9 +373,13 @@ export const WRITE_TOOLS: ToolDefinition[] = [
         return fail(`The team is already full (${MAX_TEAM_SIZE}). Remove one first.`);
       }
 
-      const gen = getCalcGenForFormat(team.format);
+      const gen = getGenForFormat(team.format);
       const entry = resolveSpecies(args.species, gen);
       if (isError(entry)) return fail(entry.error);
+
+      if (isChampionsFormatId(team.format) && !isEligibleForChampionsFormat(entry.name, team.format)) {
+        return fail(`"${entry.name}" is not in the Champions roster for this regulation.`);
+      }
 
       const patch = await buildPatch(args, entry.name, team.format);
       if (isError(patch)) return fail(patch.error, patch.extra);

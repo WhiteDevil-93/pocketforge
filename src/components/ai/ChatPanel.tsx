@@ -164,11 +164,19 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
           : msg
       );
       setHistory(cleanedHistory);
-    } catch {
-      // Only keep the partial reply when the user actually tapped stop — a real
-      // network/tool error already surfaces via the error banner, and appending a
-      // truncated assistant message alongside it would be misleading.
-      if (controller.signal.aborted && streamingTextRef.current) {
+    } catch (err) {
+      // Preserve tool call history even when a later round fails, so the user sees what succeeded.
+      const partialMessages = (err as any)?.partialMessages as ChatMessage[] | undefined;
+      if (partialMessages && partialMessages.length > baseHistory.length) {
+        const cleanedHistory = partialMessages.map((msg: ChatMessage) =>
+          msg.role === 'assistant'
+            ? { ...msg, content: stripSpecialTokens(msg.content) }
+            : msg
+        );
+        setHistory(cleanedHistory);
+      }
+      // Also keep the partial reply when the user actually tapped stop.
+      else if (controller.signal.aborted && streamingTextRef.current) {
         const cleanedContent = stripSpecialTokens(streamingTextRef.current);
         if (cleanedContent.trim()) {
           setHistory((h) => [...h, { role: 'assistant', content: cleanedContent }]);

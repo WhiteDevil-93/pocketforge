@@ -213,7 +213,10 @@ export async function sendMessage({
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     onEvent({ type: 'error', message });
-    throw error;
+    // Attach accumulated messages to error so ChatPanel can preserve tool call history
+    const err = error instanceof Error ? error : new Error(message);
+    (err as any).partialMessages = messages;
+    throw err;
   } finally {
     clearTimeout(overallTimeout);
     signal?.removeEventListener('abort', abort);
