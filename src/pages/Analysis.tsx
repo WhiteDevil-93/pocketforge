@@ -38,6 +38,9 @@ import SynergyMatrix from '../components/SynergyMatrix';
 import ScoreGauge from '../components/ScoreGauge';
 import TypeBadge from '../components/TypeBadge';
 import PokemonSprite from '../components/PokemonSprite';
+// Self-gating: renders nothing unless the AI assistant is actually usable, and
+// lazy-loads the chat sheet so this page's chunk stays free of the LLM stack.
+import ChatLauncher from '../components/ai/ChatLauncher';
 import type { Team, Pokemon } from '../types';
 
 // ---- Animation Variants -----------------------------------------------------
@@ -884,6 +887,7 @@ export default function Analysis() {
       {/* Header */}
       <div className="pt-4 pb-2 flex items-center justify-between">
         <h1 className="font-display text-text-primary">Team Analysis</h1>
+        <ChatLauncher />
       </div>
 
       {/* Team Selector */}

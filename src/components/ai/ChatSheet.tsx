@@ -9,9 +9,8 @@ import { useStore } from '../../store/useStore';
 import { sendMessage } from '../../lib/llm/ollamaCloud';
 import { sendMessage as localSendMessage } from '../../lib/llm/localLlamaCpp';
 import { buildSystemPrompt } from '../../lib/llm/systemPrompt';
-import { isNativeApp } from '../../lib/platform';
+import { useAiReadiness } from '../../hooks/use-ai-readiness';
 import type { ChatMessage, LlmStreamEvent } from '../../lib/llm/types';
-import type { LocalLlmServerStatus } from '../../lib/native/localLlm';
 
 interface ChatSheetProps {
   isOpen: boolean;
@@ -37,57 +36,15 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
   const [toolActivity, setToolActivity] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [serverStatus, setServerStatus] = useState<LocalLlmServerStatus | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   // Mirrors streamingText synchronously — state read inside the catch block below
   // would be stale (captured when handleSend started, not updated by onEvent since).
   const streamingTextRef = useRef('');
 
-  const isLocalBackend = settings.aiBackend === 'localLlamaCpp';
-
-  // Only the native shell has a local server to be ready; the browser build's
-  // status state is meaningless (and would otherwise gate the cloud path).
-  const effectiveServerStatus = isNativeApp() && isLocalBackend ? serverStatus : null;
-
-  // The local backend needs a model imported AND the llama-server live — NOT an
-  // API key (there is none). The cloud backend keeps the existing key+model check.
-  const isConfigured = settings.aiEnabled
-    ? isLocalBackend
-      ? settings.localModelPath.trim().length > 0 && effectiveServerStatus?.state === 'ready'
-      : settings.ollamaApiKey.trim().length > 0 && settings.ollamaModel.trim().length > 0
-    : false;
-
-  // Track the on-device server's live state (native only) so isConfigured can
-  // require server-ready for the local backend. No-ops in the browser — the
-  // native module is imported dynamically to keep it out of the web bundle.
-  useEffect(() => {
-    if (!isNativeApp() || !isLocalBackend) return;
-    let cancelled = false;
-    let remove: (() => void) | undefined;
-    void (async () => {
-      const { getServerStatus, addServerStatusChangedListener } = await import(
-        '../../lib/native/localLlm'
-      );
-      if (cancelled) return;
-      const apply = (status: LocalLlmServerStatus) => {
-        if (!cancelled) setServerStatus(status);
-      };
-      const handle = await addServerStatusChangedListener(apply);
-      if (cancelled) {
-        void handle.remove();
-        return;
-      }
-      remove = () => void handle.remove();
-      // Snapshot first — serverStatusChanged only fires on transitions, so a server
-      // already ready before the sheet opened would otherwise never surface.
-      void getServerStatus().then(apply).catch(() => {});
-    })();
-    return () => {
-      cancelled = true;
-      remove?.();
-    };
-  }, [isLocalBackend]);
+  // Shared with ChatLauncher (and any future chat surface) so a launcher can
+  // never appear while this sheet would report "not configured".
+  const { isConfigured, isLocalBackend } = useAiReadiness();
 
   const displayMessages = useMemo(
     () =>
