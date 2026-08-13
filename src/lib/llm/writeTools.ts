@@ -18,6 +18,7 @@ import { getAllNatureNames } from '../../data/naturesData';
 import { TYPE_NAMES } from '../../data/typesData';
 import { getChampionsMovesForSpecies, isChampionsFormatId, isEligibleForChampionsFormat } from '../../data/championsLegality';
 import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
+import { getItemByName, getAllItemNames } from '../../data/itemsData';
 import { getCalcGenForFormat } from '../showdown';
 import { MAX_TOTAL_EVS, MAX_STAT_EVS } from '../../utils/statCalc';
 import type { EVs, Pokemon, Team } from '../../types';
@@ -248,6 +249,21 @@ function validateIVs(ivs: unknown): Record<string, number> | undefined | { error
   return out;
 }
 
+function validateItem(itemName: unknown): string | undefined | { error: string; extra?: Record<string, unknown> } {
+  if (itemName === undefined || itemName === null || (typeof itemName === 'string' && !itemName.trim())) {
+    return undefined;
+  }
+  const name = String(itemName).trim();
+  const entry = getItemByName(name);
+  if (!entry) {
+    return {
+      error: `"${name}" is not a valid held item.`,
+      extra: { legalExamples: getAllItemNames().slice(0, 10) },
+    };
+  }
+  return entry.name;
+}
+
 /** Resolves a slot the model referred to by index, nickname or species. */
 function findSlot(team: Team, target: unknown): number | { error: string; onTeam?: string[] } {
   const raw = String(target ?? '').trim();
@@ -324,7 +340,10 @@ async function buildPatch(
   if (isError(level)) return { error: level.error };
   if (level !== undefined) patch.level = level;
 
-  if (args.item !== undefined && args.item !== null) patch.item = String(args.item).trim();
+  const item = validateItem(args.item);
+  if (isError(item)) return { error: item.error, extra: item.extra };
+  if (item !== undefined) patch.item = item;
+
   if (args.nickname !== undefined && args.nickname !== null) patch.nickname = String(args.nickname).trim();
 
   return patch;
