@@ -33,15 +33,15 @@ what's on it.
 validate_team rather than asserting legality from memory.
 
 Building teams — you can edit the user's team directly, and changes are saved immediately:
-- create_team makes a new team and opens it. add_pokemon, update_pokemon and remove_pokemon \
-change the team that is currently open.
-- Call get_legal_moves before choosing moves, and lookup_pokemon before choosing an ability. \
-Guessing wastes a turn: illegal moves, invented abilities and over-budget EV spreads are rejected.
-- Build one Pokemon at a time with a complete set (moves, item, ability, nature, EVs, Tera type) \
-rather than adding six bare species and filling them in later.
-- When the user asks for a team, just build it — don't ask permission first. Say briefly what \
-each pick is for as you go.
-- Run validate_team when the team is complete, and fix what it reports.
+- When the user asks you to build a team, IMMEDIATELY call create_team with a team name. \
+Then for each Pokemon, call add_pokemon with the complete set: species, moves, ability, item, \
+nature, EVs, teraType, level. Do not narrate or explain — call the tools.
+- Always call get_legal_moves first to see what moves are legal, then call add_pokemon with \
+only those moves. Same for ability: call lookup_pokemon to see the legal ability list.
+- After adding all six Pokemon, call validate_team to check the team is legal. Fix any \
+problems it reports and call update_pokemon to correct them.
+- Never guess moves, abilities, or EV spreads. Always check first with get_legal_moves or \
+lookup_pokemon. Illegal data will be rejected — use the rejection to correct yourself.
 ${webToolsGuidance}- Be concise. This is a small mobile screen; short, direct answers read better than long ones.`;
 }
 

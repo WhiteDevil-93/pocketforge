@@ -30,6 +30,23 @@ function friendlyToolName(name: string): string {
   return name.replace(/_/g, ' ');
 }
 
+/**
+ * Strip special tokens and internal markers that shouldn't be visible to users.
+ * Models sometimes emit <start_of_turn>, </s>, <|eom_id|>, etc. depending on tokenizer.
+ */
+function stripSpecialTokens(text: string): string {
+  return text
+    .replace(/<start_of_turn>/g, '')
+    .replace(/<\/start_of_turn>/g, '')
+    .replace(/<s>/g, '')
+    .replace(/<\/s>/g, '')
+    .replace(/<\|eom_id\|>/g, '')
+    .replace(/<\|end_header_id\|>/g, '')
+    .replace(/<\|begin_of_text\|>/g, '')
+    .replace(/<pad>/g, '')
+    .trim();
+}
+
 export default function ChatPanel({ isActive = true, className = 'flex-1' }: ChatPanelProps) {
   const settings = useStore((s) => s.settings);
   const teams = useStore((s) => s.teams);
@@ -99,6 +116,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
             userMessage,
           ]
         : [...history, userMessage];
+    // Strip special tokens from any streamed text before storing in history
     setHistory(baseHistory);
 
     const controller = new AbortController();
@@ -107,7 +125,8 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
     const handleEvent = (event: LlmStreamEvent) => {
       if (event.type === 'token') {
         streamingTextRef.current += event.text;
-        setStreamingText((t) => t + event.text);
+        // Display cleaned text (special tokens stripped) but keep raw in ref for end-of-turn save
+        setStreamingText((t) => stripSpecialTokens(t + event.text));
       }
       else if (event.type === 'toolCall') setToolActivity((a) => [...a, event.name]);
       // A user-initiated cancel (closing the sheet, tapping stop) surfaces here as
@@ -131,13 +150,22 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
             signal: controller.signal,
             onEvent: handleEvent,
           });
-      setHistory(updated);
+      // Strip special tokens from final message before storing
+      const cleanedHistory = updated.map((msg) =>
+        msg.role === 'assistant'
+          ? { ...msg, content: stripSpecialTokens(msg.content) }
+          : msg
+      );
+      setHistory(cleanedHistory);
     } catch {
       // Only keep the partial reply when the user actually tapped stop — a real
       // network/tool error already surfaces via the error banner, and appending a
       // truncated assistant message alongside it would be misleading.
       if (controller.signal.aborted && streamingTextRef.current) {
-        setHistory((h) => [...h, { role: 'assistant', content: streamingTextRef.current }]);
+        const cleanedContent = stripSpecialTokens(streamingTextRef.current);
+        if (cleanedContent.trim()) {
+          setHistory((h) => [...h, { role: 'assistant', content: cleanedContent }]);
+        }
       }
     } finally {
       setStreamingText('');
