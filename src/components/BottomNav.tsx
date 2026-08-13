@@ -1,9 +1,9 @@
 // ============================================================================
-// PocketForge — Bottom Navigation (4 tabs)
+// PocketForge — Bottom Navigation
 // ============================================================================
 
 import { Link, useLocation } from 'react-router';
-import { Home, Wrench, BarChart3, Calculator as CalculatorIcon, HeartPulse } from 'lucide-react';
+import { Home, Wrench, BarChart3, Calculator as CalculatorIcon, HeartPulse, Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { springSnappy, springTap } from '../lib/motion';
 import { HOME_PATH, isHomeHubPath } from '../lib/routes';
@@ -14,6 +14,7 @@ const TABS = [
   { path: '/calc', label: 'Calc', icon: CalculatorIcon, match: (path: string) => path === '/calc' || path.startsWith('/calc/') },
   { path: '/nuzlocke', label: 'Nuzlocke', icon: HeartPulse, match: (path: string) => path === '/nuzlocke' || path.startsWith('/nuzlocke/') },
   { path: '/analysis', label: 'Analysis', icon: BarChart3, match: (path: string) => path === '/analysis' || path.startsWith('/analysis/') },
+  { path: '/assistant', label: 'AI', icon: Bot, match: (path: string) => path === '/assistant' },
 ] as const;
 
 const INDICATOR_WIDTH = 48;
@@ -28,7 +29,12 @@ export default function BottomNav() {
       aria-label="Primary navigation"
       className="fixed bottom-0 left-0 right-0 z-50 bg-bg-tertiary/95 backdrop-blur-xl border-t border-border-subtle pb-safe"
     >
-      <div className="relative h-space-16 max-w-lg mx-auto grid grid-cols-5">
+      {/* Columns are driven off TABS so adding a tab can't leave the grid and the
+          active-indicator maths (which already divides by TABS.length) disagreeing. */}
+      <div
+        className="relative h-space-16 max-w-lg mx-auto grid"
+        style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}
+      >
         {activeIndex >= 0 && (
           <motion.div
             className="pointer-events-none absolute top-0 h-0.5 rounded-full bg-accent-primary"

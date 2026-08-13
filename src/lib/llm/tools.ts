@@ -28,6 +28,7 @@ import { explainEVSpread } from '../../utils/evExplainer';
 import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
 import { getDefaultLevelForFormat } from '../format';
 import { getCalcGenForFormat } from '../showdown';
+import { WRITE_TOOLS } from './writeTools';
 import type { ToolContext, ToolDefinition } from './types';
 
 const WEATHERS: Weather[] = ['none', 'sun', 'rain', 'sand', 'snow', 'harsh-sun', 'heavy-rain'];
@@ -555,13 +556,18 @@ export const TOOLS: ToolDefinition[] = [
   },
 ];
 
+/** Read-only tools plus the mutating ones from writeTools.ts. Kept in one
+ *  registry so both backends advertise the same surface — the write tools have
+ *  no API-key or network dependency, so nothing gates them per-backend. */
+export const ALL_TOOLS: ToolDefinition[] = [...TOOLS, ...WRITE_TOOLS];
+
 export function getToolByName(name: string): ToolDefinition | undefined {
-  return TOOLS.find((t) => t.name === name);
+  return ALL_TOOLS.find((t) => t.name === name);
 }
 
 /** Ollama's tool-calling wire format (OpenAI-compatible function schema). */
 export function toOllamaToolSchema() {
-  return TOOLS.map((tool) => ({
+  return ALL_TOOLS.map((tool) => ({
     type: 'function' as const,
     function: {
       name: tool.name,
