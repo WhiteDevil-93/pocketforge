@@ -24,6 +24,7 @@ const Analysis = lazy(() => import('./pages/Analysis'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const CustomFormatsPage = lazy(() => import('./pages/CustomFormatsPage'));
 const WeaknessAnalyzer = lazy(() => import('./pages/WeaknessAnalyzer'));
+const Assistant = lazy(() => import('./pages/Assistant'));
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const hasCompletedOnboarding = useStore((s) => s.settings.hasCompletedOnboarding);
@@ -203,6 +204,14 @@ export default function App() {
             element={
               <OnboardingGuard>
                 <Analysis />
+              </OnboardingGuard>
+            }
+          />
+          <Route
+            path="/assistant"
+            element={
+              <OnboardingGuard>
+                <Assistant />
               </OnboardingGuard>
             }
           />

@@ -23,7 +23,7 @@ import {
   getTeamOffensiveCoverage,
 } from './src/utils/typeChart.ts';
 import { analyzeTeamWeaknesses } from './src/utils/weaknessAnalyzer.ts';
-import { TOOLS, getToolByName, toOllamaToolSchema, toLocalToolSchema } from './src/lib/llm/tools.ts';
+import { TOOLS, ALL_TOOLS, getToolByName, toOllamaToolSchema, toLocalToolSchema } from './src/lib/llm/tools.ts';
 import { buildSystemPrompt, SYSTEM_PROMPT } from './src/lib/llm/systemPrompt.ts';
 import { sendMessage as localSendMessage } from './src/lib/llm/localLlamaCpp.ts';
 import { useStore, mergeStoreState } from './src/store/useStore.ts';
@@ -247,11 +247,14 @@ IVs: 0 Atk
   // Test 9: AI tool registry (Ollama Cloud assistant) — no network involved, this
   // only checks that each tool handler is wired correctly to its underlying util.
   console.log('Testing AI tool registry...');
-  const toolNames = TOOLS.map((t) => t.name);
+  // Uniqueness across read AND write tools: getToolByName resolves against the
+  // combined registry, so a write tool colliding with a read tool name would
+  // silently shadow one of them.
+  const toolNames = ALL_TOOLS.map((t) => t.name);
   assert(new Set(toolNames).size === toolNames.length, 'Tool names must be unique');
 
   const schema = toOllamaToolSchema();
-  assert(schema.length === TOOLS.length, 'Tool schema count must match registry');
+  assert(schema.length === ALL_TOOLS.length, 'Tool schema count must match registry');
   assert(
     schema.every((t) => t.type === 'function' && typeof t.function.name === 'string'),
     'Tool schema must be OpenAI-compatible function entries',
@@ -369,9 +372,94 @@ IVs: 0 Atk
   assert(typeof movesResult.totalMatches === 'number', 'get_legal_moves must report totalMatches');
   assert(typeof movesResult.truncated === 'boolean', 'get_legal_moves must report truncated');
 
-  assert(TOOLS.length === 10, `Expected 10 tools (8 calculators + web_search + web_fetch), got ${TOOLS.length}`);
+  assert(TOOLS.length === 10, `Expected 10 read tools (8 calculators + web_search + web_fetch), got ${TOOLS.length}`);
+  assert(
+    ALL_TOOLS.length === TOOLS.length + 4,
+    `Expected 4 write tools on top of the ${TOOLS.length} read tools, got ${ALL_TOOLS.length - TOOLS.length}`,
+  );
+  for (const name of ['create_team', 'add_pokemon', 'update_pokemon', 'remove_pokemon']) {
+    assert(getToolByName(name), `Write tool ${name} must be in the registry`);
+  }
 
-  console.log(`✅ AI tool registry verified: ${TOOLS.length} tools, schemas valid, calculators wired correctly`);
+  console.log(`✅ AI tool registry verified: ${ALL_TOOLS.length} tools, schemas valid, calculators wired correctly`);
+
+  // Test 9a: write tools — the model can build a team, and CANNOT write anything
+  // the game wouldn't allow. These mutate the real store, so the test cleans up
+  // after itself.
+  console.log('Testing AI write tools (team building)...');
+  const teamsBefore = useStore.getState().teams.length;
+
+  const created = await getToolByName('create_team').handler({ name: 'AI Test Team', format: 'gen9ou' }, {});
+  assert(created.ok && created.created, 'create_team must report success');
+  const newTeamId = created.teamId;
+  assert(useStore.getState().currentTeamId === newTeamId, 'create_team must open the new team');
+
+  const added = await getToolByName('add_pokemon').handler(
+    {
+      species: 'Garchomp',
+      ability: 'Rough Skin',
+      nature: 'Jolly',
+      item: 'Life Orb',
+      moves: ['Earthquake', 'Dragon Claw'],
+      evs: { atk: 252, spe: 252, hp: 4 },
+    },
+    {},
+  );
+  assert(added.ok, `add_pokemon must succeed for a legal set, got: ${added.error}`);
+  const storedMon = useStore.getState().teams.find((t) => t.id === newTeamId).pokemon[0];
+  assert(storedMon.species === 'Garchomp', 'add_pokemon must write the species');
+  assert(storedMon.moves.includes('Earthquake'), 'add_pokemon must write the moves');
+  assert(storedMon.evs.spe === 252 && storedMon.evs.atk === 252, 'add_pokemon must write the EV spread');
+
+  // An illegal move must be refused outright, with a usable correction.
+  const illegal = await getToolByName('add_pokemon').handler(
+    { species: 'Garchomp', moves: ['Psystrike'] },
+    {},
+  );
+  assert(!illegal.ok, 'add_pokemon must reject a move the species cannot learn');
+  assert(Array.isArray(illegal.legalExamples), 'illegal-move rejection must offer legal examples');
+  assert(
+    useStore.getState().teams.find((t) => t.id === newTeamId).pokemon.length === 1,
+    'a rejected add_pokemon must not write anything',
+  );
+
+  // Over-budget EVs must be refused — a silently-invalid team is worse than an error.
+  const overBudget = await getToolByName('add_pokemon').handler(
+    { species: 'Dragonite', evs: { hp: 252, atk: 252, spe: 252 } },
+    {},
+  );
+  assert(!overBudget.ok, 'add_pokemon must reject an EV spread over 508');
+  assert(/508/.test(overBudget.error), 'EV rejection must name the 508 limit');
+
+  // A fabricated ability must be refused, listing the real ones.
+  const badAbility = await getToolByName('add_pokemon').handler(
+    { species: 'Dragonite', ability: 'Wonder Guard' },
+    {},
+  );
+  assert(!badAbility.ok, 'add_pokemon must reject an ability the species cannot have');
+  assert(Array.isArray(badAbility.legal) && badAbility.legal.length > 0, 'ability rejection must list legal abilities');
+
+  const updated = await getToolByName('update_pokemon').handler(
+    { target: 'Garchomp', item: 'Choice Scarf', teraType: 'Steel' },
+    {},
+  );
+  assert(updated.ok, `update_pokemon must succeed, got: ${updated.error}`);
+  const afterUpdate = useStore.getState().teams.find((t) => t.id === newTeamId).pokemon[0];
+  assert(afterUpdate.item === 'Choice Scarf', 'update_pokemon must apply the item');
+  assert(afterUpdate.teraType === 'Steel', 'update_pokemon must apply the Tera type');
+  assert(afterUpdate.moves.includes('Earthquake'), 'update_pokemon must not clobber untouched fields');
+
+  const removed = await getToolByName('remove_pokemon').handler({ target: 'Garchomp' }, {});
+  assert(removed.ok && removed.removed === 'Garchomp', 'remove_pokemon must remove the named Pokemon');
+  assert(
+    useStore.getState().teams.find((t) => t.id === newTeamId).pokemon.length === 0,
+    'remove_pokemon must actually shrink the team',
+  );
+
+  useStore.getState().deleteTeam(newTeamId);
+  assert(useStore.getState().teams.length === teamsBefore, 'write-tool test must clean up its team');
+
+  console.log('✅ AI write tools build teams and refuse illegal moves, abilities, and EV spreads');
 
   // Test 9b: web_search / web_fetch — Ollama's hosted web API, reusing the chat API key.
   // Stubs global.fetch so this stays offline like every other check in this file.
@@ -575,8 +663,8 @@ IVs: 0 Atk
   const localSchema = toLocalToolSchema();
   const localNames = localSchema.map((t) => t.function.name);
   assert(
-    localSchema.length === TOOLS.length - 2,
-    `Local schema must advertise ${TOOLS.length - 2} tools (web tools excluded), got ${localSchema.length}`,
+    localSchema.length === ALL_TOOLS.length - 2,
+    `Local schema must advertise ${ALL_TOOLS.length - 2} tools (web tools excluded), got ${localSchema.length}`,
   );
   assert(!localNames.includes('web_search'), 'Local schema must not advertise web_search');
   assert(!localNames.includes('web_fetch'), 'Local schema must not advertise web_fetch');
@@ -589,6 +677,13 @@ IVs: 0 Atk
     'calculate_damage',
     'lookup_pokemon',
     'get_legal_moves',
+    // The write tools are local-only work (store mutations) with no API key or
+    // network dependency, so the on-device model must get them too — otherwise
+    // it could analyse a team on-device but never build one.
+    'create_team',
+    'add_pokemon',
+    'update_pokemon',
+    'remove_pokemon',
   ]) {
     assert(localNames.includes(name), `Local schema must keep ${name}`);
   }
