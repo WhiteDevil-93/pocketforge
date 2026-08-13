@@ -228,6 +228,25 @@ function validateLevel(level: unknown): number | undefined | { error: string } {
   return n;
 }
 
+function validateIVs(ivs: unknown): Record<string, number> | undefined | { error: string } {
+  if (ivs === undefined) return undefined;
+  if (typeof ivs !== 'object' || ivs === null) {
+    return { error: `ivs must be an object like {hp:31, atk:0, ...}, got ${String(ivs)}.` };
+  }
+
+  const out: Record<string, number> = {};
+  for (const stat of EV_KEYS) {
+    const value = (ivs as Record<string, unknown>)[stat];
+    if (value === undefined) continue;
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 0 || n > 31) {
+      return { error: `IV for ${stat} must be a whole number 0-31, got ${String(value)}.` };
+    }
+    out[stat] = n;
+  }
+  return out;
+}
+
 /** Resolves a slot the model referred to by index, nickname or species. */
 function findSlot(team: Team, target: unknown): number | { error: string; onTeam?: string[] } {
   const raw = String(target ?? '').trim();
@@ -293,6 +312,13 @@ async function buildPatch(
     patch.evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0, ...evs };
   }
 
+  const ivs = validateIVs(args.ivs);
+  if (isError(ivs)) return { error: ivs.error };
+  if (args.ivs !== undefined) {
+    // Spread over a defaulted base (31 IVs): partial IV spread inherits remaining defaults.
+    patch.ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31, ...ivs };
+  }
+
   const level = validateLevel(args.level);
   if (isError(level)) return { error: level.error };
   if (level !== undefined) patch.level = level;
@@ -319,6 +345,10 @@ const POKEMON_FIELDS = {
   evs: {
     type: 'object',
     description: 'EV spread, e.g. {"atk":252,"spe":252,"hp":4}. Max 252 per stat, 508 total.',
+  },
+  ivs: {
+    type: 'object',
+    description: 'IV spread for Trick Room and IV-dependent builds, e.g. {"spe":0,"atk":31}. Each 0-31.',
   },
 } as const;
 
