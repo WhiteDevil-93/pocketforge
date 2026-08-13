@@ -1153,16 +1153,30 @@ export default function SettingsPage() {
   const handleStartServer = useCallback(async () => {
     if (!isNativeApp() || !localModelReady) return;
     const { startServer } = await import('../lib/native/localLlm');
-    const status = await startServer(settings.localModelPath).catch(
-      (): LocalLlmServerStatus => ({ state: 'error', error: 'Failed to start server' })
-    );
-    setServerStatus(status);
+    // Resolves immediately with 'loading'; readiness arrives via the
+    // serverStatusChanged listener. A failure still lands as an error status —
+    // applied directly so an immediate error (permission denied, missing model)
+    // is never silently swallowed.
+    try {
+      const status = await startServer(settings.localModelPath);
+      setServerStatus(status);
+    } catch {
+      // Native call failed entirely — surface a generic error rather than
+      // swallowing it; the next serverStatusChanged event or getServerStatus
+      // snapshot still reports the true state.
+      setServerStatus({ state: 'error', error: 'Failed to start server' });
+    }
   }, [localModelReady, settings.localModelPath]);
 
   const handleStopServer = useCallback(async () => {
     if (!isNativeApp()) return;
     const { stopServer } = await import('../lib/native/localLlm');
-    await stopServer().catch(() => {});
+    try {
+      const status = await stopServer();
+      setServerStatus(status);
+    } catch {
+      // Ignored — the serverStatusChanged event still lands when the service stops.
+    }
   }, []);
 
   const serverStatusLabel = !serverStatus

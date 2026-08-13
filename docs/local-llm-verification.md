@@ -147,6 +147,22 @@ Negative checks:
 5. Without any model imported, the **Start** button must be disabled.
 6. With a model path that no longer exists, `startServer` must resolve an
    `error` status ("Model file not found: …"), not crash.
+7. Recovery from a dead service with stale state: while `loading` (or once
+   `ready`), stop the service out from under the app without killing the
+   process — `adb shell am stopservice com.whitedevil93.pocketforge/.LocalLlmService`.
+   - **Expect:** the status line falls back to `Stopped` (never a stale
+     `Loading model…`/`Ready`), and tapping **Start** again re-attempts the
+     load from scratch — a fresh `Loading model…` → `Ready` cycle.
+8. Restart after failure: trigger any error (step 6 above), then tap **Start**
+   again with a valid model path.
+   - **Expect:** a fresh load attempt; the error never wedges the row.
+9. Permission denial: on Android 13+ revoke/deny notifications
+   (`Settings → Apps → PocketForge → Notifications`), then tap **Start**.
+   - **Expect:** an error status with the retry hint appears in the row (not
+     a silent no-op); after granting, **Start** works normally.
+10. Load watchdog: only trips if a load exceeds 15 minutes
+    (`LocalLlmService.LOAD_WATCHDOG_MS`) — expect an `error` status with
+    "timed out … tap Start to retry" rather than an eternal `Loading model…`.
 
 ---
 
