@@ -416,7 +416,7 @@ class LocalLlmPlugin : Plugin() {
             call.reject("Plugin activity is unavailable")
             return
         }
-        if (LocalLlmService.state != "ready" || LocalLlmService.port == null) {
+        if (LocalLlmService.getStatusSnapshot()["state"] != "ready" || LocalLlmService.port == null) {
             call.reject("Local LLM server is not ready — start it from Settings first")
             return
         }

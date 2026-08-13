@@ -8,7 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import java.io.BufferedReader
@@ -54,29 +56,83 @@ class LocalLlmService : Service() {
         @Volatile var nativeHandle: Long = 0
             private set
 
+        /** True only while a LocalLlmService instance is actually alive (onCreate→onDestroy).
+         *  Distinguishes a genuinely running server from a stale companion state left
+         *  behind when the OS destroyed the service without killing the process. */
+        @Volatile var isServiceRunning: Boolean = false
+            private set
+
+        /** True between start() dispatching the FGS intent and the new instance's onCreate. */
+        @Volatile var startInFlight: Boolean = false
+            private set
+
+        @Volatile private var serviceInstance: LocalLlmService? = null
+
+        /** Model load is multi-minute on device; this is the generous ceiling before
+         *  the watchdog declares the load stuck and hands control back to the UI. */
+        private const val LOAD_WATCHDOG_MS = 15 * 60 * 1000L
+
+        private val loadWatchdog = Handler(Looper.getMainLooper())
+        private val loadWatchdogRunnable = Runnable {
+            if (state != "loading") return@Runnable
+            Log.e(TAG, "load watchdog fired after ${LOAD_WATCHDOG_MS / 60000} min")
+            val instance = serviceInstance
+            if (instance == null || !isServiceRunning) {
+                transition("error", null, "The server stopped while loading the model — tap Start to retry")
+            } else {
+                instance.abortLoad(
+                    "Model load timed out after ${LOAD_WATCHDOG_MS / 60000} minutes — tap Start to retry"
+                )
+            }
+        }
+
         var statusListener: ((String, Int?, String?) -> Unit)? = null
 
         fun getStatusSnapshot(): Map<String, Any?> {
-            val m = mutableMapOf<String, Any?>("state" to state)
-            port?.let { m["port"] = it }
-            error?.let { m["error"] = it }
+            // If the service instance is gone, 'ready'/'loading' are stale: report
+            // 'stopped' so the UI never shows a server that can no longer be reached.
+            val effectiveState =
+                if ((state == "ready" || state == "loading") && !isServiceRunning && !startInFlight) {
+                    "stopped"
+                } else {
+                    state
+                }
+            val m = mutableMapOf<String, Any?>("state" to effectiveState)
+            if (effectiveState != "stopped") {
+                port?.let { m["port"] = it }
+                error?.let { m["error"] = it }
+            }
             return m
         }
 
         fun start(ctx: Context, modelPath: String) {
-            if (state == "ready" || state == "loading") {
-                Log.i(TAG, "already $state, ignoring start")
+            if ((state == "ready" || state == "loading") && isServiceRunning) {
+                Log.i(TAG, "already $state with a live service, ignoring start")
                 return
             }
+            if (state == "ready" || state == "loading") {
+                Log.w(TAG, "stale $state with no live service, resetting before restart")
+                transition("stopped", null, null)
+            }
             transition("loading", null, null)
+            loadWatchdog.removeCallbacksAndMessages(null)
+            loadWatchdog.postDelayed(loadWatchdogRunnable, LOAD_WATCHDOG_MS)
             val intent = Intent(ctx, LocalLlmService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_MODEL_PATH, modelPath)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ctx.startForegroundService(intent)
-            } else {
-                ctx.startService(intent)
+            startInFlight = true
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ctx.startForegroundService(intent)
+                } else {
+                    ctx.startService(intent)
+                }
+            } catch (e: Exception) {
+                // Android 12+ throws ForegroundServiceStartNotAllowedException when the
+                // app is not in the foreground; surface it instead of staying 'loading'.
+                startInFlight = false
+                transition("error", null, "Could not start the LLM server: ${e.message} — keep the app open and tap Start again")
             }
         }
 
@@ -84,7 +140,12 @@ class LocalLlmService : Service() {
             val intent = Intent(ctx, LocalLlmService::class.java).apply {
                 action = ACTION_STOP
             }
-            ctx.startService(intent)
+            try {
+                ctx.startService(intent)
+            } catch (e: Exception) {
+                Log.w(TAG, "stop: could not deliver to service: ${e.message}")
+                if (state != "stopped" && state != "error") transition("stopped", null, null)
+            }
         }
 
         fun transition(newState: String, newPort: Int?, newError: String?) {
@@ -105,6 +166,9 @@ class LocalLlmService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        startInFlight = false
+        isServiceRunning = true
+        serviceInstance = this
         createChannel()
     }
 
@@ -113,7 +177,7 @@ class LocalLlmService : Service() {
             ACTION_START -> handleStart(intent.getStringExtra(EXTRA_MODEL_PATH))
             ACTION_STOP -> handleStop()
             else -> {
-                if (state == "stopped") stopSelf()
+                if (state == "stopped" || state == "error") stopSelf()
             }
         }
         return START_NOT_STICKY
@@ -127,13 +191,21 @@ class LocalLlmService : Service() {
         nativeUnloadModel(nativeHandle)
         nativeFreeModel(nativeHandle)
         nativeHandle = 0
-        transition("stopped", null, null)
+        // Keep an error visible: stopSelf() after a failed load must not erase
+        // the reason the server is down.
+        if (state != "error") transition("stopped", null, null)
+        isServiceRunning = false
+        serviceInstance = null
         super.onDestroy()
     }
 
     private fun handleStart(modelPath: String?) {
-        if (state == "ready") {
+        if (state == "ready" && isServiceRunning) {
             Log.i(TAG, "already ready, ignoring start")
+            return
+        }
+        if (state == "loading" && loadThread?.isAlive == true) {
+            Log.i(TAG, "already loading, ignoring start")
             return
         }
         if (modelPath.isNullOrBlank()) {
@@ -155,7 +227,7 @@ class LocalLlmService : Service() {
                 val chosenPort = findFreePort()
                 Log.i(TAG, "model load starting for $modelPath on port $chosenPort")
                 if (isStopping || Thread.currentThread().isInterrupted) {
-                    transition("stopped", null, null)
+                    if (state != "error") transition("stopped", null, null)
                     stopSelf()
                     return@Thread
                 }
@@ -171,7 +243,7 @@ class LocalLlmService : Service() {
                     nativeUnloadModel(nativeHandle)
                     nativeFreeModel(nativeHandle)
                     nativeHandle = 0
-                    transition("stopped", null, null)
+                    if (state != "error") transition("stopped", null, null)
                     stopSelf()
                     return@Thread
                 }
@@ -181,7 +253,7 @@ class LocalLlmService : Service() {
                     nativeUnloadModel(nativeHandle)
                     nativeFreeModel(nativeHandle)
                     nativeHandle = 0
-                    transition("stopped", null, null)
+                    if (state != "error") transition("stopped", null, null)
                     stopSelf()
                     return@Thread
                 }
@@ -193,7 +265,7 @@ class LocalLlmService : Service() {
                 nativeUnloadModel(nativeHandle)
                 nativeFreeModel(nativeHandle)
                 nativeHandle = 0
-                transition("stopped", null, null)
+                if (state != "error") transition("stopped", null, null)
                 stopSelf()
             } catch (e: Throwable) {
                 Log.e(TAG, "load failed", e)
@@ -228,6 +300,22 @@ class LocalLlmService : Service() {
     private fun interruptLoad() {
         loadThread?.interrupt()
         loadThread = null
+    }
+
+    /** Watchdog path: a load that outlives its generous budget is declared failed,
+     *  the load thread is torn down, and the UI gets a retryable 'error' state. */
+    private fun abortLoad(message: String) {
+        Log.e(TAG, "abortLoad: $message")
+        isStopping = true
+        interruptLoad()
+        stopHttpServer()
+        nativeCancel(nativeHandle)
+        nativeUnloadModel(nativeHandle)
+        nativeFreeModel(nativeHandle)
+        nativeHandle = 0
+        transition("error", null, message)
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun startForegroundWithType() {
