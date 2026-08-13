@@ -31,10 +31,9 @@ function friendlyToolName(name: string): string {
 }
 
 /**
- * Strip special tokens and internal markers that shouldn't be visible to users.
- * Models sometimes emit <start_of_turn>, </s>, <|eom_id|>, etc. depending on tokenizer.
+ * Remove special tokens without trimming — preserves spacing between tokens during streaming.
  */
-function stripSpecialTokens(text: string): string {
+function removeSpecialTokens(text: string): string {
   return text
     .replace(/<start_of_turn>/g, '')
     .replace(/<\/start_of_turn>/g, '')
@@ -43,8 +42,14 @@ function stripSpecialTokens(text: string): string {
     .replace(/<\|eom_id\|>/g, '')
     .replace(/<\|end_header_id\|>/g, '')
     .replace(/<\|begin_of_text\|>/g, '')
-    .replace(/<pad>/g, '')
-    .trim();
+    .replace(/<pad>/g, '');
+}
+
+/**
+ * Final form for stored messages: tokens removed and edges trimmed.
+ */
+function stripSpecialTokens(text: string): string {
+  return removeSpecialTokens(text).trim();
 }
 
 export default function ChatPanel({ isActive = true, className = 'flex-1' }: ChatPanelProps) {

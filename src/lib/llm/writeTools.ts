@@ -411,7 +411,15 @@ export const WRITE_TOOLS: ToolDefinition[] = [
         return fail('No fields to change. Pass at least one of moves, item, ability, nature, teraType, evs, level, nickname.');
       }
 
-      useStore.getState().updatePokemon(team.id, index, patch);
+      // The store may have changed while buildPatch awaited legality data.
+      const fresh = reread(team.id);
+      if (!fresh) return fail('Team disappeared while updating.');
+      const freshIndex = findSlot(fresh, args.target);
+      if (isError(freshIndex)) return fail(freshIndex.error, { onTeam: freshIndex.onTeam });
+      if (fresh.pokemon[freshIndex].species !== current.species) {
+        return fail('The team changed while validating. Read it again and retry.');
+      }
+      useStore.getState().updatePokemon(team.id, freshIndex, patch);
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while updating.');
