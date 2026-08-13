@@ -1151,7 +1151,12 @@ export default function SettingsPage() {
   // Server start/stop are explicit user actions only — the service never boots
   // implicitly from Settings (the chat sheet expects it already running).
   const handleStartServer = useCallback(async () => {
-    if (!isNativeApp() || !localModelReady) return;
+    if (!isNativeApp()) return;
+    if (!localModelReady) {
+      setExportMessage('Import a GGUF model first');
+      setTimeout(() => setExportMessage(''), 3000);
+      return;
+    }
     const { startServer } = await import('../lib/native/localLlm');
     // Resolves immediately with 'loading'; readiness arrives via the
     // serverStatusChanged listener. A failure still lands as an error status —
@@ -1160,13 +1165,16 @@ export default function SettingsPage() {
     try {
       const status = await startServer(settings.localModelPath);
       setServerStatus(status);
-    } catch {
-      // Native call failed entirely — surface a generic error rather than
+    } catch (e) {
+      // Native call failed entirely — surface the rejection reason rather than
       // swallowing it; the next serverStatusChanged event or getServerStatus
       // snapshot still reports the true state.
-      setServerStatus({ state: 'error', error: 'Failed to start server' });
+      setServerStatus({
+        state: 'error',
+        error: e instanceof Error ? e.message : 'Failed to start server',
+      });
     }
-  }, [localModelReady, settings.localModelPath]);
+  }, [localModelReady, setExportMessage, settings.localModelPath]);
 
   const handleStopServer = useCallback(async () => {
     if (!isNativeApp()) return;
@@ -1469,11 +1477,10 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={handleStartServer}
-                      disabled={!localModelReady}
                       className={`h-8 px-3 rounded-full text-[11px] font-medium border transition-colors touch-target ${
                         localModelReady
                           ? 'border-accent-primary/50 text-accent-primary bg-accent-primary/10'
-                          : 'border-border-subtle text-text-tertiary cursor-not-allowed'
+                          : 'border-border-subtle text-text-tertiary'
                       }`}
                     >
                       Start

@@ -68,6 +68,12 @@ class LocalLlmService : Service() {
 
         @Volatile private var serviceInstance: LocalLlmService? = null
 
+        /** Single source of truth for "is a model load actually in progress":
+         *  the 'loading' state only blocks a restart while the live service
+         *  instance still owns an alive load thread. */
+        fun isLoadInProgress(): Boolean =
+            isServiceRunning && (serviceInstance?.loadThread?.isAlive == true)
+
         /** Model load is multi-minute on device; this is the generous ceiling before
          *  the watchdog declares the load stuck and hands control back to the UI. */
         private const val LOAD_WATCHDOG_MS = 15 * 60 * 1000L
@@ -106,12 +112,16 @@ class LocalLlmService : Service() {
         }
 
         fun start(ctx: Context, modelPath: String) {
-            if ((state == "ready" || state == "loading") && isServiceRunning) {
-                Log.i(TAG, "already $state with a live service, ignoring start")
+            if (state == "ready" && isServiceRunning) {
+                Log.i(TAG, "already ready with a live service, ignoring start")
+                return
+            }
+            if (state == "loading" && isLoadInProgress()) {
+                Log.i(TAG, "already loading with a live load thread, ignoring start")
                 return
             }
             if (state == "ready" || state == "loading") {
-                Log.w(TAG, "stale $state with no live service, resetting before restart")
+                Log.w(TAG, "stale $state with no live load, resetting before restart")
                 transition("stopped", null, null)
             }
             transition("loading", null, null)
@@ -204,7 +214,7 @@ class LocalLlmService : Service() {
             Log.i(TAG, "already ready, ignoring start")
             return
         }
-        if (state == "loading" && loadThread?.isAlive == true) {
+        if (state == "loading" && isLoadInProgress()) {
             Log.i(TAG, "already loading, ignoring start")
             return
         }

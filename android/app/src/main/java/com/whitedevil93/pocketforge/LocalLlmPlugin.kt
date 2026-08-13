@@ -3,6 +3,7 @@ package com.whitedevil93.pocketforge
 import android.Manifest
 import android.app.Activity
 import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -10,6 +11,8 @@ import android.os.Build
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -301,6 +304,21 @@ class LocalLlmPlugin : Plugin() {
     // polling convey readiness.
     // ------------------------------------------------------------------
 
+    private fun statusToJSObject(snapshot: Map<String, Any?>): JSObject {
+        return JSObject().apply {
+            put("state", snapshot["state"] as? String ?: "stopped")
+            (snapshot["port"] as? Int)?.let { put("port", it) }
+            (snapshot["error"] as? String)?.let { put("error", it) }
+        }
+    }
+
+    /** POST_NOTIFICATIONS permission launcher, registered in [load] via the bridge
+     *  so the start continuation fires automatically once the user answers. */
+    private var notificationPermissionLauncher: ActivityResultLauncher<Array<String>>? = null
+
+    /** The startServer call awaiting the POST_NOTIFICATIONS dialog result. */
+    private var pendingStartServerCall: PluginCall? = null
+
     override fun load() {
         super.load()
         LocalLlmService.statusListener = { state, port, error ->
@@ -311,21 +329,23 @@ class LocalLlmPlugin : Plugin() {
             }
             notifyListeners("serverStatusChanged", data)
         }
-    }
-
-    private fun statusToJSObject(snapshot: Map<String, Any?>): JSObject {
-        return JSObject().apply {
-            put("state", snapshot["state"] as? String ?: "stopped")
-            (snapshot["port"] as? Int)?.let { put("port", it) }
-            (snapshot["error"] as? String)?.let { put("error", it) }
-        }
+        notificationPermissionLauncher = bridge.registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions -> onNotificationPermissionResult(permissions) }
     }
 
     @PluginMethod
     fun startServer(call: PluginCall) {
+        Log.i(TAG, "startServer: entry modelPath=${call.getString("modelPath")}")
         val ctx = context
         if (ctx == null) {
+            Log.e(TAG, "startServer: plugin context unavailable")
             call.reject("Plugin context unavailable")
+            return
+        }
+        if (getActivity() == null) {
+            Log.e(TAG, "startServer: plugin activity unavailable")
+            call.reject("Plugin activity is unavailable — reopen the app and tap Start again")
             return
         }
         // Android 13+ requires POST_NOTIFICATIONS at runtime. On Android 15+ with
@@ -334,29 +354,66 @@ class LocalLlmPlugin : Plugin() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    activity,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    0
-                )
-                call.resolve(JSObject().apply {
-                    put("state", "error")
-                    put("error", "Notification permission required — please grant it and tap Start again")
-                })
+                Log.i(TAG, "startServer: POST_NOTIFICATIONS not granted, requesting it")
+                if (pendingStartServerCall != null) {
+                    Log.w(TAG, "startServer: permission request already in progress")
+                    call.reject("Notification permission request already in progress")
+                    return
+                }
+                val launcher = notificationPermissionLauncher
+                if (launcher == null) {
+                    Log.e(TAG, "startServer: permission launcher unavailable")
+                    call.reject("Notification permission launcher is unavailable — restart the app and try again")
+                    return
+                }
+                pendingStartServerCall = call
+                try {
+                    launcher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+                } catch (e: Exception) {
+                    pendingStartServerCall = null
+                    Log.e(TAG, "startServer: permission request launch failed", e)
+                    call.reject("Could not request the notification permission: ${e.message}")
+                }
                 return
             }
+            Log.i(TAG, "startServer: POST_NOTIFICATIONS already granted")
         }
+        dispatchStart(call, ctx)
+    }
+
+    private fun onNotificationPermissionResult(permissions: Map<String, Boolean>) {
+        val call = pendingStartServerCall
+        pendingStartServerCall = null
+        if (call == null) {
+            Log.w(TAG, "startServer: permission result with no pending start call")
+            return
+        }
+        if (permissions[Manifest.permission.POST_NOTIFICATIONS] == true) {
+            Log.i(TAG, "startServer: POST_NOTIFICATIONS granted, continuing start")
+            dispatchStart(call)
+        } else {
+            Log.w(TAG, "startServer: POST_NOTIFICATIONS denied")
+            call.resolve(JSObject().apply {
+                put("state", "error")
+                put("error", "Notification permission denied — grant it in Android settings and tap Start again")
+            })
+        }
+    }
+
+    private fun dispatchStart(call: PluginCall, ctx: Context) {
         var modelPath = call.getString("modelPath")
         if (modelPath.isNullOrBlank()) {
             val filesDir = ctx.filesDir
             val discovered = filesDir.listFiles()?.firstOrNull { it.name.endsWith(".gguf", ignoreCase = true) }
             if (discovered != null) modelPath = discovered.absolutePath
         }
+        Log.i(TAG, "startServer: resolved modelPath=$modelPath")
         if (modelPath.isNullOrBlank()) {
             val err = JSObject().apply {
                 put("state", "error")
                 put("error", "No model imported — modelPath is required and no .gguf found in app storage")
             }
+            Log.w(TAG, "startServer: no model available")
             call.resolve(err)
             return
         }
@@ -366,9 +423,11 @@ class LocalLlmPlugin : Plugin() {
                 put("state", "error")
                 put("error", "Model file not found: $modelPath")
             }
+            Log.w(TAG, "startServer: model file missing: $modelPath")
             call.resolve(err)
             return
         }
+        Log.i(TAG, "startServer: dispatching LocalLlmService.start for $modelPath")
         LocalLlmService.statusListener = { state, port, error ->
             val data = JSObject().apply {
                 put("state", state)
@@ -379,6 +438,7 @@ class LocalLlmPlugin : Plugin() {
         }
         LocalLlmService.start(ctx, modelPath)
         val snapshot = LocalLlmService.getStatusSnapshot()
+        Log.i(TAG, "startServer: resolved state=${snapshot["state"]} error=${snapshot["error"]}")
         call.resolve(statusToJSObject(snapshot))
     }
 
