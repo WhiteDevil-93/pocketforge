@@ -17,7 +17,9 @@ import { toOllamaToolSchema } from './tools';
 import { runToolCall } from './toolRunner';
 
 const CHAT_URL = 'https://ollama.com/api/chat';
-const MAX_TOOL_ITERATIONS = 5;
+// Allow enough iterations for prescribed workflow: create_team, 6 members with
+// get_legal_moves/lookup_pokemon/add_pokemon per member, validate_team, and corrections
+const MAX_TOOL_ITERATIONS = 20;
 // Overall ceiling for one sendMessage call, covering every streamed reply and tool
 // round trip together — protects against Ollama Cloud accepting the request and then
 // stalling before the first chunk, which would otherwise hang the chat forever.

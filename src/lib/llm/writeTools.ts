@@ -16,10 +16,11 @@
 import { useStore } from '../../store/useStore';
 import { getAllNatureNames } from '../../data/naturesData';
 import { TYPE_NAMES } from '../../data/typesData';
-import { getChampionsMovesForSpecies, isChampionsFormatId, isEligibleForChampionsFormat } from '../../data/championsLegality';
+import { getChampionsMovesForSpecies, isChampionsFormatId, isEligibleForChampionsFormat, isChampionsItemLegal } from '../../data/championsLegality';
 import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
 import { getItemByName, getAllItemNames } from '../../data/itemsData';
 import { getCalcGenForFormat } from '../showdown';
+import { formatSupportsTera } from '../../data/formatsData';
 import { MAX_TOTAL_EVS, MAX_STAT_EVS } from '../../utils/statCalc';
 import type { EVs, Pokemon, Team } from '../../types';
 import type { ToolDefinition } from './types';
@@ -260,14 +261,18 @@ function validateLevel(level: unknown): number | undefined | { error: string } {
 
 function validateIVs(ivs: unknown): Record<string, number> | undefined | { error: string } {
   if (ivs === undefined) return undefined;
-  if (typeof ivs !== 'object' || ivs === null) {
+  if (typeof ivs !== 'object' || ivs === null || Array.isArray(ivs)) {
     return { error: `ivs must be an object like {hp:31, atk:0, ...}, got ${String(ivs)}.` };
   }
 
   const out: Record<string, number> = {};
-  for (const stat of EV_KEYS) {
-    const value = (ivs as Record<string, unknown>)[stat];
-    if (value === undefined) continue;
+  const input = ivs as Record<string, unknown>;
+
+  for (const [key, value] of Object.entries(input)) {
+    const stat = EV_KEYS.find((k) => k === key.toLowerCase());
+    if (!stat) {
+      return { error: `"${key}" is not an IV stat. Use ${EV_KEYS.join(', ')}.` };
+    }
     const n = Number(value);
     if (!Number.isInteger(n) || n < 0 || n > 31) {
       return { error: `IV for ${stat} must be a whole number 0-31, got ${String(value)}.` };
@@ -347,6 +352,11 @@ async function buildPatch(
 
   const teraType = validateTeraType(args.teraType);
   if (isError(teraType)) return { error: teraType.error, extra: { legal: teraType.legal } };
+  if (teraType && !formatSupportsTera(format ?? '', useStore.getState().customFormats)) {
+    return {
+      error: `Terastallization is not permitted in this format (${format}). Remove the teraType.`,
+    };
+  }
   if (teraType) patch.teraType = teraType;
 
   const evs = validateEvs(args.evs);
@@ -370,6 +380,12 @@ async function buildPatch(
 
   const item = validateItem(args.item);
   if (isError(item)) return { error: item.error, extra: item.extra };
+  if (item && isChampionsFormatId(format ?? '') && !isChampionsItemLegal(item)) {
+    return {
+      error: `"${item}" is not permitted in this Champions regulation. Choose another item.`,
+      extra: { legalExamples: getAllItemNames().slice(0, 10) },
+    };
+  }
   if (item !== undefined) patch.item = item;
 
   if (args.nickname !== undefined && args.nickname !== null) patch.nickname = String(args.nickname).trim();
@@ -444,7 +460,7 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: async (args) => {
+    handler: async (args, ctx) => {
       const team = activeTeam();
       if (isError(team)) return fail(team.error);
       if (team.pokemon.length >= MAX_TEAM_SIZE) {
@@ -462,9 +478,12 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       const patch = await buildPatch(args, entry.name, team.format);
       if (isError(patch)) return fail(patch.error, patch.extra);
 
+      // Stop before mutating if the user cancelled this request
+      if (ctx.signal?.aborted) return fail('Request was cancelled.');
+
       useStore.getState().addPokemon(team.id, { species: entry.name, ...patch });
-      // Clear stale validation errors so they don't linger until the effect re-runs
-      useStore.getState().updateTeam(team.id, { validationErrors: [] });
+      // Clear errors and mark team as invalid (needs revalidation)
+      useStore.getState().updateTeam(team.id, { validationErrors: [], isValid: false });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while adding.');
@@ -492,7 +511,7 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       },
       required: ['target'],
     },
-    handler: async (args) => {
+    handler: async (args, ctx) => {
       const team = activeTeam();
       if (isError(team)) return fail(team.error);
 
@@ -506,6 +525,9 @@ export const WRITE_TOOLS: ToolDefinition[] = [
         return fail('No fields to change. Pass at least one of moves, item, ability, nature, teraType, evs, level, nickname.');
       }
 
+      // Stop before mutating if the user cancelled this request
+      if (ctx.signal?.aborted) return fail('Request was cancelled.');
+
       // The store may have changed while buildPatch awaited legality data.
       const fresh = reread(team.id);
       if (!fresh) return fail('Team disappeared while updating.');
@@ -515,8 +537,8 @@ export const WRITE_TOOLS: ToolDefinition[] = [
         return fail('The team changed while validating. Read it again and retry.');
       }
       useStore.getState().updatePokemon(team.id, freshIndex, patch);
-      // Clear stale validation errors so they don't linger until the effect re-runs
-      useStore.getState().updateTeam(team.id, { validationErrors: [] });
+      // Clear errors and mark team as invalid (needs revalidation)
+      useStore.getState().updateTeam(team.id, { validationErrors: [], isValid: false });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while updating.');
@@ -547,8 +569,8 @@ export const WRITE_TOOLS: ToolDefinition[] = [
 
       const removed = team.pokemon[index].species;
       useStore.getState().removePokemon(team.id, index);
-      // Clear stale validation errors so they don't linger until the effect re-runs
-      useStore.getState().updateTeam(team.id, { validationErrors: [] });
+      // Clear errors and mark team as invalid (needs revalidation)
+      useStore.getState().updateTeam(team.id, { validationErrors: [], isValid: false });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while removing.');
