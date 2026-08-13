@@ -1,12 +1,16 @@
 package com.whitedevil93.pocketforge
 
+import android.Manifest
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.result.ActivityResult
+import androidx.core.app.ActivityCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -323,6 +327,24 @@ class LocalLlmPlugin : Plugin() {
         if (ctx == null) {
             call.reject("Plugin context unavailable")
             return
+        }
+        // Android 13+ requires POST_NOTIFICATIONS at runtime. On Android 15+ with
+        // targetSdk >= 35, the OS kills a foreground service immediately if its
+        // notification can't be shown — so we must have the permission before starting.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    0
+                )
+                call.resolve(JSObject().apply {
+                    put("state", "error")
+                    put("error", "Notification permission required — please grant it and tap Start again")
+                })
+                return
+            }
         }
         var modelPath = call.getString("modelPath")
         if (modelPath.isNullOrBlank()) {
