@@ -125,8 +125,10 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
     const handleEvent = (event: LlmStreamEvent) => {
       if (event.type === 'token') {
         streamingTextRef.current += event.text;
-        // Display cleaned text (special tokens stripped) but keep raw in ref for end-of-turn save
-        setStreamingText((t) => stripSpecialTokens(t + event.text));
+        // Accumulate raw (don't trim during streaming, which would collapse spaces between tokens)
+        // Strip tokens only when displaying or saving to history
+        const cleaned = stripSpecialTokens(streamingTextRef.current);
+        setStreamingText(cleaned);
       }
       else if (event.type === 'toolCall') setToolActivity((a) => [...a, event.name]);
       // A user-initiated cancel (closing the sheet, tapping stop) surfaces here as

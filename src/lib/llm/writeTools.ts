@@ -218,7 +218,7 @@ function validateLevel(level: unknown): number | undefined | { error: string } {
 }
 
 /** Resolves a slot the model referred to by index, nickname or species. */
-function findSlot(team: Team, target: unknown): number | { error: string } {
+function findSlot(team: Team, target: unknown): number | { error: string; onTeam?: string[] } {
   const raw = String(target ?? '').trim();
   if (!raw) return { error: 'target is required (slot index, nickname, or species).' };
 
@@ -238,8 +238,8 @@ function findSlot(team: Team, target: unknown): number | { error: string } {
 
   return {
     error: `No Pokemon matching "${raw}" on this team.`,
-    ...{ onTeam: team.pokemon.map((p) => p.species) },
-  } as { error: string };
+    onTeam: team.pokemon.map((p) => p.species),
+  };
 }
 
 /**
@@ -286,8 +286,8 @@ async function buildPatch(
   if (isError(level)) return { error: level.error };
   if (level !== undefined) patch.level = level;
 
-  if (args.item !== undefined) patch.item = String(args.item).trim();
-  if (args.nickname !== undefined) patch.nickname = String(args.nickname).trim();
+  if (args.item !== undefined && args.item !== null) patch.item = String(args.item).trim();
+  if (args.nickname !== undefined && args.nickname !== null) patch.nickname = String(args.nickname).trim();
 
   return patch;
 }
@@ -402,7 +402,7 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       if (isError(team)) return fail(team.error);
 
       const index = findSlot(team, args.target);
-      if (isError(index)) return fail(index.error);
+      if (isError(index)) return fail(index.error, { onTeam: index.onTeam });
 
       const current = team.pokemon[index];
       const patch = await buildPatch(args, current.species, team.format);
@@ -438,7 +438,7 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       if (isError(team)) return fail(team.error);
 
       const index = findSlot(team, args.target);
-      if (isError(index)) return fail(index.error);
+      if (isError(index)) return fail(index.error, { onTeam: index.onTeam });
 
       const removed = team.pokemon[index].species;
       useStore.getState().removePokemon(team.id, index);
