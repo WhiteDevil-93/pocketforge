@@ -385,6 +385,8 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       if (isError(patch)) return fail(patch.error, patch.extra);
 
       useStore.getState().addPokemon(team.id, { species: entry.name, ...patch });
+      // Clear stale validation errors so they don't linger until the effect re-runs
+      useStore.getState().updateTeam(team.id, { validationErrors: [] });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while adding.');
@@ -435,6 +437,8 @@ export const WRITE_TOOLS: ToolDefinition[] = [
         return fail('The team changed while validating. Read it again and retry.');
       }
       useStore.getState().updatePokemon(team.id, freshIndex, patch);
+      // Clear stale validation errors so they don't linger until the effect re-runs
+      useStore.getState().updateTeam(team.id, { validationErrors: [] });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while updating.');
@@ -465,6 +469,8 @@ export const WRITE_TOOLS: ToolDefinition[] = [
 
       const removed = team.pokemon[index].species;
       useStore.getState().removePokemon(team.id, index);
+      // Clear stale validation errors so they don't linger until the effect re-runs
+      useStore.getState().updateTeam(team.id, { validationErrors: [] });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while removing.');
