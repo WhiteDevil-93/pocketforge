@@ -390,7 +390,16 @@ class LocalLlmPlugin : Plugin() {
         }
         if (permissions[Manifest.permission.POST_NOTIFICATIONS] == true) {
             Log.i(TAG, "startServer: POST_NOTIFICATIONS granted, continuing start")
-            dispatchStart(call)
+            // Re-read the context rather than reusing startServer()'s: this runs
+            // after a trip through the system permission dialog, by which point
+            // the plugin may have been detached from its Activity.
+            val ctx = context
+            if (ctx == null) {
+                Log.e(TAG, "startServer: plugin context unavailable after permission grant")
+                call.reject("Plugin context unavailable — reopen the app and tap Start again")
+                return
+            }
+            dispatchStart(call, ctx)
         } else {
             Log.w(TAG, "startServer: POST_NOTIFICATIONS denied")
             call.resolve(JSObject().apply {
