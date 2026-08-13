@@ -16,15 +16,18 @@
 import { useStore } from '../../store/useStore';
 import { getAllNatureNames } from '../../data/naturesData';
 import { TYPE_NAMES } from '../../data/typesData';
-import { getChampionsMovesForSpecies, isChampionsFormatId, isEligibleForChampionsFormat } from '../../data/championsLegality';
+import { getChampionsMovesForSpecies, isChampionsFormatId, isEligibleForChampionsFormat, isChampionsItemLegal } from '../../data/championsLegality';
 import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
+import { getItemByName, getAllItemNames } from '../../data/itemsData';
 import { getCalcGenForFormat } from '../showdown';
+import { formatSupportsTera } from '../../data/formatsData';
+import { MAX_TOTAL_EVS, MAX_STAT_EVS } from '../../utils/statCalc';
 import type { EVs, Pokemon, Team } from '../../types';
 import type { ToolDefinition } from './types';
 
-/** Per-stat EV ceiling and the total budget, matching validation.ts. */
-const MAX_EV_PER_STAT = 252;
-const MAX_EV_TOTAL = 508;
+/** Per-stat EV ceiling matches statCalc. */
+const MAX_EV_PER_STAT = MAX_STAT_EVS;
+const MAX_EV_TOTAL = MAX_TOTAL_EVS;
 const MAX_TEAM_SIZE = 6;
 const MAX_MOVES = 4;
 
@@ -58,6 +61,34 @@ function getGenForFormat(formatId: string | undefined): number {
     return customFormat?.generation ?? 9;
   }
   return getCalcGenForFormat(formatId);
+}
+
+/**
+ * Check if a species (potentially a form) is eligible for Champions.
+ * If the form itself isn't eligible, try the base form (e.g., Gourgeist-Super → Gourgeist).
+ */
+function isChampionsEligible(species: string, formatId: string): boolean {
+  if (isEligibleForChampionsFormat(species, formatId)) return true;
+  // Try base form if this is a form (has a dash)
+  if (species.includes('-')) {
+    const base = species.split('-')[0];
+    return isEligibleForChampionsFormat(base, formatId);
+  }
+  return false;
+}
+
+/**
+ * Get Champions moves for a species, falling back to base form if needed.
+ * For forms like Gourgeist-Super, use Gourgeist's movepool if Super isn't defined.
+ */
+function getChampionsMovesWithFallback(species: string): string[] {
+  let moves = getChampionsMovesForSpecies(species);
+  // If no moves found and this is a form, try the base form
+  if (moves.length === 0 && species.includes('-')) {
+    const base = species.split('-')[0];
+    moves = getChampionsMovesForSpecies(base);
+  }
+  return moves;
 }
 
 function isError(value: unknown): value is { error: string } {
@@ -121,7 +152,7 @@ async function validateMoves(
   const pool = await getMovepoolForSpecies(species, gen);
   const scoped = isChampionsFormatId(format ?? '')
     ? (() => {
-        const legal = new Set(getChampionsMovesForSpecies(species).map((m) => m.toLowerCase()));
+        const legal = new Set(getChampionsMovesWithFallback(species).map((m) => m.toLowerCase()));
         return pool.filter((m) => legal.has(m.name.toLowerCase()));
       })()
     : pool;
@@ -228,6 +259,44 @@ function validateLevel(level: unknown): number | undefined | { error: string } {
   return n;
 }
 
+function validateIVs(ivs: unknown): Record<string, number> | undefined | { error: string } {
+  if (ivs === undefined) return undefined;
+  if (typeof ivs !== 'object' || ivs === null || Array.isArray(ivs)) {
+    return { error: `ivs must be an object like {hp:31, atk:0, ...}, got ${String(ivs)}.` };
+  }
+
+  const out: Record<string, number> = {};
+  const input = ivs as Record<string, unknown>;
+
+  for (const [key, value] of Object.entries(input)) {
+    const stat = EV_KEYS.find((k) => k === key.toLowerCase());
+    if (!stat) {
+      return { error: `"${key}" is not an IV stat. Use ${EV_KEYS.join(', ')}.` };
+    }
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 0 || n > 31) {
+      return { error: `IV for ${stat} must be a whole number 0-31, got ${String(value)}.` };
+    }
+    out[stat] = n;
+  }
+  return out;
+}
+
+function validateItem(itemName: unknown): string | undefined | { error: string; extra?: Record<string, unknown> } {
+  if (itemName === undefined || itemName === null || (typeof itemName === 'string' && !itemName.trim())) {
+    return undefined;
+  }
+  const name = String(itemName).trim();
+  const entry = getItemByName(name);
+  if (!entry) {
+    return {
+      error: `"${name}" is not a valid held item.`,
+      extra: { legalExamples: getAllItemNames().slice(0, 10) },
+    };
+  }
+  return entry.name;
+}
+
 /** Resolves a slot the model referred to by index, nickname or species. */
 function findSlot(team: Team, target: unknown): number | { error: string; onTeam?: string[] } {
   const raw = String(target ?? '').trim();
@@ -283,6 +352,11 @@ async function buildPatch(
 
   const teraType = validateTeraType(args.teraType);
   if (isError(teraType)) return { error: teraType.error, extra: { legal: teraType.legal } };
+  if (teraType && !formatSupportsTera(format ?? '', useStore.getState().customFormats)) {
+    return {
+      error: `Terastallization is not permitted in this format (${format}). Remove the teraType.`,
+    };
+  }
   if (teraType) patch.teraType = teraType;
 
   const evs = validateEvs(args.evs);
@@ -293,11 +367,27 @@ async function buildPatch(
     patch.evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0, ...evs };
   }
 
+  const ivs = validateIVs(args.ivs);
+  if (isError(ivs)) return { error: ivs.error };
+  if (args.ivs !== undefined) {
+    // Spread over a defaulted base (31 IVs): partial IV spread inherits remaining defaults.
+    patch.ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31, ...ivs };
+  }
+
   const level = validateLevel(args.level);
   if (isError(level)) return { error: level.error };
   if (level !== undefined) patch.level = level;
 
-  if (args.item !== undefined && args.item !== null) patch.item = String(args.item).trim();
+  const item = validateItem(args.item);
+  if (isError(item)) return { error: item.error, extra: item.extra };
+  if (item && isChampionsFormatId(format ?? '') && !isChampionsItemLegal(item)) {
+    return {
+      error: `"${item}" is not permitted in this Champions regulation. Choose another item.`,
+      extra: { legalExamples: getAllItemNames().slice(0, 10) },
+    };
+  }
+  if (item !== undefined) patch.item = item;
+
   if (args.nickname !== undefined && args.nickname !== null) patch.nickname = String(args.nickname).trim();
 
   return patch;
@@ -318,7 +408,11 @@ const POKEMON_FIELDS = {
   },
   evs: {
     type: 'object',
-    description: 'EV spread, e.g. {"atk":252,"spe":252,"hp":4}. Max 252 per stat, 508 total.',
+    description: 'EV spread, e.g. {"atk":252,"spe":252,"hp":4}. Max 252 per stat, 510 total.',
+  },
+  ivs: {
+    type: 'object',
+    description: 'IV spread for Trick Room and IV-dependent builds, e.g. {"spe":0,"atk":31}. Each 0-31.',
   },
 } as const;
 
@@ -366,7 +460,7 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: async (args) => {
+    handler: async (args, ctx) => {
       const team = activeTeam();
       if (isError(team)) return fail(team.error);
       if (team.pokemon.length >= MAX_TEAM_SIZE) {
@@ -377,14 +471,19 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       const entry = resolveSpecies(args.species, gen);
       if (isError(entry)) return fail(entry.error);
 
-      if (isChampionsFormatId(team.format) && !isEligibleForChampionsFormat(entry.name, team.format)) {
+      if (isChampionsFormatId(team.format) && !isChampionsEligible(entry.name, team.format)) {
         return fail(`"${entry.name}" is not in the Champions roster for this regulation.`);
       }
 
       const patch = await buildPatch(args, entry.name, team.format);
       if (isError(patch)) return fail(patch.error, patch.extra);
 
+      // Stop before mutating if the user cancelled this request
+      if (ctx.signal?.aborted) return fail('Request was cancelled.');
+
       useStore.getState().addPokemon(team.id, { species: entry.name, ...patch });
+      // Clear errors and mark team as invalid (needs revalidation)
+      useStore.getState().updateTeam(team.id, { validationErrors: [], isValid: false });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while adding.');
@@ -412,7 +511,7 @@ export const WRITE_TOOLS: ToolDefinition[] = [
       },
       required: ['target'],
     },
-    handler: async (args) => {
+    handler: async (args, ctx) => {
       const team = activeTeam();
       if (isError(team)) return fail(team.error);
 
@@ -426,6 +525,9 @@ export const WRITE_TOOLS: ToolDefinition[] = [
         return fail('No fields to change. Pass at least one of moves, item, ability, nature, teraType, evs, level, nickname.');
       }
 
+      // Stop before mutating if the user cancelled this request
+      if (ctx.signal?.aborted) return fail('Request was cancelled.');
+
       // The store may have changed while buildPatch awaited legality data.
       const fresh = reread(team.id);
       if (!fresh) return fail('Team disappeared while updating.');
@@ -435,6 +537,8 @@ export const WRITE_TOOLS: ToolDefinition[] = [
         return fail('The team changed while validating. Read it again and retry.');
       }
       useStore.getState().updatePokemon(team.id, freshIndex, patch);
+      // Clear errors and mark team as invalid (needs revalidation)
+      useStore.getState().updateTeam(team.id, { validationErrors: [], isValid: false });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while updating.');
@@ -465,6 +569,8 @@ export const WRITE_TOOLS: ToolDefinition[] = [
 
       const removed = team.pokemon[index].species;
       useStore.getState().removePokemon(team.id, index);
+      // Clear errors and mark team as invalid (needs revalidation)
+      useStore.getState().updateTeam(team.id, { validationErrors: [], isValid: false });
 
       const after = reread(team.id);
       if (!after) return fail('Team disappeared while removing.');

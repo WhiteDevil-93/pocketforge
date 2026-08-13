@@ -1,37 +1,50 @@
 // ============================================================================
 // PocketForge — Champions Regulation legality helpers
 // ============================================================================
-// Generated rosters/banlists are refreshed by scripts/update-from-showdown.mjs
+// Uses OTA-fetched regulation data (with bundled fallback)
 
-import { CHAMPIONS_MA_ROSTER, CHAMPIONS_MB_ROSTER } from './championsRoster';
-import { CHAMPIONS_BANNED_ITEMS } from './championsBannedItems';
-import { CHAMPIONS_BANNED_MOVES } from './championsBannedMoves';
-import { CHAMPIONS_LEARNSETS } from './championsLearnsets';
+import { getRegulationRoster, getRegulationBannedMoves, getRegulationBannedItems, getRegulationLearnset } from '../lib/regulations/regulationsRuntime';
 import { CHAMPIONS_META } from './championsMeta';
 import { getItemByName } from './itemsData';
 import { getMoveByName } from './movesData';
 
 export { CHAMPIONS_META };
-export { CHAMPIONS_MB_ROSTER };
+
+// Cached Sets for fast lookups — rebuilt when data loads
+let maRosterSet = new Set<string>();
+let mbRosterSet = new Set<string>();
+let bannedItemSet = new Set<string>();
+let bannedMoveSet = new Set<string>();
+
+/** Update cached Sets from runtime regulation data. */
+function updateRegulationSets(): void {
+  const maRoster = getRegulationRoster('champions-ma');
+  const mbRoster = getRegulationRoster('champions-mb');
+  const bannedItems = getRegulationBannedItems('champions-mb');
+  const bannedMoves = getRegulationBannedMoves('champions-mb');
+
+  maRosterSet = new Set(maRoster.map(normalizeSlug));
+  mbRosterSet = new Set(mbRoster.map(normalizeSlug));
+  bannedItemSet = new Set(bannedItems);
+  bannedMoveSet = new Set(bannedMoves);
+}
+
+// Initialize with bundled data on first load
+updateRegulationSets();
 
 /** Normalize species / item / move names to PS-style slugs. */
 export function normalizeSlug(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, '').replace(/-/g, '').replace(/[^a-z0-9]/g, '');
 }
 
-const MA_ROSTER_SET = new Set(CHAMPIONS_MA_ROSTER.map(normalizeSlug));
-const MB_ROSTER_SET = new Set(CHAMPIONS_MB_ROSTER.map(normalizeSlug));
-const BANNED_ITEM_SET = new Set(CHAMPIONS_BANNED_ITEMS);
-const BANNED_MOVE_SET = new Set(CHAMPIONS_BANNED_MOVES);
-
 export function isEligibleForChampionsMA(species: string): boolean {
   if (!species) return false;
-  return MA_ROSTER_SET.has(normalizeSlug(species));
+  return maRosterSet.has(normalizeSlug(species));
 }
 
 export function isEligibleForChampionsMB(species: string): boolean {
   if (!species) return false;
-  return MB_ROSTER_SET.has(normalizeSlug(species));
+  return mbRosterSet.has(normalizeSlug(species));
 }
 
 /** Active ranked regulation (M-B). */
@@ -43,24 +56,24 @@ export function isChampionsItemLegal(itemName: string): boolean {
   if (!itemName) return true;
   const entry = getItemByName(itemName);
   const id = entry?.id || normalizeSlug(itemName);
-  return !BANNED_ITEM_SET.has(id);
+  return !bannedItemSet.has(id);
 }
 
 export function isChampionsMoveLegal(moveName: string): boolean {
   if (!moveName) return true;
   const entry = getMoveByName(moveName);
   const id = entry?.id || normalizeSlug(moveName);
-  return !BANNED_MOVE_SET.has(id);
+  return !bannedMoveSet.has(id);
 }
 
 /** Legal moves for a species under the current Champions regulation learnset. */
 export function getChampionsMovesForSpecies(species: string): string[] {
   const slug = normalizeSlug(species);
-  const moveIds = CHAMPIONS_LEARNSETS[slug];
+  const moveIds = getRegulationLearnset('champions-mb', slug);
   if (!moveIds?.length) return [];
   const names: string[] = [];
   for (const id of moveIds) {
-    if (BANNED_MOVE_SET.has(id)) continue;
+    if (bannedMoveSet.has(id)) continue;
     const move = getMoveByName(id) || getMoveByName(
       id.replace(/([a-z])([A-Z])/g, '$1 $2')
     );
@@ -72,7 +85,7 @@ export function getChampionsMovesForSpecies(species: string): string[] {
 export function isMoveLegalForChampionsSpecies(species: string, moveName: string): boolean {
   if (!isChampionsMoveLegal(moveName)) return false;
   const slug = normalizeSlug(species);
-  const pool = CHAMPIONS_LEARNSETS[slug];
+  const pool = getRegulationLearnset('champions-mb', slug);
   if (!pool?.length) return isChampionsMoveLegal(moveName);
   const move = getMoveByName(moveName);
   const id = move?.id || normalizeSlug(moveName);

@@ -26,9 +26,10 @@ export default function Assistant() {
   );
 
   return (
-    // Fixed to the viewport minus the bottom nav: the composer has to stay put
-    // while the transcript scrolls, which a normally-flowing page can't do.
-    <div className="flex flex-col h-[calc(100dvh-var(--bottom-nav-height,64px))] px-4">
+    // Fixed to the viewport minus the bottom nav + safe-area inset (for notched iPhones):
+    // the composer has to stay put while the transcript scrolls, which a normally-flowing
+    // page can't do. On iPhones with a notch, safe-area-inset-bottom adds ~34px of space.
+    <div className="flex flex-col h-[calc(100dvh-var(--bottom-nav-height,64px)-env(safe-area-inset-bottom,0px))] px-4">
       <div className="pt-4 pb-2 flex items-center justify-between shrink-0">
         <div className="min-w-0">
           <h1 className="font-display text-text-primary">AI Assistant</h1>
