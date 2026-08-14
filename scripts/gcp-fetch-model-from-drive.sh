@@ -74,12 +74,6 @@ if ! grep -qE '^https://www\.googleapis\.com/auth/drive(\.readonly)?$' <<<"$SCOP
   then start it again. Scopes cannot be changed on a running instance."
 fi
 
-# Need room for the file plus a little headroom.
-AVAIL_KB="$(df -Pk "$DEST" | awk 'NR==2 {print $4}')"
-NEED_KB=$(( (EXPECTED_SIZE > 0 ? EXPECTED_SIZE : 4000000000) / 1024 + 2000000 ))
-[ "$AVAIL_KB" -ge "$NEED_KB" ] \
-  || die "only $((AVAIL_KB/1024)) MiB free on $DEST, need ~$((NEED_KB/1024)) MiB"
-
 TOKEN="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/token" \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')"
 [ -n "$TOKEN" ] || die "could not mint an access token from the metadata server"
@@ -87,9 +81,16 @@ TOKEN="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/token" \
 # --- resolve the file by name ------------------------------------------------
 # Looking it up by name means there is no 33-character file id to transcribe.
 
+# Drive's query grammar quotes string literals in single quotes, so a name containing an
+# apostrophe or backslash has to be escaped for *that* grammar. --data-urlencode only
+# handles URL encoding, one layer further out, and would leave the query itself malformed.
+# Backslash first, or it would double-escape the ones added for the quotes.
+ESC_NAME="${MODEL_NAME//\\/\\\\}"
+ESC_NAME="${ESC_NAME//\'/\\\'}"
+
 LOOKUP="$(curl -sf -G 'https://www.googleapis.com/drive/v3/files' \
   -H "Authorization: Bearer ${TOKEN}" \
-  --data-urlencode "q=name='${MODEL_NAME}' and '${FOLDER_ID}' in parents and trashed=false" \
+  --data-urlencode "q=name='${ESC_NAME}' and '${FOLDER_ID}' in parents and trashed=false" \
   --data-urlencode 'fields=files(id,name,size)' \
   --data-urlencode 'supportsAllDrives=true' \
   --data-urlencode 'includeItemsFromAllDrives=true' \
@@ -120,6 +121,13 @@ print(f["id"], f.get("size", "0"))
 ' <<<"$LOOKUP")
 log "resolved id=${FILE_ID} size=${DRIVE_SIZE} bytes"
 
+# Everything below does arithmetic on this, so refuse a missing or junk value rather than
+# letting it turn into a confusing arithmetic error later.
+case "$DRIVE_SIZE" in
+  ''|*[!0-9]*|0) die "Drive did not report a usable size for '${MODEL_NAME}' (got '${DRIVE_SIZE}').
+  Shortcuts and Google-native files have no byte size and cannot be downloaded this way." ;;
+esac
+
 if [ "$EXPECTED_SIZE" -ne 0 ] && [ "$DRIVE_SIZE" != "$EXPECTED_SIZE" ]; then
   die "Drive reports ${DRIVE_SIZE} bytes but expected ${EXPECTED_SIZE}.
   If you re-uploaded the file deliberately, re-run with EXPECTED_SIZE=${DRIVE_SIZE}.
@@ -130,17 +138,38 @@ fi
 
 OUT="${DEST}/${MODEL_NAME}"
 
-if [ -s "$OUT" ] && [ "$(stat -c%s "$OUT")" = "$DRIVE_SIZE" ]; then
-  log "already present and correct size — skipping download"
+HAVE=0
+[ -f "$OUT" ] && HAVE="$(stat -c%s "$OUT")"
+
+# A local file bigger than the remote one means the Drive copy was replaced with something
+# smaller while a stale partial sat here. Resuming from that offset asks for a range the
+# server cannot satisfy, and every retry would fail the same way.
+if [ "$HAVE" -gt "$DRIVE_SIZE" ]; then
+  log "local copy is larger than the Drive copy (${HAVE} > ${DRIVE_SIZE}) — discarding it"
+  rm -f "$OUT"
+  HAVE=0
+fi
+
+if [ "$HAVE" -eq "$DRIVE_SIZE" ]; then
+  log "already present at the expected size — skipping download"
 else
-  # Only pass -C - when there is something to resume from.
+  # Only the bytes still missing need to fit. Sizing this off the whole file would reject a
+  # complete or nearly-complete download on a disk with plenty of room for the remainder.
+  REMAINING=$(( DRIVE_SIZE - HAVE ))
+  AVAIL_KB="$(df -Pk "$DEST" | awk 'NR==2 {print $4}')"
+  NEED_KB=$(( REMAINING / 1024 + 262144 ))   # remainder + 256 MiB headroom
+  [ "$AVAIL_KB" -ge "$NEED_KB" ] \
+    || die "only $((AVAIL_KB/1024)) MiB free on ${DEST}, need ~$((NEED_KB/1024)) MiB
+  to write the remaining $((REMAINING/1024/1024)) MiB."
+
   RESUME=()
-  if [ -s "$OUT" ]; then
-    log "resuming from $(stat -c%s "$OUT") bytes"
+  if [ "$HAVE" -gt 0 ]; then
+    log "resuming from ${HAVE} bytes ($((REMAINING/1024/1024)) MiB to go)"
     RESUME=(-C -)
+  else
+    log "downloading $((DRIVE_SIZE/1024/1024)) MiB"
   fi
 
-  log "downloading (this is ~3 GB; expect a few minutes)"
   curl -fL --progress-bar "${RESUME[@]}" \
     --retry 5 --retry-delay 5 --retry-all-errors \
     -H "Authorization: Bearer ${TOKEN}" \
