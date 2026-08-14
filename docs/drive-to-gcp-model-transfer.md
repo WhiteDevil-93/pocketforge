@@ -118,7 +118,7 @@ MODEL_NAME=vgc_gemma2.gguf EXPECTED_SIZE=2784496032 ./fetch.sh
 |---|---|---|
 | `MODEL_NAME` | `gemma-4-E2B-it-Q4_K_M.gguf` | File name to look up in Drive |
 | `FOLDER_ID` | `1uNWTdlI5nz21pXz5AJ_d9g-hyPJpeXU2` | Drive folder to search (`pocketforge`) |
-| `EXPECTED_SIZE` | `3106738272` | Expected bytes; `0` disables the check |
+| `EXPECTED_SIZE` | `3106738272`, or `0` for any other `MODEL_NAME` | Expected bytes; `0` disables the check |
 | `SKIP_MD5` | `0` | `1` skips the checksum pass |
 | `DEST` | `/opt/models`, else `~/models` | Download directory |
 | `LOG` | `/var/log/pocketforge-model-fetch.log`, else `~/…` | Log file |
@@ -127,8 +127,14 @@ The system paths are used only when running as root, or when both `/opt` and `/v
 writable. Otherwise both fall back to `$HOME`. The script prints the log path it chose on its
 first line, so check there rather than assuming.
 
+The pinned `EXPECTED_SIZE` describes one specific file, so it applies only when `MODEL_NAME`
+is left at its default. Fetching anything else defaults to `0` (no size check) rather than
+comparing an unrelated model against the Gemma byte count.
+
 The script resolves the file **by name**, so there is no file id to transcribe. It is safe
-to re-run: an interrupted download resumes from where it stopped.
+to re-run: an interrupted download resumes from where it stopped, unless the file changed in
+Drive since — the partial is stamped with the revision it came from, and a mismatch discards
+it rather than splicing old bytes onto new ones.
 
 ## Watching and verifying
 

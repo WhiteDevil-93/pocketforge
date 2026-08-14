@@ -23,10 +23,21 @@ set -euo pipefail
 log() { printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"; }
 die() { printf '[%s] ERROR: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >&2; exit 1; }
 
-MODEL_NAME="${MODEL_NAME:-gemma-4-E2B-it-Q4_K_M.gguf}"
+DEFAULT_MODEL="gemma-4-E2B-it-Q4_K_M.gguf"
+DEFAULT_SIZE=3106738272
+
+MODEL_NAME="${MODEL_NAME:-$DEFAULT_MODEL}"
 FOLDER_ID="${FOLDER_ID:-1uNWTdlI5nz21pXz5AJ_d9g-hyPJpeXU2}"   # Drive folder "pocketforge"
-EXPECTED_SIZE="${EXPECTED_SIZE:-3106738272}"                   # 0 disables the check
 SKIP_MD5="${SKIP_MD5:-0}"                                      # 1 skips the checksum pass
+
+# The pinned size describes one specific file, so it must not carry over to a different
+# one. Asking for another model without also passing EXPECTED_SIZE would otherwise fail
+# the size check every time, making the documented alternate-model usage unusable.
+if [ "$MODEL_NAME" = "$DEFAULT_MODEL" ]; then
+  EXPECTED_SIZE="${EXPECTED_SIZE:-$DEFAULT_SIZE}"             # 0 disables the check
+else
+  EXPECTED_SIZE="${EXPECTED_SIZE:-0}"
+fi
 METADATA_ROOT="http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
 
 # --- validate inputs ---------------------------------------------------------
@@ -191,10 +202,21 @@ verify() {
 
 OUT="${DEST}/${MODEL_NAME}"
 PART="${OUT}.partial"
+META="${PART}.meta"
+STAMP="${FILE_ID} ${DRIVE_SIZE} ${DRIVE_MD5}"
 
 if [ -f "$OUT" ] && [ "$(stat -c%s "$OUT")" = "$DRIVE_SIZE" ] && verify "$OUT"; then
   log "already present and verified — nothing to do"
 else
+  # A partial is only resumable against the exact revision it came from. Resuming a stale
+  # prefix onto a new file splices old bytes to new ones: the result keeps the old GGUF
+  # header and reaches the new size, so it would survive the size and magic checks and be
+  # caught only by md5, after paying for the whole transfer.
+  if [ -f "$PART" ] && { [ ! -f "$META" ] || [ "$(cat "$META")" != "$STAMP" ]; }; then
+    log "partial belongs to a different Drive revision — discarding it"
+    rm -f "$PART" "$META"
+  fi
+
   HAVE=0
   [ -f "$PART" ] && HAVE="$(stat -c%s "$PART")"
 
@@ -203,7 +225,7 @@ else
   # every retry would fail identically.
   if [ "$HAVE" -gt "$DRIVE_SIZE" ]; then
     log "partial is larger than the Drive copy (${HAVE} > ${DRIVE_SIZE}) — discarding it"
-    rm -f "$PART"
+    rm -f "$PART" "$META"
     HAVE=0
   fi
 
@@ -228,6 +250,10 @@ else
       log "downloading $((DRIVE_SIZE/1024/1024)) MiB"
     fi
 
+    # Record which revision this partial belongs to, so a later run can tell whether
+    # resuming onto it is safe.
+    printf '%s' "$STAMP" > "$META"
+
     # No --max-time here: a legitimate multi-GB transfer can take a long while. The
     # low-speed guard aborts a genuinely wedged connection instead, and --retry-max-time
     # keeps the retry loop from running forever.
@@ -244,11 +270,12 @@ else
   # Verify before publishing, so nothing ever observes a partial or corrupt file at the
   # final path, and a bad download is cleared rather than poisoning every future run.
   if ! verify "$PART"; then
-    rm -f "$PART"
+    rm -f "$PART" "$META"
     die "downloaded file failed verification and was discarded. Re-run to try again."
   fi
 
   mv -f "$PART" "$OUT"
+  rm -f "$META"
 fi
 
 log "OK: ${OUT}"
