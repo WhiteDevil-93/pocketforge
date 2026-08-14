@@ -166,7 +166,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
       setHistory(cleanedHistory);
     } catch (err) {
       // Preserve tool call history even when a later round fails, so the user sees what succeeded.
-      const partialMessages = (err as any)?.partialMessages as ChatMessage[] | undefined;
+      const partialMessages = (
+        typeof err === 'object' && err !== null && 'partialMessages' in err ? (err.partialMessages as unknown) : undefined
+      ) as ChatMessage[] | undefined;
       if (partialMessages && partialMessages.length > baseHistory.length) {
         const cleanedHistory = partialMessages.map((msg: ChatMessage) =>
           msg.role === 'assistant'

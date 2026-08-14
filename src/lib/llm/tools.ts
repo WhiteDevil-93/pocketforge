@@ -232,6 +232,7 @@ export const TOOLS: ToolDefinition[] = [
       "Get the user's currently open team: format, and each member's species, level, item, " +
       'ability, nature, Tera type, and moves. Call this first in any conversation about "my team".',
     parameters: { type: 'object', properties: {} },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handler: (_args, _ctx) => {
       const team = getLiveActiveTeam();
       if ('error' in team) return team;
@@ -258,6 +259,7 @@ export const TOOLS: ToolDefinition[] = [
       'Run the real type-coverage and weakness analysis on the active team: shared weaknesses, ' +
       'offensive coverage gaps, and a 0-100 balance score. Use this for coaching questions.',
     parameters: { type: 'object', properties: {} },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handler: (_args, _ctx) => {
       const team = getLiveActiveTeam();
       if ('error' in team) return team;
@@ -282,6 +284,7 @@ export const TOOLS: ToolDefinition[] = [
       'Check the active team against its format\'s legality rules (species clause, item clause, ' +
       'level caps, Champions whitelists, etc). Use before telling the user a team is tournament-legal.',
     parameters: { type: 'object', properties: {} },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handler: async (_args, _ctx) => {
       const team = getLiveActiveTeam();
       if ('error' in team) return team;
@@ -301,6 +304,7 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handler: (args, _ctx) => {
       const team = getLiveActiveTeam();
       if ('error' in team) return team;

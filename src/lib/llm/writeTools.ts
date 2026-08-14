@@ -36,8 +36,8 @@ const EV_KEYS: (keyof EVs)[] = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
 /** Shape returned when a tool rejects the model's arguments. Always includes
  *  what was wrong AND what would be acceptable, so the model can retry without
  *  guessing a second time. */
-function fail(error: string, extra?: Record<string, unknown>) {
-  return { ok: false, error, ...extra };
+function fail(error: string, extra?: Record<string, unknown>): { ok: false; error: string; [key: string]: unknown } {
+  return { ok: false, error, ...(extra ?? {}) };
 }
 
 // ---- Store access -----------------------------------------------------------

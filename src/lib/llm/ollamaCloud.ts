@@ -217,7 +217,7 @@ export async function sendMessage({
     onEvent({ type: 'error', message });
     // Attach accumulated messages to error so ChatPanel can preserve tool call history
     const err = error instanceof Error ? error : new Error(message);
-    (err as any).partialMessages = messages;
+    (err as unknown as Record<string, unknown>).partialMessages = messages;
     throw err;
   } finally {
     clearTimeout(overallTimeout);
