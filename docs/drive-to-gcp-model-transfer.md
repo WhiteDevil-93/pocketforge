@@ -35,7 +35,7 @@ in the project that owns the instance.
 In the Drive app (or drive.google.com): long-press the file or its folder → **Share** →
 paste the service account address, e.g.
 
-```
+```text
 themyscira@themyscira-485918.iam.gserviceaccount.com
 ```
 
@@ -82,6 +82,22 @@ pipeline's status comes from `bash`, which succeeds on empty input — so withou
 leave the startup script "successful" and the model silently absent. With it, the failure shows
 up in `journalctl -u google-startup-scripts`.
 
+This pipes a branch tip into `bash` as root, which means whatever `main` happens to contain at
+boot. That is fine when you own the repo and the instance is short-lived. To harden it, pin to
+an immutable commit and check the hash before running:
+
+```bash
+#!/bin/bash
+set -o pipefail
+SHA=<commit-sha>
+EXPECT=<sha256-of-the-script>
+curl -fsSL "https://raw.githubusercontent.com/WhiteDevil-93/pocketforge/${SHA}/scripts/gcp-fetch-model-from-drive.sh" -o /tmp/fetch.sh
+echo "${EXPECT}  /tmp/fetch.sh" | sha256sum -c - && bash /tmp/fetch.sh
+```
+
+The cost is that you have to update both constants whenever the script changes, which is why
+the branch form is the default here.
+
 ## Running it by hand
 
 Console → Compute Engine → your instance → **SSH**, which opens a terminal in the browser.
@@ -103,8 +119,13 @@ MODEL_NAME=vgc_gemma2.gguf EXPECTED_SIZE=2784496032 ./fetch.sh
 | `MODEL_NAME` | `gemma-4-E2B-it-Q4_K_M.gguf` | File name to look up in Drive |
 | `FOLDER_ID` | `1uNWTdlI5nz21pXz5AJ_d9g-hyPJpeXU2` | Drive folder to search (`pocketforge`) |
 | `EXPECTED_SIZE` | `3106738272` | Expected bytes; `0` disables the check |
+| `SKIP_MD5` | `0` | `1` skips the checksum pass |
 | `DEST` | `/opt/models`, else `~/models` | Download directory |
 | `LOG` | `/var/log/pocketforge-model-fetch.log`, else `~/…` | Log file |
+
+The system paths are used only when running as root, or when both `/opt` and `/var/log` are
+writable. Otherwise both fall back to `$HOME`. The script prints the log path it chose on its
+first line, so check there rather than assuming.
 
 The script resolves the file **by name**, so there is no file id to transcribe. It is safe
 to re-run: an interrupted download resumes from where it stopped.
@@ -112,15 +133,20 @@ to re-run: an interrupted download resumes from where it stopped.
 ## Watching and verifying
 
 ```bash
-tail -f /var/log/pocketforge-model-fetch.log
+tail -f /var/log/pocketforge-model-fetch.log   # root; otherwise ~/pocketforge-model-fetch.log
 sudo journalctl -u google-startup-scripts -f   # if it ran as a startup script
 ```
 
-On success the script confirms the byte count against what Drive reports and checks that
-the file begins with the ASCII magic `GGUF`. That second check matters more than it looks:
-when a Drive download fails on auth, the API returns a JSON or HTML error page, and `curl
--o` saves it under the `.gguf` name quite happily. The file exists, the download "succeeded",
-and the failure only surfaces much later as an unintelligible loader error.
+The script downloads to `<name>.partial` and only renames it into place once it verifies, so
+the final path never holds a half-written or corrupt file, and a bad download is discarded
+rather than being resumed onto forever.
+
+Verification is three checks: the byte count against what Drive reports, the ASCII magic
+`GGUF` at the start of the file, and the MD5 that Drive stores for every uploaded file. The
+magic check matters more than it looks — when a Drive download fails on auth, the API returns
+a JSON or HTML error page, and `curl -o` saves it under the `.gguf` name quite happily. Since
+a resumed download can append onto such a page and still reach the expected total size, the
+size check alone would pass.
 
 ## Troubleshooting
 

@@ -20,14 +20,41 @@
 
 set -euo pipefail
 
+log() { printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"; }
+die() { printf '[%s] ERROR: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >&2; exit 1; }
+
 MODEL_NAME="${MODEL_NAME:-gemma-4-E2B-it-Q4_K_M.gguf}"
 FOLDER_ID="${FOLDER_ID:-1uNWTdlI5nz21pXz5AJ_d9g-hyPJpeXU2}"   # Drive folder "pocketforge"
 EXPECTED_SIZE="${EXPECTED_SIZE:-3106738272}"                   # 0 disables the check
+SKIP_MD5="${SKIP_MD5:-0}"                                      # 1 skips the checksum pass
 METADATA_ROOT="http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
 
-# Prefer system-wide paths when we can write to them (startup-script runs as root),
-# otherwise fall back to the invoking user's home so browser SSH works without sudo.
-if [ -w /opt ] || [ "$(id -u)" -eq 0 ]; then
+# --- validate inputs ---------------------------------------------------------
+# These are interpolated into a filesystem path and a Drive query, so check them before
+# use rather than discovering the damage afterwards.
+
+case "$EXPECTED_SIZE" in
+  ''|*[!0-9]*) die "EXPECTED_SIZE must be a non-negative integer (got '${EXPECTED_SIZE}')" ;;
+esac
+
+# MODEL_NAME becomes the output filename. Anything with a slash or a .. component could
+# write outside DEST entirely.
+case "$MODEL_NAME" in
+  ''|*/*|.|..) die "MODEL_NAME must be a bare filename, no path separators (got '${MODEL_NAME}')" ;;
+  *[[:cntrl:]]*) die "MODEL_NAME contains control characters" ;;
+esac
+
+# Drive ids are URL-safe base64-ish. Anything else is a typo at best.
+case "$FOLDER_ID" in
+  ''|*[!A-Za-z0-9_-]*) die "FOLDER_ID is not a valid Drive folder id (got '${FOLDER_ID}')" ;;
+esac
+
+# --- choose paths ------------------------------------------------------------
+# Both system paths have to be usable, or we fall back to $HOME for both. Checking only
+# /opt would let a non-root user who can create /opt/models still lose the log to
+# /var/log, which they cannot write.
+
+if [ "$(id -u)" -eq 0 ] || { [ -w /opt ] && [ -w /var/log ]; }; then
   DEST="${DEST:-/opt/models}"
   LOG="${LOG:-/var/log/pocketforge-model-fetch.log}"
 else
@@ -38,23 +65,25 @@ fi
 mkdir -p "$DEST" "$(dirname "$LOG")"
 exec > >(tee -a "$LOG") 2>&1
 
-log()  { printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"; }
-die()  { log "ERROR: $*"; exit 1; }
-
 log "=== fetching '${MODEL_NAME}' from Drive folder ${FOLDER_ID} into ${DEST} ==="
+log "logging to ${LOG}"
 
 # --- preflight ---------------------------------------------------------------
 
 command -v curl    >/dev/null || die "curl not found"
 command -v python3 >/dev/null || die "python3 not found"
 
-curl -sf -m 5 -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/email" >/dev/null \
+# Every request needs a bound. curl does not time out by default, and an unattended
+# startup script that hangs on a wedged connection just never finishes.
+CURL_SHORT=(--fail --silent --connect-timeout 5 --max-time 30)
+
+curl "${CURL_SHORT[@]}" -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/email" >/dev/null \
   || die "no metadata server reachable — this script must run ON the GCE instance"
 
-SA_EMAIL="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/email")"
+SA_EMAIL="$(curl "${CURL_SHORT[@]}" -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/email")"
 log "service account: ${SA_EMAIL}"
 
-SCOPES="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/scopes")" \
+SCOPES="$(curl "${CURL_SHORT[@]}" -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/scopes")" \
   || die "could not read instance scopes from the metadata server — transient error?
   Re-run; if it persists the metadata service is unreachable, which is an instance-level
   problem rather than anything to do with Drive."
@@ -74,7 +103,7 @@ if ! grep -qE '^https://www\.googleapis\.com/auth/drive(\.readonly)?$' <<<"$SCOP
   then start it again. Scopes cannot be changed on a running instance."
 fi
 
-TOKEN="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/token" \
+TOKEN="$(curl "${CURL_SHORT[@]}" -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/token" \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')"
 [ -n "$TOKEN" ] || die "could not mint an access token from the metadata server"
 
@@ -88,10 +117,11 @@ TOKEN="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/token" \
 ESC_NAME="${MODEL_NAME//\\/\\\\}"
 ESC_NAME="${ESC_NAME//\'/\\\'}"
 
-LOOKUP="$(curl -sf -G 'https://www.googleapis.com/drive/v3/files' \
+LOOKUP="$(curl --fail --silent --connect-timeout 5 --max-time 60 \
+  -G 'https://www.googleapis.com/drive/v3/files' \
   -H "Authorization: Bearer ${TOKEN}" \
   --data-urlencode "q=name='${ESC_NAME}' and '${FOLDER_ID}' in parents and trashed=false" \
-  --data-urlencode 'fields=files(id,name,size)' \
+  --data-urlencode 'fields=files(id,name,size,md5Checksum)' \
   --data-urlencode 'supportsAllDrives=true' \
   --data-urlencode 'includeItemsFromAllDrives=true' \
   --data-urlencode 'pageSize=2')" \
@@ -114,12 +144,12 @@ case "$COUNT" in
   too), or point FOLDER_ID at a folder holding only the copy you want." ;;
 esac
 
-read -r FILE_ID DRIVE_SIZE < <(python3 -c '
+read -r FILE_ID DRIVE_SIZE DRIVE_MD5 < <(python3 -c '
 import sys, json
 f = json.load(sys.stdin)["files"][0]
-print(f["id"], f.get("size", "0"))
+print(f["id"], f.get("size", "0"), f.get("md5Checksum", "-"))
 ' <<<"$LOOKUP")
-log "resolved id=${FILE_ID} size=${DRIVE_SIZE} bytes"
+log "resolved id=${FILE_ID} size=${DRIVE_SIZE} md5=${DRIVE_MD5}"
 
 # Everything below does arithmetic on this, so refuse a missing or junk value rather than
 # letting it turn into a confusing arithmetic error later.
@@ -134,69 +164,103 @@ if [ "$EXPECTED_SIZE" -ne 0 ] && [ "$DRIVE_SIZE" != "$EXPECTED_SIZE" ]; then
   Otherwise the upload may be incomplete — check it in Drive before continuing."
 fi
 
+# --- verification helper -----------------------------------------------------
+
+verify() {
+  local f=$1 actual magic sum
+
+  actual="$(stat -c%s "$f")"
+  [ "$actual" = "$DRIVE_SIZE" ] || { log "size mismatch: ${actual} != ${DRIVE_SIZE}"; return 1; }
+
+  # A Drive error page saved under a .gguf name is the classic silent failure. Resuming
+  # onto one can even reach the right total size, so this check earns its place.
+  magic="$(head -c 4 "$f")"
+  [ "$magic" = "GGUF" ] || { log "not a GGUF file (magic '${magic}')"; return 1; }
+
+  if [ "$DRIVE_MD5" != "-" ] && [ "$SKIP_MD5" != "1" ] && command -v md5sum >/dev/null; then
+    log "verifying md5 (a few seconds for a file this size)"
+    sum="$(md5sum "$f" | cut -d' ' -f1)"
+    [ "$sum" = "$DRIVE_MD5" ] || { log "md5 mismatch: ${sum} != ${DRIVE_MD5}"; return 1; }
+    log "md5 matches Drive"
+  fi
+
+  return 0
+}
+
 # --- download ----------------------------------------------------------------
 
 OUT="${DEST}/${MODEL_NAME}"
+PART="${OUT}.partial"
 
-HAVE=0
-[ -f "$OUT" ] && HAVE="$(stat -c%s "$OUT")"
-
-# A local file bigger than the remote one means the Drive copy was replaced with something
-# smaller while a stale partial sat here. Resuming from that offset asks for a range the
-# server cannot satisfy, and every retry would fail the same way.
-if [ "$HAVE" -gt "$DRIVE_SIZE" ]; then
-  log "local copy is larger than the Drive copy (${HAVE} > ${DRIVE_SIZE}) — discarding it"
-  rm -f "$OUT"
-  HAVE=0
-fi
-
-if [ "$HAVE" -eq "$DRIVE_SIZE" ]; then
-  log "already present at the expected size — skipping download"
+if [ -f "$OUT" ] && [ "$(stat -c%s "$OUT")" = "$DRIVE_SIZE" ] && verify "$OUT"; then
+  log "already present and verified — nothing to do"
 else
-  # Only the bytes still missing need to fit. Sizing this off the whole file would reject a
-  # complete or nearly-complete download on a disk with plenty of room for the remainder.
-  REMAINING=$(( DRIVE_SIZE - HAVE ))
-  AVAIL_KB="$(df -Pk "$DEST" | awk 'NR==2 {print $4}')"
-  NEED_KB=$(( REMAINING / 1024 + 262144 ))   # remainder + 256 MiB headroom
-  [ "$AVAIL_KB" -ge "$NEED_KB" ] \
-    || die "only $((AVAIL_KB/1024)) MiB free on ${DEST}, need ~$((NEED_KB/1024)) MiB
-  to write the remaining $((REMAINING/1024/1024)) MiB."
+  HAVE=0
+  [ -f "$PART" ] && HAVE="$(stat -c%s "$PART")"
 
-  RESUME=()
-  if [ "$HAVE" -gt 0 ]; then
-    log "resuming from ${HAVE} bytes ($((REMAINING/1024/1024)) MiB to go)"
-    RESUME=(-C -)
-  else
-    log "downloading $((DRIVE_SIZE/1024/1024)) MiB"
+  # A partial larger than the remote file means the Drive copy was replaced with something
+  # smaller. Resuming from that offset asks for a range the server cannot satisfy, and
+  # every retry would fail identically.
+  if [ "$HAVE" -gt "$DRIVE_SIZE" ]; then
+    log "partial is larger than the Drive copy (${HAVE} > ${DRIVE_SIZE}) — discarding it"
+    rm -f "$PART"
+    HAVE=0
   fi
 
-  curl -fL --progress-bar "${RESUME[@]}" \
-    --retry 5 --retry-delay 5 --retry-all-errors \
-    -H "Authorization: Bearer ${TOKEN}" \
-    "https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media&supportsAllDrives=true" \
-    -o "$OUT" \
-    || die "download failed — re-run this script to resume from where it stopped"
+  if [ "$HAVE" -lt "$DRIVE_SIZE" ]; then
+    # Only the bytes still missing need to fit. Sizing this off the whole file would
+    # reject a nearly complete download on a disk with room for its remainder.
+    REMAINING=$(( DRIVE_SIZE - HAVE ))
+    AVAIL_KB="$(df -Pk "$DEST" | awk 'NR==2 {print $4}')"
+    NEED_KB=$(( REMAINING / 1024 + 262144 ))   # remainder + 256 MiB headroom
+    [ "$AVAIL_KB" -ge "$NEED_KB" ] \
+      || die "only $((AVAIL_KB/1024)) MiB free on ${DEST}, need ~$((NEED_KB/1024)) MiB
+  to write the remaining $(( (REMAINING + 1048575) / 1048576 )) MiB."
+
+    # Round up, or a sub-MiB remainder reports as "0 MiB to go".
+    REMAINING_MIB=$(( (REMAINING + 1048575) / 1048576 ))
+
+    RESUME=()
+    if [ "$HAVE" -gt 0 ]; then
+      log "resuming from ${HAVE} bytes (${REMAINING_MIB} MiB to go)"
+      RESUME=(-C -)
+    else
+      log "downloading $((DRIVE_SIZE/1024/1024)) MiB"
+    fi
+
+    # No --max-time here: a legitimate multi-GB transfer can take a long while. The
+    # low-speed guard aborts a genuinely wedged connection instead, and --retry-max-time
+    # keeps the retry loop from running forever.
+    curl --fail --location --progress-bar "${RESUME[@]}" \
+      --connect-timeout 10 \
+      --speed-limit 1024 --speed-time 120 \
+      --retry 5 --retry-delay 5 --retry-all-errors --retry-max-time 1800 \
+      -H "Authorization: Bearer ${TOKEN}" \
+      "https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media&supportsAllDrives=true" \
+      -o "$PART" \
+      || die "download failed — re-run this script to resume from where it stopped"
+  fi
+
+  # Verify before publishing, so nothing ever observes a partial or corrupt file at the
+  # final path, and a bad download is cleared rather than poisoning every future run.
+  if ! verify "$PART"; then
+    rm -f "$PART"
+    die "downloaded file failed verification and was discarded. Re-run to try again."
+  fi
+
+  mv -f "$PART" "$OUT"
 fi
 
-# --- verify ------------------------------------------------------------------
-
-ACTUAL="$(stat -c%s "$OUT")"
-[ "$ACTUAL" = "$DRIVE_SIZE" ] \
-  || die "size mismatch: got ${ACTUAL}, expected ${DRIVE_SIZE}. Re-run to resume."
-
-# A Drive error page saved under a .gguf name is the classic silent failure, and it is
-# the right size to look plausible. Every GGUF starts with the magic bytes "GGUF".
-MAGIC="$(head -c 4 "$OUT")"
-[ "$MAGIC" = "GGUF" ] \
-  || die "not a GGUF file (magic bytes were '${MAGIC}') — likely an API error page.
-  Inspect with: head -c 400 '${OUT}'"
-
 log "OK: ${OUT}"
-log "    ${ACTUAL} bytes, GGUF magic verified"
+log "    ${DRIVE_SIZE} bytes, GGUF magic verified"
 
-command -v nvidia-smi >/dev/null \
-  && nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader \
-  || log "    (no nvidia-smi — GPU driver not installed on this image)"
+if command -v nvidia-smi >/dev/null; then
+  if ! nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader; then
+    log "    (nvidia-smi present but failed — driver may be broken)"
+  fi
+else
+  log "    (no nvidia-smi — GPU driver not installed on this image)"
+fi
 
 df -h "$DEST" | awk 'NR==2 {print "    disk: " $4 " free on " $6}'
 log "=== done ==="
