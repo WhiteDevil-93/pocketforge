@@ -54,8 +54,16 @@ curl -sf -m 5 -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/email" >/dev/null \
 SA_EMAIL="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/email")"
 log "service account: ${SA_EMAIL}"
 
-SCOPES="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/scopes" || true)"
-if ! grep -q 'auth/drive' <<<"$SCOPES"; then
+SCOPES="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/scopes")" \
+  || die "could not read instance scopes from the metadata server — transient error?
+  Re-run; if it persists the metadata service is unreachable, which is an instance-level
+  problem rather than anything to do with Drive."
+
+# Only these two actually permit reading a file that was *shared with* this account:
+# drive.file covers only files the caller itself created, drive.metadata.readonly cannot
+# fetch content, and cloud-platform does not imply Drive at all. Matching loosely here
+# would let those pass preflight and fail later as a confusing "not found".
+if ! grep -qE '^https://www\.googleapis\.com/auth/drive(\.readonly)?$' <<<"$SCOPES"; then
   log "instance scopes: $(tr '\n' ' ' <<<"$SCOPES")"
   die "this instance has no Drive access scope.
   Fix: stop the instance, then either recreate it with 'Set access for each API ->
@@ -79,25 +87,37 @@ TOKEN="$(curl -sf -H 'Metadata-Flavor: Google' "${METADATA_ROOT}/token" \
 # --- resolve the file by name ------------------------------------------------
 # Looking it up by name means there is no 33-character file id to transcribe.
 
-RESOLVED="$(curl -sf -G 'https://www.googleapis.com/drive/v3/files' \
+LOOKUP="$(curl -sf -G 'https://www.googleapis.com/drive/v3/files' \
   -H "Authorization: Bearer ${TOKEN}" \
   --data-urlencode "q=name='${MODEL_NAME}' and '${FOLDER_ID}' in parents and trashed=false" \
   --data-urlencode 'fields=files(id,name,size)' \
   --data-urlencode 'supportsAllDrives=true' \
   --data-urlencode 'includeItemsFromAllDrives=true' \
-  | python3 -c '
-import sys, json
-files = json.load(sys.stdin).get("files", [])
-if not files:
-    sys.exit(1)
-f = files[0]
-print(f["id"], f.get("size", "0"))
-')" || die "'${MODEL_NAME}' not found in folder ${FOLDER_ID}.
-  Most likely the folder is not shared with ${SA_EMAIL}.
-  Fix: in Drive, share the file or its folder with that address as Viewer."
+  --data-urlencode 'pageSize=2')" \
+  || die "Drive lookup request failed. If this is a 403, the Drive API may not be enabled
+  on this project: APIs & Services -> Enable APIs -> Google Drive API."
 
-FILE_ID="${RESOLVED% *}"
-DRIVE_SIZE="${RESOLVED#* }"
+# Drive allows several files with the same name in one folder, so a re-upload can quietly
+# leave a duplicate behind. Taking the first match would then pick an arbitrary one.
+COUNT="$(python3 -c 'import sys,json; print(len(json.load(sys.stdin).get("files",[])))' <<<"$LOOKUP")"
+
+case "$COUNT" in
+  0) die "'${MODEL_NAME}' not found in folder ${FOLDER_ID}.
+  Most likely the file or its folder is not shared with ${SA_EMAIL}.
+  Fix: in Drive, share it with that address as Viewer. Drive permissions are separate
+  from IAM, so no project role substitutes for this.
+  Also check the name matches exactly, including case." ;;
+  1) : ;;
+  *) die "more than one file named '${MODEL_NAME}' in folder ${FOLDER_ID}.
+  Refusing to guess which one you meant. Remove the duplicate in Drive (check the trash
+  too), or point FOLDER_ID at a folder holding only the copy you want." ;;
+esac
+
+read -r FILE_ID DRIVE_SIZE < <(python3 -c '
+import sys, json
+f = json.load(sys.stdin)["files"][0]
+print(f["id"], f.get("size", "0"))
+' <<<"$LOOKUP")
 log "resolved id=${FILE_ID} size=${DRIVE_SIZE} bytes"
 
 if [ "$EXPECTED_SIZE" -ne 0 ] && [ "$DRIVE_SIZE" != "$EXPECTED_SIZE" ]; then

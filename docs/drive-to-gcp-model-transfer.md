@@ -73,21 +73,27 @@ by the time the instance finishes booting, no SSH needed:
 
 ```bash
 #!/bin/bash
-curl -sL https://raw.githubusercontent.com/WhiteDevil-93/pocketforge/main/scripts/gcp-fetch-model-from-drive.sh | bash
+set -o pipefail
+curl -fsSL https://raw.githubusercontent.com/WhiteDevil-93/pocketforge/main/scripts/gcp-fetch-model-from-drive.sh | bash
 ```
+
+`pipefail` matters here. `curl -f` on a bad URL exits non-zero and prints the error, but the
+pipeline's status comes from `bash`, which succeeds on empty input — so without it a 404 would
+leave the startup script "successful" and the model silently absent. With it, the failure shows
+up in `journalctl -u google-startup-scripts`.
 
 ## Running it by hand
 
 Console → Compute Engine → your instance → **SSH**, which opens a terminal in the browser.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/WhiteDevil-93/pocketforge/main/scripts/gcp-fetch-model-from-drive.sh | bash
+curl -fsSL https://raw.githubusercontent.com/WhiteDevil-93/pocketforge/main/scripts/gcp-fetch-model-from-drive.sh | bash
 ```
 
 Or with overrides:
 
 ```bash
-curl -sLo fetch.sh https://raw.githubusercontent.com/WhiteDevil-93/pocketforge/main/scripts/gcp-fetch-model-from-drive.sh
+curl -fsSLo fetch.sh https://raw.githubusercontent.com/WhiteDevil-93/pocketforge/main/scripts/gcp-fetch-model-from-drive.sh
 chmod +x fetch.sh
 MODEL_NAME=vgc_gemma2.gguf EXPECTED_SIZE=2784496032 ./fetch.sh
 ```
@@ -133,6 +139,11 @@ and start it again.
 wrong address. The script prints the service account it is actually running as; check that
 address appears in the file's Drive sharing list. Also confirm the file name matches exactly,
 including case.
+
+**`more than one file named ...`** — Drive permits duplicate names within a folder, so a
+re-upload can leave an older copy behind rather than replacing it. The script refuses to guess
+between them. Delete the one you don't want (check the trash too), or point `FOLDER_ID` at a
+folder containing only the copy you want.
 
 **`Drive reports N bytes but expected M`** — either the upload to Drive was still running, or
 the file legitimately changed. Confirm it looks complete in Drive, then re-run with
