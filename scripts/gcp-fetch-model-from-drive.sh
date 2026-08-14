@@ -205,6 +205,14 @@ PART="${OUT}.partial"
 META="${PART}.meta"
 STAMP="${FILE_ID} ${DRIVE_SIZE} ${DRIVE_MD5}"
 
+# If the target path is a directory, `mv` would move the partial *into* it and the script
+# would then report success with no model at the promised path. Catch it before doing any
+# work rather than after transferring gigabytes.
+if [ -e "$OUT" ] && [ ! -f "$OUT" ]; then
+  die "${OUT} already exists and is not a regular file.
+  Remove or rename it, or point DEST somewhere else."
+fi
+
 if [ -f "$OUT" ] && [ "$(stat -c%s "$OUT")" = "$DRIVE_SIZE" ] && verify "$OUT"; then
   log "already present and verified — nothing to do"
 else
@@ -274,7 +282,9 @@ else
     die "downloaded file failed verification and was discarded. Re-run to try again."
   fi
 
-  mv -f "$PART" "$OUT"
+  # -T so the destination is always treated as a filename, never as a directory to move
+  # into, closing the window between the check above and this rename.
+  mv -fT "$PART" "$OUT"
   rm -f "$META"
 fi
 
