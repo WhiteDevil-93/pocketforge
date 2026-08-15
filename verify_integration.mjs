@@ -38,6 +38,10 @@ function assert(condition, message) {
 }
 
 async function runTests() {
+  // Initialize regulation cache for Champions legality checks
+  const { preloadBundledRegulations } = await import('./src/lib/regulations/regulationsRuntime.ts');
+  preloadBundledRegulations(['champions-ma', 'champions-mb']);
+
   console.log('--- PocketForge Integration Verification ---');
 
   // Test 1: Team Import/Export
