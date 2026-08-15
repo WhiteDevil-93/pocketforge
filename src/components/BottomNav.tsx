@@ -19,6 +19,19 @@ const TABS = [
 
 const INDICATOR_WIDTH = 48;
 
+// Same specifiers App.tsx passes to lazy() — the bundler resolves both to the
+// same chunk, so warming it here on press just makes App's Suspense boundary
+// resolve instantly instead of showing PageLoader after the tab-switch fade.
+// import() itself dedupes repeat calls, so no need to track what's already fired.
+const PREFETCH: Partial<Record<(typeof TABS)[number]['path'], () => Promise<unknown>>> = {
+  [HOME_PATH]: () => import('../pages/Teams'),
+  '/builder': () => import('../pages/Builder'),
+  '/calc': () => import('../pages/Calculator'),
+  '/nuzlocke': () => import('../pages/Nuzlocke'),
+  '/analysis': () => import('../pages/Analysis'),
+  '/assistant': () => import('../pages/Assistant'),
+};
+
 export default function BottomNav() {
   const location = useLocation();
   const currentPath = location.pathname;
@@ -59,6 +72,11 @@ export default function BottomNav() {
               to={tab.path}
               className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1"
               aria-current={isActive ? 'page' : undefined}
+              onPointerDown={() => {
+                // Fires before click/navigation, giving the chunk a head start
+                // during the tap instead of loading it after the route mounts.
+                if (!isActive) void PREFETCH[tab.path]?.();
+              }}
             >
               <motion.div
                 whileTap={{ scale: 0.85 }}
