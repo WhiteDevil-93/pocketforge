@@ -30,19 +30,21 @@ function friendlyToolName(name: string): string {
   return name.replace(/_/g, ' ');
 }
 
+// Gemma opens a turn as "<start_of_turn>model\n". The role word belongs to the
+// scaffolding, not the reply, so it goes with the marker — stripping the marker
+// alone is what leaves a stray "model" line at the top of a bubble.
+const TURN_HEADER_PATTERN = /<\/?start_of_turn>[ \t]*(?:model|user|system|assistant)?[ \t]*\n?/g;
+
+const SPECIAL_TOKEN_PATTERN =
+  /<end_of_turn>|<\/?s>|<pad>|<\|(?:im_start|im_end|eot_id|eom_id|begin_of_text|end_of_text|start_header_id|end_header_id)\|>/g;
+
 /**
  * Remove special tokens without trimming — preserves spacing between tokens during streaming.
+ * Always applied to the whole accumulated buffer, so a marker split across two
+ * streamed chunks still matches once both halves have arrived.
  */
 function removeSpecialTokens(text: string): string {
-  return text
-    .replace(/<start_of_turn>/g, '')
-    .replace(/<\/start_of_turn>/g, '')
-    .replace(/<s>/g, '')
-    .replace(/<\/s>/g, '')
-    .replace(/<\|eom_id\|>/g, '')
-    .replace(/<\|end_header_id\|>/g, '')
-    .replace(/<\|begin_of_text\|>/g, '')
-    .replace(/<pad>/g, '');
+  return text.replace(TURN_HEADER_PATTERN, '').replace(SPECIAL_TOKEN_PATTERN, '');
 }
 
 /**

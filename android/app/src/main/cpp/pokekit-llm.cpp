@@ -778,6 +778,21 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
         std::lock_guard<std::mutex> gen_lock(session->generateMutex);
         session->cancelled = false;
 
+        // Each request carries the whole conversation and the chat template
+        // re-renders it from scratch, so the context has to start empty. Without
+        // this the prompt is decoded on top of the previous request's KV cache:
+        // the tool-calling loop sends one request per round trip (up to
+        // MAX_TOOL_ITERATIONS per user message), each stacking another full
+        // transcript on the last, so the model reads a conversation spliced from
+        // duplicated turns, starts echoing raw <start_of_turn> markers as content,
+        // and fills the context long before it answers.
+        llama_memory_clear(llama_get_memory(session->ctx), true);
+
+        const int32_t n_ctx_total = static_cast<int32_t>(llama_n_ctx(session->ctx));
+        if (static_cast<int32_t>(prompt_tokens.size()) >= n_ctx_total) {
+            throw std::runtime_error("the conversation is longer than the model's context window");
+        }
+
         llama_batch batch = llama_batch_get_one(prompt_tokens.data(), static_cast<int32_t>(prompt_tokens.size()));
 
         std::string generated_text; // raw pieces, may end in an incomplete UTF-8 tail
