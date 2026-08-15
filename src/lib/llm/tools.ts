@@ -204,10 +204,10 @@ function getLiveActiveTeam(): Team | { error: string } {
  * Get the active team's format from the live store (or undefined if no team open).
  * Used by tools that need format context but don't need the full team.
  */
-function getLiveActiveTeamFormat(): string | undefined {
+function getLiveActiveTeamFormat(fallback?: { format?: string }): string | undefined {
   const { teams, currentTeamId } = useStore.getState();
   const team = teams.find((t) => t.id === currentTeamId);
-  return team?.format;
+  return team?.format ?? fallback?.format;
 }
 
 /** Only forward a weather/terrain string if it's one calculateSpeed/calculateDamage actually
@@ -232,9 +232,9 @@ export const TOOLS: ToolDefinition[] = [
       "Get the user's currently open team: format, and each member's species, level, item, " +
       'ability, nature, Tera type, and moves. Call this first in any conversation about "my team".',
     parameters: { type: 'object', properties: {} },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    handler: (_args, _ctx) => {
-      const team = getLiveActiveTeam();
+    handler: (_args, ctx) => {
+      let team = getLiveActiveTeam();
+      if ('error' in team && ctx?.team) team = ctx.team;
       if ('error' in team) return team;
       return {
         name: team.name,
@@ -259,9 +259,9 @@ export const TOOLS: ToolDefinition[] = [
       'Run the real type-coverage and weakness analysis on the active team: shared weaknesses, ' +
       'offensive coverage gaps, and a 0-100 balance score. Use this for coaching questions.',
     parameters: { type: 'object', properties: {} },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    handler: (_args, _ctx) => {
-      const team = getLiveActiveTeam();
+    handler: (_args, ctx) => {
+      let team = getLiveActiveTeam();
+      if ('error' in team && ctx?.team) team = ctx.team;
       if ('error' in team) return team;
       const weaknesses = analyzeTeamWeaknesses(team);
       const gaps = getCoverageGaps(team);
@@ -284,9 +284,9 @@ export const TOOLS: ToolDefinition[] = [
       'Check the active team against its format\'s legality rules (species clause, item clause, ' +
       'level caps, Champions whitelists, etc). Use before telling the user a team is tournament-legal.',
     parameters: { type: 'object', properties: {} },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    handler: async (_args, _ctx) => {
-      const team = getLiveActiveTeam();
+    handler: async (_args, ctx) => {
+      let team = getLiveActiveTeam();
+      if ('error' in team && ctx?.team) team = ctx.team;
       if ('error' in team) return team;
       return validateTeam(team);
     },
@@ -304,9 +304,9 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    handler: (args, _ctx) => {
-      const team = getLiveActiveTeam();
+    handler: (args, ctx) => {
+      let team = getLiveActiveTeam();
+      if ('error' in team && ctx?.team) team = ctx.team;
       if ('error' in team) return team;
       const member = findTeamMember(team, String(args.species));
       if (!member) return { error: `"${args.species}" is not on the active team.` };
@@ -332,8 +332,9 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: (args) => {
-      const liveTeam = getLiveActiveTeam();
+    handler: (args, ctx) => {
+      let liveTeam = getLiveActiveTeam();
+      if ('error' in liveTeam && ctx?.team) liveTeam = ctx.team;
       const teamArg = 'error' in liveTeam ? null : liveTeam;
       const subject = resolveSpeedSubject(teamArg, String(args.species));
       if ('error' in subject) return subject;
@@ -380,8 +381,9 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['attacker', 'defender', 'move'],
     },
-    handler: (args) => {
-      const liveTeam = getLiveActiveTeam();
+    handler: (args, ctx) => {
+      let liveTeam = getLiveActiveTeam();
+      if ('error' in liveTeam && ctx?.team) liveTeam = ctx.team;
       const teamArg = 'error' in liveTeam ? null : liveTeam;
       const attacker = resolveCalcSubject(teamArg, String(args.attacker));
       if ('error' in attacker) return attacker;
@@ -456,8 +458,8 @@ export const TOOLS: ToolDefinition[] = [
       properties: { species: { type: 'string', description: 'Species name.' } },
       required: ['species'],
     },
-    handler: (args) => {
-      const format = getLiveActiveTeamFormat();
+    handler: (args, ctx) => {
+      const format = getLiveActiveTeamFormat(ctx?.team);
       const dex = getPokedexEntry(String(args.species), getCalcGenForFormat(format));
       if (!dex) return { error: `Unknown species "${args.species}".` };
       return {
@@ -484,8 +486,8 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ['species'],
     },
-    handler: async (args) => {
-      const format = getLiveActiveTeamFormat();
+    handler: async (args, ctx) => {
+      const format = getLiveActiveTeamFormat(ctx?.team);
       const moves = await getMovepoolForSpecies(String(args.species), getCalcGenForFormat(format));
       const scoped = isChampionsFormatId(format ?? '')
         ? (() => {
