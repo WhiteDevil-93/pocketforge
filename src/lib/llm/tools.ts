@@ -204,7 +204,7 @@ function getLiveActiveTeam(): Team | { error: string } {
  * Get the active team's format from the live store (or undefined if no team open).
  * Used by tools that need format context but don't need the full team.
  */
-function getLiveActiveTeamFormat(fallback?: { format?: string }): string | undefined {
+function getLiveActiveTeamFormat(fallback?: Team | null): string | undefined {
   const { teams, currentTeamId } = useStore.getState();
   const team = teams.find((t) => t.id === currentTeamId);
   return team?.format ?? fallback?.format;
