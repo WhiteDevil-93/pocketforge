@@ -578,10 +578,33 @@ tower, so `audioBackend` is available on the same bundle — again separate work
    `backendId` visible in `getServerStatus`, and confirming which backend the real
    device actually lands on (per LiteRT-LM #2114, GPU init failing on some hardware is
    expected, not a bug — the point of the chain is that CPU still succeeds).
-5. **Generation.** Request parsing → `systemInstruction` / `initialMessages` /
-   validated `SamplerConfig` / `maxOutputToken`, `MessageCallback` wiring,
-   `cancelProcess()` **with the `CancellationException`-is-not-an-error branch**.
-   Success: single-turn chat streams to the WebView with **zero** TypeScript changes.
+5. **Generation. Done, pending build/device verification.** Added
+   `engine/ChatRequest.kt` (`parseChatRequest`): the OpenAI body → `systemInstruction`
+   (from `messages[0]` if `role: "system"`) / `initialMessages` (everything between) /
+   `lastMessage` (the final entry, the actual `sendMessageAsync` argument) mapping from
+   §4.2, plus `SamplerConfig` requiring all three of `temperature`/`top_p`/`top_k`
+   present and in-range or falling back to `null` rather than guessing the missing
+   ones or crashing on `SamplerConfig`'s own validation, `max_tokens` → `maxOutputToken`
+   (`>0` or `null`), and `presence_penalty`/`frequency_penalty` → `RepetitionPenaltyConfig`.
+   None of these extra fields are sent by this app's TypeScript layer today — parsed
+   anyway so a future client that does send them isn't a second Kotlin change.
+   `LiteRtLmEngine.generate()` builds one `Conversation` per call, wires the
+   `MessageCallback` overload (not `Flow` — no coroutine scope needed on a plain HTTP
+   worker thread), and blocks on a `CountDownLatch` released by `onDone`/`onError` so
+   the method's blocking contract matches `LlamaCppEngine`'s. `onError` implements the
+   `CancellationException`-is-not-an-error branch from §4.3 exactly. `SamplerConfig` is
+   forced to `null` on the NPU backend per §4.2 point 3. `cancel()` now does real work:
+   reads a `@Volatile activeConversation` set for the duration of one `generate()` call
+   (so a `cancel()` from a different thread — client disconnect, service teardown — has
+   something to reach) and calls `cancelProcess()`, swallowing the
+   `IllegalStateException` a race against `generate()`'s own `finally`-block close can
+   produce. Tool calls are still step 6 — every turn reports an empty `[]` tool-calls
+   array regardless of what the model does with them.
+   **Not yet verified against a real build or device** — needs everything step 4 still
+   needs, plus actually sending a chat message through the real 3.87 GB bundle and
+   confirming a token stream reaches the WebView with no TypeScript changes, and
+   confirming a client disconnect mid-stream reaches `cancel()` and does not surface as
+   a spurious SSE error frame.
 6. **Tool calls.** `PassthroughTool` + `automaticToolCalling = false`, `ToolCall.arguments`
    serialised to JSON, verified against the real `toolRunner.ts` loop on a calculator call.
 7. **`onTrimMemory` + TS settings/migration.**

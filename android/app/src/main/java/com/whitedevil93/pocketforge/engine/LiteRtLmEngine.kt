@@ -3,39 +3,123 @@ package com.whitedevil93.pocketforge.engine
 import android.content.Context
 import android.util.Log
 import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Conversation
+import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.LogSeverity
+import com.google.ai.edge.litertlm.Message
+import com.google.ai.edge.litertlm.MessageCallback
 import com.whitedevil93.pocketforge.GenerationCallback
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * LiteRT-LM binding for a .litertlm bundle — see docs/litertlm-android-adapter.md.
  *
- * Step 4 (this file): engine construction and the NPU→GPU→CPU backend fallback.
- * [generate] and [cancel] get their real implementation in step 5, once request
- * parsing and Conversation construction are wired up; until then [generate] fails
- * loudly (LocalLlmService's existing catch-and-report path turns that into a normal
- * SSE error frame) and [cancel] is a genuine no-op, not a placeholder — every
- * LocalLlmService teardown path calls `engine?.cancel()` unconditionally, including
- * right after a load with nothing yet generating, so it must never throw.
+ * One [Conversation] per [generate] call, built entirely from that request's history
+ * (§4.2) — nothing is replayed as traffic, so there is no cross-request state here
+ * beyond [activeConversation], which exists only so a concurrent [cancel] has
+ * something to reach. Tool calling is not wired up yet (step 6); every turn reports
+ * an empty tool-calls array.
  */
 class LiteRtLmEngine private constructor(
     private val engine: Engine,
-    backendName: String,
+    private val backendName: String,
 ) : InferenceEngine {
     override val backendId: String = "litertLm:$backendName"
 
     private val closed = AtomicBoolean(false)
 
+    /** The Conversation currently in flight, if any — set for the duration of one
+     *  [generate] call so a concurrent [cancel] (from a different thread: the client
+     *  disconnected, or the service is tearing down) has something to reach. @Volatile
+     *  because cancel() reads it from whatever thread called it, unrelated to the
+     *  thread running generate(). */
+    @Volatile private var activeConversation: Conversation? = null
+
+    /**
+     * Runs one turn: builds a fresh Conversation from the parsed request (per
+     * docs/litertlm-android-adapter.md §4.2 — history and prior state are all
+     * *configuration* here, nothing is replayed), streams the response via the
+     * [MessageCallback] overload (no coroutine scope needed — this is already called
+     * from a plain HTTP worker thread), and blocks until the turn is fully done. The
+     * blocking contract matches [InferenceEngine.generate]'s and mirrors how
+     * LlamaCppEngine's nativeGenerate already behaves from LocalLlmService's POV.
+     */
     override fun generate(requestBodyJson: String, callback: GenerationCallback) {
-        throw UnsupportedOperationException(
-            "LiteRT-LM generation not implemented yet — see docs/litertlm-android-adapter.md step 5"
+        val parsed = parseChatRequest(requestBodyJson)
+        // §4.2: SamplerConfig is inert on NPU (the gallery's own pattern passes null
+        // there) — build it as null on that backend rather than silently ignoring a
+        // request's sampler settings without saying so anywhere.
+        val samplerConfig = if (backendName == "NPU") null else parsed.samplerConfig
+        val conversation = engine.createConversation(
+            ConversationConfig(
+                systemInstruction = parsed.systemInstruction,
+                initialMessages = parsed.initialMessages,
+                samplerConfig = samplerConfig,
+            )
         )
+        activeConversation = conversation
+        try {
+            val latch = CountDownLatch(1)
+            val assembled = StringBuilder()
+            val messageCallback = object : MessageCallback {
+                override fun onMessage(message: Message) {
+                    val piece = message.toString()
+                    assembled.append(piece)
+                    callback.onToken(piece)
+                }
+
+                override fun onDone() {
+                    // No tool calls yet (step 6) — always an empty array.
+                    callback.onDone(assembled.toString(), "[]")
+                    latch.countDown()
+                }
+
+                override fun onError(throwable: Throwable) {
+                    if (throwable is CancellationException) {
+                        // §4.3: a cancelled generation arrives here, not onDone() — this
+                        // is the client-disconnect / server-stop path, not a failure.
+                        callback.onDone(assembled.toString(), "[]")
+                    } else {
+                        callback.onError(throwable.message ?: "LiteRT-LM generation failed")
+                    }
+                    latch.countDown()
+                }
+            }
+            conversation.sendMessageAsync(
+                parsed.lastMessage,
+                messageCallback,
+                maxOutputToken = parsed.maxOutputToken,
+                repetitionPenaltyConfig = parsed.repetitionPenaltyConfig,
+            )
+            try {
+                latch.await()
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                throw IllegalStateException("Interrupted while waiting for LiteRT-LM generation", e)
+            }
+        } finally {
+            activeConversation = null
+            // Conversation.close() throws if already closed, unlike InferenceEngine's
+            // own idempotent contract — but nothing else ever closes this instance, so
+            // exactly one close() here is correct, not merely defensive.
+            conversation.close()
+        }
     }
 
     override fun cancel() {
-        // No Conversation exists yet to cancel (step 5 adds one). Intentionally empty.
+        val conversation = activeConversation ?: return
+        try {
+            // A no-op when idle (per its own KDoc); the IllegalStateException it can
+            // throw means the conversation was already closed — a real race against
+            // generate()'s finally block, not a bug, so swallow it like the idle case.
+            conversation.cancelProcess()
+        } catch (_: IllegalStateException) {
+            Log.d(TAG, "cancelProcess on an already-closed conversation — ignoring")
+        }
     }
 
     override fun close() {
