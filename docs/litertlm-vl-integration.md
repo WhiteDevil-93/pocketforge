@@ -220,11 +220,35 @@ access as "not required" and silently skip prompting, rather than failing loudly
 CAMERA permission dialog appears, or confirm gallery picking truly needs nothing
 beyond what source-reading predicts.
 
-**12. Attach button.** In `src/components/ai/ChatPanel.tsx` (`handleSend`, ~line 106), add a
-pending-attachment slot next to the `input` state, an attach control by the send button, and a
-thumbnail with a remove affordance. Gate the control on
-`isNativeApp() && aiBackend === 'localLiteRt' && visionAvailable`. This is the generic path and
-should ship before the importer — it exercises every layer end to end with a trivial UI.
+**12. Attach button. Done, TS build-verified.** `ChatPanel.tsx` gained
+`attachedImage: string | null` state holding the full `data:image/<format>;base64,<data>`
+URL directly — not `{ base64, format }` — specifically so the thumbnail's `<img src>`
+and the eventual `ContentPart.image_url.url` both use it unchanged, and this file never
+needs a static import of `imagePicker.ts` (native-only, dynamic-import-only per its own
+header). `handleAttachImage` dynamically imports `pickOrCaptureImage`/`toDataUrl`,
+converts on success, and — since `ImagePickCancelledError` can't cross that same dynamic
+boundary as a type without defeating its purpose — checks `err.name ===
+'ImagePickCancelledError'` rather than `instanceof`, exactly the reason that class sets
+`this.name` explicitly in step 11.
+`canAttachImage` gates on `isNativeApp() && aiBackend === 'localLiteRt' &&
+serverStatus?.visionAvailable === true`, exactly as specified — the llama.cpp/GGUF path
+never sets `visionAvailable` and Ollama Cloud has no server status at all, so both fall
+through to `false` without their own special-casing. The control and thumbnail are
+conditionally rendered (hidden, not disabled-with-explanation), matching this app's
+existing convention for native-only controls (`SettingsPage.tsx`'s import/server rows).
+`handleSend` now captures `attachedImage` into a local before clearing it, the same
+pattern already used for `text` — and allows sending an image with no text (`(!text &&
+!image)`, not `!text` alone), building `content` as an array only when an image is
+present, with the text part included only when non-empty. The send button's `disabled`
+was widened to match (`!input.trim() && !attachedImage`).
+No changes needed to `localLlamaCpp.ts` — step 10 already made `toWireMessage` a
+transparent passthrough for array content, so once `ChatMessage.content` carries the
+image this step's whole job was UI plumbing, not another wire-format change.
+**Verified**: `npx tsc -b` and `npm run lint` both clean across the whole project.
+**Not verified**: no device to see the attach button render, tap through the native
+picker, or confirm the thumbnail/removal affordance actually work — and no VL bundle
+loaded anywhere to make `visionAvailable` ever true in a live app, so the gated control
+has never actually been seen rendered, only reasoned about.
 
 **13. Team import.** A "Import from screenshot" entry point that composes the same message with
 a task-specific instruction telling the model to read the image and use the existing team tools.

@@ -7,13 +7,14 @@
 // ============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, Loader2, Send, Square, User, Wrench } from 'lucide-react';
+import { Bot, ImagePlus, Loader2, Send, Square, User, Wrench, X } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { sendMessage } from '../../lib/llm/ollamaCloud';
 import { sendMessage as localSendMessage } from '../../lib/llm/localLlamaCpp';
 import { buildSystemPrompt } from '../../lib/llm/systemPrompt';
 import { useAiReadiness } from '../../hooks/use-ai-readiness';
-import { contentToText, type ChatMessage, type LlmStreamEvent } from '../../lib/llm/types';
+import { isNativeApp } from '../../lib/platform';
+import { contentToText, type ChatMessage, type ContentPart, type LlmStreamEvent } from '../../lib/llm/types';
 
 interface ChatPanelProps {
   /**
@@ -65,6 +66,12 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
 
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  // The full "data:image/<format>;base64,<data>" URL — not { base64, format } — so
+  // the thumbnail's <img src> and the eventual ContentPart.image_url.url both use it
+  // directly, and this file never needs a static import of imagePicker.ts's
+  // toDataUrl (that module is native-only and must stay behind a dynamic import;
+  // see its own header comment).
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [streamingText, setStreamingText] = useState('');
   const [toolActivity, setToolActivity] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -77,7 +84,29 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
 
   // Shared with ChatLauncher (and any future chat surface) so a launcher can
   // never appear while this sheet would report "not configured".
-  const { isConfigured, isLocalBackend } = useAiReadiness();
+  const { isConfigured, isLocalBackend, serverStatus } = useAiReadiness();
+
+  // docs/litertlm-vl-integration.md §12: images are LiteRT-LM-only. llama.cpp/GGUF
+  // never sets visionAvailable, and Ollama Cloud has no server status at all — both
+  // fall through to false without needing their own checks here.
+  const canAttachImage =
+    isNativeApp() && settings.aiBackend === 'localLiteRt' && serverStatus?.visionAvailable === true;
+
+  const handleAttachImage = useCallback(async () => {
+    if (isStreaming) return;
+    try {
+      const { pickOrCaptureImage, toDataUrl } = await import('../../lib/native/imagePicker');
+      const image = await pickOrCaptureImage();
+      setAttachedImage(toDataUrl(image));
+    } catch (err) {
+      // ImagePickCancelledError (user declined the permission prompt or cancelled
+      // the picker) is a normal outcome, not a failure — checked by name rather
+      // than importing the class statically, which the dynamic-import boundary
+      // above exists specifically to avoid.
+      if (err instanceof Error && err.name === 'ImagePickCancelledError') return;
+      setError(err instanceof Error ? err.message : 'Failed to attach image');
+    }
+  }, [isStreaming]);
 
   const displayMessages = useMemo(
     () =>
@@ -105,16 +134,24 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || isStreaming || !isConfigured) return;
+    const image = attachedImage; // capture before clearing, same reason as `text`
+    if ((!text && !image) || isStreaming || !isConfigured) return;
 
     setInput('');
+    setAttachedImage(null);
     setError(null);
     setStreamingText('');
     streamingTextRef.current = '';
     setToolActivity([]);
     setIsStreaming(true);
 
-    const userMessage: ChatMessage = { role: 'user', content: text };
+    const content: string | ContentPart[] = image
+      ? [
+          ...(text ? [{ type: 'text', text } as const] : []),
+          { type: 'image_url', image_url: { url: image } } as const,
+        ]
+      : text;
+    const userMessage: ChatMessage = { role: 'user', content };
     const baseHistory: ChatMessage[] =
       history.length === 0
         ? [
@@ -198,6 +235,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
     }
   }, [
     input,
+    attachedImage,
     isStreaming,
     isConfigured,
     history,
@@ -298,7 +336,35 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
               )}
             </div>
 
-            <div className="flex items-end gap-2 pt-3 border-t border-border-subtle shrink-0">
+            {attachedImage && (
+              <div className="flex items-center gap-2 pt-3 border-t border-border-subtle shrink-0">
+                <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-border-subtle shrink-0">
+                  <img src={attachedImage} alt="Attached" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setAttachedImage(null)}
+                    aria-label="Remove attached image"
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={`flex items-end gap-2 shrink-0 ${attachedImage ? 'pt-2' : 'pt-3 border-t border-border-subtle'}`}>
+              {canAttachImage && (
+                <button
+                  type="button"
+                  onClick={() => void handleAttachImage()}
+                  disabled={isStreaming}
+                  aria-label="Attach image"
+                  title="Attach image"
+                  className="w-11 h-11 shrink-0 rounded-xl bg-bg-tertiary border border-border-subtle text-text-primary flex items-center justify-center disabled:opacity-40 touch-target"
+                >
+                  <ImagePlus size={18} />
+                </button>
+              )}
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -327,7 +393,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
                 <button
                   type="button"
                   onClick={() => void handleSend()}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() && !attachedImage}
                   aria-label="Send message"
                   className="w-11 h-11 shrink-0 rounded-xl bg-accent-primary text-white flex items-center justify-center disabled:opacity-40 touch-target"
                 >
