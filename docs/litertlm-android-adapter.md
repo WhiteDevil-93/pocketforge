@@ -136,12 +136,28 @@ enum class ModelFormat(val magic: ByteArray, val extension: String) {
 }
 ```
 
-**Open item:** the `.litertlm` container magic must be read off the real artefact
-(`xxd -l 16 vgc_e4b_v5_heretic.litertlm`, or from LiteRT-LM's
-`schema/core/litertlm_header.fbs`) before this constant is written. Do not guess it —
-a wrong magic turns every import into a false "not a model" rejection. Until it is
-confirmed, gate LiteRT imports on extension **and** a successful `Engine.initialize()`,
-never on a guessed byte string.
+**Resolved from source.** `schema/core/litertlm_read.cc` checks
+`content.substr(0, 8) == "LITERTLM"` — the magic is the eight ASCII bytes `LITERTLM` at
+offset 0, immediately followed by three `uint32` version fields:
+
+```
+offset 0   8 bytes   "LITERTLM"
+offset 8   uint32    major_version
+offset 12  uint32    minor_version
+offset 16  uint32    patch_version
+```
+
+`ReadHeaderFromLiteRTLM` rejects the file outright when
+`header->major_version != LITERTLM_MAJOR_VERSION`, and `schema/core/litertlm_header.h`
+pins that at `LITERTLM_MAJOR_VERSION = 1` (current format 1.6.0). So the Kotlin validator
+should read 20 bytes, not 8, and check the major version too — that turns a future
+format break into "this model was built for a newer LiteRT-LM" at import time instead of
+an opaque `initialize()` failure minutes later.
+
+```kotlin
+private val LITERTLM_MAGIC = "LITERTLM".toByteArray(Charsets.US_ASCII)
+private const val LITERTLM_SUPPORTED_MAJOR = 1
+```
 
 `copyInChunks` then reads `MAGIC_WINDOW` bytes instead of four, sniffs, rejects `null`
 with a message naming both accepted formats, and prepends the window to the output
@@ -153,47 +169,54 @@ confirm `filesDir` has ~4 GB free *before* starting rather than failing at 90 %.
 
 ## 4. `LiteRtLmEngine`
 
-Everything below is taken from the upstream Kotlin API doc and from Google's own
-`gallery` app, not inferred — see §11 for the exact sources. Where something is still
-unverified it is marked **UNVERIFIED** rather than guessed.
+Everything below is read out of the LiteRT-LM Kotlin sources
+(`kotlin/java/com/google/ai/edge/litertlm/`) and Google's `gallery` app — see §11. Nothing
+here is inferred from documentation prose alone.
 
 ### 4.1 Engine construction
 
+`EngineConfig` in full (`Config.kt`):
+
 ```kotlin
-val engineConfig = EngineConfig(
-    modelPath      = modelPath,
-    backend        = preferredBackend,          // Backend.CPU() | Backend.GPU() | Backend.NPU(nativeLibraryDir = …)
-    visionBackend  = null,                      // set only for the VL bundle — see §8
-    audioBackend   = null,
-    maxNumTokens   = MAX_NUM_TOKENS,            // ENGINE-level, not per-request — see §4.2
-    cacheDir       = context.cacheDir.absolutePath,
+data class EngineConfig(
+  val modelPath: String,
+  val backend: Backend = Backend.CPU(),
+  val visionBackend: Backend? = null,   // null ⇒ vision executor not initialised
+  val audioBackend: Backend? = null,    // null ⇒ audio executor not initialised
+  val maxNumTokens: Int? = null,        // sum of input+output = KV-cache size
+  val maxNumImages: Int? = null,
+  val cacheDir: String? = null,         // defaults to modelPath's dir; ":nocache" disables
 )
-val engine = Engine(engineConfig)
-engine.initialize()
 ```
 
-`Engine` and `Conversation` are both `AutoCloseable` and the upstream examples use
-`.use { }`. That fits `InferenceEngine : AutoCloseable` from §2 with no adaptation.
+`maxNumTokens` is **the context window**, documented as "equivalent to the size of the
+kv-cache" — it is not an output cap. Leave it `null` to take the model's own value unless
+memory forces a smaller KV cache.
 
-Also worth setting once, at plugin load, so the native layer stops flooding logcat:
+`cacheDir` defaulting to *the model's directory* matters here: PocketForge imports models
+into `filesDir`, so leaving it unset writes compiled kernels next to a 3.87 GB file in
+app-private storage that never gets evicted. Set it explicitly to
+`context.cacheDir.absolutePath` so the OS can reclaim it.
+
+Backends (`Config.kt`), all four:
 
 ```kotlin
-Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
+data class CPU(val threadCount: Int? = null) : Backend("CPU")
+class      GPU                               : Backend("GPU")
+data class NPU(val nativeLibraryDir: String = "") : Backend("NPU")
+class      GOOGLE_TENSOR                     : Backend("GOOGLE_TENSOR_ARTISAN")
 ```
 
-**Backend fallback.** The gallery picks a single backend from a user setting and does
-*not* fall back. PocketForge has no such setting and should walk NPU → GPU → CPU. This is
-not defensive padding: LiteRT-LM issue #2114 is a GPU `initialize()` failure on the
-Galaxy S26 Exynos (Xclipse 960 + ANGLE-CL), i.e. a current flagship. A GPU-only build
-would simply not start there.
+`GOOGLE_TENSOR` is a distinct backend from `NPU` and is the Pixel path — the gallery maps
+both its NPU and TPU settings onto `Backend.NPU`, so it never exercises this one. Worth
+including in the chain on Pixel hardware, but only after NPU/GPU/CPU is proven.
+
+**Backend fallback.** The gallery picks one backend from a user setting and does not fall
+back. PocketForge has no such setting and should walk NPU → GPU → CPU. Not defensive
+padding: LiteRT-LM issue #2114 is a GPU `initialize()` failure on the Galaxy S26 Exynos
+(Xclipse 960 + ANGLE-CL) — a current flagship where a GPU-only build simply would not start.
 
 ```kotlin
-private fun backends(nativeLibraryDir: String): List<Pair<String, () -> Backend>> = listOf(
-    "NPU" to { Backend.NPU(nativeLibraryDir = nativeLibraryDir) },
-    "GPU" to { Backend.GPU() },
-    "CPU" to { Backend.CPU() },
-)
-
 fun load(modelPath: String, context: Context): LiteRtLmEngine {
     val attempted = mutableListOf<String>()
     var last: Throwable? = null
@@ -203,9 +226,9 @@ fun load(modelPath: String, context: Context): LiteRtLmEngine {
         try {
             engine.initialize()
             return LiteRtLmEngine(engine, backendName = name)
-        } catch (e: Exception) {           // Errors (OOM, UnsatisfiedLinkError) deliberately propagate
+        } catch (e: Exception) {      // Errors (OOM, UnsatisfiedLinkError) deliberately propagate
             Log.w(TAG, "backend $name unavailable: ${e.message}")
-            engine.close()                 // a half-initialised engine still holds native memory
+            engine.close()            // a half-initialised engine still holds native memory
             last = e
         }
     }
@@ -213,131 +236,160 @@ fun load(modelPath: String, context: Context): LiteRtLmEngine {
 }
 ```
 
-Two corrections against my first draft: the catch is `Exception`, not
-`LiteRtLmJniException` alone (#2114 shows init failures that are not necessarily JNI
-exceptions), and a failed `initialize()` must still `close()` its engine before the next
-attempt — otherwise a three-step fallback leaks two engines' worth of native allocation
-on the way to CPU.
+Catch `Exception`, not `LiteRtLmJniException` alone (#2114 shows init failures that are
+not necessarily JNI exceptions), and `close()` each failed engine before the next attempt —
+otherwise a three-step walk leaks two engines' worth of native allocation on the way to CPU.
 
-`cacheDir` holds compiled kernels; the upstream comment is "this can improve 2nd load
-time". It is evictable — losing it costs one slow load, not a failure — so `cacheDir`,
-not `filesDir`. A cold NPU→GPU→CPU walk is *three* `initialize()` calls, so
-`LOAD_WATCHDOG_MS` (15 min) stays as it is, and each attempt must be logged so a slow
-start is diagnosable.
+Also worth setting once at plugin load: `Engine.setNativeMinLogSeverity(LogSeverity.ERROR)`.
 
-### 4.2 Conversation construction — history maps to `initialMessages`
+A cold NPU→GPU→CPU walk is *three* `initialize()` calls, so `LOAD_WATCHDOG_MS` (15 min)
+stays as it is, and each attempt must be logged.
 
-This is the correction that matters most against my first draft. I assumed history had to
-be replayed by sending messages. It does not: `ConversationConfig` takes it directly.
+### 4.2 Conversation construction
+
+`ConversationConfig` (`Config.kt`), abbreviated to the fields that matter here:
 
 ```kotlin
-val conversationConfig = ConversationConfig(
-    systemInstruction = Contents.of("You are a helpful assistant."),
-    initialMessages   = listOf(
-        Message.user("What is the capital city of the United States?"),
-        Message.model("Washington, D.C."),
-    ),
-    samplerConfig     = SamplerConfig(topK = 10, topP = 0.95, temperature = 0.8),
-    tools             = listOf(tool(SomeOpenApiTool())),
-    automaticToolCalling = false,
+data class ConversationConfig(
+  val systemInstruction: Contents? = null,   // "prepend[ed] to initialMessages"
+  val initialMessages: List<Message> = listOf(),
+  val tools: List<ToolProvider> = listOf(),
+  val samplerConfig: SamplerConfig? = null,  // null ⇒ engine defaults
+  val automaticToolCalling: Boolean = true,
+  val channels: List<Channel>? = null,       // e.g. a thinking channel
+  val extraContext: Map<String, Any> = emptyMap(),
+  val prefillPrefaceOnInit: Boolean = false,
+  val maxOutputToken: Int? = null,
+  val thinkingConfig: ThinkingConfig? = null,
+  val enableResponseFormat: Boolean = false,
 )
-val conversation = engine.createConversation(conversationConfig)
 ```
 
-So the mapping from one stateless `/v1/chat/completions` body is direct and clean:
+Mapping one stateless `/v1/chat/completions` body:
 
 | OpenAI body | LiteRT-LM |
 |---|---|
-| `messages[0]` with `role: "system"` | `ConversationConfig.systemInstruction = Contents.of(text)` |
-| all `messages[1..n-1]` | `initialMessages` — `Message.user(…)` / `Message.model(…)` / `Message.tool(…)` |
-| final `messages[n]` (`role: "user"` or `role: "tool"`) | the argument to `sendMessageAsync(…)` |
-| `tools[]` | `ConversationConfig.tools` (§4.4) |
-| `temperature` / `top_p` / `top_k` | `SamplerConfig(temperature: Double, topP: Double, topK: Int)` |
-| `max_tokens` | **no per-request equivalent** — see below |
+| `messages[0]` `role: "system"` | `systemInstruction = Contents.of(text)` |
+| `messages[1..n-1]` | `initialMessages` — `Message.user` / `Message.model` / `Message.tool` |
+| `messages[n]` | argument to `sendMessageAsync(…)` |
+| `tools[]` | `tools` (§4.4) |
+| `temperature` / `top_p` / `top_k` | `SamplerConfig` — **with validation, see below** |
+| `max_tokens` | `maxOutputToken` (per-call arg **or** config field) |
+| `presence_penalty` / `frequency_penalty` | `RepetitionPenaltyConfig` |
 
-`systemInstruction` is `Contents`, not `String`; `Contents.of(…)` wraps it.
-`src/lib/llm/systemPrompt.ts` sends the system prompt as `messages[0]`, so it must be
-lifted out of the array into `systemInstruction` — leaving it as a user turn will degrade
-the fine-tune.
+Corrections against the previous draft, all from source:
 
-Three constraints fall out that the first draft did not know about:
+1. **`max_tokens` does map.** `sendMessage`/`sendMessageAsync` both take
+   `maxOutputToken: Int? = null` as a per-call parameter, and `ConversationConfig` carries
+   a default. The earlier claim that it was engine-level-only conflated it with
+   `maxNumTokens` (context size). Pass the request's `max_tokens` straight through.
+2. **`SamplerConfig` validates in `init` and throws.**
+   ```kotlin
+   data class SamplerConfig(val topK: Int, val topP: Double, val temperature: Double, val seed: Int = 0) {
+     init {
+       require(topK > 0)                    // "topK should be positive"
+       require(topP in 0.0..1.0)
+       require(temperature >= 0)
+     }
+   }
+   ```
+   This is a live trap: in llama.cpp `top_k = 0` means *disabled*, and any client sending
+   that gets an `IllegalArgumentException` here. Validate and clamp before constructing —
+   omit `SamplerConfig` entirely (pass `null`, meaning engine defaults) rather than
+   coercing a nonsense value.
+3. **`samplerConfig = null` means "use the engine's defaults"**, not "no sampling". The
+   gallery passes `null` on NPU (`if (preferredBackend is Backend.NPU) null else …`), so
+   on an NPU device the request's sampler settings are inert. That difference must reach
+   the user — see §7.
+4. **Free upgrades over the llama.cpp path.** `RepetitionPenaltyConfig` carries
+   `presencePenalty` and `frequencyPenalty` documented as "OpenAI style", so those request
+   fields map directly. `channels` exposes a thinking channel into `Message.channels`,
+   separate from the primary response — relevant if the fine-tune ever emits reasoning.
+5. `prefillPrefaceOnInit = false` (the default) is right: setting it makes
+   `createConversation()` block on prefill.
+6. `systemInstruction` is `Contents`, not `String`. `src/lib/llm/systemPrompt.ts` sends it
+   as `messages[0]`, so lift it out of the array — leaving it as a user turn degrades the
+   fine-tune.
 
-1. **`maxNumTokens` is an `EngineConfig` field, not a per-conversation or per-request
-   one.** OpenAI's `max_tokens` therefore cannot be honoured per request. Pick one
-   engine-level ceiling as a named constant, and either ignore `max_tokens` from the body
-   or enforce it in Kotlin by stopping collection early and emitting `[DONE]`. Prefer the
-   latter — the TS layer does set it, and silently ignoring it is a behaviour change from
-   the llama.cpp path.
-2. **`SamplerConfig` must be `null` on NPU.** The gallery does exactly this:
-   `samplerConfig = if (preferredBackend is Backend.NPU) null else SamplerConfig(…)`.
-   So on an NPU device, `temperature`/`top_p`/`top_k` from the request are silently
-   inert. That difference must reach the user — it is one more reason for the
-   `backend` field on `getServerStatus` (§7).
-3. **One `Conversation` per HTTP request**, built from `initialMessages` and closed in a
-   `finally`. Since history is config rather than replayed traffic, this is much less
-   objectionable than the first draft feared, and the prefix-cache idea in that draft
-   should be dropped until measurement says otherwise.
+One `Conversation` per HTTP request, built from `initialMessages` and closed in a
+`finally`. Since history is *configuration* rather than replayed traffic, the prefix-cache
+idea from the first draft is dropped.
 
 ### 4.3 Streaming and cancellation
 
+Use the `MessageCallback` overload, not the `Flow` one. `Flow<Message>` is literally a
+`callbackFlow` wrapper around `MessageCallback` in `Conversation.kt`, and
+`handleChatCompletions` writes SSE synchronously on the HTTP worker thread — it has no use
+for a coroutine scope.
+
 ```kotlin
-conversation
-    .sendMessageAsync(Contents.of(contents))
-    .catch  { callback.onError(it.message ?: "LiteRT-LM generation failed") }
-    .onCompletion { … }
-    .collect { message -> callback.onToken(message.toString()) }
+interface MessageCallback {
+    fun onMessage(message: Message)   // "Called when a new message chunk is available"
+    fun onDone()
+    fun onError(throwable: Throwable)
+}
 ```
 
-`sendMessageAsync` accepts either a `String` or `Contents`. Three send styles exist —
-synchronous `sendMessage`, `sendMessageAsync(text, MessageCallback)` with
-`onMessage`/`onDone`/`onError`, and `sendMessageAsync(text): Flow<Message>`. The
-`MessageCallback` variant maps almost one-to-one onto `GenerationCallback` and is
-arguably the better fit here, since `handleChatCompletions` writes SSE synchronously on
-the HTTP worker thread and does not want a coroutine scope at all. **Use the callback
-variant**; keep the Flow variant in reserve if `extraContext` or operators are needed.
+**Chunks are deltas** — confirmed by the KDoc on `MessageCallback.onMessage` ("a new
+message chunk"), by the gallery appending each one, and by the TUI example printing each
+in a loop. Maps straight onto `callback.onToken(piece)`, no diffing.
 
-**Chunks are deltas, not cumulative** — the gallery appends each one
-(`appendModelResponse(partialResponse = it.toString())`) and the upstream TUI example
-prints each in a loop. That maps straight onto `callback.onToken(piece)` with no
-diffing. **UNVERIFIED** in the sense that no doc states it in words: assert it once at
-runtime during step 5 (a cumulative stream would show quadratic growth in frame sizes
-and is trivially visible in logcat).
+**Cancellation.** `conversation.cancelProcess()` — and two things the first draft got wrong:
 
-**Cancellation is `conversation.cancelProcess()`**, not coroutine cancellation — my first
-draft was wrong here. The gallery wraps it in `IllegalStateException` handling, because
-calling it when no generation is in flight throws.
+- It is **a no-op when no inference is running**. The `IllegalStateException` it can throw
+  comes from `checkIsAlive()`, i.e. a *closed* conversation, not an idle one. Guard for
+  the closed case, not the idle one.
+- **A cancelled generation arrives as `onError`, not `onDone`.**
+  `JniMessageCallbackImpl.onError` maps native `statusCode == 1` (`kCancelled`) to a
+  `CancellationException`. So the naive wiring writes an SSE `{"error": …}` frame every
+  time a user navigates away mid-stream:
 
 ```kotlin
-override fun cancel() {
-    try {
-        conversation?.cancelProcess()
-    } catch (e: IllegalStateException) {
-        Log.d(TAG, "cancelProcess with no generation in flight — ignoring")
+override fun onError(throwable: Throwable) {
+    if (throwable is CancellationException) {
+        callback.onDone(assembled.toString(), toolCallsJson)   // clean stop, not a failure
+    } else {
+        callback.onError(throwable.message ?: "LiteRT-LM generation failed")
     }
 }
 ```
 
 This matters for a path that already exists: `writeSse` returns false on client
-disconnect and `handleChatCompletions` (`LocalLlmService.kt:494`) calls cancel
-immediately. Routing that to `cancelProcess()` preserves the behaviour exactly.
+disconnect and `handleChatCompletions` (`LocalLlmService.kt:494`) cancels immediately.
 
 ### 4.4 Tool calls — `automaticToolCalling = false`
 
-LiteRT-LM supports two tool styles: `@Tool`/`@ToolParam`-annotated Kotlin functions on a
-`ToolSet` (what the gallery's `MobileActionsTools.kt` uses), and `OpenApiTool` with a raw
-JSON schema. **PocketForge needs the second, in manual mode.**
+LiteRT-LM offers two tool styles: `@Tool`/`@ToolParam` on a `ToolSet` (reflection over
+Kotlin functions — what the gallery's `MobileActionsTools.kt` uses), and `OpenApiTool`
+with a raw JSON schema. **PocketForge needs the second, in manual mode**, because
+`@Tool` functions are executed *by LiteRT-LM in Kotlin* and PocketForge's tools are
+TypeScript in the WebView (`toolRunner.ts`, `tools.ts`, `writeTools.ts`) operating on data
+Kotlin cannot reach.
 
-The reason is structural. `@Tool` functions are executed *by LiteRT-LM, in Kotlin*.
-PocketForge's tools are TypeScript running in the WebView — `src/lib/llm/toolRunner.ts`,
-`tools.ts`, `writeTools.ts` — operating on data that only exists there. Kotlin cannot
-execute them. And `localLlamaCpp.ts:6` already owns the multi-turn loop.
-
-So:
+**Manual mode works on the streaming path — verified.** `JniMessageCallbackImpl.onMessage`:
 
 ```kotlin
-/** Carries an OpenAI tool declaration through to the model. execute() is never
- *  invoked because the conversation sets automaticToolCalling = false; the call
- *  is surfaced to TypeScript and executed there. */
+if (messageJsonObject.has("tool_calls")) {
+    if (!automaticToolCalling) {
+        callback.onMessage(jsonToMessage(messageJsonObject))
+        return
+    }
+    …
+}
+```
+
+So `MessageCallback.onMessage` delivers a `Message` with `toolCalls` populated. The
+sync-vs-async branch the previous draft reserved as a contingency is **not needed** —
+delete it from the plan.
+
+`OpenApiTool` wants exactly `{"name", "description", "parameters"}`, per its own KDoc.
+OpenAI declarations are `{"type":"function","function":{name, description, parameters}}`,
+so the translation is unwrapping `.function` — no schema rewriting.
+
+```kotlin
+/** Carries an OpenAI tool declaration through to the model. execute() is unreachable
+ *  because the conversation sets automaticToolCalling = false; the call is surfaced to
+ *  TypeScript and executed there. */
 private class PassthroughTool(private val schemaJson: String) : OpenApiTool {
     override fun getToolDescriptionJsonString(): String = schemaJson
     override fun execute(paramsJsonString: String): String =
@@ -345,48 +397,43 @@ private class PassthroughTool(private val schemaJson: String) : OpenApiTool {
 }
 ```
 
-The OpenAI `tools[]` entries are `{"type":"function","function":{"name","description","parameters"}}`;
-`getToolDescriptionJsonString()` wants `{"name","description","parameters"}`. The
-translation is unwrapping `.function` — no schema rewriting.
+`tool(openApiTool)` parses that JSON **at registration** and throws `ToolException` on
+malformed input. Catch it and fail the request as a 400 rather than letting it surface as
+a generation error.
 
-The model then returns a `Message` with `toolCalls` populated, each having `.name` and
-`.arguments`, which map onto the existing SSE frame:
+**`ToolCall.arguments` is a `Map`, not a string** — `data class ToolCall(val name: String,
+val arguments: Map<String, Any?>)`. The SSE contract carries `arguments` as a JSON string
+that `parseToolCallArguments` in `localLlamaCpp.ts` later `JSON.parse`s, so the map must
+be serialised on the way out:
 
 ```kotlin
-callback.onToolCallDelta(index, toolCall.name, toolCall.arguments)
+callback.onToolCallDelta(index, toolCall.name, gson.toJson(toolCall.arguments))
 ```
 
-Emit one delta per call with the complete name and arguments. The TS
-`ToolCallAccumulator` keys on array index and concatenates fragments, so a single
-whole-value fragment is handled correctly; the index must be per-turn monotonic and never
-reused.
+One delta per call, complete name and arguments. The TS `ToolCallAccumulator` keys on
+array index and concatenates fragments, so a single whole-value fragment is handled
+correctly; the index must be per-turn monotonic and never reused.
 
-Coming back the other way, the TS layer sends tool results as `role: "tool"` history
-entries on the next request. Those map to `Message.tool(Contents.of(Content.ToolResponse(name, resultJson)))`
-in `initialMessages` (§4.2).
+Coming back, TS sends tool results as `role: "tool"` history entries, which map to
+`Message.tool(Contents.of(Content.ToolResponse(name, response)))` in `initialMessages`.
+Note `Content.ToolResponse(val name: String, val response: Any?)` — `response` is `Any?`,
+so the raw result JSON string can go in directly.
 
-**UNVERIFIED, and the one thing to test first in step 6:** the upstream manual-tool-calling
-example uses the *synchronous* `sendMessage` and reads `toolCalls` off the returned
-`Message`. Whether `toolCalls` is populated on a streamed chunk via `sendMessageAsync` —
-and if so, on which chunk — is not documented. If it turns out tool calls only surface
-synchronously, the engine must use `sendMessage` when `tools[]` is non-empty and
-`sendMessageAsync` otherwise. That is a small branch, but it has to be discovered before
-§4.3's streaming design is locked, not after.
-
-Constrained decoding is a genuine quality win over the llama.cpp path. Take it, change
-nothing above the bridge.
+`RECURRING_TOOL_CALL_LIMIT` and the automatic re-send loop in `onDone` only apply when
+`automaticToolCalling = true`; in manual mode neither is reachable. `enableResponseFormat`
++ `ResponseFormat` is a *separate* constrained-decoding facility (LLGuidance) and is not
+needed for tool calling.
 
 ## 5. Gradle, manifest, R8
 
-```kotlin
-implementation("com.google.ai.edge.litertlm:litertlm-android:0.15.0")
-```
+Latest release is **v0.16.0** (per the repo README, "a quick follow up to v0.15.0"), so
+the version question from the previous draft resolves upward — the gallery's 0.10.0 is
+simply old. Pin explicitly; never `latest.release`, which the upstream docs use for
+brevity and which makes builds irreproducible.
 
-Version pinned via the catalog if one exists — never `latest.release`, which the upstream
-docs use for brevity and which makes builds irreproducible. Note a discrepancy to settle
-before writing the line: `docs/on-device-llm.md` records 0.15.0, while Google's own
-gallery app is on 0.10.0. Confirm 0.15.0 actually resolves and that the API shapes in this
-document hold on it — the `tools` / `automaticToolCalling` surface is recent.
+```kotlin
+implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.0")
+```
 
 ```xml
 <!-- AndroidManifest.xml, inside <application> -->
@@ -394,70 +441,67 @@ document hold on it — the `tools` / `automaticToolCalling` surface is recent.
 <uses-native-library android:name="libOpenCL.so" android:required="false"/>
 ```
 
-Confirmed required for the GPU backend by the upstream Android guide. `required="false"`
-matters — a device without OpenCL must still install and fall through to CPU.
+`required="false"` matters — a device without OpenCL must still install and fall through
+to CPU.
 
 - `abiFilters` — arm64-v8a only.
 - R8/ProGuard keeps: `GenerationCallback` (JNI target of the existing native lib),
-  `InferenceEngine` implementations, and the `PassthroughTool` / `OpenApiTool` subclass
-  (reflection-reached by the tool registry). Verify against a **release** build.
+  `InferenceEngine` implementations, and the `OpenApiTool` subclass. Note LiteRT-LM's
+  `tool(ToolSet)` path uses Kotlin reflection (`toolClass.functions`, annotation
+  scanning) — PocketForge does not use that path, but if it ever does, those classes need
+  full member keeps. Verify against a **release** build.
 - APK/AAB size is unaffected — the model is side-loaded via SAF, never bundled.
 
 ## 6. Memory
-
-A 3.87 GB resident model on a phone is the dominant risk.
 
 - **Single engine invariant.** `handleStart` already refuses to start when `state == "ready"`.
   Keep it, and make `EngineFactory.load` assert no other engine is live.
 - **`onTrimMemory`.** `LocalLlmService` does not override it today. Add it: at
   `TRIM_MEMORY_COMPLETE` / `TRIM_MEMORY_RUNNING_CRITICAL`, close the engine and
   `transition("stopped", …)` so the UI shows a truthful state rather than a stale "ready"
-  pointing at freed memory. Highest-value single addition in this plan, and it benefits
-  the GGUF path too.
+  pointing at freed memory. Highest-value single addition here, and it helps the GGUF path too.
 - **Foreground type.** Already `FOREGROUND_SERVICE_TYPE_SPECIAL_USE` on API 34+
   (`LocalLlmService.kt:334`) — correct, no change.
-- A failed backend attempt must `close()` before the next is tried (§4.1) or the fallback
-  walk itself becomes a memory problem.
+- A failed backend attempt must `close()` before the next is tried (§4.1).
+- `maxNumTokens` is the lever if the KV cache proves too large on a given device — it is
+  the one memory knob that does not require re-exporting the model.
+- `Conversation.getTokenCount()` returns KV-cache occupancy (prefill + decode) and is the
+  cheapest instrument for seeing how close a long chat is running to `maxNumTokens`.
 
 ## 7. TypeScript surface
-
-Minimal, and deliberately so:
 
 - `src/types/index.ts:193` —
   `aiBackend: 'ollamaCloud' | 'localLlamaCpp' | 'localLiteRt';`
 - `src/store/useStore.ts` — bump `version: 3` → `4` and extend `migrate` to default the
   new field. The existing v2→v3 comment spells out why the bump is mandatory: zustand
   skips `migrate` when versions match, and the default `merge` shallow-replaces `settings`
-  wholesale, crashing on first access to a missing field. Same trap here.
+  wholesale, crashing on first access to a missing field.
 - `LocalLlmServerStatus` (`src/lib/native/localLlm.ts:30`) gains `backend?: string`
   carrying `InferenceEngine.backendId` (e.g. `"litertLm:GPU"`). This is how "running on
-  NPU" vs "fell back to CPU" reaches the user — worth surfacing on its own given the
-  performance spread, and now doubly so because **sampler settings are inert on NPU**
-  (§4.2) and the UI should say so rather than showing live-looking temperature controls.
-- Prefer this status field over a persisted `localModelFormat` setting: less state to
+  NPU" vs "fell back to CPU" reaches the user — worth surfacing for the performance spread
+  alone, and doubly so because **sampler settings are inert on NPU** (§4.2) and the UI
+  should say so rather than showing live-looking temperature controls.
+- Prefer that status field over a persisted `localModelFormat` setting: less state to
   migrate, and it cannot go stale against the actually-loaded model.
 
 Nothing in `src/lib/llm/localLlamaCpp.ts` changes. Its name becomes a slight misnomer;
-renaming it is a separate mechanical commit, not part of this work.
+renaming it is a separate mechanical commit.
 
 ## 8. Scope: text first, VL later
 
-`vgc_e4b_v5_heretic_vl.litertlm` is a superset — it contains the full text export plus the
-vision tower, so it serves text-only workloads identically. Two things block using it as
-VL today:
+`vgc_e4b_v5_heretic_vl.litertlm` is a superset — full text export plus vision tower, so it
+serves text-only workloads identically. Two things block using it *as* VL today:
 
 1. Nothing in the stack can feed it an image. `chatOnce` takes text `messages`, the SSE
    contract has no image part, and `ChatOnceOptions` would need widening.
-2. **`visionBackend` is an `EngineConfig` field**, so vision is enabled at *load* time,
-   not per request. It cannot be a runtime toggle — it is a different engine
-   configuration, and on the gallery's pattern
-   (`visionBackend = if (shouldEnableImage) visionBackend else null`) it is driven by a
-   persisted setting decided before load.
+2. **`visionBackend` is an `EngineConfig` field** — vision is enabled at *load* time, not
+   per request, and `maxNumImages` is likewise engine-level. It cannot be a runtime toggle;
+   it is a different engine configuration, driven by a setting decided before load (which
+   is exactly how the gallery does it).
 
-The input types are `Content.ImageFile(path)` and `Content.AudioBytes(bytes)`, sent via
-`Contents.of(Content.ImageFile(…), Content.Text(…))`. Note the E4B export also carries an
-audio tower, so `audioBackend` is available on the same bundle — a separate piece of work
-again, with its own plan.
+Inputs are `Content.ImageFile(path)` / `Content.AudioBytes(bytes)` via
+`Contents.of(Content.ImageFile(…), Content.Text(…))`. The E4B export also carries an audio
+tower, so `audioBackend` is available on the same bundle — again separate work.
 
 **Ship the text bundle first.**
 
@@ -466,68 +510,71 @@ again, with its own plan.
 1. **Seam, no behaviour change.** Add `InferenceEngine`, move the five externals into
    `LlamaCppEngine`, rewire `LocalLlmService`. Verify the GGUF path is unchanged.
    *No LiteRT dependency yet.* This step must be perfect; if it regresses GGUF, stop.
-2. **Format detection.** `ModelFormat` sniffing in `copyInChunks`, extension-agnostic
-   discovery in `dispatchStart`, error strings updated.
-3. **Dependency + manifest + R8.** Confirm a release build runs and GGUF still works with
-   LiteRT on the classpath. Settle the 0.10.0/0.15.0 version question here.
-4. **`LiteRtLmEngine` load path.** Backend fallback with per-attempt `close()`,
-   `initialize()`, `backendId` in status. Success: `ready` on the real 3.87 GB bundle with
-   the chosen backend visible.
+2. **Format detection.** `LITERTLM` magic + major-version check in `copyInChunks`,
+   extension-agnostic discovery in `dispatchStart`, error strings updated.
+3. **Dependency + manifest + R8.** Pin 0.16.0, confirm a release build runs and GGUF still
+   works with LiteRT on the classpath.
+4. **`LiteRtLmEngine` load path.** Backend fallback with per-attempt `close()`, explicit
+   `cacheDir`, `backendId` in status. Success: `ready` on the real 3.87 GB bundle with the
+   chosen backend visible.
 5. **Generation.** Request parsing → `systemInstruction` / `initialMessages` /
-   `SamplerConfig`, `MessageCallback` wiring, `cancelProcess()`. Assert the delta
-   assumption in logcat. Success: single-turn chat streams to the WebView with **zero**
-   TypeScript changes.
-6. **Tool calls.** Resolve the streamed-`toolCalls` question (§4.4) *first*, then
-   `PassthroughTool` + `automaticToolCalling = false` + `onToolCallDelta`, verified
-   against the real `toolRunner.ts` loop on a calculator call.
+   validated `SamplerConfig` / `maxOutputToken`, `MessageCallback` wiring,
+   `cancelProcess()` **with the `CancellationException`-is-not-an-error branch**.
+   Success: single-turn chat streams to the WebView with **zero** TypeScript changes.
+6. **Tool calls.** `PassthroughTool` + `automaticToolCalling = false`, `ToolCall.arguments`
+   serialised to JSON, verified against the real `toolRunner.ts` loop on a calculator call.
 7. **`onTrimMemory` + TS settings/migration.**
 
 Each step is independently shippable and revertible.
 
 ## 10. Open questions
 
-- **`.litertlm` container magic bytes** — must be read off the artefact (see §3). Still
-  the one blocking unknown for the import path.
-- **Streamed `toolCalls`** — populated on `sendMessageAsync` chunks, or synchronous
-  `sendMessage` only? Decides whether §4.3 and §4.4 can share one code path (§9 step 6).
-- **Chunk semantics** — deltas, per the gallery and the TUI example, but assert it at
-  runtime rather than trusting the inference.
-- **Library version** — 0.15.0 (per `docs/on-device-llm.md`) vs 0.10.0 (per the gallery).
-  Confirm the `tools` / `automaticToolCalling` API exists on whichever is pinned.
-- **`max_tokens`** — enforce in Kotlin by early-stopping, or accept engine-level only?
-  Recommendation is to enforce, since the llama.cpp path honours it.
+The format magic, the streamed-`toolCalls` question, the chunk semantics, the library
+version and the `max_tokens` mapping are all now settled from source. What remains:
+
 - **NPU availability on the target device.** The published S26 Ultra figures do not
-  transfer, and LiteRT-LM #2114 shows GPU init failing outright on a current Exynos
-  flagship. Exercise the whole fallback chain on real hardware before any performance
-  claim reaches the UI.
+  transfer, and #2114 shows GPU init failing outright on a current Exynos flagship.
+  Exercise the whole fallback chain on real hardware before any performance claim reaches
+  the UI. Whether `Backend.GOOGLE_TENSOR` is worth adding depends on the same test.
+- **Does the fine-tune emit a thinking channel?** If so, `channels` needs configuring or
+  reasoning tokens will land in the primary response — and they count against
+  `maxOutputToken`.
+- **KV-cache sizing.** `maxNumTokens` left `null` takes the model's default; whether that
+  fits alongside a 3.87 GB weight set on a mid-range device is a measurement, not a guess.
 - `docs/local-llm-verification.md` is written entirely for `vgc_gemma2.gguf` on llama.cpp
   and needs a LiteRT-LM section once step 5 lands.
 
 ## 11. Sources
 
-Everything in §4–§5 is taken from these, not from memory:
+Read directly, not recalled:
 
-- [LiteRT-LM Kotlin getting-started](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/kotlin/getting_started.md)
-  — `EngineConfig`, `ConversationConfig`, `initialMessages`, `SamplerConfig`, the three
-  send styles, `Contents`/`Content`, `@Tool`/`@ToolParam`, `OpenApiTool`,
-  `automaticToolCalling`, manual `toolCalls` → `Content.ToolResponse` → `Message.tool`,
-  `extraContext`.
-- [LiteRT-LM TUI example `Main.kt`](https://github.com/google-ai-edge/LiteRT-LM/blob/main/kotlin/java/com/google/ai/edge/litertlm/example/Main.kt)
-  — `.use {}` lifecycle, `setNativeMinLogSeverity`, per-chunk printing.
+- `schema/core/litertlm_read.cc`, `schema/core/litertlm_header.h`,
+  `schema/core/litertlm_header_schema.fbs` — the `LITERTLM` magic, the three `uint32`
+  version fields, the major-version rejection, `LITERTLM_MAJOR_VERSION = 1` (format 1.6.0),
+  the section union (`TFLiteModel`, `SP_Tokenizer`, `LlmMetadataProto`,
+  `HF_Tokenizer_Zlib`, `TFLiteWeights`, `EmbeddingMetadataProto`, `ExecutorMetadataProto`)
+  and the 16 KiB section block alignment.
+- `kotlin/java/com/google/ai/edge/litertlm/Config.kt` — `EngineConfig`,
+  `ConversationConfig`, `SamplerConfig` (and its `require` validation), the four `Backend`
+  variants, `RepetitionPenaltyConfig`, `NoRepeatNgramConfig`, `SuppressTokensConfig`,
+  `ThinkingConfig`, `Channel`, `LoraConfig`.
+- `…/Conversation.kt` — `resolveResponseFormat`, the `sendMessage` tool loop and
+  `RECURRING_TOOL_CALL_LIMIT`, `JniMessageCallbackImpl` (manual tool calls on the
+  streaming path; `kCancelled` → `CancellationException`), `cancelProcess()` as a no-op
+  when idle, `Flow` as a `callbackFlow` over `MessageCallback`, `getTokenCount()`,
+  `MessageCallback` KDoc confirming chunk semantics.
+- `…/Message.kt` — `ToolCall(name, arguments: Map<String, Any?>)`,
+  `Content.ToolResponse(name, response: Any?)`, `Message.user/model/tool`, `Contents.of`.
+- `…/Tool.kt` — `OpenApiTool` and its required description keys, `tool()` providers,
+  `ToolException` at registration, the reflection-based `ToolSet` path.
 - [gallery `LlmChatModelHelper.kt`](https://github.com/google-ai-edge/gallery/blob/main/Android/src/app/src/main/java/com/google/ai/edge/gallery/ui/llmchat/LlmChatModelHelper.kt)
-  — `maxNumTokens`, `visionBackend`/`audioBackend`, the conditional `cacheDir`,
-  backend selection, **`samplerConfig = null` on NPU**, `cancelProcess()` with
-  `IllegalStateException` handling, close ordering (conversation then engine).
+  — `samplerConfig = null` on NPU, conditional `cacheDir`, close ordering.
 - [gallery `customtasks/mobileactions`](https://github.com/google-ai-edge/gallery/tree/main/Android/src/app/src/main/java/com/google/ai/edge/gallery/customtasks/mobileactions)
-  — `Actions.kt`, `MobileActionsModule.kt`, `MobileActionsScreen.kt`,
-  `MobileActionsTask.kt`, `MobileActionsTools.kt`, `MobileActionsViewModel.kt`. The
-  working reference for `ToolSet` + `@Tool`, and for `sendMessageAsync(Contents.of(…))`
-  with `.catch`/`.onCompletion`/`.collect`. Caveat: it is Compose + Hilt + ViewModel, so
-  only `LlmChatModelHelper` and `MobileActionsTools` transfer to PocketForge's
-  plugin/service shape — and `MobileActionsTools` shows the `@Tool` style PocketForge
-  specifically must *not* use (§4.4).
-- [Get Started with LiteRT-LM on Android](https://developers.google.com/edge/litert-lm/android)
-  — the two `<uses-native-library>` manifest entries for the GPU backend.
-- [LiteRT-LM issue #2114](https://github.com/google-ai-edge/LiteRT-LM/issues/2114)
-  — GPU `initialize()` failure on Galaxy S26 Exynos (Xclipse 960 + ANGLE-CL); the
-  concrete justification for the fallback chain.
+  — the `ToolSet` + `@Tool` reference. Compose + Hilt, so only the helper transfers, and
+  it demonstrates the tool style PocketForge specifically must *not* use (§4.4).
+- [Kotlin getting-started](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/kotlin/getting_started.md)
+  and [`Main.kt`](https://github.com/google-ai-edge/LiteRT-LM/blob/main/kotlin/java/com/google/ai/edge/litertlm/example/Main.kt).
+- [Android guide](https://developers.google.com/edge/litert-lm/android) — the two
+  `<uses-native-library>` entries.
+- [LiteRT-LM issue #2114](https://github.com/google-ai-edge/LiteRT-LM/issues/2114) — GPU
+  `initialize()` failure on Galaxy S26 Exynos; the concrete case for the fallback chain.
