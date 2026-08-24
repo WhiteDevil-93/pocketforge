@@ -2,8 +2,11 @@ package com.whitedevil93.pocketforge.engine
 
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Message
+import com.google.ai.edge.litertlm.OpenApiTool
 import com.google.ai.edge.litertlm.RepetitionPenaltyConfig
 import com.google.ai.edge.litertlm.SamplerConfig
+import com.google.ai.edge.litertlm.ToolProvider
+import com.google.ai.edge.litertlm.tool
 import org.json.JSONObject
 
 /**
@@ -18,6 +21,7 @@ internal data class ChatRequest(
     val samplerConfig: SamplerConfig?,
     val maxOutputToken: Int?,
     val repetitionPenaltyConfig: RepetitionPenaltyConfig?,
+    val tools: List<ToolProvider>,
 )
 
 /**
@@ -66,6 +70,7 @@ internal fun parseChatRequest(requestBodyJson: String): ChatRequest {
         // all collapse to "no override".
         maxOutputToken = body.optInt("max_tokens", -1).takeIf { it > 0 },
         repetitionPenaltyConfig = parseRepetitionPenaltyConfig(body),
+        tools = parseTools(body),
     )
 }
 
@@ -114,4 +119,37 @@ private fun optFiniteFloat(body: JSONObject, key: String): Float? {
     if (!body.has(key)) return null
     val value = body.optDouble(key)
     return if (value.isNaN()) null else value.toFloat()
+}
+
+/**
+ * Wraps each OpenAI tool declaration (`{"type":"function","function":{name,
+ * description, parameters}}`) as a [PassthroughTool]. Every Conversation this app
+ * creates sets `automaticToolCalling = false` (see LiteRtLmEngine — PocketForge's
+ * tools are TypeScript in the WebView, not Kotlin LiteRT-LM can call itself), so this
+ * is a pure declaration hand-off: OpenApiTool.execute() is never reached.
+ *
+ * A malformed entry (missing "function" or unparsable as JSON) is skipped rather than
+ * failing the whole request — the model just won't be offered that one tool.
+ * [OpenApiTool.getToolDescriptionJsonString]'s own JSON parsing (inside the LiteRT-LM
+ * library) is the real validation gate; a schema that parses here but not there
+ * surfaces as a ToolException from Engine.createConversation(), which LiteRtLmEngine
+ * catches and reports distinctly from a generation failure.
+ */
+private fun parseTools(body: JSONObject): List<ToolProvider> {
+    val toolsArray = body.optJSONArray("tools") ?: return emptyList()
+    return (0 until toolsArray.length()).mapNotNull { i ->
+        val function = toolsArray.optJSONObject(i)?.optJSONObject("function") ?: return@mapNotNull null
+        tool(PassthroughTool(function.toString()))
+    }
+}
+
+/** Carries an OpenAI tool declaration through to the model. [execute] is unreachable
+ *  because every Conversation this app creates sets `automaticToolCalling = false` —
+ *  the call is surfaced to TypeScript via `onToolCallDelta` and executed by the real
+ *  handlers in `toolRunner.ts`, which is where the app's actual data lives. */
+private class PassthroughTool(private val schemaJson: String) : OpenApiTool {
+    override fun getToolDescriptionJsonString(): String = schemaJson
+
+    override fun execute(paramsJsonString: String): String =
+        throw IllegalStateException("execute() unreachable with automaticToolCalling = false")
 }

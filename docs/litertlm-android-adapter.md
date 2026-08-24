@@ -605,8 +605,33 @@ tower, so `audioBackend` is available on the same bundle — again separate work
    confirming a token stream reaches the WebView with no TypeScript changes, and
    confirming a client disconnect mid-stream reaches `cancel()` and does not surface as
    a spurious SSE error frame.
-6. **Tool calls.** `PassthroughTool` + `automaticToolCalling = false`, `ToolCall.arguments`
-   serialised to JSON, verified against the real `toolRunner.ts` loop on a calculator call.
+6. **Tool calls. Done, pending build/device/toolRunner.ts verification.** Added
+   `parseTools`/`PassthroughTool` to `engine/ChatRequest.kt`: each OpenAI
+   `{"type":"function","function":{...}}` entry unwraps to just the `.function` object
+   and wraps as an `OpenApiTool` whose `execute()` is provably unreachable (thrown, not
+   just documented) since every `Conversation` `LiteRtLmEngine` creates sets
+   `automaticToolCalling = false`. A malformed `tools[]` entry (missing `function`, not
+   an object) is skipped rather than failing the request — validation is left to the
+   library's own JSON parsing inside `ToolManager`, which runs *eagerly* inside
+   `Engine.createConversation()` (confirmed from source: `ToolManager`'s
+   `internalTools` is an `init`-time property, not lazy) — so `generate()` wraps that
+   call in a `try/catch` for `ToolException` and reports it via `callback.onError` with
+   a distinguishing "Invalid tool declaration" message, per §4.4's "fail as a 400"
+   guidance, rather than letting it read as a generic generation failure.
+   `MessageCallback.onMessage` now handles content and tool calls as the independent
+   fields they actually are on `Message` (confirmed from source — not mutually
+   exclusive, contrary to what an earlier version of this comment assumed), emitting
+   `onToken` for any text and one `onToolCallDelta` per call via a monotonic index that
+   is never reset within a `generate()` call, matching the TS `ToolCallAccumulator`'s
+   by-index contract. `ToolCall.arguments` (a `Map<String, Any?>`) is serialised with
+   `org.json.JSONObject`, not the `Gson` the plan's own snippet used — the library
+   pulls in Gson transitively, but this app already uses `org.json` everywhere else, so
+   depending on the declared dependency rather than an undeclared transitive one is the
+   more robust choice for the same result.
+   **Not yet verified** — needs everything step 5 still needs, plus a real round trip
+   through `toolRunner.ts`: the model calling a real tool (e.g. `calculate_speed`), the
+   TS `ToolCallAccumulator` reassembling it correctly from the streamed deltas, and the
+   result routing back in as a `role: "tool"` history entry on the next turn.
 7. **`onTrimMemory` + TS settings/migration.**
 
 Each step is independently shippable and revertible.

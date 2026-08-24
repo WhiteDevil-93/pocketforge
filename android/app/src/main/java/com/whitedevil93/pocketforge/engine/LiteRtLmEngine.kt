@@ -10,10 +10,13 @@ import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.LogSeverity
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
+import com.google.ai.edge.litertlm.ToolException
 import com.whitedevil93.pocketforge.GenerationCallback
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * LiteRT-LM binding for a .litertlm bundle — see docs/litertlm-android-adapter.md.
@@ -21,8 +24,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * One [Conversation] per [generate] call, built entirely from that request's history
  * (§4.2) — nothing is replayed as traffic, so there is no cross-request state here
  * beyond [activeConversation], which exists only so a concurrent [cancel] has
- * something to reach. Tool calling is not wired up yet (step 6); every turn reports
- * an empty tool-calls array.
+ * something to reach. Tool calls (§4.4) are declared to the model but never executed
+ * here — `automaticToolCalling = false` on every Conversation this class creates, so
+ * a call is always surfaced back to TypeScript via `onToolCallDelta` and executed by
+ * the real handlers in `toolRunner.ts`, the same as the llama.cpp backend.
  */
 class LiteRtLmEngine private constructor(
     private val engine: Engine,
@@ -54,27 +59,68 @@ class LiteRtLmEngine private constructor(
         // there) — build it as null on that backend rather than silently ignoring a
         // request's sampler settings without saying so anywhere.
         val samplerConfig = if (backendName == "NPU") null else parsed.samplerConfig
-        val conversation = engine.createConversation(
-            ConversationConfig(
-                systemInstruction = parsed.systemInstruction,
-                initialMessages = parsed.initialMessages,
-                samplerConfig = samplerConfig,
+        val conversation = try {
+            engine.createConversation(
+                ConversationConfig(
+                    systemInstruction = parsed.systemInstruction,
+                    initialMessages = parsed.initialMessages,
+                    samplerConfig = samplerConfig,
+                    tools = parsed.tools,
+                    // §4.4: PocketForge's tools are TypeScript in the WebView, not
+                    // Kotlin — the model's calls must come back to us to execute, not
+                    // be run in-process by the library.
+                    automaticToolCalling = false,
+                )
             )
-        )
+        } catch (e: ToolException) {
+            // A malformed tool schema is a request-shape problem, not a generation
+            // failure — ToolManager's eager parsing (inside createConversation) throws
+            // before any inference happens, so report it as that distinct case rather
+            // than the generic "LiteRT-LM generation failed" message.
+            callback.onError("Invalid tool declaration: ${e.message}")
+            return
+        }
         activeConversation = conversation
         try {
             val latch = CountDownLatch(1)
             val assembled = StringBuilder()
+            val toolCallsLog = JSONArray()
+            var toolCallIndex = 0
             val messageCallback = object : MessageCallback {
                 override fun onMessage(message: Message) {
+                    // contents and toolCalls are independent fields on Message, not
+                    // mutually exclusive — handle both rather than assuming a chunk is
+                    // one or the other (e.g. lead-in text before a tool call).
                     val piece = message.toString()
-                    assembled.append(piece)
-                    callback.onToken(piece)
+                    if (piece.isNotEmpty()) {
+                        assembled.append(piece)
+                        callback.onToken(piece)
+                    }
+                    // §4.4: with automaticToolCalling = false, a tool call is delivered
+                    // whole here rather than executed by the library.
+                    for (toolCall in message.toolCalls) {
+                        val index = toolCallIndex++
+                        // org.json (already used throughout this app), not the Gson the
+                        // library pulls in transitively — one JSON library to depend on.
+                        val argumentsJson = JSONObject(toolCall.arguments).toString()
+                        toolCallsLog.put(
+                            JSONObject().put("name", toolCall.name).put("arguments", argumentsJson)
+                        )
+                        // One delta per call with the complete name/arguments — the TS
+                        // ToolCallAccumulator concatenates fragments by index, so a
+                        // single whole-value fragment is handled correctly as-is. The
+                        // index is monotonic across this whole generate() call, never
+                        // reset per onMessage, so it can never be reused even if tool
+                        // calls arrive across more than one onMessage invocation.
+                        callback.onToolCallDelta(index, toolCall.name, argumentsJson)
+                    }
                 }
 
                 override fun onDone() {
-                    // No tool calls yet (step 6) — always an empty array.
-                    callback.onDone(assembled.toString(), "[]")
+                    // toolCallsLog is diagnostic only — LocalLlmService.handleChatCompletions
+                    // logs onDone's second argument but never sends it to the client; the
+                    // client already has the tool calls from the onToolCallDelta stream.
+                    callback.onDone(assembled.toString(), toolCallsLog.toString())
                     latch.countDown()
                 }
 
@@ -82,7 +128,7 @@ class LiteRtLmEngine private constructor(
                     if (throwable is CancellationException) {
                         // §4.3: a cancelled generation arrives here, not onDone() — this
                         // is the client-disconnect / server-stop path, not a failure.
-                        callback.onDone(assembled.toString(), "[]")
+                        callback.onDone(assembled.toString(), toolCallsLog.toString())
                     } else {
                         callback.onError(throwable.message ?: "LiteRT-LM generation failed")
                     }
