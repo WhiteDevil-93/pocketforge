@@ -2,9 +2,14 @@
 
 [`googlecolab/colab-mcp`](https://github.com/googlecolab/colab-mcp) is Google's MCP server
 that hands an agent a Google Colab notebook as a remote runtime — free T4-class GPU
-included. For PocketForge it is the cheapest place to do the parts of the on-device LLM
-work that need a GPU but not a long-lived machine: GGUF quantisation, `.litertlm`
-conversion, template round-trip checks, short QLoRA runs on `vgc_gemma2`.
+included. For PocketForge that covers the parts of the on-device LLM work that need a GPU
+but not a long-lived machine, against the **Gemma 4 E4B** base: template round-trip checks,
+GGUF quantisation, one-off experiments.
+
+It is not the first thing to reach for. **HF Jobs is the better home for the scripted
+conversion work** — it submits over an API, so it runs from a phone or a remote session,
+which is exactly what colab-mcp cannot do (see below). Colab earns its place when you want
+a notebook you can poke at by hand.
 
 The repo ships the client config in [`.mcp.json`](../.mcp.json). This document is about
 the one thing the upstream README does not say out loud: **where this works, and where it
@@ -90,9 +95,9 @@ and there is no SLA. That maps cleanly onto some of the model work and badly ont
 | Task | Colab | Notes |
 |---|---|---|
 | GGUF quantise / requantise an existing `safetensors` checkpoint | Good | CPU/RAM-bound, minutes, output is a few GB |
-| `.litertlm` conversion for the LiteRT-LM path in [`on-device-llm.md`](./on-device-llm.md) | Good | One-shot, no state to lose |
+| `.litertlm` conversion for the LiteRT-LM path in [`on-device-llm.md`](./on-device-llm.md) | Fallback | Works, but prefer HF Jobs — same job, submittable from a phone |
 | Extract and eyeball the GGUF chat template (see [`local-llm-verification.md`](./local-llm-verification.md) §3) | Good | Pure inspection |
-| Short QLoRA / LoRA run on Gemma-2 | Workable | Checkpoint to Drive every N steps; a reclaimed session loses everything on local disk |
+| Short QLoRA / LoRA run on Gemma 4 E4B | Tight | E4B is roughly double E2B; the free tier's 16 GB T4 leaves little headroom, and Turing has no bf16. Checkpoint to Drive every N steps — a reclaimed session loses local disk |
 | Multi-hour full fine-tune | Bad | Use the GCE T4 (~$0.55/hr) from [`drive-to-gcp-model-transfer.md`](./drive-to-gcp-model-transfer.md) |
 | Anything holding a >10 GB working set on disk | Bad | Same |
 
