@@ -58,4 +58,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- @capacitor/camera's getPhoto(): declaring this is what makes the plugin
+         actually prompt for camera permission at runtime — confirmed from its
+         Android source (LegacyCameraFlow.checkCameraPermissions): an
+         undeclared CAMERA permission is treated as "not required" and the
+         plugin never asks, silently misbehaving instead of failing loudly.
+         Gallery picking needs no permission of its own on API 29+ (this
+         app's realistic target hardware) as long as saveToGallery is false,
+         which src/lib/native/imagePicker.ts always passes. -->
+    <uses-permission android:name="android.permission.CAMERA" />
 </manifest>

@@ -177,12 +177,48 @@ environment, so ran `npm install` (745 packages, clean) and then `npx tsc -b` an
 first step in either LiteRT-LM plan with a real compiler in the loop rather than
 manual source-tracing; the Android side still has none.
 
-**11. Capture.** Add `@capacitor/camera`, wrap it in `src/lib/native/imagePicker.ts` behind
-`isNativeApp()` (mirroring `src/lib/native/localLlm.ts`), returning base64 + mime. Use
-`CameraSource.Prompt` so one call offers camera and gallery. Add `CAMERA` to the manifest;
-verify on-device whether `READ_MEDIA_IMAGES` is needed for the installed plugin version — recent
-versions use the Android Photo Picker and need no gallery permission. Handle permission-denied
-as a normal state, not an error toast.
+**11. Capture. Done, TS build-verified; permission logic verified from the installed
+plugin's own source rather than on-device.** Added `@capacitor/camera` (`^8.2.3`,
+matching this project's existing `@capacitor/*` v8 pins) and
+`src/lib/native/imagePicker.ts`, mirroring `localLlm.ts`'s dynamic-import-behind-
+`isNativeApp()` convention.
+One real design correction against this bullet's original wording: `CameraSource.Prompt`
+belongs to `getPhoto()`, which v8 marks **deprecated** in favor of separate
+`takePhoto()`/`chooseFromGallery()` calls with structured `CameraErrorCode`s — found by
+actually installing the plugin and reading its shipped `.d.ts`, not by trusting the
+plan's own speculative text. Chose to keep `getPhoto()` anyway, deliberately: read the
+plugin's Android source and confirmed it delegates to a real `legacyFlow.getPhoto`
+implementation (not a stub), and it is the only way to offer one native "camera or
+gallery" prompt without this app building its own chooser UI — which would pull UI
+work into what should be a thin wrapper. Documented the tradeoff and the fix (switch to
+`takePhoto()`/`chooseFromGallery()` plus a two-button chooser here) in the file's own
+header comment for whenever the plugin actually removes it.
+Passes `quality: 85, width: 1024, height: 1024` to downscale before the image ever
+reaches the WebView as a base64 string — generous relative to `ChatRequest.kt`'s 8 MiB
+decoded cap from step 9, confirming that cap really is a backstop, not the primary
+control.
+**Permission-denied handling**: `getPhoto()`'s legacy flow rejects with a plain string
+("User denied access to camera", "User cancelled photos app" — read directly from
+`LegacyCameraFlow.java`, not guessed), not a structured error code, so
+`ImagePickCancelledError` classifies the rejection by matching those words rather than
+exact string equality — durable against a future wording change, at the cost of also
+(harmlessly) catching a genuine failure whose message happens to contain one of them.
+**The `READ_MEDIA_IMAGES` question this bullet asked to verify on-device is fully
+resolved from source instead — more conclusively than a single device could confirm,
+since it's static logic, not something that varies by hardware.** Traced
+`LegacyCameraFlow.checkCameraPermissions`: on API 29+ (this app's realistic target —
+the Galaxy S25 Ultra named throughout this project's docs — and everything from
+Android 10 onward) gallery permission state is never even read before the function
+returns; below API 29 it's only requested when `saveToGallery` is true, which this
+wrapper always passes `false`. So the only permission this integration ever needs is
+`CAMERA`, added to the manifest — confirmed necessary, not just customary: the
+plugin's own source shows an undeclared `CAMERA` permission makes it treat camera
+access as "not required" and silently skip prompting, rather than failing loudly.
+**Verified**: `npx tsc -b` and `npm run lint` both clean across the whole project
+(same real verification as step 10 — `node_modules` stays installed from that step).
+**Not verified**: no device to actually exercise the native prompt, confirm the
+CAMERA permission dialog appears, or confirm gallery picking truly needs nothing
+beyond what source-reading predicts.
 
 **12. Attach button.** In `src/components/ai/ChatPanel.tsx` (`handleSend`, ~line 106), add a
 pending-attachment slot next to the `input` state, an attach control by the send button, and a
