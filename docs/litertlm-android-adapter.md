@@ -525,8 +525,20 @@ tower, so `audioBackend` is available on the same bundle — again separate work
    SDK/NDK, so the actual `assembleDebug` + on-device GGUF regression pass (per §"Verification"
    above) is still outstanding.
    *No LiteRT dependency yet.* This step must be perfect; if it regresses GGUF, stop.
-2. **Format detection.** `LITERTLM` magic + major-version check in `copyInChunks`,
-   extension-agnostic discovery in `dispatchStart`, error strings updated.
+2. **Format detection. Done.** `LocalLlmPlugin.kt` gained `ModelFormat`
+   (GGUF/LITERTLM) and `FormatSniffResult`. `copyInChunks` now reads a 20-byte header
+   window (was 4), sniffs both magics via `sniffFormat`, and rejects a `.litertlm` file
+   at an unsupported major version with a clear message rather than failing opaquely at
+   engine load — exactly the resolved-from-source design in §3. `dispatchStart`'s
+   auto-discovery now matches any known extension instead of hardcoding `.gguf`.
+   `sanitizeFileName`'s blank-name fallback dropped the baked-in `.gguf` extension
+   (`imported-model`, no extension); `ensureFormatExtension` attaches the *sniffed*
+   format's extension once `copyInChunks` returns, so a mislabeled or extension-less SAF
+   pick still lands under a name `dispatchStart` will find. Error strings and doc
+   comments updated to stop assuming GGUF. **Not yet verified against a real build**
+   (no Android SDK/NDK in this environment) — needs the same on-device pass as step 1,
+   plus importing an actual `.litertlm` file and confirming it's accepted, renamed
+   correctly, and discovered.
 3. **Dependency + manifest + R8.** Pin 0.16.0, confirm a release build runs and GGUF still
    works with LiteRT on the classpath.
 4. **`LiteRtLmEngine` load path.** Backend fallback with per-attempt `close()`, explicit
