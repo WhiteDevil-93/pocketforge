@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, ImagePlus, Loader2, Send, Square, User, Wrench, X } from 'lucide-react';
+import { Bot, ImagePlus, Loader2, ScanLine, Send, Square, User, Wrench, X } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { sendMessage } from '../../lib/llm/ollamaCloud';
 import { sendMessage as localSendMessage } from '../../lib/llm/localLlamaCpp';
@@ -132,6 +132,89 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
   // running against state nothing is reading any more.
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // Everything from "send this fully-built history" onward — shared by handleSend
+  // (appends to the current conversation) and handleImportScreenshot (starts a
+  // fresh one). Takes baseHistory as a parameter rather than reading `history`
+  // from the closure so callers can pass a freshly-built array without a
+  // stale-state race against the setHistory(baseHistory) below.
+  const runTurn = useCallback(
+    async (baseHistory: ChatMessage[]) => {
+      setHistory(baseHistory);
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const handleEvent = (event: LlmStreamEvent) => {
+        if (event.type === 'token') {
+          streamingTextRef.current += event.text;
+          // Accumulate raw (don't trim during streaming, which would collapse spaces between tokens)
+          // Strip tokens only when displaying or saving to history
+          const cleaned = stripSpecialTokens(streamingTextRef.current);
+          setStreamingText(cleaned);
+        }
+        else if (event.type === 'toolCall') setToolActivity((a) => [...a, event.name]);
+        // A user-initiated cancel (closing the sheet, tapping stop) surfaces here as
+        // an abort "error" — that's not a failure worth showing, just report real ones.
+        else if (event.type === 'error' && !controller.signal.aborted) setError(event.message);
+      };
+
+      try {
+        const updated = isLocalBackend
+          ? await localSendMessage({
+              history: baseHistory,
+              ctx: { team },
+              signal: controller.signal,
+              onEvent: handleEvent,
+            })
+          : await sendMessage({
+              apiKey: settings.ollamaApiKey,
+              model: settings.ollamaModel,
+              history: baseHistory,
+              ctx: { team },
+              signal: controller.signal,
+              onEvent: handleEvent,
+            });
+        // Strip special tokens from final message before storing
+        const cleanedHistory = updated.map((msg) =>
+          msg.role === 'assistant'
+            ? { ...msg, content: stripSpecialTokens(contentToText(msg.content)) }
+            : msg
+        );
+        setHistory(cleanedHistory);
+      } catch (err) {
+        // Preserve tool call history even when a later round fails, so the user sees what succeeded.
+        const partialMessages =
+          typeof err === 'object' &&
+          err !== null &&
+          'partialMessages' in err &&
+          Array.isArray((err as Record<string, unknown>).partialMessages)
+            ? ((err as Record<string, unknown>).partialMessages as ChatMessage[])
+            : undefined;
+        if (partialMessages && partialMessages.length > baseHistory.length) {
+          const cleanedHistory = partialMessages.map((msg: ChatMessage) =>
+            msg.role === 'assistant'
+              ? { ...msg, content: stripSpecialTokens(contentToText(msg.content)) }
+              : msg
+          );
+          setHistory(cleanedHistory);
+        }
+        // Also keep the partial reply when the user actually tapped stop.
+        else if (controller.signal.aborted && streamingTextRef.current) {
+          const cleanedContent = stripSpecialTokens(streamingTextRef.current);
+          if (cleanedContent.trim()) {
+            setHistory((h) => [...h, { role: 'assistant', content: cleanedContent }]);
+          }
+        }
+      } finally {
+        setStreamingText('');
+        setToolActivity([]);
+        setIsStreaming(false);
+        abortRef.current = null;
+      }
+    },
+    [isLocalBackend, settings.ollamaApiKey, settings.ollamaModel, team]
+  );
+
   const handleSend = useCallback(async () => {
     const text = input.trim();
     const image = attachedImage; // capture before clearing, same reason as `text`
@@ -160,79 +243,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
             userMessage,
           ]
         : [...history, userMessage];
-    // Strip special tokens from any streamed text before storing in history
-    setHistory(baseHistory);
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    const handleEvent = (event: LlmStreamEvent) => {
-      if (event.type === 'token') {
-        streamingTextRef.current += event.text;
-        // Accumulate raw (don't trim during streaming, which would collapse spaces between tokens)
-        // Strip tokens only when displaying or saving to history
-        const cleaned = stripSpecialTokens(streamingTextRef.current);
-        setStreamingText(cleaned);
-      }
-      else if (event.type === 'toolCall') setToolActivity((a) => [...a, event.name]);
-      // A user-initiated cancel (closing the sheet, tapping stop) surfaces here as
-      // an abort "error" — that's not a failure worth showing, just report real ones.
-      else if (event.type === 'error' && !controller.signal.aborted) setError(event.message);
-    };
-
-    try {
-      const updated = isLocalBackend
-        ? await localSendMessage({
-            history: baseHistory,
-            ctx: { team },
-            signal: controller.signal,
-            onEvent: handleEvent,
-          })
-        : await sendMessage({
-            apiKey: settings.ollamaApiKey,
-            model: settings.ollamaModel,
-            history: baseHistory,
-            ctx: { team },
-            signal: controller.signal,
-            onEvent: handleEvent,
-          });
-      // Strip special tokens from final message before storing
-      const cleanedHistory = updated.map((msg) =>
-        msg.role === 'assistant'
-          ? { ...msg, content: stripSpecialTokens(contentToText(msg.content)) }
-          : msg
-      );
-      setHistory(cleanedHistory);
-    } catch (err) {
-      // Preserve tool call history even when a later round fails, so the user sees what succeeded.
-      const partialMessages =
-        typeof err === 'object' &&
-        err !== null &&
-        'partialMessages' in err &&
-        Array.isArray((err as Record<string, unknown>).partialMessages)
-          ? ((err as Record<string, unknown>).partialMessages as ChatMessage[])
-          : undefined;
-      if (partialMessages && partialMessages.length > baseHistory.length) {
-        const cleanedHistory = partialMessages.map((msg: ChatMessage) =>
-          msg.role === 'assistant'
-            ? { ...msg, content: stripSpecialTokens(contentToText(msg.content)) }
-            : msg
-        );
-        setHistory(cleanedHistory);
-      }
-      // Also keep the partial reply when the user actually tapped stop.
-      else if (controller.signal.aborted && streamingTextRef.current) {
-        const cleanedContent = stripSpecialTokens(streamingTextRef.current);
-        if (cleanedContent.trim()) {
-          setHistory((h) => [...h, { role: 'assistant', content: cleanedContent }]);
-        }
-      }
-    } finally {
-      setStreamingText('');
-      setToolActivity([]);
-      setIsStreaming(false);
-      abortRef.current = null;
-    }
+    await runTurn(baseHistory);
   }, [
     input,
     attachedImage,
@@ -240,10 +251,52 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
     isConfigured,
     history,
     isLocalBackend,
-    settings.ollamaApiKey,
-    settings.ollamaModel,
-    team,
+    runTurn,
   ]);
+
+  // "Import team from screenshot" (docs/litertlm-vl-integration.md step 13): a
+  // dedicated entry point, not a mode toggle on the normal composer. It always
+  // starts a fresh conversation — the system prompt is only set once per
+  // conversation (baked in on the first message), so an existing chat's prompt
+  // can't be swapped mid-conversation to add the image-reading instruction.
+  // Losing the current transcript this way is low-stakes: chat history isn't
+  // persisted anywhere in this app, so closing the sheet already discards it.
+  const handleImportScreenshot = useCallback(async () => {
+    if (isStreaming) return;
+    let dataUrl: string;
+    try {
+      const { pickOrCaptureImage, toDataUrl } = await import('../../lib/native/imagePicker');
+      const image = await pickOrCaptureImage();
+      dataUrl = toDataUrl(image);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'ImagePickCancelledError') return;
+      setError(err instanceof Error ? err.message : 'Failed to import screenshot');
+      return;
+    }
+
+    setInput('');
+    setAttachedImage(null);
+    setError(null);
+    setStreamingText('');
+    streamingTextRef.current = '';
+    setToolActivity([]);
+    setIsStreaming(true);
+
+    const baseHistory: ChatMessage[] = [
+      {
+        role: 'system',
+        content: buildSystemPrompt({ includeWebTools: false, includeImageImport: true }),
+      },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Build my team from this screenshot.' },
+          { type: 'image_url', image_url: { url: dataUrl } },
+        ],
+      },
+    ];
+    await runTurn(baseHistory);
+  }, [isStreaming, runTurn]);
 
   return (
     <div className={`flex flex-col min-h-0 ${className}`}>
@@ -270,6 +323,16 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
                       : `Ask about ${team ? `"${team.name}"` : 'your team'} — weaknesses, a damage roll,
                         speed comparisons, whether a set is legal, or search the web for current rulings.`}
                   </p>
+                  {canAttachImage && (
+                    <button
+                      type="button"
+                      onClick={() => void handleImportScreenshot()}
+                      className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-accent-primary/10 text-accent-primary text-[12px] px-3 py-1.5 touch-target"
+                    >
+                      <ScanLine size={14} />
+                      Import team from screenshot
+                    </button>
+                  )}
                 </div>
               )}
 

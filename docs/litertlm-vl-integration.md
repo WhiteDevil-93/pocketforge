@@ -250,12 +250,50 @@ picker, or confirm the thumbnail/removal affordance actually work — and no VL 
 loaded anywhere to make `visionAvailable` ever true in a live app, so the gated control
 has never actually been seen rendered, only reasoned about.
 
-**13. Team import.** A "Import from screenshot" entry point that composes the same message with
-a task-specific instruction telling the model to read the image and use the existing team tools.
-The instruction belongs in `systemPrompt.ts` as a new `buildSystemPrompt` option (e.g.
-`includeImageImport`), keeping all prompt text in one file. No new tools. Then the honest work:
-prompt iteration against real screenshots until extraction is reliable, and a UI that shows what
-the model wrote so a wrong read is visible and correctable.
+**13. Team import. Plumbing done and TS build-verified; the step's own "honest work"
+is explicitly not done, and cannot be done here.**
+`systemPrompt.ts` gained `includeImageImport?: boolean` exactly as specified — no new
+tools, reuses the same `create_team`/`add_pokemon`/`get_legal_moves`/`lookup_pokemon`/
+`validate_team` sequence already described for every other team build, with guidance
+added for screenshot-specific failure modes (abbreviated species/move names, compact EV
+strings, and — the one addition beyond a literal reading of the plan — an explicit
+instruction to say what it *couldn't* read rather than invent a Tera type or EV spread,
+given how well-documented the accuracy risk is: a 4-bit quantized E4B reading small text
+in a compressed screenshot).
+`ChatPanel.tsx`: extracted `runTurn(baseHistory)` from `handleSend` — the streaming/
+tool-activity/error-handling core, now shared rather than duplicated, taking the
+message list as a parameter specifically to avoid a stale-closure race against
+`setHistory` that a naive "seed history then call handleSend" approach would hit.
+`handleImportScreenshot` always starts a **fresh** conversation, not a mode toggle on
+the existing composer — the system prompt is only set once per conversation (baked in
+on the first message), so an existing chat's prompt can't be swapped mid-conversation.
+Entry point is a CTA button in the empty-conversation state, gated on the same
+`canAttachImage` step 12 already computed.
+**Scoped "visible and correctable" to the mechanism steps before this one already
+built, rather than adding a new review screen**: the assistant's own reply already
+narrates what it read (the prompt asks for this explicitly), the tool-activity pills
+already show which tools fired, and — because import mode is a live conversation, not
+a one-shot extraction — the user can correct a wrong read the exact same way they'd
+correct any other team the assistant built: by saying what's wrong and letting it call
+`update_pokemon`. Considered wiring a "View team" `navigate(\`/builder/${teamId}\`)`
+link (the app's real per-Pokemon editor, confirmed to exist and be reachable this way)
+but held off — it's a genuine enhancement, not what "correctable" in the plan's
+wording was pointing at, and would add a new routing dependency to a component that
+doesn't otherwise have one. Worth revisiting once step 13's *actual* content — the
+prompt itself — has been tested and iterated on, since only then will it be clear
+whether conversational correction is sufficient or whether wrong reads are common
+enough to need a dedicated review surface.
+**What this step cannot do here, at all, full stop**: the plan's own words for this
+step are "the honest work: prompt iteration against real screenshots until extraction
+is reliable." That requires a running model on real hardware and real screenshots —
+none of which exist in this environment. Everything shipped in this step is a
+reasoned first draft of the prompt and a plumbing path for it to run through, not a
+tested one. This is the one step in either LiteRT-LM plan where "not yet verified" is
+not just "no device to check" (true of nearly every Android-side step so far) but "the
+actual deliverable this step describes has not been attempted." Flagging this
+explicitly rather than letting the "Done" language above imply otherwise.
+**TS-verified**: `npx tsc -b` and `npm run lint` both clean — confirms the plumbing
+compiles and reuses the existing send path correctly, nothing more.
 
 **14. Settings + docs.** Surface `visionAvailable` in the Settings AI section so a user who
 imported the text bundle understands why there is no attach button. Add a VL section to
