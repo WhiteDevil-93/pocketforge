@@ -554,9 +554,30 @@ tower, so `audioBackend` is available on the same bundle — again separate work
    no new repository was added — but the artifact's actual presence there is
    unconfirmed), that `minSdkVersion 24` satisfies whatever floor LiteRT-LM's AAR
    manifest declares, and that GGUF still works with LiteRT-LM on the classpath.
-4. **`LiteRtLmEngine` load path.** Backend fallback with per-attempt `close()`, explicit
-   `cacheDir`, `backendId` in status. Success: `ready` on the real 3.87 GB bundle with the
-   chosen backend visible.
+4. **`LiteRtLmEngine` load path. Done, pending build/device verification.** Added
+   `engine/LiteRtLmEngine.kt`: the NPU→GPU→CPU backend fallback from §4.1, each failed
+   attempt `close()`d before the next, explicit `cacheDir = context.cacheDir`,
+   `backendId = "litertLm:$name"`. Added `EngineLoadError.BackendUnavailable` (all
+   three backends failed). `generate()`/`cancel()` are deliberately not implemented
+   yet — `cancel()` is a genuine no-op (every teardown path in `LocalLlmService` calls
+   it unconditionally, so it must never throw even with nothing to cancel);
+   `generate()` throws, which `LocalLlmService`'s existing catch-and-report path in
+   `handleChatCompletions` already turns into a normal SSE error frame. Real
+   generation is step 5.
+   Also promoted `ModelFormat` out of `LocalLlmPlugin.kt` (was file-private) into
+   `engine/ModelFormat.kt` so `LocalLlmService.handleStart` can dispatch on it:
+   extension → `ModelFormat` → `LlamaCppEngine.load` or `LiteRtLmEngine.load`. This
+   trusts the file's extension at load time rather than re-sniffing bytes, which is
+   safe only because step 2's `ensureFormatExtension` already guarantees the extension
+   matches the content-sniffed format at import time — the two steps compose into one
+   guarantee, not two independent checks.
+   **Not yet verified against a real build or device** (no Android SDK/NDK in this
+   environment, and no S25 Ultra to test the backend chain on) — needs: a release
+   build with the classpath from step 3, importing the real
+   `vgc_e4b_v5_heretic.litertlm` bundle, confirming the service reaches `ready` with
+   `backendId` visible in `getServerStatus`, and confirming which backend the real
+   device actually lands on (per LiteRT-LM #2114, GPU init failing on some hardware is
+   expected, not a bug — the point of the chain is that CPU still succeeds).
 5. **Generation.** Request parsing → `systemInstruction` / `initialMessages` /
    validated `SamplerConfig` / `maxOutputToken`, `MessageCallback` wiring,
    `cancelProcess()` **with the `CancellationException`-is-not-an-error branch**.

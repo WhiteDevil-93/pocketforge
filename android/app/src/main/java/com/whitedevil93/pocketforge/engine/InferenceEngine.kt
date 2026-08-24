@@ -28,4 +28,8 @@ interface InferenceEngine : AutoCloseable {
 /** Failures from loading a model into an [InferenceEngine]. */
 sealed class EngineLoadError(message: String, cause: Throwable? = null) : Exception(message, cause) {
     class Native(message: String, cause: Throwable? = null) : EngineLoadError(message, cause)
+
+    /** Every backend in a fallback chain (e.g. NPU → GPU → CPU) failed to initialize. */
+    class BackendUnavailable(attempted: List<String>, cause: Throwable?) :
+        EngineLoadError("No usable backend (tried ${attempted.joinToString(" → ")})", cause)
 }

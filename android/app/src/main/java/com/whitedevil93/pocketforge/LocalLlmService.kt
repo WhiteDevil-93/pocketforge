@@ -14,7 +14,9 @@ import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.whitedevil93.pocketforge.engine.InferenceEngine
+import com.whitedevil93.pocketforge.engine.LiteRtLmEngine
 import com.whitedevil93.pocketforge.engine.LlamaCppEngine
+import com.whitedevil93.pocketforge.engine.ModelFormat
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -249,7 +251,13 @@ class LocalLlmService : Service() {
                 if (file.length() < 1024 * 1024) {
                     throw IllegalStateException("Model file too small (${file.length()} bytes)")
                 }
-                engine = LlamaCppEngine.load(modelPath)
+                val format = ModelFormat.entries.firstOrNull {
+                    modelPath.endsWith(".${it.extension}", ignoreCase = true)
+                } ?: throw IllegalStateException("Unrecognized model file extension: $modelPath")
+                engine = when (format) {
+                    ModelFormat.GGUF -> LlamaCppEngine.load(modelPath)
+                    ModelFormat.LITERTLM -> LiteRtLmEngine.load(modelPath, applicationContext)
+                }
                 if (isStopping || Thread.currentThread().isInterrupted) {
                     teardownEngine()
                     if (state != "error") transition("stopped", null, null)

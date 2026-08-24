@@ -20,6 +20,7 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.whitedevil93.pocketforge.engine.ModelFormat
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -33,14 +34,6 @@ import java.util.TreeMap
 import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
-
-/** Model container formats this app can import and load. Detected by sniffing the
- *  file's own header bytes — never trusted from a filename extension alone, since SAF
- *  content providers do not always supply one. */
-private enum class ModelFormat(val extension: String) {
-    GGUF("gguf"),
-    LITERTLM("litertlm"),
-}
 
 /** Result of sniffing the header window read at the start of an imported file. */
 private sealed class FormatSniffResult {
