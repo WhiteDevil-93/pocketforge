@@ -14,6 +14,9 @@ ext {
     androidxFragmentVersion = '1.8.9'
     coreSplashScreenVersion = '1.2.0'
     androidxWebkitVersion = '1.14.0'
+    // Pinned, not 'latest.release' (which the upstream docs use for brevity but which
+    // makes builds irreproducible) — see docs/litertlm-android-adapter.md §5.
+    litertLmVersion = '0.16.0'
     junitVersion = '4.13.2'
     androidxJunitVersion = '1.3.0'
     androidxEspressoCoreVersion = '3.7.0'

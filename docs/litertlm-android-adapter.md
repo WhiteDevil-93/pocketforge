@@ -539,8 +539,21 @@ tower, so `audioBackend` is available on the same bundle — again separate work
    (no Android SDK/NDK in this environment) — needs the same on-device pass as step 1,
    plus importing an actual `.litertlm` file and confirming it's accepted, renamed
    correctly, and discovered.
-3. **Dependency + manifest + R8.** Pin 0.16.0, confirm a release build runs and GGUF still
-   works with LiteRT on the classpath.
+3. **Dependency + manifest + R8. Done, pending build verification.** Pinned
+   `com.google.ai.edge.litertlm:litertlm-android:0.16.0` in `variables.gradle` /
+   `app/build.gradle` (not `latest.release`). Added the two `<uses-native-library
+   required="false">` entries for the GPU backend to `AndroidManifest.xml`. Added R8
+   keep rules for `GenerationCallback` and `engine.**` to `proguard-rules.pro` — these
+   are currently **dormant**, since release `minifyEnabled` is `false` project-wide and
+   this step didn't turn it on (a real minification pass needs its own whole-app test
+   cycle, out of scope here); a TODO marks where the step-6 `OpenApiTool` keep goes.
+   `abiFilters 'arm64-v8a'` was already the project's only target — no change needed.
+   **Not verified against a real build** (no Android SDK/NDK in this environment):
+   still needed are confirming the 0.16.0 artifact actually resolves from
+   `mavenCentral()`/`google()` (both already declared at the `allprojects` level, so
+   no new repository was added — but the artifact's actual presence there is
+   unconfirmed), that `minSdkVersion 24` satisfies whatever floor LiteRT-LM's AAR
+   manifest declares, and that GGUF still works with LiteRT-LM on the classpath.
 4. **`LiteRtLmEngine` load path.** Backend fallback with per-attempt `close()`, explicit
    `cacheDir`, `backendId` in status. Success: `ready` on the real 3.87 GB bundle with the
    chosen backend visible.

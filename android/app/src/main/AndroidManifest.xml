@@ -38,6 +38,18 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="on-device LLM inference server" />
         </service>
+
+        <!-- LiteRT-LM's GPU backend (Backend.GPU()) — not loaded yet (see
+             docs/litertlm-android-adapter.md step 4), added now so the release/R8
+             build is proven with these present. required="false" so a device
+             without OpenCL still installs and LiteRT-LM's NPU->GPU->CPU fallback
+             falls through to CPU instead of failing to install. -->
+        <uses-native-library
+            android:name="libvndksupport.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
     </application>
 
     <!-- Permissions -->
