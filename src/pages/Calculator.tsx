@@ -627,9 +627,17 @@ export default function Calculator() {
                   <ChevronDown size={16} className="text-text-tertiary" />
                 </button>
 
-                {/* Damage Result for this move */}
-                {damageResults[i] && (
+                {/* Damage Result for this move — Status moves and 0-power moves never
+                    produce a damageResults entry (see the useMemo above), so without
+                    this note picking one of those silently showed nothing at all. */}
+                {damageResults[i] ? (
                   <DamageResultCard result={damageResults[i]!} />
+                ) : (
+                  move && (move.category === 'Status' || move.power === 0) && (
+                    <p className="px-3 pb-2 text-[11px] text-text-tertiary">
+                      Status moves don't deal damage — pick an attacking move.
+                    </p>
+                  )
                 )}
               </div>
             ))}

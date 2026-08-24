@@ -64,7 +64,11 @@ export function useAiReadiness(): AiReadiness {
       remove = () => void handle.remove();
       // Snapshot first — serverStatusChanged only fires on transitions, so a
       // server already ready before this mounted would otherwise never surface.
-      void getServerStatus().then(apply).catch(() => {});
+      // A failed snapshot must still resolve to an explicit state rather than
+      // leaving serverStatus stuck at its initial null indefinitely.
+      void getServerStatus()
+        .then(apply)
+        .catch(() => apply({ state: 'error', error: 'Could not read server status' }));
     })();
     return () => {
       cancelled = true;

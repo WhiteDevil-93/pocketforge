@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { isNativeApp } from '../lib/platform';
 import { HOME_PATH } from '../lib/routes';
+import { consumeBackGuard } from './use-back-guard';
 
 /**
  * Wires up the Android shell's platform behaviour.
@@ -57,6 +58,10 @@ export function useNativeShell() {
       if (cancelled) return;
 
       const handle = await App.addListener('backButton', ({ canGoBack }) => {
+        // A non-route overlay (e.g. PokemonEditor's unsaved-changes guard) gets
+        // first refusal — see use-back-guard.ts for why this can't just be a
+        // second addListener call.
+        if (consumeBackGuard()) return;
         // Only leave the app from the home screen. Anywhere else, go back — falling
         // back to home when there is no history to pop (e.g. a deep link cold start).
         if (location.pathname === HOME_PATH) {

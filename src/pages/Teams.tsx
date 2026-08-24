@@ -2,16 +2,17 @@
 // PocketForge — Home Page (Redesigned)
 // ============================================================================
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Search, Settings, Plus, FolderOpen, ChevronDown,
-  Users, AlertTriangle, Check, Zap, BookOpen, Shield,
+  Users, AlertTriangle, Zap, BookOpen, Shield,
   Wrench, Calculator, Crosshair, Heart,
   TrendingUp, ArrowRight
 } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { springTap, transitionFast } from '../lib/motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { transitionFast } from '../lib/motion';
 import { useStore } from '../store/useStore';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import type { Team } from '../types';
@@ -63,38 +64,6 @@ function groupTeamsByFolder(teams: Team[]): Record<string, Team[]> {
   return groups;
 }
 
-// ---- Pull-to-refresh Pokeball icon -----------------------------------------
-
-function PokeballIcon({ rotation }: { rotation: number }) {
-  return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{ transform: `rotate(${rotation}deg)` }} className="mx-auto">
-      <path d="M16 2C8.268 2 2 8.268 2 16h12.5V12.5a3.5 3.5 0 1 1 7 0V16H30c0-7.732-6.268-14-14-14z" fill="#EF4444" />
-      <path d="M16 30c7.732 0 14-6.268 14-14H17.5v3.5a3.5 3.5 0 1 1-7 0V16H2c0 7.732 6.268 14 14 14z" fill="#F1F5F9" />
-      <rect x="2" y="15" width="28" height="2" fill="#1E293B" />
-      <circle cx="16" cy="16" r="5" fill="#1E293B" />
-      <circle cx="16" cy="16" r="3.5" fill="#F1F5F9" />
-      <circle cx="16" cy="16" r="2" fill="#1E293B" />
-    </svg>
-  );
-}
-
-// ---- Toast notification ----------------------------------------------------
-
-interface ToastData { id: string; message: string; type: 'success' | 'error' | 'info'; }
-
-function Toast({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }) {
-  useEffect(() => { const timer = setTimeout(onDismiss, 3000); return () => clearTimeout(timer); }, [onDismiss]);
-  const borderColor = toast.type === 'success' ? 'var(--success)' : toast.type === 'error' ? 'var(--danger)' : 'var(--accent-primary)';
-  return (
-    <motion.div initial={{ opacity: 0, y: -20, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: -10, x: '-50%' }} transition={transitionFast}
-      className="fixed top-4 left-1/2 z-[60] flex items-center gap-2 px-4 py-3 rounded-card-md bg-bg-elevated shadow-card" style={{ borderLeft: `3px solid ${borderColor}` }}>
-      {toast.type === 'success' && <Check size={16} className="text-success" />}
-      {toast.type === 'error' && <AlertTriangle size={16} className="text-danger" />}
-      {toast.type === 'info' && <AlertTriangle size={16} className="text-accent-primary" />}
-      <span className="font-body text-text-primary">{toast.message}</span>
-    </motion.div>
-  );
-}
 
 // ---- Quick Actions Grid ----------------------------------------------------
 
@@ -196,6 +165,7 @@ export default function Teams() {
   const folders = useStore((s) => s.folders);
   const createTeam = useStore((s) => s.createTeam);
   const deleteTeam = useStore((s) => s.deleteTeam);
+  const restoreTeam = useStore((s) => s.restoreTeam);
   const duplicateTeam = useStore((s) => s.duplicateTeam);
   const setCurrentTeam = useStore((s) => s.setCurrentTeam);
 
@@ -204,15 +174,6 @@ export default function Teams() {
   const [activeFormat, setActiveFormat] = useState('all');
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [isScrolled, setIsScrolled] = useState(false);
-  const [toasts, setToasts] = useState<ToastData[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshComplete, setRefreshComplete] = useState(false);
-  const pullY = useMotionValue(0);
-  const pullRotate = useTransform(pullY, [0, 80], [0, 180]);
-  const pullOpacity = useTransform(pullY, [0, 30], [0, 1]);
-  const isPulling = useRef(false);
-  const pullStartY = useRef(0);
-
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -247,15 +208,6 @@ export default function Teams() {
     return allFolders.filter((f) => (groupedTeams[f]?.length || 0) > 0);
   }, [folders, filteredTeams, groupedTeams]);
 
-  const addToast = useCallback((message: string, type: ToastData['type'] = 'info') => {
-    const id = crypto.randomUUID();
-    setToasts((prev) => [...prev.slice(-1), { id, message, type }]);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
   const handleCreateTeam = useCallback(() => {
     const teamId = createTeam('New Team');
     setCurrentTeam(teamId);
@@ -269,13 +221,21 @@ export default function Teams() {
 
   const handleCopyTeam = useCallback((teamId: string) => {
     const newId = duplicateTeam(teamId);
-    if (newId) addToast('Team copied', 'success');
-  }, [duplicateTeam, addToast]);
+    if (newId) toast.success('Team copied');
+  }, [duplicateTeam]);
 
   const handleDeleteTeam = useCallback((teamId: string) => {
+    // Swipe-to-delete is the cheapest gesture in the app (one swipe + one tap,
+    // previously with no confirmation and no way back) — an undo toast fixes
+    // that without adding a confirm-sheet tap to the common case.
+    const deleted = teams.find((t) => t.id === teamId);
     deleteTeam(teamId);
-    addToast('Team deleted', 'success');
-  }, [deleteTeam, addToast]);
+    toast.success('Team deleted', {
+      action: deleted
+        ? { label: 'Undo', onClick: () => restoreTeam(deleted) }
+        : undefined,
+    });
+  }, [teams, deleteTeam, restoreTeam]);
 
   const handleExportTeam = useCallback((teamId: string) => {
     setCurrentTeam(teamId);
@@ -284,65 +244,18 @@ export default function Teams() {
 
   const handleDuplicateTeam = useCallback((teamId: string) => {
     const newId = duplicateTeam(teamId);
-    if (newId) addToast('Team duplicated', 'success');
-  }, [duplicateTeam, addToast]);
+    if (newId) toast.success('Team duplicated');
+  }, [duplicateTeam]);
 
   const toggleFolder = useCallback((folder: string) => {
     setExpandedFolders((prev) => ({ ...prev, [folder]: !(prev[folder] ?? true) }));
   }, []);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (window.scrollY === 0) {
-      pullStartY.current = e.touches[0].clientY;
-      isPulling.current = true;
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isPulling.current || isRefreshing) return;
-    const diff = e.touches[0].clientY - pullStartY.current;
-    if (diff > 0 && window.scrollY <= 0) {
-      pullY.set(Math.min(diff * 0.5, 100));
-      if (diff > 80) setRefreshComplete(true);
-    }
-  }, [pullY, isRefreshing]);
-
-  const handleTouchEnd = useCallback(() => {
-    if (!isPulling.current) return;
-    isPulling.current = false;
-    const currentPull = pullY.get();
-    if (currentPull > 80) {
-      setIsRefreshing(true);
-      pullY.set(60);
-      setTimeout(() => {
-        setIsRefreshing(false);
-        setRefreshComplete(true);
-        pullY.set(0);
-        addToast('Teams refreshed', 'success');
-        setTimeout(() => setRefreshComplete(false), 1000);
-      }, 1500);
-    } else {
-      pullY.set(0);
-      setRefreshComplete(false);
-    }
-  }, [pullY, addToast]);
-
   const isEmpty = teams.length === 0;
   const noSearchResults = !isEmpty && filteredTeams.length === 0;
-  const [pullRotationVal, setPullRotationVal] = useState(0);
-  useEffect(() => {
-    const unsubscribe = pullRotate.on('change', (v) => setPullRotationVal(v));
-    return () => unsubscribe();
-  }, [pullRotate]);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col relative" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      {/* Toast notifications */}
-      <AnimatePresence>
-        {toasts.map((toast) => (
-          <Toast key={toast.id} toast={toast} onDismiss={() => removeToast(toast.id)} />
-        ))}
-      </AnimatePresence>
+    <div className="min-h-[100dvh] flex flex-col relative">
 
       {/* Top App Bar */}
       <motion.header className={`sticky top-0 z-40 h-[56px] flex items-center justify-between px-4 transition-colors duration-200 ${isScrolled ? 'bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle' : 'bg-transparent'}`}>
@@ -356,23 +269,6 @@ export default function Teams() {
           </button>
         </div>
       </motion.header>
-
-      {/* Pull-to-refresh indicator */}
-      <motion.div style={{ height: pullY, opacity: pullOpacity }} className="overflow-hidden flex items-center justify-center">
-        <div className="py-2">
-          {isRefreshing ? (
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.5, ease: 'linear' }}>
-              <PokeballIcon rotation={0} />
-            </motion.div>
-          ) : refreshComplete ? (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={springTap}>
-              <Check size={28} className="text-success" />
-            </motion.div>
-          ) : (
-            <PokeballIcon rotation={pullRotationVal} />
-          )}
-        </div>
-      </motion.div>
 
       {/* Search Bar (collapsible) */}
       <AnimatePresence>

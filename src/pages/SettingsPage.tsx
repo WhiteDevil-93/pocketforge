@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   Moon,
   Sun,
@@ -41,6 +42,7 @@ import {
 } from 'lucide-react';
 import BottomSheet from '../components/BottomSheet';
 import PageHeader from '../components/PageHeader';
+import ChatSheetLoadingFallback from '../components/ai/ChatSheetLoadingFallback';
 // Lazy-loaded: ChatSheet statically reaches ollamaCloud.ts and the full tool
 // registry (calculators, movepool queries, mega/champions data). Every Settings
 // visit would otherwise pull that in even when AI is disabled and chat is never
@@ -874,8 +876,6 @@ export default function SettingsPage() {
   const [hasOpenedChat, setHasOpenedChat] = useState(false);
   const [showOfflineToast, setShowOfflineToast] = useState(false);
 
-  // Export state
-  const [exportMessage, setExportMessage] = useState('');
   const restoreInputRef = useRef<HTMLInputElement>(null);
 
   // Theme
@@ -957,8 +957,12 @@ export default function SettingsPage() {
       }
       remove = () => void handle.remove();
       // Snapshot first — serverStatusChanged only fires on transitions, so a server
-      // already ready before Settings opened would otherwise never surface.
-      void getServerStatus().then(apply).catch(() => {});
+      // already ready before Settings opened would otherwise never surface. A
+      // failed snapshot must still resolve to *something* other than the
+      // initial null, or the row is stuck reading "Checking…" forever.
+      void getServerStatus()
+        .then(apply)
+        .catch(() => apply({ state: 'error', error: 'Could not read server status' }));
     })();
     return () => {
       cancelled = true;
@@ -969,8 +973,7 @@ export default function SettingsPage() {
   // Export all teams
   const handleExport = useCallback(() => {
     if (teams.length === 0) {
-      setExportMessage('No teams to export!');
-      setTimeout(() => setExportMessage(''), 2000);
+      toast.error('No teams to export!');
       return;
     }
     const data = JSON.stringify(teams, null, 2);
@@ -983,8 +986,7 @@ export default function SettingsPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    setExportMessage('Teams exported!');
-    setTimeout(() => setExportMessage(''), 2000);
+    toast.success('Teams exported!');
   }, [teams]);
 
   // Import teams
@@ -1004,16 +1006,15 @@ export default function SettingsPage() {
             for (const team of data) {
               useStore.getState().importTeam(team);
             }
-            setExportMessage(`${data.length} teams imported!`);
+            toast.success(`${data.length} teams imported!`);
           } else if (data && typeof data === 'object') {
             // Single team
             useStore.getState().importTeam(data);
-            setExportMessage('Team imported!');
+            toast.success('Team imported!');
           }
         } catch {
-          setExportMessage('Invalid file format');
+          toast.error('Invalid file format');
         }
-        setTimeout(() => setExportMessage(''), 2000);
       };
       reader.readAsText(file);
     };
@@ -1057,8 +1058,7 @@ export default function SettingsPage() {
     a.download = `pocketforge-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setExportMessage('Full App Backup downloaded successfully!');
-    setTimeout(() => setExportMessage(''), 3000);
+    toast.success('Full App Backup downloaded successfully!');
   }, []);
 
   // Import Full Backup
@@ -1089,11 +1089,10 @@ export default function SettingsPage() {
           localStorage.removeItem(NUZLOCKE_STORAGE_KEY);
         }
         for (const key of LEGACY_NUZLOCKE_STORAGE_KEYS) localStorage.removeItem(key);
-        setExportMessage('Backup restored! Reloading app...');
+        toast.success('Backup restored! Reloading app...');
         setTimeout(() => window.location.reload(), 1200);
       } catch {
-        setExportMessage('Invalid backup JSON file.');
-        setTimeout(() => setExportMessage(''), 3000);
+        toast.error('Invalid backup JSON file.');
       }
     };
     reader.onloadend = () => {
@@ -1112,23 +1111,22 @@ export default function SettingsPage() {
 
   // Check the app-scoped Service Worker without deleting user data or origin caches.
   const handleForceUpdateCache = useCallback(async () => {
-    setExportMessage('Checking for the latest app version...');
+    const id = toast.loading('Checking for the latest app version...');
     try {
       const result = await checkForAppUpdate();
       if (result === 'updated') {
-        setExportMessage('Update installed. Reloading...');
+        toast.success('Update installed. Reloading...', { id });
       } else if (result === 'current') {
-        setExportMessage('PocketForge is already up to date.');
+        toast.success('PocketForge is already up to date.', { id });
       } else if (result === 'offline') {
-        setExportMessage('Connect to the internet to check for updates.');
+        toast.error('Connect to the internet to check for updates.', { id });
       } else {
-        setExportMessage('Updates are unavailable in this browser.');
+        toast.error('Updates are unavailable in this browser.', { id });
       }
     } catch (e) {
       console.warn('App update check failed:', e);
-      setExportMessage('Could not check for updates. Please try again.');
+      toast.error('Could not check for updates. Please try again.', { id });
     }
-    setTimeout(() => setExportMessage(''), 3000);
   }, []);
 
   // On-device model import: SAF picker → app-private storage (native only). The
@@ -1142,8 +1140,17 @@ export default function SettingsPage() {
       const result = await pickModelFile();
       setImportedModelSize(result.size);
       updateSettings({ localModelPath: result.path, localModelName: result.name });
-    } catch {
-      // SAF picker cancelled or the copy failed — leave any previous model untouched.
+    } catch (e) {
+      // A plain cancel (the user backed out of the SAF picker) is a normal
+      // outcome, not a failure — everything else (bad magic bytes, unsupported
+      // .litertlm format version, disk-full mid-copy, etc.) is a real,
+      // already user-worded native rejection that was previously discarded
+      // silently, leaving the row to revert to "No model imported" with no
+      // explanation at all.
+      const message = e instanceof Error ? e.message : String(e);
+      if (!/picker was cancelled/i.test(message)) {
+        toast.error(message);
+      }
     } finally {
       setIsImporting(false);
     }
@@ -1154,8 +1161,10 @@ export default function SettingsPage() {
   const handleStartServer = useCallback(async () => {
     if (!isNativeApp()) return;
     if (!localModelReady) {
-      setExportMessage('Import a GGUF model first');
-      setTimeout(() => setExportMessage(''), 3000);
+      // toast, not setExportMessage: that banner renders at the top of the
+      // page (several sections above this AI card), so a user who just
+      // tapped Start here would very likely never see it.
+      toast.error('Import a model first (.gguf or .litertlm)');
       return;
     }
     const { startServer } = await import('../lib/native/localLlm');
@@ -1175,7 +1184,7 @@ export default function SettingsPage() {
         error: e instanceof Error ? e.message : 'Failed to start server',
       });
     }
-  }, [localModelReady, setExportMessage, settings.localModelPath]);
+  }, [localModelReady, settings.localModelPath]);
 
   const handleStopServer = useCallback(async () => {
     if (!isNativeApp()) return;
@@ -1183,8 +1192,17 @@ export default function SettingsPage() {
     try {
       const status = await stopServer();
       setServerStatus(status);
-    } catch {
-      // Ignored — the serverStatusChanged event still lands when the service stops.
+    } catch (e) {
+      // The serverStatusChanged event usually still lands even on a rejected
+      // call, but if the plugin context is gone (LocalLlmPlugin.kt's
+      // teardown case) that event never arrives either — applying an error
+      // status directly here is the same "never leave a stale label" pattern
+      // as handleStartServer, so the row can't get stuck reading "Ready"
+      // forever with a Stop button that silently does nothing.
+      setServerStatus({
+        state: 'error',
+        error: e instanceof Error ? e.message : 'Failed to stop server',
+      });
     }
   }, []);
 
@@ -1288,21 +1306,6 @@ export default function SettingsPage() {
             <span className="text-[12px] text-warning">
               Working offline — teams saved locally
             </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Toast messages */}
-      <AnimatePresence>
-        {exportMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center gap-2 bg-accent-primary/10 border border-accent-primary/30 rounded-xl px-3 py-2.5 mb-3"
-          >
-            <Info size={16} className="text-accent-primary shrink-0" />
-            <span className="text-[12px] text-accent-primary">{exportMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1438,7 +1441,14 @@ export default function SettingsPage() {
                 label="Import model"
                 subtitle={
                   isImporting
-                    ? 'Importing…'
+                    ? // isImporting flips true before the SAF picker even opens
+                      // (handleImportModel), so "Importing…" would otherwise show
+                      // while the user is still just browsing files — importProgress
+                      // only starts arriving once the native side is actually
+                      // copying bytes.
+                      importProgress
+                      ? 'Importing…'
+                      : 'Choosing file…'
                     : localModelReady
                       ? settings.localModelName
                       : 'No model imported'
@@ -1741,7 +1751,7 @@ export default function SettingsPage() {
       />
 
       {hasOpenedChat && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ChatSheetLoadingFallback />}>
           <ChatSheet isOpen={chatOpen} onClose={() => setChatOpen(false)} />
         </Suspense>
       )}

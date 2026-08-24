@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import BottomNav from './BottomNav';
+import { Toaster } from './ui/sonner';
 import { transitionFast } from '../lib/motion';
 
 interface LayoutProps {
@@ -54,6 +55,8 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Bottom Navigation */}
         {showNav && <BottomNav />}
+
+        <Toaster />
       </div>
     </MotionConfig>
   );

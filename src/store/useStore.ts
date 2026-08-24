@@ -45,12 +45,20 @@ export interface StoreState {
   createTeam: (name: string, format?: string) => string;
   updateTeam: (teamId: string, updates: Partial<Team>) => void;
   deleteTeam: (teamId: string) => void;
+  /** Re-inserts a team object verbatim — the undo side of deleteTeam, for an
+   *  undo-toast rather than a delete confirmation (Teams.tsx). A no-op if a
+   *  team with that id somehow already exists. */
+  restoreTeam: (team: Team) => void;
   duplicateTeam: (teamId: string) => string;
   setCurrentTeam: (teamId: string | null) => void;
 
   // Actions — Pokemon
   addPokemon: (teamId: string, pokemon?: Partial<Pokemon>) => void;
   removePokemon: (teamId: string, index: number) => void;
+  /** Re-inserts a full Pokemon object at a specific index — the undo side of
+   *  removePokemon, for an undo-toast rather than a delete confirmation
+   *  (Builder.tsx's inline card delete). A no-op if the team is already full. */
+  insertPokemonAt: (teamId: string, index: number, pokemon: Pokemon) => void;
   updatePokemon: (teamId: string, index: number, updates: Partial<Pokemon>) => void;
   reorderPokemon: (teamId: string, fromIndex: number, toIndex: number) => void;
 
@@ -146,6 +154,12 @@ export const useStore = create<StoreState>()(
         }));
       },
 
+      restoreTeam: (team: Team) => {
+        set(state =>
+          state.teams.some(t => t.id === team.id) ? state : { teams: [...state.teams, team] }
+        );
+      },
+
       duplicateTeam: (teamId: string) => {
         const original = get().teams.find(t => t.id === teamId);
         if (!original) return '';
@@ -207,6 +221,17 @@ export const useStore = create<StoreState>()(
                 }
               : t
           ),
+        }));
+      },
+
+      insertPokemonAt: (teamId: string, index: number, pokemon: Pokemon) => {
+        set(state => ({
+          teams: state.teams.map(t => {
+            if (t.id !== teamId || t.pokemon.length >= 6) return t;
+            const next = [...t.pokemon];
+            next.splice(Math.min(index, next.length), 0, pokemon);
+            return { ...t, pokemon: next, updatedAt: new Date().toISOString() };
+          }),
         }));
       },
 

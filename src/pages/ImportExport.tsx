@@ -2,7 +2,7 @@
 // PocketForge — Import / Export Page
 // ============================================================================
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import {
   ClipboardPaste,
@@ -10,13 +10,13 @@ import {
   Check,
   Share2,
   ChevronDown,
-  AlertTriangle,
   Download,
   Sword,
   Shield,
   Scale,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { springSnappy, transitionFast } from '../lib/motion';
 import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
@@ -139,44 +139,6 @@ Timid Nature
   },
 ];
 
-// ---- Toast -----------------------------------------------------------------
-
-interface ToastData {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info';
-}
-
-function Toast({ toast, onDismiss }: { toast: ToastData; onDismiss: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onDismiss, 3000);
-    return () => clearTimeout(timer);
-  }, [onDismiss]);
-
-  const borderColor =
-    toast.type === 'success'
-      ? 'var(--success)'
-      : toast.type === 'error'
-      ? 'var(--danger)'
-      : 'var(--accent-primary)';
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20, x: '-50%' }}
-      animate={{ opacity: 1, y: 0, x: '-50%' }}
-      exit={{ opacity: 0, y: -10, x: '-50%' }}
-      transition={transitionFast}
-      className="fixed top-4 left-1/2 z-[60] flex items-center gap-2 px-4 py-3 rounded-card-md bg-bg-elevated shadow-card"
-      style={{ borderLeft: `3px solid ${borderColor}` }}
-    >
-      {toast.type === 'success' && <Check size={16} className="text-success" />}
-      {toast.type === 'error' && <AlertTriangle size={16} className="text-danger" />}
-      {toast.type === 'info' && <AlertTriangle size={16} className="text-accent-primary" />}
-      <span className="font-body text-text-primary">{toast.message}</span>
-    </motion.div>
-  );
-}
-
 // ---- Tab type --------------------------------------------------------------
 
 type TabId = 'import' | 'export';
@@ -202,20 +164,6 @@ export default function ImportExport() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
-  // Toast
-  const [toasts, setToasts] = useState<ToastData[]>([]);
-
-  // ---- Toast helpers -------------------------------------------------------
-
-  const addToast = useCallback((message: string, type: ToastData['type'] = 'info') => {
-    const id = crypto.randomUUID();
-    setToasts((prev) => [...prev.slice(-1), { id, message, type }]);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
   // ---- Export text generation ----------------------------------------------
 
   const activeSelectedTeamId = selectedTeamId || teams[0]?.id || '';
@@ -238,14 +186,14 @@ export default function ImportExport() {
       if (text.trim()) {
         setImportText(text);
         setImportError(null);
-        addToast('Pasted from clipboard', 'success');
+        toast.success('Pasted from clipboard');
       } else {
-        addToast('Clipboard is empty', 'error');
+        toast.error('Clipboard is empty');
       }
     } catch {
-      addToast('Could not access clipboard', 'error');
+      toast.error('Could not access clipboard');
     }
-  }, [addToast]);
+  }, []);
 
   const handleImport = useCallback(() => {
     if (!importText.trim()) {
@@ -277,7 +225,7 @@ export default function ImportExport() {
       };
 
       const teamId = importTeam(teamData);
-      addToast(`Team "${teamName}" imported successfully!`, 'success');
+      toast.success(`Team "${teamName}" imported successfully!`);
       setImportText('');
       setImportError(null);
 
@@ -291,7 +239,7 @@ export default function ImportExport() {
           : 'Invalid format. Make sure you are using Pokemon Showdown export format.'
       );
     }
-  }, [importText, importTeam, setCurrentTeam, navigate, addToast]);
+  }, [importText, importTeam, setCurrentTeam, navigate]);
 
   const handleImportSample = useCallback(
     (psFormat: string) => {
@@ -305,14 +253,14 @@ export default function ImportExport() {
         };
 
         const teamId = importTeam(teamData);
-        addToast(`Sample team "${teamName}" imported!`, 'success');
+        toast.success(`Sample team "${teamName}" imported!`);
         setCurrentTeam(teamId);
         navigate(`/builder/${teamId}`);
       } catch {
-        addToast('Failed to import sample team', 'error');
+        toast.error('Failed to import sample team');
       }
     },
-    [importTeam, setCurrentTeam, navigate, addToast]
+    [importTeam, setCurrentTeam, navigate]
   );
 
   // ---- Export handlers -----------------------------------------------------
@@ -322,12 +270,12 @@ export default function ImportExport() {
     try {
       await navigator.clipboard.writeText(exportText);
       setCopied(true);
-      addToast('Copied to clipboard!', 'success');
+      toast.success('Copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      addToast('Failed to copy', 'error');
+      toast.error('Failed to copy');
     }
-  }, [exportText, addToast]);
+  }, [exportText]);
 
   const handleShare = useCallback(async () => {
     if (!exportText) return;
@@ -338,7 +286,7 @@ export default function ImportExport() {
           title: selectedTeam?.name || 'PocketForge Team',
           text: exportText,
         });
-        addToast('Shared successfully!', 'success');
+        toast.success('Shared successfully!');
       } catch {
         // User cancelled or share failed, fallback to clipboard
         handleCopyToClipboard();
@@ -346,7 +294,7 @@ export default function ImportExport() {
     } else {
       handleCopyToClipboard();
     }
-  }, [exportText, selectedTeam, addToast, handleCopyToClipboard]);
+  }, [exportText, selectedTeam, handleCopyToClipboard]);
 
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
@@ -376,13 +324,13 @@ export default function ImportExport() {
 
       await navigator.clipboard.writeText(shareUrl);
       setShareLinkCopied(true);
-      addToast('Shareable link copied to clipboard!', 'success');
+      toast.success('Shareable link copied to clipboard!');
       setTimeout(() => setShareLinkCopied(false), 2000);
     } catch (err) {
       console.error('Failed to create share link:', err);
-      addToast('Failed to create share link', 'error');
+      toast.error('Failed to create share link');
     }
-  }, [selectedTeam, addToast]);
+  }, [selectedTeam]);
 
   const handleDownload = useCallback(() => {
     if (!exportText || !selectedTeam) return;
@@ -395,8 +343,8 @@ export default function ImportExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    addToast('Team downloaded!', 'success');
-  }, [exportText, selectedTeam, addToast]);
+    toast.success('Team downloaded!');
+  }, [exportText, selectedTeam]);
 
   // ---- Character count for import textarea ---------------------------------
 
@@ -410,12 +358,6 @@ export default function ImportExport() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col">
-      {/* Toast notifications */}
-      <AnimatePresence>
-        {toasts.map((toast) => (
-          <Toast key={toast.id} toast={toast} onDismiss={() => removeToast(toast.id)} />
-        ))}
-      </AnimatePresence>
 
       <PageHeader title="Import / Export" />
 

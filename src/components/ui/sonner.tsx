@@ -5,15 +5,18 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { useStore } from "../../store/useStore"
 
+// next-themes' ThemeProvider is never mounted in this app — PocketForge tracks
+// its own theme in settings.theme (Zustand-persisted), so read that directly
+// instead of a useTheme() that would always report "system".
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const theme = useStore((s) => s.settings.theme)
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,
@@ -24,10 +27,23 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
+          "--normal-bg": "var(--bg-elevated)",
+          "--normal-text": "var(--text-primary)",
+          "--normal-border": "var(--border-active)",
+          "--success-bg": "var(--bg-elevated)",
+          "--success-text": "var(--success)",
+          "--success-border": "var(--border-active)",
+          "--error-bg": "var(--bg-elevated)",
+          "--error-text": "var(--danger)",
+          "--error-border": "var(--border-active)",
+          "--warning-bg": "var(--bg-elevated)",
+          "--warning-text": "var(--warning)",
+          "--warning-border": "var(--border-active)",
           "--border-radius": "var(--radius)",
+          // Above BottomSheet's sheet layer (z-[100]) so a toast (e.g. an
+          // import-error toast fired while a sheet is open) is never hidden
+          // behind it.
+          zIndex: 110,
         } as React.CSSProperties
       }
       {...props}

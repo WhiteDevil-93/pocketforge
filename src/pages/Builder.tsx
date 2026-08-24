@@ -5,6 +5,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   ChevronLeft,
   CheckCircle,
@@ -19,6 +20,7 @@ import {
 import PokemonCard from '../components/PokemonCard';
 import PokemonEditor, { type TeammateAddResult } from '../components/PokemonEditor';
 import BottomSheet from '../components/BottomSheet';
+import ConfirmSheet from '../components/ConfirmSheet';
 import TypeBadge from '../components/TypeBadge';
 import { useStore } from '../store/useStore';
 import {
@@ -64,6 +66,7 @@ export default function Builder() {
   const updatePokemon = useStore((s) => s.updatePokemon);
   const addPokemon = useStore((s) => s.addPokemon);
   const removePokemon = useStore((s) => s.removePokemon);
+  const insertPokemonAt = useStore((s) => s.insertPokemonAt);
   const customFormats = useStore((s) => s.customFormats);
 
   // Find team
@@ -174,14 +177,52 @@ export default function Builder() {
     setEditingName(true);
   }, [teamName]);
 
-  const handleSetFormat = useCallback(
+  const commitFormatChange = useCallback(
     (formatId: string) => {
-      if (team) {
-        updateTeam(team.id, { format: formatId });
-      }
+      if (team) updateTeam(team.id, { format: formatId });
       setShowFormatSheet(false);
     },
     [team, updateTeam]
+  );
+
+  // Switching format can silently invalidate Pokemon (illegal species/moves/
+  // items under the new ruleset, or new clause violations) — only worth an
+  // extra confirmation tap when the team is valid right now and the switch
+  // would actually break something; otherwise apply immediately, matching
+  // the previous instant behavior for the common case.
+  const [pendingFormatChange, setPendingFormatChange] = useState<{
+    formatId: string;
+    message: string;
+  } | null>(null);
+
+  const handleSetFormat = useCallback(
+    async (formatId: string) => {
+      if (!team) {
+        setShowFormatSheet(false);
+        return;
+      }
+      if (!team.isValid) {
+        commitFormatChange(formatId);
+        return;
+      }
+      const result = await validateTeam({ ...team, format: formatId });
+      if (result.isValid) {
+        commitFormatChange(formatId);
+        return;
+      }
+      const illegalIndices = new Set<string>();
+      for (const err of result.errors) {
+        const match = /^Pokemon #(\d+)/.exec(err);
+        if (match) illegalIndices.add(match[1]);
+      }
+      const message =
+        illegalIndices.size > 0
+          ? `${illegalIndices.size} Pokemon on this team would become illegal under this format. Switch anyway?`
+          : 'This team would become illegal under this format. Switch anyway?';
+      setPendingFormatChange({ formatId, message });
+      setShowFormatSheet(false);
+    },
+    [team, commitFormatChange]
   );
 
   const handleTapPokemon = useCallback((index: number) => {
@@ -260,6 +301,24 @@ export default function Builder() {
     setEditorOpen(false);
     setEditingSlot(null);
   }, [team, editingSlot, removePokemon]);
+
+  // The inline Delete button directly on a PokemonCard (not the full editor's
+  // own delete, which already goes through a confirm sheet) — previously
+  // instant with no confirmation and no way back. An undo toast fixes that
+  // without adding a confirm-sheet tap to the common case.
+  const handleDeletePokemonCard = useCallback(
+    (index: number) => {
+      if (!team) return;
+      const removed = team.pokemon[index];
+      removePokemon(team.id, index);
+      toast.success('Pokemon removed', {
+        action: removed
+          ? { label: 'Undo', onClick: () => insertPokemonAt(team.id, index, removed) }
+          : undefined,
+      });
+    },
+    [team, removePokemon, insertPokemonAt]
+  );
 
   const handleCopyPokemon = useCallback(
     (index: number) => {
@@ -465,7 +524,7 @@ export default function Builder() {
                   onTap={handleTapPokemon}
                   onTapEmpty={handleTapEmpty}
                   onCopy={handleCopyPokemon}
-                  onDelete={(idx) => removePokemon(team.id, idx)}
+                  onDelete={handleDeletePokemonCard}
                 />
               </motion.div>
             );
@@ -586,6 +645,19 @@ export default function Builder() {
           ))}
         </div>
       </BottomSheet>
+
+      {/* Format-change confirmation — only shown when the currently-valid team
+          would become illegal under the newly-picked format. */}
+      <ConfirmSheet
+        isOpen={pendingFormatChange !== null}
+        onClose={() => setPendingFormatChange(null)}
+        title="Switch format?"
+        message={pendingFormatChange?.message ?? ''}
+        confirmLabel="Switch anyway"
+        onConfirm={() => {
+          if (pendingFormatChange) commitFormatChange(pendingFormatChange.formatId);
+        }}
+      />
 
       {/* Pokemon Selection Sheet */}
       <BottomSheet

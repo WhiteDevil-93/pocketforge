@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { NUZLOCKE_STORAGE_KEY } from '../lib/storage';
+import type { NuzlockeRoute } from '../data/nuzlockeRoutes';
 
 export interface NuzlockeEncounter {
   routeId: string;
@@ -29,6 +30,12 @@ export interface NuzlockeRun {
   startedAt: string;
   encounters: NuzlockeEncounter[];
   teraRaids: TeraRaidDen[];
+  /** Locations the user added by hand (Nuzlocke.tsx's "Add Custom Location"),
+   *  scoped to this run and persisted here — previously this was pushed onto
+   *  the shared, in-memory NuzlockeGame.routes array from data/nuzlockeRoutes.ts,
+   *  which is not persisted and is shared across every run, so it vanished on
+   *  reload and would have leaked into every other run using the same game. */
+  customLocations: NuzlockeRoute[];
   rules: {
     dupesClause: boolean;
     shinyClause: boolean;
@@ -46,6 +53,7 @@ interface NuzlockeState {
   updateEncounter: (runId: string, routeId: string, updates: Partial<NuzlockeEncounter>) => void;
   removeEncounter: (runId: string, routeId: string) => void;
   updateRules: (runId: string, rules: Partial<NuzlockeRun['rules']>) => void;
+  addCustomLocation: (runId: string, route: NuzlockeRoute) => void;
   addTeraRaid: (runId: string, raid: TeraRaidDen) => void;
   updateTeraRaid: (runId: string, routeId: string, updates: Partial<TeraRaidDen>) => void;
   removeTeraRaid: (runId: string, routeId: string) => void;
@@ -67,6 +75,7 @@ export const useNuzlockeStore = create<NuzlockeState>()(
           startedAt: new Date().toISOString(),
           encounters: [],
           teraRaids: [],
+          customLocations: [],
           rules: { dupesClause: true, shinyClause: true, levelCap: true },
         };
         set((s) => ({ runs: [...s.runs, newRun], currentRunId: id }));
@@ -78,6 +87,8 @@ export const useNuzlockeStore = create<NuzlockeState>()(
       updateEncounter: (runId, routeId, updates) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, encounters: r.encounters.map((e) => e.routeId === routeId ? { ...e, ...updates } : e) } : r) })),
       removeEncounter: (runId, routeId) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, encounters: r.encounters.filter((e) => e.routeId !== routeId) } : r) })),
       updateRules: (runId, rules) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, rules: { ...r.rules, ...rules } } : r) })),
+      // `r.customLocations ?? []` guards a run persisted before this field existed.
+      addCustomLocation: (runId, route) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, customLocations: [...(r.customLocations ?? []), route] } : r) })),
       addTeraRaid: (runId, raid) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: [...r.teraRaids, raid] } : r) })),
       updateTeraRaid: (runId, routeId, updates) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: r.teraRaids.map((t) => t.routeId === routeId ? { ...t, ...updates } : t) } : r) })),
       removeTeraRaid: (runId, routeId) => set((s) => ({ runs: s.runs.map((r) => r.id === runId ? { ...r, teraRaids: r.teraRaids.filter((t) => t.routeId !== routeId) } : r) })),

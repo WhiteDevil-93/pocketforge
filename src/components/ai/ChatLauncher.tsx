@@ -5,6 +5,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useAiReadiness } from '../../hooks/use-ai-readiness';
+import ChatSheetLoadingFallback from './ChatSheetLoadingFallback';
 
 // Lazy for the same reason SettingsPage does it: ChatSheet statically reaches
 // ollamaCloud.ts and the full tool registry (calculators, movepool queries,
@@ -48,7 +49,7 @@ export default function ChatLauncher({ className = '' }: ChatLauncherProps) {
         Ask AI
       </button>
       {hasOpened && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ChatSheetLoadingFallback />}>
           <ChatSheet isOpen={isOpen} onClose={() => setIsOpen(false)} />
         </Suspense>
       )}
