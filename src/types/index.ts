@@ -190,10 +190,11 @@ export interface AppSettings {
   /** Ollama Cloud model tag, e.g. "gemma4:cloud". */
   ollamaModel: string;
   /** Which LLM backend the AI assistant uses. */
-  aiBackend: 'ollamaCloud' | 'localLlamaCpp';
-  /** Absolute path of the imported GGUF model in app-private storage. Empty string = not imported. */
+  aiBackend: 'ollamaCloud' | 'localLlamaCpp' | 'localLiteRt';
+  /** Absolute path of the imported model (GGUF or .litertlm) in app-private storage.
+   *  Empty string = not imported. */
   localModelPath: string;
-  /** Display name of the imported GGUF model. Empty string = not imported. */
+  /** Display name of the imported model. Empty string = not imported. */
   localModelName: string;
 }
 

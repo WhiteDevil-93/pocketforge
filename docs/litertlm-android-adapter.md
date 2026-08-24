@@ -632,7 +632,49 @@ tower, so `audioBackend` is available on the same bundle — again separate work
    through `toolRunner.ts`: the model calling a real tool (e.g. `calculate_speed`), the
    TS `ToolCallAccumulator` reassembling it correctly from the streamed deltas, and the
    result routing back in as a `role: "tool"` history entry on the next turn.
-7. **`onTrimMemory` + TS settings/migration.**
+7. **`onTrimMemory` + TS settings/migration. Done, pending build/device verification.**
+   `LocalLlmService.onTrimMemory` now force-stops at `TRIM_MEMORY_COMPLETE` /
+   `TRIM_MEMORY_RUNNING_CRITICAL` (checked as those exact two levels, not a `>=`
+   range, matching §6). Renamed the watchdog's `abortLoad(message)` to
+   `forceStop(message)` — it's unconditional teardown-to-error now used by two
+   independent triggers (a stuck load, memory pressure), not just the load path — and
+   reused it rather than adding a second near-duplicate teardown sequence. Reports
+   `state: "error"` with an explanatory message rather than a silent `"stopped"`: the
+   plan's own goal ("truthful state") is better served by telling the user *why* the
+   model unloaded than by a state that looks identical to them tapping Stop
+   themselves — a deliberate refinement of §6's literal wording, matching the
+   existing `forceStop`/watchdog precedent already in this file rather than inventing
+   a second UX pattern for the same kind of involuntary shutdown.
+   TS: `aiBackend` widened to include `'localLiteRt'` (`src/types/index.ts`) — needed
+   by `docs/litertlm-vl-integration.md`'s image-attach gating, not by this step alone.
+   Fixed `isLocalBackend` in both `use-ai-readiness.ts` and `SettingsPage.tsx`, which
+   checked `=== 'localLlamaCpp'` specifically — with the union widened, that check
+   would have silently treated a `'localLiteRt'` backend as the cloud path once
+   something could set it (nothing can yet — no selector UI exists for it — but the
+   type now allows it, so this was worth closing now rather than leaving a live trap
+   for whoever builds that UI). Added `backend?: string` to `LocalLlmServerStatus`
+   (`src/lib/native/localLlm.ts`), plumbed end to end: `LocalLlmService`'s companion
+   gained a `backend` field alongside `port`/`error`, `transition()` takes an optional
+   4th `newBackend` parameter (defaulted, so the 16 existing non-`"ready"` call sites
+   needed no changes), and the one `"ready"` transition passes `engine?.backendId`.
+   `LocalLlmPlugin`'s two identical `statusListener` closures (a pre-existing
+   duplication) were factored into one `emitServerStatusChanged` function reference
+   while touching both anyway, rather than tripling the duplicated logic.
+   **No store version bump.** The plan's own bullet called for one, but tracing
+   `useStore.ts`'s actual `migrate`/`merge` (`mergeStoreState`) showed neither is
+   needed: this step adds no new *persisted field* — only widens `aiBackend`'s
+   existing value space, and follows the plan's own preference (§7) for the `backend`
+   status field over a persisted `localModelFormat` setting specifically to avoid
+   needing migration. Both `migrate`'s `{...DEFAULT_SETTINGS, ...persisted.settings}`
+   and the custom `merge`'s `{...currentState.settings, ...persisted.settings}`
+   already field-merge against current defaults, so an old install's persisted
+   `aiBackend: 'ollamaCloud' | 'localLlamaCpp'` is already a valid value under the
+   widened type with zero risk — confirmed by reading the code, not assumed from the
+   v2→v3 comment's reasoning (which was about *new* fields, not a wider enum).
+   **Not yet verified** — needs a device to actually trigger `onTrimMemory` (simulable
+   via `adb shell am send-trim-memory <package> RUNNING_CRITICAL`) and confirm the
+   error message reaches the UI, plus confirming `backend` shows up correctly in
+   `getServerStatus()` for both the llama.cpp and LiteRT-LM paths.
 
 Each step is independently shippable and revertible.
 

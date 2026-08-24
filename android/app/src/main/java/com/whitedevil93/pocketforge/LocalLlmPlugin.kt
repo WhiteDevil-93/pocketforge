@@ -400,7 +400,21 @@ class LocalLlmPlugin : Plugin() {
             put("state", snapshot["state"] as? String ?: "stopped")
             (snapshot["port"] as? Int)?.let { put("port", it) }
             (snapshot["error"] as? String)?.let { put("error", it) }
+            (snapshot["backend"] as? String)?.let { put("backend", it) }
         }
+    }
+
+    /** Shared body for both LocalLlmService.statusListener assignments below —
+     *  they were identical duplicated closures; kept as one function reference so
+     *  the two call sites can't drift out of sync with each other. */
+    private fun emitServerStatusChanged(state: String, port: Int?, error: String?, backend: String?) {
+        val data = JSObject().apply {
+            put("state", state)
+            if (port != null) put("port", port)
+            if (error != null) put("error", error)
+            if (backend != null) put("backend", backend)
+        }
+        notifyListeners("serverStatusChanged", data)
     }
 
     /** POST_NOTIFICATIONS permission launcher, registered in [load] via the bridge
@@ -412,14 +426,7 @@ class LocalLlmPlugin : Plugin() {
 
     override fun load() {
         super.load()
-        LocalLlmService.statusListener = { state, port, error ->
-            val data = JSObject().apply {
-                put("state", state)
-                if (port != null) put("port", port)
-                if (error != null) put("error", error)
-            }
-            notifyListeners("serverStatusChanged", data)
-        }
+        LocalLlmService.statusListener = ::emitServerStatusChanged
         notificationPermissionLauncher = bridge.registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions -> onNotificationPermissionResult(permissions) }
@@ -530,14 +537,7 @@ class LocalLlmPlugin : Plugin() {
             return
         }
         Log.i(TAG, "startServer: dispatching LocalLlmService.start for $modelPath")
-        LocalLlmService.statusListener = { state, port, error ->
-            val data = JSObject().apply {
-                put("state", state)
-                if (port != null) put("port", port)
-                if (error != null) put("error", error)
-            }
-            notifyListeners("serverStatusChanged", data)
-        }
+        LocalLlmService.statusListener = ::emitServerStatusChanged
         LocalLlmService.start(ctx, modelPath)
         val snapshot = LocalLlmService.getStatusSnapshot()
         Log.i(TAG, "startServer: resolved state=${snapshot["state"]} error=${snapshot["error"]}")

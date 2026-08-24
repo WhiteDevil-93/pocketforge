@@ -28,7 +28,9 @@ export function useAiReadiness(): AiReadiness {
   const settings = useStore((s) => s.settings);
   const [serverStatus, setServerStatus] = useState<LocalLlmServerStatus | null>(null);
 
-  const isLocalBackend = settings.aiBackend === 'localLlamaCpp';
+  // Any on-device backend counts as local — llama.cpp and LiteRT-LM share the
+  // same OpenAI-shaped HTTP contract, so nothing here needs to distinguish them.
+  const isLocalBackend = settings.aiBackend !== 'ollamaCloud';
 
   // Only the native shell has a local server to be ready; the browser build's
   // status state is meaningless (and would otherwise gate the cloud path).

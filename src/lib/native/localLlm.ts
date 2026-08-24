@@ -31,6 +31,12 @@ export interface LocalLlmServerStatus {
   state: 'stopped' | 'loading' | 'ready' | 'error';
   port?: number;
   error?: string;
+  /** Which InferenceEngine backend served this 'ready' state, e.g. "llamaCpp" or
+   *  "litertLm:GPU" — undefined outside 'ready'. LiteRT-LM's NPU/GPU/CPU fallback
+   *  (docs/litertlm-android-adapter.md §4.1) means the winning backend isn't
+   *  knowable in advance; sampler settings are also inert on NPU (§4.2), so this is
+   *  worth showing the user, not just logging. */
+  backend?: string;
 }
 
 export interface ChatOnceOptions {

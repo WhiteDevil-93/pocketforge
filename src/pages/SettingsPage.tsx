@@ -849,7 +849,8 @@ export default function SettingsPage() {
   // read as "not configured" everywhere, not just where the actual request is sent.
   // Backend-aware: the local llama.cpp path needs an imported model (and a live
   // server on-device), never an API key; the cloud path keeps the key+model check.
-  const isLocalBackend = settings.aiBackend === 'localLlamaCpp';
+  // Any on-device backend counts as local — see use-ai-readiness.ts's own note.
+  const isLocalBackend = settings.aiBackend !== 'ollamaCloud';
   // Native-only controls (import row, server row) only exist in the Android shell.
   const localUiActive = isNativeApp() && isLocalBackend;
   const localModelReady = settings.localModelPath.trim().length > 0;

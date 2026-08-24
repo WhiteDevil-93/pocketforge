@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -57,6 +58,13 @@ class LocalLlmService : Service() {
             private set
         @Volatile var error: String? = null
             private set
+        /** Which InferenceEngine backend served the current 'ready' state, e.g.
+         *  "llamaCpp" or "litertLm:GPU" — null outside 'ready'. Surfaced to the UI so
+         *  "running on NPU" vs "fell back to CPU" is visible, and so sampler settings
+         *  showing as inert on NPU (docs/litertlm-android-adapter.md §4.2) has an
+         *  explanation on screen rather than looking broken. */
+        @Volatile var backend: String? = null
+            private set
         /** True only while a LocalLlmService instance is actually alive (onCreate→onDestroy).
          *  Distinguishes a genuinely running server from a stale companion state left
          *  behind when the OS destroyed the service without killing the process. */
@@ -87,13 +95,13 @@ class LocalLlmService : Service() {
             if (instance == null || !isServiceRunning) {
                 transition("error", null, "The server stopped while loading the model — tap Start to retry")
             } else {
-                instance.abortLoad(
+                instance.forceStop(
                     "Model load timed out after ${LOAD_WATCHDOG_MS / 60000} minutes — tap Start to retry"
                 )
             }
         }
 
-        var statusListener: ((String, Int?, String?) -> Unit)? = null
+        var statusListener: ((String, Int?, String?, String?) -> Unit)? = null
 
         fun getStatusSnapshot(): Map<String, Any?> {
             // If the service instance is gone, 'ready'/'loading' are stale: report
@@ -108,6 +116,7 @@ class LocalLlmService : Service() {
             if (effectiveState != "stopped") {
                 port?.let { m["port"] = it }
                 error?.let { m["error"] = it }
+                backend?.let { m["backend"] = it }
             }
             return m
         }
@@ -159,12 +168,13 @@ class LocalLlmService : Service() {
             }
         }
 
-        fun transition(newState: String, newPort: Int?, newError: String?) {
+        fun transition(newState: String, newPort: Int?, newError: String?, newBackend: String? = null) {
             state = newState
             port = newPort
             error = newError
-            Log.i(TAG, "state=$newState port=$newPort error=$newError")
-            statusListener?.invoke(newState, newPort, newError)
+            backend = newBackend
+            Log.i(TAG, "state=$newState port=$newPort error=$newError backend=$newBackend")
+            statusListener?.invoke(newState, newPort, newError, newBackend)
         }
     }
 
@@ -272,9 +282,9 @@ class LocalLlmService : Service() {
                     stopSelf()
                     return@Thread
                 }
-                transition("ready", chosenPort, null)
+                transition("ready", chosenPort, null, engine?.backendId)
                 updateNotification()
-                Log.i(TAG, "ready on port $chosenPort (backend=${engine?.backendId})")
+                Log.i(TAG, "ready on port $chosenPort")
             } catch (e: InterruptedException) {
                 Log.i(TAG, "load interrupted")
                 teardownEngine()
@@ -311,10 +321,12 @@ class LocalLlmService : Service() {
         loadThread = null
     }
 
-    /** Watchdog path: a load that outlives its generous budget is declared failed,
-     *  the load thread is torn down, and the UI gets a retryable 'error' state. */
-    private fun abortLoad(message: String) {
-        Log.e(TAG, "abortLoad: $message")
+    /** Unconditional teardown to a retryable 'error' state, for anything that stops
+     *  the server involuntarily — a stuck load (the watchdog) or the OS reclaiming
+     *  memory ([onTrimMemory]). Safe to call regardless of current state: cancel()/
+     *  teardownEngine()/stopHttpServer() are all no-ops on nothing loaded. */
+    private fun forceStop(message: String) {
+        Log.e(TAG, "forceStop: $message")
         isStopping = true
         interruptLoad()
         stopHttpServer()
@@ -323,6 +335,33 @@ class LocalLlmService : Service() {
         transition("error", null, message)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    /**
+     * The OS is reclaiming memory. At the two most severe levels, unload the model
+     * unconditionally rather than risk the process being killed with the server
+     * mid-request — and, just as important, leave the UI in a state that says why: a
+     * silent transition to 'stopped' would look identical to the user tapping Stop,
+     * when what actually happened is the system pulled the rug out from under a model
+     * still using several GB. Named-constant checks against exactly the two levels
+     * docs/litertlm-android-adapter.md §6 calls out (COMPLETE, RUNNING_CRITICAL) —
+     * this fires only when the OS is deciding what to kill next, not on ordinary
+     * background/UI-hidden trims that don't warrant losing a loaded model.
+     *
+     * Was a gap before LiteRT-LM: nothing here handled memory pressure at all, and a
+     * 3-4 GB resident model makes this the single highest-value addition in the whole
+     * LiteRT-LM adapter — it also benefits the existing GGUF path, since llama.cpp
+     * models are large too and this override isn't format-specific.
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level != ComponentCallbacks2.TRIM_MEMORY_COMPLETE &&
+            level != ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
+        ) {
+            return
+        }
+        if (state != "ready" && state != "loading") return
+        forceStop("The server was stopped because the system reclaimed memory — tap Start to reload the model")
     }
 
     private fun startForegroundWithType() {
