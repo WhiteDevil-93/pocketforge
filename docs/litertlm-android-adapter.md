@@ -159,6 +159,10 @@ private val LITERTLM_MAGIC = "LITERTLM".toByteArray(Charsets.US_ASCII)
 private const val LITERTLM_SUPPORTED_MAJOR = 1
 ```
 
+Prior art worth knowing: `timmyy123/LLM-Hub` is a shipping open-source Android/iOS app
+that imports `.task`, `.litertlm`, `.gguf`, `.mnn` and QNN models side by side — the same
+multi-format import this section describes, already in production.
+
 `copyInChunks` then reads `MAGIC_WINDOW` bytes instead of four, sniffs, rejects `null`
 with a message naming both accepted formats, and prepends the window to the output
 exactly as it does today (`:217`). Everything else in the import path — the SAF
@@ -578,3 +582,48 @@ Read directly, not recalled:
   `<uses-native-library>` entries.
 - [LiteRT-LM issue #2114](https://github.com/google-ai-edge/LiteRT-LM/issues/2114) — GPU
   `initialize()` failure on Galaxy S26 Exynos; the concrete case for the fallback chain.
+
+## 12. Adjacent: AI Edge Gallery agent skills
+
+Not part of this adapter, but it bears on §4.4 and §6, so it is recorded here rather than
+lost.
+
+Google's AI Edge Gallery has an **agent-skills** mechanism, documented in the community
+`StrinGhost/gemma-skills` repo (the `gemma4-agent-skills` GitHub topic, 8 repos). A skill
+is a folder with a `SKILL.md` — YAML frontmatter (`name`, `description`, optional
+`require-secret` / `require-secret-description`) plus instructions — and optionally
+`scripts/index.html`, which the app loads into a **hidden webview** and calls through a
+global `window['ai_edge_gallery_get_result'](data)` returning a stringified
+`{result}` or `{error}`. Skills can also return `{image: {base64}}` or
+`{webview: {url, aspectRatio}}` to render in the chat.
+
+**PocketForge already has the hard part.** That whole architecture exists to give an
+on-device model a JavaScript execution environment. PocketForge *is* a WebView app —
+`toolRunner.ts`, `tools.ts` and `writeTools.ts` already run exactly there, over data that
+only exists there. The Gallery pattern is what you build when you don't have that.
+
+One idea does transfer, and it is worth costing:
+
+**Progressive disclosure of tool declarations.** The Gallery puts only each skill's *name
+and description* in the system prompt, and loads the full instructions only once the model
+triggers it. PocketForge sends all 14 tool declarations (10 in `tools.ts`, 4 in
+`writeTools.ts`, ~2.4 KB of description text plus JSON parameter schemas) on **every**
+request. Under §4.2's one-conversation-per-request model that whole block is re-prefilled
+on every turn *and* on every tool round-trip, against a fixed KV cache sized by
+`maxNumTokens`. On a cloud backend this is a rounding error; on a 3.87 GB on-device model
+it is prefill latency and context budget paid repeatedly.
+
+Two ways to cut it, neither blocking on this adapter:
+
+1. Declare a small always-on set plus a single generic dispatcher, Gallery-style, and let
+   the model pull a fuller schema on demand.
+2. Filter the declared set by app state — the write tools are meaningless without an
+   active team.
+
+`Conversation.getTokenCount()` (§6) is the instrument for deciding whether this is worth
+doing: measure the prefill cost of the declaration block on a real device before
+restructuring anything.
+
+**Caveat.** `gemma-skills` is a community repo documenting Google's app format, not a
+published spec, and the topic is new. The `SKILL.md` shape is a reasonable convention to
+borrow from; it is not something to build a dependency on.
