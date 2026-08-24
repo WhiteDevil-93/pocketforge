@@ -1,15 +1,19 @@
-# On-device llama.cpp backend — verification checklist
+# On-device LLM backend — verification checklist
 
 Ordered on-device verification checklist for PocketForge's on-device LLM path
 (Capacitor plugin → foreground service → local OpenAI-compatible server →
-`src/lib/llm/localLlamaCpp.ts`).
+`src/lib/llm/localLlamaCpp.ts`). Sections 1–7 cover the original llama.cpp/GGUF
+engine; [section 8](#8-vision-litert-lm-vl-bundle) covers the newer LiteRT-LM
+engine (`docs/litertlm-android-adapter.md`, `docs/litertlm-vl-integration.md`),
+text-only and vision.
 
 | | |
 |---|---|
 | Target device | Galaxy S25 Ultra (arm64-v8a only) |
-| Model | `vgc_gemma2.gguf` (~2.78 GB, Gemma-2 tool-calling fine-tune) |
+| Model (sections 1–7) | `vgc_gemma2.gguf` (~2.78 GB, Gemma-2 tool-calling fine-tune, llama.cpp engine) |
+| Models (section 8) | `vgc_e4b_v5_heretic.litertlm` (3.87 GB, text-only) and `vgc_e4b_v5_heretic_vl.litertlm` (4.03 GB, same weights + vision tower), both LiteRT-LM engine |
 | App id | `com.whitedevil93.pocketforge` |
-| Native module | `pokekit-llm` (vendored llama.cpp, tag b10362, in `third_party/llama.cpp`) |
+| Native module | `pokekit-llm` (vendored llama.cpp, tag b10362, in `third_party/llama.cpp`) for sections 1–7; LiteRT-LM Kotlin API (`com.google.ai.edge.litertlm`, pinned `0.16.0`) for section 8 |
 
 **Ground rule: do not mark anything here as verified unless it was observed on
 the physical device with the real model.** Everything that can be checked
@@ -369,6 +373,124 @@ the TS calculators.**
 
 ---
 
+## 8. Vision (LiteRT-LM VL bundle)
+
+**Requires the physical device + both `.litertlm` bundles** (`vgc_e4b_v5_heretic.litertlm`
+text-only, `vgc_e4b_v5_heretic_vl.litertlm` text+vision — see the table at the top). This
+section is new relative to 1–7: the engine, the backend fallback walk, and the whole
+image-attach path are all LiteRT-LM-specific and share none of the llama.cpp code those
+sections exercise. Background: `docs/litertlm-android-adapter.md` (text path, steps 1–7) and
+`docs/litertlm-vl-integration.md` (vision path, steps 8–14).
+
+### 8.1 Engine load & backend fallback
+
+1. Import `vgc_e4b_v5_heretic_vl.litertlm`, tap **Start** on the "On-device server" row.
+   - **Expect:** status reaches `Ready · port <N>`; the "Enable AI Assistant" and "Backend"
+     subtitles both show a backend name of the form `LiteRT-LM · <NPU|GPU|CPU>` (whichever
+     backend actually won); the new "On-device server" subtitle below the Start/Stop row
+     reads **"Vision available — attach photos in Chat"** with the eye icon.
+   - Logcat: watch for the NPU→GPU→CPU walk, each backend tried with `visionBackend` set
+     first — confirm which backend won and whether any vision-enabled attempt failed and
+     fell through before succeeding (that fallthrough, not a hard failure, is expected
+     behaviour on hardware without NPU vision support).
+2. Stop the server, import `vgc_e4b_v5_heretic.litertlm` instead (same import flow), Start.
+   - **Expect:** reaches `Ready`; the subtitle instead reads **"Vision not available — this
+     model is text-only. Import a VL bundle to attach images."**
+   - Logcat: confirm the no-vision retry actually fires for the winning backend (i.e. the
+     text bundle's load does *not* silently reuse a vision-capable attempt) rather than
+     failing the load outright.
+   - **Fail means:** if the text bundle's status ever shows "Vision available", the format
+     detection or the vision-retry logic is wrong — file a bug against
+     `LiteRtLmEngine.load`, don't paper over it in the UI.
+
+### 8.2 Attach control gating
+
+With `vgc_e4b_v5_heretic_vl.litertlm` loaded and the server `ready`:
+
+1. Open **Chat**. **Expect:** an attach (camera/image) control next to the composer.
+2. Tap it. **Expect:** the native chooser offers **Camera** and **Photos** in one prompt
+   (`CameraSource.Prompt`). Pick a photo.
+   - **Expect:** a thumbnail appears above the composer with a remove (×) affordance;
+     removing it clears the attachment without sending anything.
+3. Deny the camera permission when prompted (first run only — `Settings → Apps →
+   PocketForge → Permissions` to reset it for a repeat test).
+   - **Expect:** the picker simply closes with no attachment and **no error toast** — this
+     is a normal outcome (`ImagePickCancelledError`), not a failure state.
+4. Stop the server, start it again with `vgc_e4b_v5_heretic.litertlm` (text-only) loaded,
+   reopen **Chat**.
+   - **Expect:** the attach control is gone entirely — confirms the gate reads live
+     `visionAvailable` off the server status rather than a stale/cached value from the
+     previous session.
+5. Switch **AI Assistant → Backend** to **Ollama Cloud** with the VL bundle still imported
+   on-device.
+   - **Expect:** no attach control in Chat — the control is gated on the local server's
+     `visionAvailable`, not on having *any* `.litertlm` file sitting in storage.
+
+### 8.3 Generic attach-and-ask
+
+With the VL bundle `ready`:
+
+1. Attach a photo of anything (not a team screenshot) and ask "what is in this image?".
+   - **Expect:** a coherent streamed answer describing the actual photo content.
+   - **Fail means:** a generic/hallucinated answer unrelated to the photo → the image bytes
+     are not reaching the model — check the content-part JSON crossing the bridge
+     (`ChatRequest.kt`'s `decodeImageDataUrl`) and that `Content.ImageBytes` is actually
+     attached to the `Conversation`, not dropped.
+2. Attach an image over ~8 MiB decoded (a high-res photo without native downscaling — e.g.
+   push one directly via `adb shell content` rather than through the picker, which always
+   downscales).
+   - **Expect:** a clear rejection error, not a crash or a silent text-only answer
+     (`ChatRequest.kt`'s `MAX_IMAGE_BYTES` cap).
+3. Tap **stop** mid-stream on an image-attached turn. **Expect:** same behaviour as the
+   text-only stop button (section 5) — partial reply kept, no error banner.
+
+### 8.4 Team import (the headline feature)
+
+1. From the empty-chat state, tap **"Import team from screenshot"**.
+   - **Expect:** the picker opens immediately (no text composer step first).
+2. Run this against a corpus of **at least 10 real screenshots**, covering: a clean Showdown
+   text export screenshotted, a team preview screen, a photographed (not screenshotted)
+   phone/monitor showing a team, and at least one deliberately bad case (blurry, cropped,
+   partially off-screen).
+   - **Expect per image:** the model calls `create_team` then `add_pokemon` per Pokemon
+     (tool chips visible during streaming, matching the existing tool-call UX), then
+     `validate_team`; the final reply summarizes what it read so a wrong species/move/EV
+     spread is visible and correctable, not silently written in.
+   - **Record, don't eyeball:** for each image, note whether the resulting team is an exact
+     match to the screenshot (species, moves, ability, item, nature, EVs, teraType, level)
+     — "looks plausible" is not a pass. This is the plan's own go/no-go gate
+     (`docs/litertlm-vl-integration.md`'s Risks section): a low exact-match rate means the
+     UI needs to become a confirm-before-write draft flow instead of direct writes, which is
+     a follow-up task, not a bug in this pass.
+   - **Expect on the bad-case image:** the model says explicitly what it couldn't read
+     (per the `includeImageImport` system-prompt guidance in `systemPrompt.ts`) rather than
+     inventing plausible-sounding values for the blurry/cropped parts.
+3. Confirm the import always starts a **fresh** conversation (per-message history isn't
+   polluted by whatever was on screen before the import button was tapped).
+
+### 8.5 Memory
+
+1. `adb shell dumpsys meminfo com.whitedevil93.pocketforge` right after the VL bundle
+   reaches `ready`, then again after sending one image-attached turn.
+   - **Expect:** a working-set increase consistent with the extra vision executor + one
+     image's worth of KV cache — not an unbounded climb turn over turn (each request builds
+     one fresh `Conversation`, so nothing should accumulate across turns).
+2. Background the app for a few minutes with the VL server still `ready` (trigger
+   `onTrimMemory` — `adb shell am send-trim-memory com.whitedevil93.pocketforge
+   RUNNING_CRITICAL` if backgrounding alone doesn't trip it on this device).
+   - **Expect:** the service force-stops per the existing `onTrimMemory` handling (shared
+     with the llama.cpp path, `docs/litertlm-android-adapter.md` step 7) — the vision-loaded
+     engine is not exempt from this.
+
+### 8.6 Regression
+
+1. With `vgc_gemma2.gguf` (llama.cpp, section 1–5) imported and running — **Expect:** no
+   attach control anywhere, no vision subtitle text, everything in sections 1–7 unaffected.
+2. Switch back to **Ollama Cloud** — **Expect:** unaffected; no image affordance appears
+   anywhere in the app for the cloud backend, on any device.
+
+---
+
 ## What CI covers (automated checks)
 
 Hardware-free, deterministic, run by `npm run check` locally and by
@@ -417,4 +539,8 @@ Hardware-free, deterministic, run by `npm run check` locally and by
   what this checklist verifies.
 
 Everything above this line in the document is **not** covered by CI and
-**must** be run on the Galaxy S25 Ultra with `vgc_gemma2.gguf`.
+**must** be run on the Galaxy S25 Ultra — sections 1–7 with `vgc_gemma2.gguf`, section 8 with
+both `.litertlm` bundles. CI's Android workflow compiles the LiteRT-LM engine into the APK the
+same way it does for llama.cpp (a compile gate only, same caveat) — the Gradle dependency, the
+manifest's `uses-native-library` entries, and the Kotlin sources all build, but backend
+selection, `visionAvailable`, and extraction accuracy are exactly the parts CI cannot see.

@@ -230,10 +230,13 @@ converts on success, and — since `ImagePickCancelledError` can't cross that sa
 boundary as a type without defeating its purpose — checks `err.name ===
 'ImagePickCancelledError'` rather than `instanceof`, exactly the reason that class sets
 `this.name` explicitly in step 11.
-`canAttachImage` gates on `isNativeApp() && aiBackend === 'localLiteRt' &&
+`canAttachImage` originally gated on `isNativeApp() && aiBackend === 'localLiteRt' &&
 serverStatus?.visionAvailable === true`, exactly as specified — the llama.cpp/GGUF path
 never sets `visionAvailable` and Ollama Cloud has no server status at all, so both fall
-through to `false` without their own special-casing. The control and thumbnail are
+through to `false` without their own special-casing. **Corrected in step 14** (see below):
+`aiBackend === 'localLiteRt'` was unreachable dead weight — nothing in Settings ever sets
+that literal value, which would have kept the control permanently hidden regardless of
+`visionAvailable`. The control and thumbnail are
 conditionally rendered (hidden, not disabled-with-explanation), matching this app's
 existing convention for native-only controls (`SettingsPage.tsx`'s import/server rows).
 `handleSend` now captures `attachedImage` into a local before clearing it, the same
@@ -295,9 +298,52 @@ explicitly rather than letting the "Done" language above imply otherwise.
 **TS-verified**: `npx tsc -b` and `npm run lint` both clean — confirms the plumbing
 compiles and reuses the existing send path correctly, nothing more.
 
-**14. Settings + docs.** Surface `visionAvailable` in the Settings AI section so a user who
-imported the text bundle understands why there is no attach button. Add a VL section to
-`docs/local-llm-verification.md`.
+**14. Settings + docs. Done, and closed a real bug found while doing it.**
+`SettingsPage.tsx` now shows a `backendDisplayName` derived from `serverStatus.backend`
+(`"litertLm:GPU"` → `"LiteRT-LM · GPU"`, `"llamaCpp"` → `"llama.cpp"`) in both the "Enable
+AI Assistant" and "Backend" row subtitles, replacing the hardcoded `"(llama.cpp)"` text
+those rows had carried since before this plan — stale as of step 7's `aiBackend` widening,
+since that text was then wrong for any LiteRT-LM backend. Below the existing "On-device
+server" Start/Stop row, a new subtitle line reads **"Vision available — attach photos in
+Chat"** or **"Vision not available — this model is text-only. Import a VL bundle to attach
+images."**, shown whenever `serverStatus.state === 'ready'` (so it covers a plain GGUF
+import too, not just a text-only `.litertlm` — both produce `visionAvailable: false`, and
+both are cases where a user might wonder where the attach control went).
+
+**Bug found and fixed, not just documented**: while wiring this up, tracing how a user
+would ever get `settings.aiBackend` to actually equal `'localLiteRt'` turned up that
+nothing sets it — the Settings "On-device" toggle only ever writes `'localLlamaCpp'`
+(§7 of the adapter plan flagged this gap explicitly: "no selector UI exists for it...yet").
+Engine selection is format-sniffed from the imported file itself
+(`docs/litertlm-android-adapter.md` step 2), not a user preference, so adding a second
+on-device radio option for users to manually pre-declare "llama.cpp" vs "LiteRT-LM" would
+have been redundant with data the app already has more reliably at load time. Given that,
+step 12's `canAttachImage` gate — which required `aiBackend === 'localLiteRt'` in addition
+to `visionAvailable === true` — was checking a value nothing could ever produce, which
+would have kept the entire image-attach feature (steps 8–13) permanently unreachable
+regardless of what was loaded. Fixed in `ChatPanel.tsx` by dropping that clause:
+`canAttachImage = isNativeApp() && isLocalBackend && serverStatus?.visionAvailable ===
+true`. `visionAvailable` already fully expresses "a vision-capable engine is loaded right
+now" — it doesn't need a second, unreachable condition alongside it, and this version
+also correctly handles a stale `aiBackend: 'localLlamaCpp'` setting left over from before
+a VL bundle was ever imported (the format-sniffed engine wins regardless of what the
+setting says). `settings.aiBackend`'s `'localLiteRt'` value itself is left in the type —
+removing it is a separate, unrelated cleanup, not this step's job.
+
+Added a new §8 to `docs/local-llm-verification.md` covering the whole LiteRT-LM path end
+to end: engine load + backend fallback (8.1), attach-control gating including the
+denied-permission and backend-switch cases (8.2), generic attach-and-ask plus the 8 MiB
+cap (8.3), the team importer with the plan's own "count exact matches" go/no-go framing
+carried over verbatim (8.4), memory/`onTrimMemory` (8.5), and regression against the
+llama.cpp and cloud paths (8.6). Retitled the doc from "On-device llama.cpp backend" to
+"On-device LLM backend" and widened its intro/prerequisites table since it's no longer
+llama.cpp-only, without touching the wording of sections 1–7 themselves.
+
+**Verified**: `npx tsc -b` and `npm run lint` both clean.
+**Not verified**: no device, no imported `.litertlm` bundle of either kind — nothing in
+this step could be seen rendered, only reasoned about, same caveat as every prior
+Android-adjacent step in this plan. §8 of the verification doc is itself the checklist
+for that future device pass, not evidence it already happened.
 
 ## Files
 

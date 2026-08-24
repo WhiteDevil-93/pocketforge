@@ -88,9 +88,15 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
 
   // docs/litertlm-vl-integration.md §12: images are LiteRT-LM-only. llama.cpp/GGUF
   // never sets visionAvailable, and Ollama Cloud has no server status at all — both
-  // fall through to false without needing their own checks here.
+  // fall through to false without needing their own checks here. Gating on
+  // `visionAvailable` alone (rather than also requiring settings.aiBackend ===
+  // 'localLiteRt') is deliberate: the engine format is sniffed from the imported
+  // file itself (docs/litertlm-android-adapter.md step 2), not from a user
+  // preference, so a persisted 'localLlamaCpp' setting left over from before a VL
+  // bundle was imported must not hide the control — visionAvailable already fully
+  // captures "is a vision-capable engine actually loaded right now".
   const canAttachImage =
-    isNativeApp() && settings.aiBackend === 'localLiteRt' && serverStatus?.visionAvailable === true;
+    isNativeApp() && isLocalBackend && serverStatus?.visionAvailable === true;
 
   const handleAttachImage = useCallback(async () => {
     if (isStreaming) return;

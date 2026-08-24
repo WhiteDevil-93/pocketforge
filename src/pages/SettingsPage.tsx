@@ -1200,6 +1200,18 @@ export default function SettingsPage() {
           ? serverStatus.error || 'Error'
           : 'Stopped';
 
+  // Human-readable form of InferenceEngine.backendId (e.g. "litertLm:GPU",
+  // "llamaCpp") for the subtitles below — undefined until the server has
+  // actually loaded something, since which engine wins isn't knowable before
+  // that (docs/litertlm-android-adapter.md §4.1's NPU/GPU/CPU fallback).
+  const backendDisplayName = (() => {
+    const backend = serverStatus?.backend;
+    if (!backend) return null;
+    if (backend === 'llamaCpp') return 'llama.cpp';
+    if (backend.startsWith('litertLm:')) return `LiteRT-LM · ${backend.slice('litertLm:'.length)}`;
+    return backend;
+  })();
+
   const handleFeatureOpen = useCallback((path: string) => {
     const teamId = currentTeamId && teams.some((team) => team.id === currentTeamId)
       ? currentTeamId
@@ -1357,7 +1369,7 @@ export default function SettingsPage() {
             label="Enable AI Assistant"
             subtitle={
               localUiActive
-                ? 'Chat and coaching on-device (llama.cpp)'
+                ? `Chat and coaching on-device${backendDisplayName ? ` (${backendDisplayName})` : ''}`
                 : 'Chat and coaching via Ollama Cloud'
             }
             rightElement={
@@ -1373,7 +1385,13 @@ export default function SettingsPage() {
             icon={Bot}
             iconColor="#8B5CF6"
             label="Backend"
-            subtitle={isLocalBackend ? 'On-device (llama.cpp)' : 'Ollama Cloud'}
+            subtitle={
+              isLocalBackend
+                ? backendDisplayName
+                  ? `On-device (${backendDisplayName})`
+                  : 'On-device'
+                : 'Ollama Cloud'
+            }
             rightElement={
               <div
                 className="flex items-center rounded-lg bg-bg-tertiary p-0.5"
@@ -1489,6 +1507,20 @@ export default function SettingsPage() {
                   )}
                 </div>
               </div>
+              {serverStatus?.state === 'ready' && (
+                <div className="px-4 pb-3 -mt-1">
+                  <p className="text-[10px] text-text-tertiary font-jetbrains-mono flex items-center gap-1">
+                    {serverStatus.visionAvailable ? (
+                      <Eye size={12} className="shrink-0" />
+                    ) : (
+                      <EyeOff size={12} className="shrink-0" />
+                    )}
+                    {serverStatus.visionAvailable
+                      ? 'Vision available — attach photos in Chat'
+                      : 'Vision not available — this model is text-only. Import a VL bundle to attach images.'}
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <>
