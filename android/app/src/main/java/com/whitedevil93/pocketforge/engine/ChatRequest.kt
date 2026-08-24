@@ -1,5 +1,7 @@
 package com.whitedevil93.pocketforge.engine
 
+import android.util.Base64
+import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.OpenApiTool
@@ -7,6 +9,7 @@ import com.google.ai.edge.litertlm.RepetitionPenaltyConfig
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.ToolProvider
 import com.google.ai.edge.litertlm.tool
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -30,10 +33,14 @@ internal data class ChatRequest(
  * nothing in this app's TypeScript layer sends them yet — but are parsed here so a
  * future client that does isn't a second Kotlin change.
  *
- * @throws IllegalArgumentException if `messages` is missing, empty, or contains
- *   nothing but a system message.
+ * @param visionAvailable whether the loaded engine can accept image content
+ *   (docs/litertlm-vl-integration.md §8-9) — an `image_url` part is rejected with a
+ *   clear error when false, rather than silently answering as if the image were never
+ *   attached.
+ * @throws IllegalArgumentException if `messages` is missing, empty, contains nothing
+ *   but a system message, or contains an image this engine can't accept.
  */
-internal fun parseChatRequest(requestBodyJson: String): ChatRequest {
+internal fun parseChatRequest(requestBodyJson: String, visionAvailable: Boolean): ChatRequest {
     val body = JSONObject(requestBodyJson)
     val messages = body.optJSONArray("messages")
         ?: throw IllegalArgumentException("request body has no \"messages\" array")
@@ -56,9 +63,9 @@ internal fun parseChatRequest(requestBodyJson: String): ChatRequest {
     }
 
     val initialMessages = (startIndex until lastIndex).map { i ->
-        toLiteRtMessage(messages.getJSONObject(i))
+        toLiteRtMessage(messages.getJSONObject(i), visionAvailable)
     }
-    val lastMessage = toLiteRtMessage(messages.getJSONObject(lastIndex))
+    val lastMessage = toLiteRtMessage(messages.getJSONObject(lastIndex), visionAvailable)
 
     return ChatRequest(
         systemInstruction = systemInstruction,
@@ -74,16 +81,83 @@ internal fun parseChatRequest(requestBodyJson: String): ChatRequest {
     )
 }
 
-private fun toLiteRtMessage(wire: JSONObject): Message {
-    val content = wire.optString("content", "")
+private fun toLiteRtMessage(wire: JSONObject, visionAvailable: Boolean): Message {
+    val contents = parseContent(wire.opt("content"), visionAvailable)
     return when (wire.optString("role")) {
-        "user" -> Message.user(content)
-        "assistant" -> Message.model(content)
-        "tool" -> Message.tool(Contents.of(content))
+        "user" -> Message.user(contents)
+        "assistant" -> Message.model(contents)
+        "tool" -> Message.tool(contents)
         // An unrecognized role degrades to a user turn rather than failing the whole
-        // request — the model still sees the text, just without special framing.
-        else -> Message.user(content)
+        // request — the model still sees the content, just without special framing.
+        else -> Message.user(contents)
     }
+}
+
+/** Bytes read from a decoded data: URL above this are rejected rather than sent on —
+ *  generous for a real screenshot, tight enough that a malformed or huge payload
+ *  fails fast here instead of during base64 decode + JNI marshaling. Downscaling
+ *  before the image crosses the bridge (docs/litertlm-vl-integration.md §11, camera
+ *  capture) is the primary control; this is a backstop, not the main defense. */
+private const val MAX_IMAGE_BYTES = 8 * 1024 * 1024
+
+/**
+ * `content` is either a plain string (every existing call site) or an OpenAI content-parts
+ * array (docs/litertlm-vl-integration.md's "Image transport" design):
+ * `[{"type":"text","text":"…"}, {"type":"image_url","image_url":{"url":"data:…;base64,…"}}]`.
+ *
+ * @throws IllegalArgumentException if an `image_url` part appears while [visionAvailable]
+ *   is false, or an image part's data URL is malformed or exceeds [MAX_IMAGE_BYTES].
+ */
+private fun parseContent(raw: Any?, visionAvailable: Boolean): Contents {
+    return when (raw) {
+        null -> Contents.of("")
+        is String -> Contents.of(raw)
+        is JSONArray -> {
+            val parts = mutableListOf<Content>()
+            for (i in 0 until raw.length()) {
+                val part = raw.optJSONObject(i) ?: continue
+                when (part.optString("type")) {
+                    "text" -> parts.add(Content.Text(part.optString("text", "")))
+                    "image_url" -> {
+                        if (!visionAvailable) {
+                            throw IllegalArgumentException(
+                                "This message includes an image, but the loaded model has no " +
+                                    "vision support — import a VL .litertlm bundle to use images"
+                            )
+                        }
+                        val url = part.optJSONObject("image_url")?.optString("url").orEmpty()
+                        parts.add(Content.ImageBytes(decodeImageDataUrl(url)))
+                    }
+                    // An unrecognized part type is skipped rather than failing the whole
+                    // request — matches toLiteRtMessage's unrecognized-role behavior.
+                    else -> {}
+                }
+            }
+            Contents.of(parts)
+        }
+        // Anything else (a number, boolean, nested object) is not a shape this app's
+        // TypeScript layer ever sends — stringify rather than crash on a client bug.
+        else -> Contents.of(raw.toString())
+    }
+}
+
+/** Decodes a `data:<mime>;base64,<data>` URL into raw bytes. */
+private fun decodeImageDataUrl(url: String): ByteArray {
+    val commaIndex = url.indexOf(',')
+    if (!url.startsWith("data:") || commaIndex == -1) {
+        throw IllegalArgumentException("image_url.url must be a data: URL (data:<mime>;base64,<data>)")
+    }
+    val bytes = try {
+        Base64.decode(url.substring(commaIndex + 1), Base64.DEFAULT)
+    } catch (e: IllegalArgumentException) {
+        throw IllegalArgumentException("image_url.url is not valid base64", e)
+    }
+    if (bytes.size > MAX_IMAGE_BYTES) {
+        throw IllegalArgumentException(
+            "Image is ${bytes.size} bytes, exceeding the $MAX_IMAGE_BYTES byte limit — downscale before attaching"
+        )
+    }
+    return bytes
 }
 
 /**

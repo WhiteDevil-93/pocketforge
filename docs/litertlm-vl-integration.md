@@ -131,11 +131,27 @@ vision-enabled attempts fail as expected (worth confirming they fail the way thi
 assumes, i.e. cleanly and specifically on the vision-enabled attempt, not by crashing the
 whole load).
 
-**9. Image plumbing, Kotlin.** In the request parser (§4.2), map OpenAI content parts onto
-`Contents.of(Content.Text(…), Content.ImageBytes(…))`. Reject an image part with a clear error
-when `visionAvailable` is false rather than silently dropping it — a silently text-only answer
-about an image the user attached is worse than a refusal. Cap decoded image bytes and fail the
-request above the cap.
+**9. Image plumbing, Kotlin. Done, pending build/device/real-client verification.**
+`parseChatRequest` and `toLiteRtMessage` (`engine/ChatRequest.kt`) now take
+`visionAvailable: Boolean` and build a `Contents` from either shape of the wire
+`content` field: the existing plain string, or an OpenAI content-parts array
+(`[{"type":"text","text":…}, {"type":"image_url","image_url":{"url":"data:…;base64,…"}}]`)
+— applies uniformly to every message via `toLiteRtMessage`, so an image anywhere in
+history (not just the final turn) is handled the same way. An `image_url` part throws
+a clear `IllegalArgumentException` when `visionAvailable` is false, propagating through
+`LiteRtLmEngine.generate()` (unguarded there — no try/catch needed, `LocalLlmService`'s
+existing catch-and-report path already turns any thrown exception from `generate()`
+into an SSE error frame) rather than silently degrading to a text-only answer about an
+image the model never saw. `decodeImageDataUrl` base64-decodes and rejects anything
+over `MAX_IMAGE_BYTES` (8 MiB, a named constant) — a backstop, not the primary size
+control; downscaling before the image crosses the bridge is step 11's job, once camera
+capture exists to do it. `Content.ImageBytes`'s `@OptIn(ExperimentalEncodingApi::class)`
+is the library's own internal annotation for its `toJson()`, confirmed from source —
+it does not require an opt-in from this app's calling code.
+**Not yet verified** — needs everything step 8 still needs, plus a hand-built
+content-parts request (no picker UI exists until step 11-12) driven at `chatOnce` to
+confirm the whole path end to end: an image reaching the model on the VL bundle, and a
+clear rejection (not a crash, not a silent text-only answer) on the text-only bundle.
 
 **10. Image plumbing, TypeScript.** Widen `ChatMessage.content`; add `contentToText`; update
 `toWireMessage` in `localLlamaCpp.ts` to pass array content through; make `ollamaCloud.ts`

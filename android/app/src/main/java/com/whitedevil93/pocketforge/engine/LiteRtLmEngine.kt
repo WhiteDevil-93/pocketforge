@@ -55,7 +55,7 @@ class LiteRtLmEngine private constructor(
      * LlamaCppEngine's nativeGenerate already behaves from LocalLlmService's POV.
      */
     override fun generate(requestBodyJson: String, callback: GenerationCallback) {
-        val parsed = parseChatRequest(requestBodyJson)
+        val parsed = parseChatRequest(requestBodyJson, visionAvailable)
         // §4.2: SamplerConfig is inert on NPU (the gallery's own pattern passes null
         // there) — build it as null on that backend rather than silently ignoring a
         // request's sampler settings without saying so anywhere.
