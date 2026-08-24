@@ -401,18 +401,26 @@ class LocalLlmPlugin : Plugin() {
             (snapshot["port"] as? Int)?.let { put("port", it) }
             (snapshot["error"] as? String)?.let { put("error", it) }
             (snapshot["backend"] as? String)?.let { put("backend", it) }
+            put("visionAvailable", snapshot["visionAvailable"] as? Boolean ?: false)
         }
     }
 
     /** Shared body for both LocalLlmService.statusListener assignments below —
      *  they were identical duplicated closures; kept as one function reference so
      *  the two call sites can't drift out of sync with each other. */
-    private fun emitServerStatusChanged(state: String, port: Int?, error: String?, backend: String?) {
+    private fun emitServerStatusChanged(
+        state: String,
+        port: Int?,
+        error: String?,
+        backend: String?,
+        visionAvailable: Boolean,
+    ) {
         val data = JSObject().apply {
             put("state", state)
             if (port != null) put("port", port)
             if (error != null) put("error", error)
             if (backend != null) put("backend", backend)
+            put("visionAvailable", visionAvailable)
         }
         notifyListeners("serverStatusChanged", data)
     }

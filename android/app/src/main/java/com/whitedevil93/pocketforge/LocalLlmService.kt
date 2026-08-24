@@ -65,6 +65,10 @@ class LocalLlmService : Service() {
          *  explanation on screen rather than looking broken. */
         @Volatile var backend: String? = null
             private set
+        /** Whether the loaded engine can accept image content — see
+         *  docs/litertlm-vl-integration.md §8. Always false outside 'ready'. */
+        @Volatile var visionAvailable: Boolean = false
+            private set
         /** True only while a LocalLlmService instance is actually alive (onCreate→onDestroy).
          *  Distinguishes a genuinely running server from a stale companion state left
          *  behind when the OS destroyed the service without killing the process. */
@@ -101,7 +105,7 @@ class LocalLlmService : Service() {
             }
         }
 
-        var statusListener: ((String, Int?, String?, String?) -> Unit)? = null
+        var statusListener: ((String, Int?, String?, String?, Boolean) -> Unit)? = null
 
         fun getStatusSnapshot(): Map<String, Any?> {
             // If the service instance is gone, 'ready'/'loading' are stale: report
@@ -117,6 +121,7 @@ class LocalLlmService : Service() {
                 port?.let { m["port"] = it }
                 error?.let { m["error"] = it }
                 backend?.let { m["backend"] = it }
+                m["visionAvailable"] = visionAvailable
             }
             return m
         }
@@ -168,13 +173,23 @@ class LocalLlmService : Service() {
             }
         }
 
-        fun transition(newState: String, newPort: Int?, newError: String?, newBackend: String? = null) {
+        fun transition(
+            newState: String,
+            newPort: Int?,
+            newError: String?,
+            newBackend: String? = null,
+            newVisionAvailable: Boolean = false,
+        ) {
             state = newState
             port = newPort
             error = newError
             backend = newBackend
-            Log.i(TAG, "state=$newState port=$newPort error=$newError backend=$newBackend")
-            statusListener?.invoke(newState, newPort, newError, newBackend)
+            visionAvailable = newVisionAvailable
+            Log.i(
+                TAG,
+                "state=$newState port=$newPort error=$newError backend=$newBackend visionAvailable=$newVisionAvailable"
+            )
+            statusListener?.invoke(newState, newPort, newError, newBackend, newVisionAvailable)
         }
     }
 
@@ -282,7 +297,7 @@ class LocalLlmService : Service() {
                     stopSelf()
                     return@Thread
                 }
-                transition("ready", chosenPort, null, engine?.backendId)
+                transition("ready", chosenPort, null, engine?.backendId, engine?.visionAvailable ?: false)
                 updateNotification()
                 Log.i(TAG, "ready on port $chosenPort")
             } catch (e: InterruptedException) {

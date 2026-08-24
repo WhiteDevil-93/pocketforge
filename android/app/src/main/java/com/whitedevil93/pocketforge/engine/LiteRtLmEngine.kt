@@ -32,6 +32,7 @@ import org.json.JSONObject
 class LiteRtLmEngine private constructor(
     private val engine: Engine,
     private val backendName: String,
+    override val visionAvailable: Boolean,
 ) : InferenceEngine {
     override val backendId: String = "litertLm:$backendName"
 
@@ -196,41 +197,61 @@ class LiteRtLmEngine private constructor(
 
         /**
          * Walks the backend fallback chain, returning the first that initializes.
-         * @throws EngineLoadError.BackendUnavailable if every backend fails.
+         * Vision is a load-time EngineConfig choice, not a per-request toggle
+         * (docs/litertlm-vl-integration.md §8) — for each backend, try it with
+         * `visionBackend` set first, and if that specific attempt fails, retry the
+         * *same* backend without vision before moving on to the next one. A
+         * text-only bundle (no vision tower to initialize) is expected to fail the
+         * vision-enabled attempt, not the backend itself — this is what lets the
+         * same code path serve both bundle types without the caller declaring which
+         * one was imported.
+         *
+         * @throws EngineLoadError.BackendUnavailable if every backend fails, with and
+         *   without vision.
          */
         fun load(modelPath: String, context: Context): LiteRtLmEngine {
             val attempted = mutableListOf<String>()
             var last: Throwable? = null
             for ((name, makeBackend) in backends(context.applicationInfo.nativeLibraryDir)) {
-                attempted += name
-                val candidate = Engine(
-                    EngineConfig(
-                        modelPath = modelPath,
-                        backend = makeBackend(),
-                        // Defaults to the model's own directory otherwise — for a model
-                        // imported into filesDir that means unevictable compiled kernels
-                        // parked next to a multi-GB file. cacheDir is OS-reclaimable.
-                        cacheDir = context.cacheDir.absolutePath,
+                for (withVision in booleanArrayOf(true, false)) {
+                    val label = if (withVision) "$name+vision" else name
+                    attempted += label
+                    val backendInstance = makeBackend()
+                    val candidate = Engine(
+                        EngineConfig(
+                            modelPath = modelPath,
+                            backend = backendInstance,
+                            visionBackend = if (withVision) backendInstance else null,
+                            // The importer sends one screenshot at a time; leaving this
+                            // at the model default risks a larger KV allocation than
+                            // needed on a device already carrying several GB of weights.
+                            maxNumImages = if (withVision) 1 else null,
+                            // Defaults to the model's own directory otherwise — for a
+                            // model imported into filesDir that means unevictable
+                            // compiled kernels parked next to a multi-GB file.
+                            // cacheDir is OS-reclaimable.
+                            cacheDir = context.cacheDir.absolutePath,
+                        )
                     )
-                )
-                try {
-                    candidate.initialize()
-                    Log.i(TAG, "loaded on backend=$name")
-                    return LiteRtLmEngine(candidate, name)
-                } catch (e: Exception) {
-                    // Catching Exception, not Throwable: an Error (OOM,
-                    // UnsatisfiedLinkError) is not this backend's problem to retry
-                    // around and propagates immediately, failing the whole load.
-                    Log.w(TAG, "backend $name unavailable: ${e.message}")
-                    // A half-initialized engine still holds native memory; free it
-                    // before the next attempt so a 3-step fallback doesn't leak two
-                    // engines' worth of allocation on the way to CPU.
                     try {
-                        candidate.close()
-                    } catch (closeError: Exception) {
-                        Log.w(TAG, "close() after failed init also failed: ${closeError.message}")
+                        candidate.initialize()
+                        Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
+                        return LiteRtLmEngine(candidate, name, visionAvailable = withVision)
+                    } catch (e: Exception) {
+                        // Catching Exception, not Throwable: an Error (OOM,
+                        // UnsatisfiedLinkError) is not this attempt's problem to retry
+                        // around and propagates immediately, failing the whole load.
+                        Log.w(TAG, "backend $label unavailable: ${e.message}")
+                        // A half-initialized engine still holds native memory; free it
+                        // before the next attempt so this fallback doesn't leak an
+                        // engine's worth of allocation on the way to the next one.
+                        try {
+                            candidate.close()
+                        } catch (closeError: Exception) {
+                            Log.w(TAG, "close() after failed init also failed: ${closeError.message}")
+                        }
+                        last = e
                     }
-                    last = e
                 }
             }
             throw EngineLoadError.BackendUnavailable(attempted, last)

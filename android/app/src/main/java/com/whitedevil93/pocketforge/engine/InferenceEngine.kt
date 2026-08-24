@@ -13,6 +13,12 @@ interface InferenceEngine : AutoCloseable {
     /** Backend id surfaced on getServerStatus, e.g. "llamaCpp" or "litertLm:GPU". */
     val backendId: String
 
+    /** Whether this loaded instance can accept image content — see
+     *  docs/litertlm-vl-integration.md §8. Always false for [LlamaCppEngine]; for
+     *  [LiteRtLmEngine] it reflects whether the vision executor actually initialized
+     *  for the specific model file that was loaded, not just which backend won. */
+    val visionAvailable: Boolean
+
     /**
      * Runs ONE model turn. Blocking — callers are already on a worker thread
      * (the HTTP request thread in [com.whitedevil93.pocketforge.LocalLlmService]).

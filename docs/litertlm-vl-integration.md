@@ -107,10 +107,29 @@ default risks a larger KV allocation than needed on a device already carrying 4 
 
 Steps continue the numbering in `docs/litertlm-android-adapter.md` (that plan ends at 7).
 
-**8. Vision-capable engine load.** Extend `LiteRtLmEngine.load` to attempt `visionBackend` per
-backend with a no-vision retry, set `maxNumImages`, and surface `visionAvailable` through
-`InferenceEngine` → `getStatusSnapshot()` → `LocalLlmServerStatus`. Verifiable on its own: the
-VL bundle reaches `ready` with `visionAvailable: true`, the text bundle with `false`.
+**8. Vision-capable engine load. Done, pending build/device verification.**
+`LiteRtLmEngine.load` now tries each backend twice: `visionBackend` set (same `Backend`
+instance as `backend`) and `maxNumImages = 1` first, then — only if that specific attempt
+throws — the same backend again without vision, before moving to the next backend. A
+text-only bundle is expected to fail the vision-enabled attempt (no vision tower to
+initialize), not the backend itself, which is what lets one code path serve both bundle
+types without the caller declaring which one was imported. `InferenceEngine` gained a
+`visionAvailable: Boolean` alongside `backendId`; `LlamaCppEngine` reports it hard-coded
+`false` (GGUF never supports images in this app). Plumbed the same way `backendId` was in
+the adapter plan's step 7: a `LocalLlmService` companion field, a 5th `transition()`
+parameter (defaulted `false`, so no existing call site needed touching except the one
+`"ready"` transition), through to `getStatusSnapshot()` →
+`LocalLlmPlugin.statusToJSObject`/`emitServerStatusChanged` → TS's
+`LocalLlmServerStatus.visionAvailable?: boolean` (optional, matching `port`/`error`/
+`backend`'s own convention of being absent outside `'ready'` — not required, which an
+earlier pass of this edit briefly got wrong).
+**Not yet verified** — needs both real bundles on real hardware: the VL bundle
+(`vgc_e4b_v5_heretic_vl.litertlm`) reaching `ready` with `visionAvailable: true` and
+showing which backend won *with* vision, and the text-only bundle
+(`vgc_e4b_v5_heretic.litertlm`) reaching `ready` with `visionAvailable: false` after its
+vision-enabled attempts fail as expected (worth confirming they fail the way this design
+assumes, i.e. cleanly and specifically on the vision-enabled attempt, not by crashing the
+whole load).
 
 **9. Image plumbing, Kotlin.** In the request parser (§4.2), map OpenAI content parts onto
 `Contents.of(Content.Text(…), Content.ImageBytes(…))`. Reject an image part with a clear error

@@ -37,6 +37,12 @@ export interface LocalLlmServerStatus {
    *  knowable in advance; sampler settings are also inert on NPU (§4.2), so this is
    *  worth showing the user, not just logging. */
   backend?: string;
+  /** Whether the loaded engine can accept image content (docs/litertlm-vl-integration.md
+   *  §8) — absent outside 'ready' (matching `port`/`error`/`backend`'s own convention),
+   *  and false for the llama.cpp/GGUF path, which never supports images. Gates the (not
+   *  yet built) image-attach UI: a text-only .litertlm import should not show a control
+   *  that will only ever error. */
+  visionAvailable?: boolean;
 }
 
 export interface ChatOnceOptions {

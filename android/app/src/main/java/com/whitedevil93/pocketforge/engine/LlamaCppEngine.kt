@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class LlamaCppEngine private constructor(private val handle: Long) : InferenceEngine {
     override val backendId: String = "llamaCpp"
+    override val visionAvailable: Boolean = false
 
     /** Guards against a double nativeUnloadModel/nativeFreeModel — both are
      *  documented idempotent on the native side, but close() may be called
