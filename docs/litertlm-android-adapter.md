@@ -511,8 +511,19 @@ tower, so `audioBackend` is available on the same bundle — again separate work
 
 ## 9. Sequencing
 
-1. **Seam, no behaviour change.** Add `InferenceEngine`, move the five externals into
-   `LlamaCppEngine`, rewire `LocalLlmService`. Verify the GGUF path is unchanged.
+1. **Seam, no behaviour change. Done.** `InferenceEngine`/`EngineLoadError` added in
+   `android/.../engine/InferenceEngine.kt`; the five externals moved into
+   `android/.../engine/LlamaCppEngine.kt`, with `nativeLoadModel` rebound as a static JNI
+   method (`@JvmStatic external fun` in its companion) since no session handle exists until
+   after load. The JNI exports in `pokekit-llm.cpp` were renamed to match
+   (`Java_..._engine_LlamaCppEngine_native*`; `nativeLoadModel`'s second parameter changed
+   from `jobject` to `jclass` to match the static call). `LocalLlmService` now holds
+   `engine: InferenceEngine?` instead of the companion `nativeHandle: Long`, with a
+   `teardownEngine()` helper replacing the repeated unload+free+zero sequence at every call
+   site. Behaviour is unchanged: same load/cancel/close ordering, same idempotency, same
+   error paths. **Not yet verified against a real build** — this environment has no Android
+   SDK/NDK, so the actual `assembleDebug` + on-device GGUF regression pass (per §"Verification"
+   above) is still outstanding.
    *No LiteRT dependency yet.* This step must be perfect; if it regresses GGUF, stop.
 2. **Format detection.** `LITERTLM` magic + major-version check in `copyInChunks`,
    extension-agnostic discovery in `dispatchStart`, error strings updated.

@@ -526,7 +526,7 @@ Java_com_whitedevil93_pocketforge_LocalLlmPlugin_nativePing(JNIEnv *env, jobject
 // Loads a GGUF model and returns an opaque session handle (pointer cast), or 0
 // on ANY failure with everything already freed. Kotlin treats 0 as fatal.
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeLoadModel(JNIEnv * env, jobject /* thiz */, jstring jPath) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeLoadModel(JNIEnv * env, jclass /* clazz */, jstring jPath) {
     if (jPath == nullptr) {
         LOGE("nativeLoadModel: null path");
         return 0;
@@ -633,14 +633,14 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeLoadModel(JNIEnv * env, 
 // Frees the heavy resources but keeps the session struct alive so a later
 // nativeFreeModel can delete it. Idempotent.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeUnloadModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeUnloadModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
     teardown_session(handle, false);
 }
 
 // Deletes the session struct (and any resources nativeUnloadModel left).
 // Idempotent.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeFreeModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeFreeModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
     teardown_session(handle, true);
 }
 
@@ -654,7 +654,7 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeFreeModel(JNIEnv * /* en
 // session cannot be torn down under the running generation) or immediately
 // before nativeUnloadModel/nativeFreeModel on the same thread.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeCancel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeCancel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
     if (handle == 0) {
         return;
     }
@@ -678,7 +678,7 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeCancel(JNIEnv * /* env *
 // back to raw-piece streaming plus one final tool_calls delta at the end, as
 // the plan allows.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeGenerate(
     JNIEnv * env, jobject /* thiz */, jlong handle, jstring jRequestBodyJson, jobject callback) {
     if (jRequestBodyJson == nullptr || callback == nullptr) {
         LOGE("nativeGenerate: null request body or callback");

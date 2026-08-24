@@ -13,6 +13,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.whitedevil93.pocketforge.engine.InferenceEngine
+import com.whitedevil93.pocketforge.engine.LlamaCppEngine
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -26,7 +28,7 @@ import java.net.Socket
 import java.nio.charset.StandardCharsets
 
 /**
- * Streaming callback invoked from nativeGenerate on the HTTP worker thread.
+ * Streaming callback invoked from InferenceEngine.generate on the HTTP worker thread.
  * Each invocation is written to the client as ONE SSE frame by the service.
  */
 interface GenerationCallback {
@@ -53,9 +55,6 @@ class LocalLlmService : Service() {
             private set
         @Volatile var error: String? = null
             private set
-        @Volatile var nativeHandle: Long = 0
-            private set
-
         /** True only while a LocalLlmService instance is actually alive (onCreate→onDestroy).
          *  Distinguishes a genuinely running server from a stale companion state left
          *  behind when the OS destroyed the service without killing the process. */
@@ -171,6 +170,14 @@ class LocalLlmService : Service() {
     private var acceptThread: Thread? = null
     private var loadThread: Thread? = null
     @Volatile private var isStopping = false
+    @Volatile private var engine: InferenceEngine? = null
+
+    /** Closes the engine if one is loaded and clears the reference. Idempotent —
+     *  InferenceEngine.close() is documented safe to call more than once. */
+    private fun teardownEngine() {
+        engine?.close()
+        engine = null
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -197,10 +204,8 @@ class LocalLlmService : Service() {
         isStopping = true
         stopHttpServer()
         interruptLoad()
-        nativeCancel(nativeHandle)
-        nativeUnloadModel(nativeHandle)
-        nativeFreeModel(nativeHandle)
-        nativeHandle = 0
+        engine?.cancel()
+        teardownEngine()
         // Keep an error visible: stopSelf() after a failed load must not erase
         // the reason the server is down.
         if (state != "error") transition("stopped", null, null)
@@ -244,15 +249,9 @@ class LocalLlmService : Service() {
                 if (file.length() < 1024 * 1024) {
                     throw IllegalStateException("Model file too small (${file.length()} bytes)")
                 }
-                val handle = nativeLoadModel(modelPath)
-                if (handle == 0L) {
-                    throw IllegalStateException("Native model load failed for $modelPath")
-                }
-                nativeHandle = handle
+                engine = LlamaCppEngine.load(modelPath)
                 if (isStopping || Thread.currentThread().isInterrupted) {
-                    nativeUnloadModel(nativeHandle)
-                    nativeFreeModel(nativeHandle)
-                    nativeHandle = 0
+                    teardownEngine()
                     if (state != "error") transition("stopped", null, null)
                     stopSelf()
                     return@Thread
@@ -260,28 +259,22 @@ class LocalLlmService : Service() {
                 startHttpServer(chosenPort)
                 if (isStopping) {
                     stopHttpServer()
-                    nativeUnloadModel(nativeHandle)
-                    nativeFreeModel(nativeHandle)
-                    nativeHandle = 0
+                    teardownEngine()
                     if (state != "error") transition("stopped", null, null)
                     stopSelf()
                     return@Thread
                 }
                 transition("ready", chosenPort, null)
                 updateNotification()
-                Log.i(TAG, "ready on port $chosenPort")
+                Log.i(TAG, "ready on port $chosenPort (backend=${engine?.backendId})")
             } catch (e: InterruptedException) {
                 Log.i(TAG, "load interrupted")
-                nativeUnloadModel(nativeHandle)
-                nativeFreeModel(nativeHandle)
-                nativeHandle = 0
+                teardownEngine()
                 if (state != "error") transition("stopped", null, null)
                 stopSelf()
             } catch (e: Throwable) {
                 Log.e(TAG, "load failed", e)
-                nativeUnloadModel(nativeHandle)
-                nativeFreeModel(nativeHandle)
-                nativeHandle = 0
+                teardownEngine()
                 stopHttpServer()
                 transition("error", null, e.message ?: "Failed to load model")
                 updateNotification()
@@ -295,13 +288,11 @@ class LocalLlmService : Service() {
         isStopping = true
         interruptLoad()
         stopHttpServer()
-        // Abort any in-flight generation: nativeCancel only flips the atomic
-        // flag, the decode loop observes it between tokens and exits, then
-        // unload/free (which take the same mutex) can proceed safely.
-        nativeCancel(nativeHandle)
-        nativeUnloadModel(nativeHandle)
-        nativeFreeModel(nativeHandle)
-        nativeHandle = 0
+        // Abort any in-flight generation: cancel() only flips the atomic flag
+        // on the native side, the decode loop observes it between tokens and
+        // exits, then close() (which takes the same mutex) can proceed safely.
+        engine?.cancel()
+        teardownEngine()
         transition("stopped", null, null)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -319,10 +310,8 @@ class LocalLlmService : Service() {
         isStopping = true
         interruptLoad()
         stopHttpServer()
-        nativeCancel(nativeHandle)
-        nativeUnloadModel(nativeHandle)
-        nativeFreeModel(nativeHandle)
-        nativeHandle = 0
+        engine?.cancel()
+        teardownEngine()
         transition("error", null, message)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -478,7 +467,8 @@ class LocalLlmService : Service() {
     }
 
     private fun handleChatCompletions(reader: BufferedReader, contentLength: Int, out: OutputStream) {
-        if (nativeHandle == 0L) {
+        val activeEngine = engine
+        if (activeEngine == null) {
             writeJsonResponse(out, "HTTP/1.1 500 Internal Server Error", """{"error":"model not loaded"}""")
             return
         }
@@ -491,7 +481,7 @@ class LocalLlmService : Service() {
         val callback = object : GenerationCallback {
             override fun onToken(piece: String) {
                 if (!writeSse(out, """{"choices":[{"delta":{"content":"${jsonEscape(piece)}"}}]}""")) {
-                    nativeCancel(nativeHandle)
+                    activeEngine.cancel()
                 }
             }
 
@@ -499,7 +489,7 @@ class LocalLlmService : Service() {
                 val frame = """{"choices":[{"delta":{"tool_calls":[{"index":$index,""" +
                     """"function":{"name":"${jsonEscape(nameDelta)}","arguments":"${jsonEscape(argsDelta)}"}}]}}]}"""
                 if (!writeSse(out, frame)) {
-                    nativeCancel(nativeHandle)
+                    activeEngine.cancel()
                 }
             }
 
@@ -516,12 +506,12 @@ class LocalLlmService : Service() {
             }
         }
         try {
-            nativeGenerate(nativeHandle, body, callback)
+            activeEngine.generate(body, callback)
         } catch (e: Throwable) {
-            // Last-resort guard: never let a JNI escape crash the process.
-            Log.e(TAG, "nativeGenerate threw", e)
+            // Last-resort guard: never let a native/engine escape crash the process.
+            Log.e(TAG, "engine.generate threw", e)
             try {
-                writeSse(out, """{"error":"${jsonEscape(e.message ?: "nativeGenerate failed")}"}""")
+                writeSse(out, """{"error":"${jsonEscape(e.message ?: "generate failed")}"}""")
             } catch (_: Exception) {}
         }
     }
@@ -555,10 +545,4 @@ class LocalLlmService : Service() {
             }
         }
     }
-
-    private external fun nativeLoadModel(path: String): Long
-    private external fun nativeUnloadModel(handle: Long)
-    private external fun nativeFreeModel(handle: Long)
-    private external fun nativeGenerate(handle: Long, requestBodyJson: String, callback: GenerationCallback)
-    private external fun nativeCancel(handle: Long)
 }
