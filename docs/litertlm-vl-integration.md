@@ -153,10 +153,29 @@ content-parts request (no picker UI exists until step 11-12) driven at `chatOnce
 confirm the whole path end to end: an image reaching the model on the VL bundle, and a
 clear rejection (not a crash, not a silent text-only answer) on the text-only bundle.
 
-**10. Image plumbing, TypeScript.** Widen `ChatMessage.content`; add `contentToText`; update
-`toWireMessage` in `localLlamaCpp.ts` to pass array content through; make `ollamaCloud.ts`
-reject it. Everything else in `src/lib/llm/` should compile unchanged — if it doesn't, the
-union was widened in the wrong place.
+**10. Image plumbing, TypeScript. Done — the one step this run with real build
+verification.** `ChatMessage.content` widened to `string | ContentPart[]`
+(`src/lib/llm/types.ts`), `ContentPart` matching the OpenAI content-parts shape
+exactly so it needs no reshaping crossing the bridge, plus `contentToText`. In
+`localLlamaCpp.ts`, `WireMessage.content` widened the same way and `toWireMessage`
+needed **zero body changes** — `content: message.content` already passed through
+verbatim, exactly the "no reshaping" the design banked on. `ollamaCloud.ts`'s
+`WireMessage.content` stays `string`; its `toWireMessage` now throws on array content
+rather than flattening silently — checked its only call site
+(`history.map(toWireMessage)` inside `streamChatOnce`, an async generator) actually
+propagates that throw to `sendMessage`'s existing `catch`, the same path an HTTP
+failure already takes, before relying on it.
+Outside `src/lib/llm/`, `ChatPanel.tsx` was the one other consumer (grepped for it):
+fixed the `displayMessages` filter (`.trim()` on content — now
+`contentToText(m.content).trim()`), both post-turn `stripSpecialTokens(msg.content)`
+calls (now `stripSpecialTokens(contentToText(msg.content))`), and the JSX render of
+`message.content` (now wrapped). An image renders as a `'[image]'` placeholder for
+now — a real inline thumbnail is step 12's job, not this one's.
+**Actually verified**, not just traced: `node_modules` didn't exist in this
+environment, so ran `npm install` (745 packages, clean) and then `npx tsc -b` and
+`npm run lint` — both pass with zero errors across the whole project. This is the
+first step in either LiteRT-LM plan with a real compiler in the loop rather than
+manual source-tracing; the Android side still has none.
 
 **11. Capture.** Add `@capacitor/camera`, wrap it in `src/lib/native/imagePicker.ts` behind
 `isNativeApp()` (mirroring `src/lib/native/localLlm.ts`), returning base64 + mime. Use

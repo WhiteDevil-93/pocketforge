@@ -13,7 +13,7 @@
 // { history, ctx, onEvent, signal }.
 // ============================================================================
 
-import type { ChatMessage, LlmStreamEvent, ToolCall, ToolContext } from './types';
+import type { ChatMessage, ContentPart, LlmStreamEvent, ToolCall, ToolContext } from './types';
 import { toLocalToolSchema } from './tools';
 import { runToolCall } from './toolRunner';
 import type { ChatOnceEvent, ChatOnceResult } from '../native/localLlm';
@@ -36,7 +36,7 @@ interface WireToolCall {
 
 interface WireMessage {
   role: string;
-  content: string;
+  content: string | ContentPart[];
   tool_calls?: WireToolCall[];
   tool_call_id?: string;
 }

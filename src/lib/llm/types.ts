@@ -12,13 +12,41 @@ export interface ToolCall {
   arguments: Record<string, unknown>;
 }
 
+/**
+ * One piece of a multi-part message — the OpenAI content-parts shape, unchanged, so
+ * it can flow straight through the native bridge (see localLlamaCpp.ts's toWireMessage)
+ * to the LiteRT-LM engine's request parser without any reshaping in between.
+ * docs/litertlm-vl-integration.md's "Image transport" design.
+ */
+export type ContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
 export interface ChatMessage {
   role: ChatRole;
-  content: string;
+  /** Plain text for every existing message. An array only ever appears on a user
+   *  message carrying an attached image (docs/litertlm-vl-integration.md) — the
+   *  local LiteRT-LM backend is the only consumer that does anything with the
+   *  array form; every other call site should use contentToText() rather than
+   *  assume content is a string. */
+  content: string | ContentPart[];
   /** Only on assistant messages that requested tool calls. */
   toolCalls?: ToolCall[];
   /** Only on role: 'tool' messages — which tool produced this result. */
   toolName?: string;
+}
+
+/**
+ * Flattens content to plain text — for history display, stripSpecialTokens, and any
+ * other place that only ever needs a string (an assistant/tool/system message's
+ * content is always already a plain string; this only does real work for a user
+ * message carrying an image). Image parts render as a fixed placeholder rather than
+ * their base64 data — a real inline thumbnail is the attach-UI's job, not this
+ * fallback's (docs/litertlm-vl-integration.md step 12).
+ */
+export function contentToText(content: string | ContentPart[]): string {
+  if (typeof content === 'string') return content;
+  return content.map((part) => (part.type === 'text' ? part.text : '[image]')).join('');
 }
 
 /** JSON-Schema subset used to describe a tool's parameters to the model. */

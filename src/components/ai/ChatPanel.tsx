@@ -13,7 +13,7 @@ import { sendMessage } from '../../lib/llm/ollamaCloud';
 import { sendMessage as localSendMessage } from '../../lib/llm/localLlamaCpp';
 import { buildSystemPrompt } from '../../lib/llm/systemPrompt';
 import { useAiReadiness } from '../../hooks/use-ai-readiness';
-import type { ChatMessage, LlmStreamEvent } from '../../lib/llm/types';
+import { contentToText, type ChatMessage, type LlmStreamEvent } from '../../lib/llm/types';
 
 interface ChatPanelProps {
   /**
@@ -83,7 +83,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
     () =>
       history.filter(
         (m): m is ChatMessage & { role: 'user' | 'assistant' } =>
-          (m.role === 'user' || m.role === 'assistant') && m.content.trim().length > 0
+          (m.role === 'user' || m.role === 'assistant') && contentToText(m.content).trim().length > 0
       ),
     [history]
   );
@@ -162,7 +162,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
       // Strip special tokens from final message before storing
       const cleanedHistory = updated.map((msg) =>
         msg.role === 'assistant'
-          ? { ...msg, content: stripSpecialTokens(msg.content) }
+          ? { ...msg, content: stripSpecialTokens(contentToText(msg.content)) }
           : msg
       );
       setHistory(cleanedHistory);
@@ -178,7 +178,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
       if (partialMessages && partialMessages.length > baseHistory.length) {
         const cleanedHistory = partialMessages.map((msg: ChatMessage) =>
           msg.role === 'assistant'
-            ? { ...msg, content: stripSpecialTokens(msg.content) }
+            ? { ...msg, content: stripSpecialTokens(contentToText(msg.content)) }
             : msg
         );
         setHistory(cleanedHistory);
@@ -252,7 +252,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1' }: Cha
                         : 'bg-bg-tertiary text-text-primary rounded-bl-md'
                     }`}
                   >
-                    {message.content}
+                    {contentToText(message.content)}
                   </div>
                   {message.role === 'user' && (
                     <div className="w-7 h-7 rounded-full bg-bg-tertiary flex items-center justify-center shrink-0">
