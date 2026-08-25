@@ -152,6 +152,7 @@ export default function ImportExport() {
   const teams = useStore((s) => s.teams);
   const importTeam = useStore((s) => s.importTeam);
   const setCurrentTeam = useStore((s) => s.setCurrentTeam);
+  const currentTeamId = useStore((s) => s.currentTeamId);
 
   // Tabs — driven by ?tab= so callers elsewhere (Teams swipe-Export, Builder's
   // Export button) can land directly on the Export tab instead of Import.
@@ -178,7 +179,12 @@ export default function ImportExport() {
 
   // ---- Export text generation ----------------------------------------------
 
-  const activeSelectedTeamId = selectedTeamId || teams[0]?.id || '';
+  // Teams' swipe-Export and Builder's Export button both call setCurrentTeam
+  // before navigating here specifically so this can default to the team the
+  // user actually tapped Export on — falling back to teams[0] only landed on
+  // whichever team happened to sort first, exporting the wrong team's data
+  // whenever it wasn't that one.
+  const activeSelectedTeamId = selectedTeamId || currentTeamId || teams[0]?.id || '';
 
   const selectedTeam = useMemo(
     () => teams.find((t) => t.id === activeSelectedTeamId),

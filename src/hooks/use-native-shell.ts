@@ -14,7 +14,9 @@ export function useNativeShell() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Status bar + splash screen. Runs once — these are app-global.
+  // Splash screen — runs once, app-global. The status bar's own style/color is
+  // owned by use-theme.ts instead, since it needs to react to theme changes,
+  // not just run once at startup.
   useEffect(() => {
     if (!isNativeApp()) return;
 
@@ -22,18 +24,8 @@ export function useNativeShell() {
 
     void (async () => {
       try {
-        const [{ StatusBar, Style }, { SplashScreen }] = await Promise.all([
-          import('@capacitor/status-bar'),
-          import('@capacitor/splash-screen'),
-        ]);
+        const { SplashScreen } = await import('@capacitor/splash-screen');
         if (cancelled) return;
-
-        // Confusingly named: Style.Dark means "light content, for dark backgrounds" —
-        // see the plugin's own Android implementation, setAppearanceLightStatusBars(!style.equals("DARK")).
-        // The app is dark-first (#0B1120), so this is the one we want; Style.Light renders
-        // dark icons and would be invisible here.
-        await StatusBar.setStyle({ style: Style.Dark });
-        await StatusBar.setBackgroundColor({ color: '#0B1120' });
         await SplashScreen.hide();
       } catch (error) {
         console.warn('Native shell setup failed:', error);

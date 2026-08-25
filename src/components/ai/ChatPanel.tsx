@@ -184,12 +184,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   // Mirrors streamingText synchronously — state read inside the catch block below
   // would be stale (captured when handleSend started, not updated by onEvent since).
   const streamingTextRef = useRef('');
-  // The exact baseHistory a turn was started with, so Retry can resend it
-  // verbatim — runTurn always overwrites history with baseHistory first, so
-  // replaying it is a clean restart, not a duplicate-message risk. Mirrored
-  // into canRetry (state, not a ref read) since the Retry button's presence
-  // is a render decision, and refs may not be read during render.
-  const lastBaseHistoryRef = useRef<ChatMessage[] | null>(null);
+  // Whether there's a turn to retry — state, not a ref read, since the Retry
+  // button's presence is a render decision and refs may not be read during
+  // render.
   const [canRetry, setCanRetry] = useState(false);
   // Only auto-scroll to the bottom when the user is already there — otherwise
   // reading back through the transcript during a reply gets yanked away on
@@ -286,7 +283,6 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   // without a stale-state race against the setHistory(baseHistory) below.
   const runTurn = useCallback(
     async (baseHistory: ChatMessage[]) => {
-      lastBaseHistoryRef.current = baseHistory;
       setCanRetry(true);
       const turnSeq = ++turnSeqRef.current;
       setCurrentTurnSeq(turnSeq);
@@ -455,14 +451,21 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   ]);
 
   const handleRetry = useCallback(() => {
-    if (isStreaming || !lastBaseHistoryRef.current) return;
+    if (isStreaming || history.length === 0) return;
     setError(null);
     setStreamingText('');
     streamingTextRef.current = '';
     isAtBottomRef.current = true;
     setIsStreaming(true);
-    void runTurn(lastBaseHistoryRef.current);
-  }, [isStreaming, runTurn]);
+    // Resume from the live history, not the pre-turn baseHistory the failed
+    // attempt started from: a later-round failure after successful tool
+    // calls (e.g. create_team) already preserves those results in history
+    // (see runTurn's catch block below) — replaying the original baseHistory
+    // would re-run the model's tool-calling turn from scratch, and nothing
+    // here rolls back a Zustand write a tool already made, so a retried turn
+    // could re-execute it and duplicate or overwrite the user's data.
+    void runTurn(history);
+  }, [isStreaming, history, runTurn]);
 
   const handleNewChat = useCallback(() => {
     abortRef.current?.abort();

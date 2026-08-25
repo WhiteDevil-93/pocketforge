@@ -16,6 +16,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -39,6 +40,16 @@ class LiteRtLmEngine private constructor(
 
     private val closed = AtomicBoolean(false)
 
+    /** Held for the entire duration of [generate] — mirrors LlamaCppEngine's
+     *  native generateMutex, which close()/teardown already waits on before
+     *  freeing anything. [close] needs the same guarantee here: cancel()'s
+     *  conversation.cancelProcess() only *requests* cancellation and returns
+     *  immediately, so without this a close() called right after cancel()
+     *  (LocalLlmService's forceStop/handleStop both do exactly that) could
+     *  free the engine while generate()'s still-running sendMessageAsync call
+     *  is using it. */
+    private val generationLock = ReentrantLock()
+
     /** The Conversation currently in flight, if any — set for the duration of one
      *  [generate] call so a concurrent [cancel] (from a different thread: the client
      *  disconnected, or the service is tearing down) has something to reach. @Volatile
@@ -56,6 +67,15 @@ class LiteRtLmEngine private constructor(
      * LlamaCppEngine's nativeGenerate already behaves from LocalLlmService's POV.
      */
     override fun generate(requestBodyJson: String, callback: GenerationCallback) {
+        generationLock.lock()
+        try {
+            generateLocked(requestBodyJson, callback)
+        } finally {
+            generationLock.unlock()
+        }
+    }
+
+    private fun generateLocked(requestBodyJson: String, callback: GenerationCallback) {
         val parsed = parseChatRequest(requestBodyJson, visionAvailable)
         // §4.2: SamplerConfig is inert on NPU (the gallery's own pattern passes null
         // there) — build it as null on that backend rather than silently ignoring a
@@ -174,7 +194,32 @@ class LiteRtLmEngine private constructor(
 
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
-        engine.close()
+        if (generationLock.tryLock()) {
+            try {
+                engine.close()
+            } finally {
+                generationLock.unlock()
+            }
+            return
+        }
+        // A generation is still winding down — cancelProcess() (already called by
+        // the caller: forceStop/handleStop both call cancel() immediately before
+        // close()) only requests cancellation and returns asynchronously, so the
+        // lock isn't released until generate()'s in-flight call actually observes
+        // it and returns. Finish the wait on a background thread instead of
+        // blocking whoever called close(): two of its three call sites
+        // (the load watchdog, onTrimMemory) run on the main thread, and blocking
+        // that for a stuck generation would be a guaranteed ANR, not a fix.
+        // generate()'s own GENERATION_TIMEOUT_MS bounds this to at most a few
+        // minutes even in the worst case.
+        Thread({
+            generationLock.lock()
+            try {
+                engine.close()
+            } finally {
+                generationLock.unlock()
+            }
+        }, "litertlm-engine-close").start()
     }
 
     companion object {
