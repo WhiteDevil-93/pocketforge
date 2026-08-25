@@ -189,12 +189,26 @@ export interface AppSettings {
   ollamaApiKey: string;
   /** Ollama Cloud model tag, e.g. "gemma4:cloud". */
   ollamaModel: string;
-  /** Which LLM backend the AI assistant uses. */
-  aiBackend: 'ollamaCloud' | 'localLlamaCpp';
-  /** Absolute path of the imported GGUF model in app-private storage. Empty string = not imported. */
+  /** Which LLM backend the AI assistant uses. 'localLiteRt' is never written by
+   *  any UI — the on-device toggle only ever writes 'localLlamaCpp', and this
+   *  field only distinguishes local vs. cloud. The actual engine (llama.cpp vs
+   *  LiteRT-LM) is chosen by sniffing the imported file's magic bytes at load
+   *  time (docs/litertlm-android-adapter.md step 2), not by this setting —
+   *  don't use this value to guess which engine is loaded; read
+   *  LocalLlmServerStatus.backend instead. */
+  aiBackend: 'ollamaCloud' | 'localLlamaCpp' | 'localLiteRt';
+  /** Absolute path of the imported model (GGUF or .litertlm) in app-private storage.
+   *  Empty string = not imported. */
   localModelPath: string;
-  /** Display name of the imported GGUF model. Empty string = not imported. */
+  /** Display name of the imported model. Empty string = not imported. */
   localModelName: string;
+  /** Whether the currently-imported model was last observed to support vision
+   *  (LocalLlmServerStatus.visionAvailable from the most recent successful
+   *  server start). Undefined until the server has been started at least once
+   *  since import. Lets Settings show "Vision available"/"Text-only" from the
+   *  second session on without starting the server and waiting out a full
+   *  load just to find out. Cleared on a new import (see handleImportModel). */
+  localModelVision?: boolean;
 }
 
 export interface AppState {

@@ -38,21 +38,30 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // PocketForge Design Tokens
-        'bg-primary': '#0A0E1A',
-        'bg-secondary': '#111827',
-        'bg-tertiary': '#1A2332',
-        'bg-elevated': '#1E293B',
-        'border-subtle': '#1E293B',
-        'border-active': '#334155',
-        'text-primary': '#F1F5F9',
-        'text-secondary': '#94A3B8',
-        'text-tertiary': '#64748B',
-        'accent-primary': '#3B82F6',
-        'accent-secondary': '#06B6D4',
-        'success': '#22C55E',
-        'warning': '#EAB308',
-        'danger': '#EF4444',
+        // PocketForge Design Tokens — sourced from the CSS custom properties in
+        // src/index.css (not hard-coded here) so a [data-theme="light"] override
+        // block there can actually change what these classes render as. Each var
+        // holds space-separated RGB components (e.g. "59 130 246", not "#3B82F6"
+        // or "rgb(59 130 246)") specifically so the rgb(var(--x) / <alpha-value>)
+        // form below lets Tailwind's opacity-modifier syntax work
+        // (bg-accent-primary/10 and the many other /NN usages throughout this
+        // app) — a bare var(--x) reference silently drops those modifier
+        // classes at build time instead of erroring, which is what happened
+        // here until this was caught by diffing the compiled CSS.
+        'bg-primary': 'rgb(var(--bg-primary) / <alpha-value>)',
+        'bg-secondary': 'rgb(var(--bg-secondary) / <alpha-value>)',
+        'bg-tertiary': 'rgb(var(--bg-tertiary) / <alpha-value>)',
+        'bg-elevated': 'rgb(var(--bg-elevated) / <alpha-value>)',
+        'border-subtle': 'rgb(var(--border-subtle) / <alpha-value>)',
+        'border-active': 'rgb(var(--border-active) / <alpha-value>)',
+        'text-primary': 'rgb(var(--text-primary) / <alpha-value>)',
+        'text-secondary': 'rgb(var(--text-secondary) / <alpha-value>)',
+        'text-tertiary': 'rgb(var(--text-tertiary) / <alpha-value>)',
+        'accent-primary': 'rgb(var(--accent-primary) / <alpha-value>)',
+        'accent-secondary': 'rgb(var(--accent-secondary) / <alpha-value>)',
+        'success': 'rgb(var(--success) / <alpha-value>)',
+        'warning': 'rgb(var(--warning) / <alpha-value>)',
+        'danger': 'rgb(var(--danger) / <alpha-value>)',
         // Type Colors (18 types)
         'type-normal': '#A8A77A',
         'type-fire': '#EE8130',

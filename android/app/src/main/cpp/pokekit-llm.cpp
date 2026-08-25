@@ -526,7 +526,7 @@ Java_com_whitedevil93_pocketforge_LocalLlmPlugin_nativePing(JNIEnv *env, jobject
 // Loads a GGUF model and returns an opaque session handle (pointer cast), or 0
 // on ANY failure with everything already freed. Kotlin treats 0 as fatal.
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeLoadModel(JNIEnv * env, jobject /* thiz */, jstring jPath) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeLoadModel(JNIEnv * env, jclass /* clazz */, jstring jPath) {
     if (jPath == nullptr) {
         LOGE("nativeLoadModel: null path");
         return 0;
@@ -633,14 +633,14 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeLoadModel(JNIEnv * env, 
 // Frees the heavy resources but keeps the session struct alive so a later
 // nativeFreeModel can delete it. Idempotent.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeUnloadModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeUnloadModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
     teardown_session(handle, false);
 }
 
 // Deletes the session struct (and any resources nativeUnloadModel left).
 // Idempotent.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeFreeModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeFreeModel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
     teardown_session(handle, true);
 }
 
@@ -654,7 +654,7 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeFreeModel(JNIEnv * /* en
 // session cannot be torn down under the running generation) or immediately
 // before nativeUnloadModel/nativeFreeModel on the same thread.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeCancel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeCancel(JNIEnv * /* env */, jobject /* thiz */, jlong handle) {
     if (handle == 0) {
         return;
     }
@@ -678,7 +678,7 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeCancel(JNIEnv * /* env *
 // back to raw-piece streaming plus one final tool_calls delta at the end, as
 // the plan allows.
 extern "C" JNIEXPORT void JNICALL
-Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
+Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeGenerate(
     JNIEnv * env, jobject /* thiz */, jlong handle, jstring jRequestBodyJson, jobject callback) {
     if (jRequestBodyJson == nullptr || callback == nullptr) {
         LOGE("nativeGenerate: null request body or callback");
@@ -691,6 +691,24 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
             LOGE("nativeGenerate: unknown session handle");
             return;
         }
+    }
+
+    // Acquired here — before any session member is touched — rather than just
+    // around the decode loop as before. teardown_session takes this same
+    // mutex before freeing tmpls/ctx/model, but reg_lock above is released as
+    // soon as the handle is validated; a Stop/unload racing in right after
+    // that release (and before this thread reached the old, later lock point)
+    // could free those members while the JSON-parse/prompt-build steps below
+    // were still reading them with no lock held at all — a real use-after-free,
+    // not just a theoretical one, since teardown_session's own reg_lock hold
+    // only blocks other reg_lock callers, not this gap. Holding generateMutex
+    // for the whole request (setup through decode) closes that window.
+    std::lock_guard<std::mutex> gen_lock(session->generateMutex);
+    if (session->model == nullptr) {
+        // Lost the race: torn down (Stop, unload, or memory-pressure teardown)
+        // between the reg_lock check above and acquiring generateMutex here.
+        LOGE("nativeGenerate: session torn down before generation could start");
+        return;
     }
 
     GenerationCallback cb;
@@ -772,10 +790,9 @@ Java_com_whitedevil93_pocketforge_LocalLlmService_nativeGenerate(
         }
         apply_parser_format_override(parser_params);
 
-        // Serialize overlapping requests: the whole decode loop (and cleanup)
-        // holds generateMutex so concurrent /v1/chat/completions requests queue
-        // instead of corrupting the shared context.
-        std::lock_guard<std::mutex> gen_lock(session->generateMutex);
+        // generateMutex (acquired above, before this try block) already
+        // serializes overlapping requests for the whole call, not just the
+        // decode loop below — see the comment at its acquisition site.
         session->cancelled = false;
 
         // Each request carries the whole conversation and the chat template

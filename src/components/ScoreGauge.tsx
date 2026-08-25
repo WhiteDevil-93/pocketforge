@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { EASE_SMOOTH } from '../lib/motion';
 
 interface ScoreGaugeProps {
   score: number;
@@ -67,7 +68,7 @@ export default function ScoreGauge({
             strokeDasharray={circumference}
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference - progress }}
-            transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] }}
+            transition={{ duration: 1.2, ease: EASE_SMOOTH }}
           />
         </svg>
         {/* Center text */}

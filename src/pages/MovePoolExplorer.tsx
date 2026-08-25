@@ -23,12 +23,20 @@ const CATEGORIES: (Move['category'] | 'All')[] = ['All', 'Physical', 'Special', 
 
 export default function MovePoolExplorer() {
   const [speciesQuery, setSpeciesQuery] = useState('');
+  // Garchomp is a placeholder so the page isn't blank on first visit, not a
+  // real choice — hasPickedSpecies tracks whether the user has actually
+  // searched for one yet, so the explainer note only shows for the default.
   const [selectedSpecies, setSelectedSpecies] = useState<string>('Garchomp');
+  const [hasPickedSpecies, setHasPickedSpecies] = useState(false);
 
   const [method, setMethod] = useState<AcquisitionMethod | 'All'>('All');
   const [category, setCategory] = useState<Move['category'] | 'All'>('All');
   const [moveQuery, setMoveQuery] = useState('');
   const [movepool, setMovepool] = useState<AnnotatedMove[]>([]);
+  // Starts true to cover the initial Garchomp fetch; the search-result
+  // onClick below flips it back on for a species switch — never set
+  // synchronously from inside the effect itself (see the .then() callback).
+  const [isLoadingMovepool, setIsLoadingMovepool] = useState(true);
 
   const searchResults = useMemo(
     () => (speciesQuery ? searchPokemon(speciesQuery) : []),
@@ -40,7 +48,9 @@ export default function MovePoolExplorer() {
   useEffect(() => {
     let active = true;
     getMovepoolForSpecies(selectedSpecies).then((res) => {
-      if (active) setMovepool(res);
+      if (!active) return;
+      setMovepool(res);
+      setIsLoadingMovepool(false);
     });
     return () => {
       active = false;
@@ -81,8 +91,14 @@ export default function MovePoolExplorer() {
                 <li key={p.id}>
                   <button
                     onClick={() => {
+                      // Selecting the species already shown wouldn't change
+                      // `selectedSpecies`, so the fetch effect wouldn't re-run
+                      // to ever clear this — only set it when it actually
+                      // will.
+                      if (p.name !== selectedSpecies) setIsLoadingMovepool(true);
                       setSelectedSpecies(p.name);
                       setSpeciesQuery('');
+                      setHasPickedSpecies(true);
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-bg-tertiary"
                   >
@@ -113,6 +129,11 @@ export default function MovePoolExplorer() {
             <span className="font-jetbrains-mono text-text-tertiary">#{dex.id}</span>
           </div>
         )}
+        {!hasPickedSpecies && (
+          <p className="font-caption text-text-tertiary -mt-2">
+            Showing Garchomp as an example — search above to look up a Pokemon's movepool.
+          </p>
+        )}
 
         {/* Filters */}
         <div>
@@ -124,7 +145,7 @@ export default function MovePoolExplorer() {
               <button
                 key={m}
                 onClick={() => setMethod(m)}
-                className={`px-3 h-8 rounded-full text-[12px] font-body-medium border whitespace-nowrap ${
+                className={`tap-target-y px-3 h-8 rounded-full text-[12px] font-body-medium border whitespace-nowrap ${
                   method === m
                     ? 'bg-accent-primary text-white border-accent-primary'
                     : 'border-border-subtle text-text-secondary bg-bg-secondary'
@@ -145,7 +166,7 @@ export default function MovePoolExplorer() {
               <button
                 key={c}
                 onClick={() => setCategory(c)}
-                className={`flex-1 h-8 rounded-full text-[12px] font-body-medium border ${
+                className={`tap-target-y flex-1 h-8 rounded-full text-[12px] font-body-medium border ${
                   category === c
                     ? 'bg-accent-primary text-white border-accent-primary'
                     : 'border-border-subtle text-text-secondary bg-bg-secondary'
@@ -177,7 +198,16 @@ export default function MovePoolExplorer() {
             <h2 className="font-subtitle text-text-primary">Moves</h2>
             <span className="font-caption text-text-tertiary">{filtered.length}</span>
           </div>
-          {filtered.length === 0 ? (
+          {isLoadingMovepool ? (
+            <div className="flex flex-col gap-2" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="h-[72px] rounded-card-md bg-bg-secondary border border-border-subtle animate-pulse"
+                />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
             <p className="font-body text-text-tertiary py-8 text-center">
               No moves match the current filters.
             </p>

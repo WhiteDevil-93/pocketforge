@@ -26,11 +26,31 @@ export interface PickModelResult {
   size: number;
 }
 
+/** One model file sitting in app-private storage — every import writes a new
+ *  file and nothing before this ever deleted one, so this can list several. */
+export interface ModelFile {
+  path: string;
+  name: string;
+  size: number;
+}
+
 /** Server lifecycle snapshot, mirroring LocalLlmPlugin's serverStatusChanged events. */
 export interface LocalLlmServerStatus {
   state: 'stopped' | 'loading' | 'ready' | 'error';
   port?: number;
   error?: string;
+  /** Which InferenceEngine backend served this 'ready' state, e.g. "llamaCpp" or
+   *  "litertLm:GPU" — undefined outside 'ready'. LiteRT-LM's NPU/GPU/CPU fallback
+   *  (docs/litertlm-android-adapter.md §4.1) means the winning backend isn't
+   *  knowable in advance; sampler settings are also inert on NPU (§4.2), so this is
+   *  worth showing the user, not just logging. */
+  backend?: string;
+  /** Whether the loaded engine can accept image content (docs/litertlm-vl-integration.md
+   *  §8) — absent outside 'ready' (matching `port`/`error`/`backend`'s own convention),
+   *  and false for the llama.cpp/GGUF path, which never supports images. Gates the (not
+   *  yet built) image-attach UI: a text-only .litertlm import should not show a control
+   *  that will only ever error. */
+  visionAvailable?: boolean;
 }
 
 export interface ChatOnceOptions {
@@ -75,6 +95,8 @@ export interface LocalLlmPlugin {
   startServer(options: { modelPath?: string }): Promise<LocalLlmServerStatus>;
   stopServer(): Promise<LocalLlmServerStatus>;
   getServerStatus(): Promise<LocalLlmServerStatus>;
+  listModelFiles(): Promise<{ files: ModelFile[] }>;
+  deleteModelFile(options: { path: string }): Promise<void>;
   addListener(
     eventName: 'modelImportProgress',
     listenerFunc: (progress: ModelImportProgress) => void,
@@ -99,6 +121,17 @@ export function pingLocalLlm(): Promise<{ message: string; nativeInfo: string }>
 /** Launches the SAF picker and imports the selected GGUF into app-private storage. */
 export function pickModelFile(): Promise<PickModelResult> {
   return localLlm.pickModelFile();
+}
+
+/** Lists every imported model file sitting in app-private storage. */
+export function listModelFiles(): Promise<{ files: ModelFile[] }> {
+  return localLlm.listModelFiles();
+}
+
+/** Deletes an imported model file. Rejects if that path is the one currently
+ *  loaded/serving — stop the server first. */
+export function deleteModelFile(path: string): Promise<void> {
+  return localLlm.deleteModelFile({ path });
 }
 
 /**

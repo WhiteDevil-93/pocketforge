@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   Moon,
   Sun,
@@ -40,7 +41,9 @@ import {
   Loader2,
 } from 'lucide-react';
 import BottomSheet from '../components/BottomSheet';
+import ConfirmSheet from '../components/ConfirmSheet';
 import PageHeader from '../components/PageHeader';
+import ChatSheetLoadingFallback from '../components/ai/ChatSheetLoadingFallback';
 // Lazy-loaded: ChatSheet statically reaches ollamaCloud.ts and the full tool
 // registry (calculators, movepool queries, mega/champions data). Every Settings
 // visit would otherwise pull that in even when AI is disabled and chat is never
@@ -54,16 +57,19 @@ import { CHAMPIONS_META } from '../data/championsLegality';
 import { CHAMPIONS_USAGE_META } from '../data/championsUsageRankings';
 import { checkForAppUpdate } from '../lib/pwaUpdate';
 import { isNativeApp } from '../lib/platform';
+import { useAiReadiness } from '../hooks/use-ai-readiness';
 // Type-only: the native module itself is imported dynamically behind isNativeApp()
 // so the web/PWA bundle never pulls the Capacitor plugin registration in.
-import type { LocalLlmServerStatus, ModelImportProgress } from '../lib/native/localLlm';
+import type { LocalLlmServerStatus, ModelFile, ModelImportProgress } from '../lib/native/localLlm';
 import {
   APP_STORAGE_KEY,
+  CHAT_STORAGE_KEY,
   LEGACY_NUZLOCKE_STORAGE_KEYS,
   NUZLOCKE_STORAGE_KEY,
 } from '../lib/storage';
+import { EASE_SMOOTH } from '../lib/motion';
 
-const easeSmooth = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
+const easeSmooth = EASE_SMOOTH;
 
 /** Human-readable byte size (B/KB/MB/GB) for the on-device model import UI. */
 function formatBytes(bytes: number): string {
@@ -71,6 +77,24 @@ function formatBytes(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function formatElapsed(sec: number): string {
+  if (sec < 60) return `${sec}s`;
+  return `${Math.floor(sec / 60)}m ${sec % 60}s`;
+}
+
+/** Friendly headline for a raw LocalLlmServerStatus.error string — the full
+ *  text (absolute paths, JVM exception text) stays available in a collapsed
+ *  details element next to wherever this is shown, never discarded. */
+function friendlyServerErrorHeadline(message: string): string {
+  if (/model file not found/i.test(message)) return 'The model file is missing — re-import it.';
+  if (/too small/i.test(message)) return "That file doesn't look like a valid model — re-import it.";
+  if (/timed out/i.test(message)) return 'The model took too long to load — tap Start to retry.';
+  if (/notification permission/i.test(message)) return 'Notification permission is needed to run the on-device server.';
+  if (/no usable backend/i.test(message)) return 'The model failed to load — it may be too large for this device.';
+  if (/system reclaimed memory/i.test(message)) return 'The device reclaimed memory while loading — tap Start to retry.';
+  return 'The on-device server hit a problem.';
 }
 
 type SettingsTab = 'preferences' | 'features';
@@ -383,6 +407,103 @@ function FeaturesPanel({ onOpen }: { onOpen: (path: string) => void }) {
         decision support and should be reviewed for your format and strategy.
       </p>
     </motion.div>
+  );
+}
+
+// ---- Imported Model Files Sheet --------------------------------------------
+//
+// Every model import writes a NEW file under filesDir — nothing before this
+// ever deleted one, so multi-GB files accumulate silently with no way to see
+// or reclaim the space. This lists them (native listModelFiles), lets the
+// user pick a different one as active, and delete ones they no longer need.
+//
+// Purely presentational: the list is fetched by the "Manage models" row's own
+// click handler in SettingsPage (a real event, not an effect reacting to
+// isOpen) and handed down as a prop — avoids a fetch-on-open effect whose
+// setState the react-hooks/set-state-in-effect rule flags regardless of
+// where in the async chain the call sits.
+
+function ModelFilesSheet({
+  isOpen,
+  onClose,
+  files,
+  activePath,
+  busyPath,
+  onSelect,
+  onDelete,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  files: ModelFile[] | null;
+  activePath: string;
+  busyPath: string | null;
+  onSelect: (file: ModelFile) => void;
+  onDelete: (file: ModelFile) => void;
+}) {
+  const [pendingDelete, setPendingDelete] = useState<ModelFile | null>(null);
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <BottomSheet isOpen={isOpen} onClose={onClose} title="Imported models" showSearch={false}>
+        <div className="space-y-2 pt-2">
+          {files === null ? (
+            <p className="py-6 text-center text-[12px] text-text-tertiary">Loading…</p>
+          ) : files.length === 0 ? (
+            <p className="py-6 text-center text-[12px] text-text-tertiary">No imported models found.</p>
+          ) : (
+            files.map((file) => {
+              const isActive = file.path === activePath;
+              return (
+                <div
+                  key={file.path}
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${
+                    isActive ? 'border-accent-primary/50 bg-accent-primary/10' : 'border-border-subtle'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => !isActive && onSelect(file)}
+                    disabled={isActive}
+                    className="min-w-0 flex-1 text-left touch-target"
+                  >
+                    <p className="truncate text-sm text-text-primary">{file.name}</p>
+                    <p className="font-jetbrains-mono text-[10px] text-text-tertiary">
+                      {formatBytes(file.size)}
+                      {isActive ? ' · Active' : ''}
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(file)}
+                    disabled={busyPath === file.path}
+                    aria-label={`Delete ${file.name}`}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-danger touch-target disabled:opacity-40"
+                  >
+                    {busyPath === file.path ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={16} />
+                    )}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </BottomSheet>
+      <ConfirmSheet
+        isOpen={pendingDelete != null}
+        onClose={() => setPendingDelete(null)}
+        title={`Delete ${pendingDelete?.name ?? 'this model'}?`}
+        message="This removes the file from the device. You'll need to re-import it to use it again."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (pendingDelete) onDelete(pendingDelete);
+        }}
+      />
+    </>
   );
 }
 
@@ -844,24 +965,98 @@ export default function SettingsPage() {
   const [importProgress, setImportProgress] = useState<ModelImportProgress | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importedModelSize, setImportedModelSize] = useState<number | null>(null);
-  const [serverStatus, setServerStatus] = useState<LocalLlmServerStatus | null>(null);
+  // isLocalBackend/serverStatus come from the shared readiness hook (it owns
+  // the actual native subscription) rather than a second independent one here
+  // — the two used to disagree on web with a leftover on-device setting (a
+  // restored Android backup opened in the browser build), where this page's
+  // own isLocalBackend stayed true forever since it never checked
+  // isNativeApp(). A rejection that never reaches the native service at all
+  // (a missing notification permission, an unavailable plugin context) can't
+  // produce a serverStatusChanged event for the hook to pick up — those
+  // surface as a toast in handleStartServer/handleStopServer below instead of
+  // trying to force an ad-hoc status onto this value.
+  const { isLocalBackend, serverStatus } = useAiReadiness();
   // Matches ChatSheet's own configured-check — a whitespace-only key/model should
   // read as "not configured" everywhere, not just where the actual request is sent.
   // Backend-aware: the local llama.cpp path needs an imported model (and a live
   // server on-device), never an API key; the cloud path keeps the key+model check.
-  const isLocalBackend = settings.aiBackend === 'localLlamaCpp';
-  // Native-only controls (import row, server row) only exist in the Android shell.
-  const localUiActive = isNativeApp() && isLocalBackend;
+  const localUiActive = isLocalBackend;
   const localModelReady = settings.localModelPath.trim().length > 0;
-  const localServerReady = isNativeApp() ? serverStatus?.state === 'ready' : false;
   const hasAiConfig = isLocalBackend
-    ? localModelReady && (!isNativeApp() || localServerReady)
+    ? localModelReady && (!isNativeApp() || serverStatus?.state === 'ready')
     : settings.ollamaApiKey.trim().length > 0 && settings.ollamaModel.trim().length > 0;
+
+  // Elapsed time while the model is loading — LiteRT-LM's NPU/GPU/CPU fallback
+  // walk can take minutes with otherwise zero feedback (no percent, no stage).
+  // Resets every time a fresh 'loading' state begins.
+  const [loadElapsedSec, setLoadElapsedSec] = useState(0);
+  useEffect(() => {
+    if (serverStatus?.state !== 'loading') return;
+    const startedAt = Date.now();
+    // Ticks only from inside the interval callback (never synchronously in the
+    // effect body) — a fresh loading session may show up to 1s of the previous
+    // session's stale elapsed count before the first tick corrects it, which
+    // is an acceptable cosmetic gap for an already-approximate timer.
+    const interval = setInterval(
+      () => setLoadElapsedSec(Math.floor((Date.now() - startedAt) / 1000)),
+      1000
+    );
+    return () => clearInterval(interval);
+  }, [serverStatus?.state]);
+
+  // Persist the last-observed vision capability so Settings can show
+  // "Vision available"/"Text-only" without starting the server and waiting
+  // out a full load just to find out — from the second session on.
+  useEffect(() => {
+    if (serverStatus?.state === 'ready' && settings.localModelVision !== serverStatus.visionAvailable) {
+      updateSettings({ localModelVision: serverStatus.visionAvailable });
+    }
+  }, [serverStatus?.state, serverStatus?.visionAvailable, settings.localModelVision, updateSettings]);
+
+  // Always-on native status, independent of isLocalBackend — the readiness
+  // hook above deliberately nulls its own serverStatus once the backend
+  // switches to cloud (correct for chat, which shouldn't care about a local
+  // server the user isn't using), but that means switching to cloud with the
+  // on-device server still running leaves it running with a foreground
+  // notification and no in-app way to see or stop it. This is a second,
+  // narrower subscription that exists specifically to catch that case.
+  const [rawServerStatus, setRawServerStatus] = useState<LocalLlmServerStatus | null>(null);
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    let cancelled = false;
+    let remove: (() => void) | undefined;
+    void (async () => {
+      const { getServerStatus, addServerStatusChangedListener } = await import('../lib/native/localLlm');
+      if (cancelled) return;
+      const apply = (status: LocalLlmServerStatus) => {
+        if (!cancelled) setRawServerStatus(status);
+      };
+      const handle = await addServerStatusChangedListener(apply);
+      if (cancelled) {
+        void handle.remove();
+        return;
+      }
+      remove = () => void handle.remove();
+      void getServerStatus().then(apply).catch(() => {});
+    })();
+    return () => {
+      cancelled = true;
+      remove?.();
+    };
+  }, []);
+  const orphanedServerRunning =
+    !isLocalBackend &&
+    isNativeApp() &&
+    (rawServerStatus?.state === 'ready' || rawServerStatus?.state === 'loading');
+
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [activeTab, setActiveTab] = useState<SettingsTab>('preferences');
 
   // Sheet/modal states
   const [formatSheetOpen, setFormatSheetOpen] = useState(false);
+  const [modelFilesSheetOpen, setModelFilesSheetOpen] = useState(false);
+  const [modelFiles, setModelFiles] = useState<ModelFile[] | null>(null);
+  const [modelFilesBusyPath, setModelFilesBusyPath] = useState<string | null>(null);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [attributionOpen, setAttributionOpen] = useState(false);
   const [creditsOpen, setCreditsOpen] = useState(false);
@@ -873,8 +1068,6 @@ export default function SettingsPage() {
   const [hasOpenedChat, setHasOpenedChat] = useState(false);
   const [showOfflineToast, setShowOfflineToast] = useState(false);
 
-  // Export state
-  const [exportMessage, setExportMessage] = useState('');
   const restoreInputRef = useRef<HTMLInputElement>(null);
 
   // Theme
@@ -937,39 +1130,10 @@ export default function SettingsPage() {
   // Track the on-device llama-server's live state (native + local backend only).
   // No-ops in the browser — the native module is imported dynamically so the
   // web/PWA bundle never pulls it in (same convention as ChatSheet).
-  useEffect(() => {
-    if (!isNativeApp() || !isLocalBackend) return;
-    let cancelled = false;
-    let remove: (() => void) | undefined;
-    void (async () => {
-      const { getServerStatus, addServerStatusChangedListener } = await import(
-        '../lib/native/localLlm'
-      );
-      if (cancelled) return;
-      const apply = (status: LocalLlmServerStatus) => {
-        if (!cancelled) setServerStatus(status);
-      };
-      const handle = await addServerStatusChangedListener(apply);
-      if (cancelled) {
-        void handle.remove();
-        return;
-      }
-      remove = () => void handle.remove();
-      // Snapshot first — serverStatusChanged only fires on transitions, so a server
-      // already ready before Settings opened would otherwise never surface.
-      void getServerStatus().then(apply).catch(() => {});
-    })();
-    return () => {
-      cancelled = true;
-      remove?.();
-    };
-  }, [isLocalBackend]);
-
   // Export all teams
   const handleExport = useCallback(() => {
     if (teams.length === 0) {
-      setExportMessage('No teams to export!');
-      setTimeout(() => setExportMessage(''), 2000);
+      toast.error('No teams to export!');
       return;
     }
     const data = JSON.stringify(teams, null, 2);
@@ -982,8 +1146,7 @@ export default function SettingsPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    setExportMessage('Teams exported!');
-    setTimeout(() => setExportMessage(''), 2000);
+    toast.success('Teams exported!');
   }, [teams]);
 
   // Import teams
@@ -1003,16 +1166,15 @@ export default function SettingsPage() {
             for (const team of data) {
               useStore.getState().importTeam(team);
             }
-            setExportMessage(`${data.length} teams imported!`);
+            toast.success(`${data.length} teams imported!`);
           } else if (data && typeof data === 'object') {
             // Single team
             useStore.getState().importTeam(data);
-            setExportMessage('Team imported!');
+            toast.success('Team imported!');
           }
         } catch {
-          setExportMessage('Invalid file format');
+          toast.error('Invalid file format');
         }
-        setTimeout(() => setExportMessage(''), 2000);
       };
       reader.readAsText(file);
     };
@@ -1056,8 +1218,7 @@ export default function SettingsPage() {
     a.download = `pocketforge-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setExportMessage('Full App Backup downloaded successfully!');
-    setTimeout(() => setExportMessage(''), 3000);
+    toast.success('Full App Backup downloaded successfully!');
   }, []);
 
   // Import Full Backup
@@ -1088,11 +1249,10 @@ export default function SettingsPage() {
           localStorage.removeItem(NUZLOCKE_STORAGE_KEY);
         }
         for (const key of LEGACY_NUZLOCKE_STORAGE_KEYS) localStorage.removeItem(key);
-        setExportMessage('Backup restored! Reloading app...');
+        toast.success('Backup restored! Reloading app...');
         setTimeout(() => window.location.reload(), 1200);
       } catch {
-        setExportMessage('Invalid backup JSON file.');
-        setTimeout(() => setExportMessage(''), 3000);
+        toast.error('Invalid backup JSON file.');
       }
     };
     reader.onloadend = () => {
@@ -1105,30 +1265,50 @@ export default function SettingsPage() {
   const handleClearAll = useCallback(() => {
     localStorage.removeItem(APP_STORAGE_KEY);
     localStorage.removeItem(NUZLOCKE_STORAGE_KEY);
+    localStorage.removeItem(CHAT_STORAGE_KEY);
     for (const key of LEGACY_NUZLOCKE_STORAGE_KEYS) localStorage.removeItem(key);
     window.location.reload();
   }, []);
 
   // Check the app-scoped Service Worker without deleting user data or origin caches.
   const handleForceUpdateCache = useCallback(async () => {
-    setExportMessage('Checking for the latest app version...');
+    const id = toast.loading('Checking for the latest app version...');
     try {
       const result = await checkForAppUpdate();
       if (result === 'updated') {
-        setExportMessage('Update installed. Reloading...');
+        toast.success('Update installed. Reloading...', { id });
       } else if (result === 'current') {
-        setExportMessage('PocketForge is already up to date.');
+        toast.success('PocketForge is already up to date.', { id });
       } else if (result === 'offline') {
-        setExportMessage('Connect to the internet to check for updates.');
+        toast.error('Connect to the internet to check for updates.', { id });
       } else {
-        setExportMessage('Updates are unavailable in this browser.');
+        toast.error('Updates are unavailable in this browser.', { id });
       }
     } catch (e) {
       console.warn('App update check failed:', e);
-      setExportMessage('Could not check for updates. Please try again.');
+      toast.error('Could not check for updates. Please try again.', { id });
     }
-    setTimeout(() => setExportMessage(''), 3000);
   }, []);
+
+  // A running server keeps serving whatever model it already loaded — without
+  // this, switching the selected/imported model while the server is up would
+  // leave Settings and chat both looking like the new model is active while
+  // requests are still answered by the old one. Stop-and-require-a-restart
+  // (matching this page's "server never starts implicitly" rule) instead of
+  // trying to hot-swap.
+  const stopRunningServerIfNeeded = useCallback(async () => {
+    if (serverStatus?.state !== 'ready' && serverStatus?.state !== 'loading') return;
+    try {
+      const { stopServer } = await import('../lib/native/localLlm');
+      await stopServer();
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : 'Could not stop the running server — restart it manually before using the new model.'
+      );
+    }
+  }, [serverStatus?.state]);
 
   // On-device model import: SAF picker → app-private storage (native only). The
   // result commits straight to settings on completion — no local draft needed.
@@ -1139,51 +1319,129 @@ export default function SettingsPage() {
     try {
       const { pickModelFile } = await import('../lib/native/localLlm');
       const result = await pickModelFile();
+      await stopRunningServerIfNeeded();
       setImportedModelSize(result.size);
-      updateSettings({ localModelPath: result.path, localModelName: result.name });
-    } catch {
-      // SAF picker cancelled or the copy failed — leave any previous model untouched.
+      updateSettings({
+        localModelPath: result.path,
+        localModelName: result.name,
+        localModelVision: undefined,
+      });
+    } catch (e) {
+      // A plain cancel (the user backed out of the SAF picker) is a normal
+      // outcome, not a failure — everything else (bad magic bytes, unsupported
+      // .litertlm format version, disk-full mid-copy, etc.) is a real,
+      // already user-worded native rejection that was previously discarded
+      // silently, leaving the row to revert to "No model imported" with no
+      // explanation at all.
+      const message = e instanceof Error ? e.message : String(e);
+      if (!/picker was cancelled/i.test(message)) {
+        toast.error(message);
+      }
     } finally {
       setIsImporting(false);
     }
-  }, [isImporting, updateSettings]);
+  }, [isImporting, updateSettings, stopRunningServerIfNeeded]);
+
+  const handleSelectModelFile = useCallback(
+    async (file: ModelFile) => {
+      await stopRunningServerIfNeeded();
+      setImportedModelSize(file.size);
+      updateSettings({ localModelPath: file.path, localModelName: file.name, localModelVision: undefined });
+      setModelFilesSheetOpen(false);
+    },
+    [updateSettings, stopRunningServerIfNeeded]
+  );
+
+  // Fetched on the "Manage models" row's own click (see handleOpenModelFiles)
+  // rather than in an effect reacting to modelFilesSheetOpen — a real event
+  // handler, not an effect, so there's no synchronous-setState-in-effect
+  // concern regardless of where the setState calls land in the async chain.
+  const refreshModelFiles = useCallback(async () => {
+    try {
+      const { listModelFiles } = await import('../lib/native/localLlm');
+      const { files } = await listModelFiles();
+      setModelFiles(files);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not list imported models');
+      setModelFiles([]);
+    }
+  }, []);
+
+  const handleOpenModelFiles = useCallback(() => {
+    setModelFilesSheetOpen(true);
+    setModelFiles(null);
+    void refreshModelFiles();
+  }, [refreshModelFiles]);
+
+  const handleDeleteModelFile = useCallback(
+    (file: ModelFile) => {
+      setModelFilesBusyPath(file.path);
+      void (async () => {
+        try {
+          const { deleteModelFile } = await import('../lib/native/localLlm');
+          await deleteModelFile(file.path);
+          toast.success(`Deleted ${file.name}`);
+          // The native side only refuses this while the file is the one
+          // actively ready/loading — deleting the *selected* file while the
+          // server is merely stopped is allowed, and without this Settings
+          // would keep pointing Start at a path that no longer exists.
+          if (file.path === settings.localModelPath) {
+            setImportedModelSize(null);
+            updateSettings({ localModelPath: '', localModelName: '', localModelVision: undefined });
+          }
+          await refreshModelFiles();
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : 'Could not delete the model file');
+        } finally {
+          setModelFilesBusyPath(null);
+        }
+      })();
+    },
+    [refreshModelFiles, settings.localModelPath, updateSettings]
+  );
 
   // Server start/stop are explicit user actions only — the service never boots
   // implicitly from Settings (the chat sheet expects it already running).
   const handleStartServer = useCallback(async () => {
     if (!isNativeApp()) return;
     if (!localModelReady) {
-      setExportMessage('Import a GGUF model first');
-      setTimeout(() => setExportMessage(''), 3000);
+      // toast, not setExportMessage: that banner renders at the top of the
+      // page (several sections above this AI card), so a user who just
+      // tapped Start here would very likely never see it.
+      toast.error('Import a model first (.gguf or .litertlm)');
       return;
     }
     const { startServer } = await import('../lib/native/localLlm');
-    // Resolves immediately with 'loading'; readiness arrives via the
-    // serverStatusChanged listener. A failure still lands as an error status —
-    // applied directly so an immediate error (permission denied, missing model)
-    // is never silently swallowed.
+    // Resolves immediately with 'loading'; readiness arrives via the shared
+    // readiness hook's serverStatusChanged subscription. A rejection here
+    // (permission denied, plugin context gone) means the native service never
+    // transitioned state at all, so no such event is coming — a toast is the
+    // only way this failure reaches the user.
     try {
-      const status = await startServer(settings.localModelPath);
-      setServerStatus(status);
+      // A denied notification-permission request (Android 13+, required before a
+      // foreground service can start) resolves with state:'error' rather than
+      // rejecting — dispatchStart's own rejections cover everything else, but this
+      // one path needs its own check or it'd silently do nothing.
+      const result = await startServer(settings.localModelPath);
+      if (result.state === 'error') {
+        toast.error(result.error ?? 'Failed to start server');
+      }
     } catch (e) {
-      // Native call failed entirely — surface the rejection reason rather than
-      // swallowing it; the next serverStatusChanged event or getServerStatus
-      // snapshot still reports the true state.
-      setServerStatus({
-        state: 'error',
-        error: e instanceof Error ? e.message : 'Failed to start server',
-      });
+      toast.error(e instanceof Error ? e.message : 'Failed to start server');
     }
-  }, [localModelReady, setExportMessage, settings.localModelPath]);
+  }, [localModelReady, settings.localModelPath]);
 
   const handleStopServer = useCallback(async () => {
     if (!isNativeApp()) return;
     const { stopServer } = await import('../lib/native/localLlm');
     try {
-      const status = await stopServer();
-      setServerStatus(status);
-    } catch {
-      // Ignored — the serverStatusChanged event still lands when the service stops.
+      await stopServer();
+    } catch (e) {
+      // The serverStatusChanged event usually still lands even on a rejected
+      // call, but if the plugin context is gone (LocalLlmPlugin.kt's teardown
+      // case) that event never arrives either — a toast is the only way this
+      // failure reaches the user, so the Stop tap doesn't silently do nothing.
+      toast.error(e instanceof Error ? e.message : 'Failed to stop server');
     }
   }, []);
 
@@ -1194,10 +1452,22 @@ export default function SettingsPage() {
         ? `Ready · port ${serverStatus.port}`
         : 'Ready'
       : serverStatus.state === 'loading'
-        ? 'Loading model…'
+        ? `Loading model… ${formatElapsed(loadElapsedSec)}`
         : serverStatus.state === 'error'
-          ? serverStatus.error || 'Error'
+          ? friendlyServerErrorHeadline(serverStatus.error || 'Error')
           : 'Stopped';
+
+  // Human-readable form of InferenceEngine.backendId (e.g. "litertLm:GPU",
+  // "llamaCpp") for the subtitles below — undefined until the server has
+  // actually loaded something, since which engine wins isn't knowable before
+  // that (docs/litertlm-android-adapter.md §4.1's NPU/GPU/CPU fallback).
+  const backendDisplayName = (() => {
+    const backend = serverStatus?.backend;
+    if (!backend) return null;
+    if (backend === 'llamaCpp') return 'llama.cpp';
+    if (backend.startsWith('litertLm:')) return `LiteRT-LM · ${backend.slice('litertLm:'.length)}`;
+    return backend;
+  })();
 
   const handleFeatureOpen = useCallback((path: string) => {
     const teamId = currentTeamId && teams.some((team) => team.id === currentTeamId)
@@ -1279,21 +1549,6 @@ export default function SettingsPage() {
         )}
       </AnimatePresence>
 
-      {/* Toast messages */}
-      <AnimatePresence>
-        {exportMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center gap-2 bg-accent-primary/10 border border-accent-primary/30 rounded-xl px-3 py-2.5 mb-3"
-          >
-            <Info size={16} className="text-accent-primary shrink-0" />
-            <span className="text-[12px] text-accent-primary">{exportMessage}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <AnimatePresence mode="wait" initial={false}>
       {activeTab === 'features' ? (
         <FeaturesPanel onOpen={handleFeatureOpen} />
@@ -1356,7 +1611,7 @@ export default function SettingsPage() {
             label="Enable AI Assistant"
             subtitle={
               localUiActive
-                ? 'Chat and coaching on-device (llama.cpp)'
+                ? `Chat and coaching on-device${backendDisplayName ? ` (${backendDisplayName})` : ''}`
                 : 'Chat and coaching via Ollama Cloud'
             }
             rightElement={
@@ -1372,7 +1627,13 @@ export default function SettingsPage() {
             icon={Bot}
             iconColor="#8B5CF6"
             label="Backend"
-            subtitle={isLocalBackend ? 'On-device (llama.cpp)' : 'Ollama Cloud'}
+            subtitle={
+              isLocalBackend
+                ? backendDisplayName
+                  ? `On-device (${backendDisplayName})`
+                  : 'On-device'
+                : 'Ollama Cloud'
+            }
             rightElement={
               <div
                 className="flex items-center rounded-lg bg-bg-tertiary p-0.5"
@@ -1410,6 +1671,23 @@ export default function SettingsPage() {
               </div>
             }
           />
+          {orphanedServerRunning && (
+            <>
+              <div className="h-px bg-border-subtle mx-4" />
+              <div className="flex items-center gap-2 px-4 py-2.5">
+                <span className="flex-1 text-[11px] text-warning">
+                  On-device server is still running
+                </span>
+                <button
+                  type="button"
+                  onClick={handleStopServer}
+                  className="h-7 px-3 rounded-full text-[11px] font-medium border border-danger/40 text-danger bg-danger/10 touch-target"
+                >
+                  Stop
+                </button>
+              </div>
+            </>
+          )}
           {localUiActive ? (
             <>
               <div className="h-px bg-border-subtle mx-4" />
@@ -1419,7 +1697,14 @@ export default function SettingsPage() {
                 label="Import model"
                 subtitle={
                   isImporting
-                    ? 'Importing…'
+                    ? // isImporting flips true before the SAF picker even opens
+                      // (handleImportModel), so "Importing…" would otherwise show
+                      // while the user is still just browsing files — importProgress
+                      // only starts arriving once the native side is actually
+                      // copying bytes.
+                      importProgress
+                      ? 'Importing…'
+                      : 'Choosing file…'
                     : localModelReady
                       ? settings.localModelName
                       : 'No model imported'
@@ -1450,22 +1735,58 @@ export default function SettingsPage() {
                 </div>
               )}
               {!isImporting && localModelReady && (
-                <div className="px-4 pb-3 -mt-1">
+                <div className="px-4 pb-3 -mt-1 space-y-1">
                   <p className="text-[10px] text-text-tertiary font-jetbrains-mono break-all">
                     {importedModelSize != null && `${formatBytes(importedModelSize)} · `}
                     {settings.localModelPath}
                   </p>
+                  {/* Last-observed capability, persisted so it's visible without
+                      starting the server and waiting out a full load — hidden
+                      once the live status below is showing the same thing. */}
+                  {settings.localModelVision != null && serverStatus?.state !== 'ready' && (
+                    <p className="text-[10px] text-text-tertiary flex items-center gap-1">
+                      {settings.localModelVision ? (
+                        <Eye size={11} className="shrink-0" />
+                      ) : (
+                        <EyeOff size={11} className="shrink-0" />
+                      )}
+                      {settings.localModelVision ? 'Vision available' : 'Text-only model'}
+                    </p>
+                  )}
                 </div>
               )}
               <div className="h-px bg-border-subtle mx-4" />
+              <SettingsRow
+                icon={FolderOpen}
+                iconColor="#8B5CF6"
+                label="Manage models"
+                subtitle="See imported files and free up space"
+                rightElement={<ChevronRight size={16} className="text-text-tertiary" />}
+                onClick={handleOpenModelFiles}
+              />
+              <div className="h-px bg-border-subtle mx-4" />
               <div className="flex items-center w-full min-h-14 px-4">
-                <Cpu size={22} style={{ color: '#8B5CF6' }} className="shrink-0 mr-3" />
+                {serverStatus?.state === 'loading' ? (
+                  <Loader2 size={22} className="shrink-0 mr-3 animate-spin text-accent-primary" />
+                ) : (
+                  <Cpu size={22} style={{ color: '#8B5CF6' }} className="shrink-0 mr-3" />
+                )}
                 <div className="flex-1 min-w-0">
                   <span className="text-sm block text-text-primary">On-device server</span>
-                  <span className="text-[11px] text-text-secondary">{serverStatusLabel}</span>
+                  <span
+                    className={`text-[11px] ${
+                      serverStatus?.state === 'error' ? 'text-danger' : 'text-text-secondary'
+                    }`}
+                  >
+                    {serverStatusLabel}
+                  </span>
                 </div>
                 <div className="shrink-0 ml-2">
-                  {serverStatus?.state === 'ready' ? (
+                  {/* 'loading' shows Stop too (not a disabled Start) — this is
+                      what makes repeat Start taps during a multi-minute load a
+                      non-issue (there's no Start button to tap) while still
+                      letting a stuck load be cancelled. */}
+                  {serverStatus?.state === 'ready' || serverStatus?.state === 'loading' ? (
                     <button
                       type="button"
                       onClick={handleStopServer}
@@ -1488,6 +1809,28 @@ export default function SettingsPage() {
                   )}
                 </div>
               </div>
+              {serverStatus?.state === 'error' && serverStatus.error && (
+                <div className="px-4 pb-3 -mt-1">
+                  <details>
+                    <summary className="text-[10px] text-text-tertiary cursor-pointer">Details</summary>
+                    <p className="text-[10px] text-text-tertiary break-words mt-1">{serverStatus.error}</p>
+                  </details>
+                </div>
+              )}
+              {serverStatus?.state === 'ready' && (
+                <div className="px-4 pb-3 -mt-1">
+                  <p className="text-[10px] text-text-tertiary font-jetbrains-mono flex items-center gap-1">
+                    {serverStatus.visionAvailable ? (
+                      <Eye size={12} className="shrink-0" />
+                    ) : (
+                      <EyeOff size={12} className="shrink-0" />
+                    )}
+                    {serverStatus.visionAvailable
+                      ? 'Vision available — attach photos in Chat'
+                      : 'Vision not available — this model is text-only. Import a VL bundle to attach images.'}
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -1687,6 +2030,16 @@ export default function SettingsPage() {
         onSelect={(id) => updateSettings({ defaultFormat: id })}
       />
 
+      <ModelFilesSheet
+        isOpen={modelFilesSheetOpen}
+        onClose={() => setModelFilesSheetOpen(false)}
+        files={modelFiles}
+        activePath={settings.localModelPath}
+        busyPath={modelFilesBusyPath}
+        onSelect={handleSelectModelFile}
+        onDelete={handleDeleteModelFile}
+      />
+
       <ClearDataDialog
         isOpen={clearDialogOpen}
         onClose={() => setClearDialogOpen(false)}
@@ -1708,7 +2061,7 @@ export default function SettingsPage() {
       />
 
       {hasOpenedChat && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ChatSheetLoadingFallback />}>
           <ChatSheet isOpen={chatOpen} onClose={() => setChatOpen(false)} />
         </Suspense>
       )}

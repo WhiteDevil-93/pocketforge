@@ -4,23 +4,34 @@
 
 @layer base {
   :root {
-    /* PocketForge CSS Variables */
-    --bg-primary: #0A0E1A;
-    --bg-secondary: #111827;
-    --bg-tertiary: #1A2332;
-    --bg-elevated: #1E293B;
-    --border-subtle: #1E293B;
-    --border-active: #334155;
-    --text-primary: #F1F5F9;
-    --text-secondary: #94A3B8;
-    --text-tertiary: #64748B;
-    --accent-primary: #3B82F6;
-    --accent-secondary: #06B6D4;
-    --success: #22C55E;
-    --warning: #EAB308;
-    --danger: #EF4444;
+    /* PocketForge CSS Variables — space-separated RGB components (not a hex
+       string or an rgb()-wrapped value) so tailwind.config.js can substitute
+       Tailwind's <alpha-value> opacity-modifier syntax (bg-accent-primary/10
+       and friends, used throughout this app) via rgb(var(--x) / <alpha-value>).
+       Every direct var(--x) usage elsewhere (index.css below, sonner.tsx) is
+       wrapped in rgb(...) for exactly this reason — the bare triplet is not a
+       valid CSS color on its own. */
+    --bg-primary: 10 14 26;
+    --bg-secondary: 17 24 39;
+    --bg-tertiary: 26 35 50;
+    --bg-elevated: 30 41 59;
+    --border-subtle: 30 41 59;
+    --border-active: 51 65 85;
+    --text-primary: 241 245 249;
+    --text-secondary: 148 163 184;
+    --text-tertiary: 100 116 139;
+    --accent-primary: 59 130 246;
+    --accent-secondary: 6 182 212;
+    --success: 34 197 94;
+    --warning: 234 179 8;
+    --danger: 239 68 68;
     --surface-valid: rgba(34, 197, 94, 0.1);
     --surface-invalid: rgba(239, 68, 68, 0.1);
+
+    /* BottomNav's own height (`h-space-16` = 64px in tailwind.config.js) —
+       defined here so callers that need to size around it (Assistant.tsx)
+       read the real value instead of only ever hitting their var() fallback. */
+    --bottom-nav-height: 64px;
 
     /* Stat Colors */
     --stat-hp: #FF4444;
@@ -79,6 +90,57 @@
     --radius: 0.75rem;
   }
 
+  /* Light theme — settings.theme === 'light' stamps data-theme="light" on
+     <html> (see useTheme / Layout.tsx). Dark stays the :root default above;
+     this is an explicit override, not a prefers-color-scheme media query —
+     AppSettings.theme has no "system" option, so there is nothing to react
+     to but the user's own explicit choice. Backgrounds/borders/text invert
+     as expected. Type/stat colors (below, both here and in dark) are
+     identity colors and stay fixed in both themes.
+
+     accent/success/warning/danger are each one Tailwind palette step darker
+     than dark mode's (blue-500->600, cyan-500->700, green-500->700,
+     amber-500->700, red-500->600) rather than unchanged: these tokens are
+     used as bare foreground text throughout the app (validation states,
+     Nuzlocke counters, warning banners — not just as button/chip
+     backgrounds, where the original shade would have been fine), and
+     measuring the original values against this palette's near-white
+     bg-primary gave contrast ratios of ~1.9-3.7:1 — amber and green in
+     particular were close to invisible. Each darkened value was re-checked
+     to clear 4.5:1 (WCAG AA for normal text); recognizable as the same
+     brand hue, just legible as text now. */
+  :root[data-theme="light"] {
+    --bg-primary: 248 250 252;
+    --bg-secondary: 241 245 249;
+    --bg-tertiary: 255 255 255;
+    --bg-elevated: 255 255 255;
+    --border-subtle: 226 232 240;
+    --border-active: 148 163 184;
+    --text-primary: 15 23 42;
+    --text-secondary: 71 85 105;
+    --text-tertiary: 100 116 139;
+    --accent-primary: 37 99 235;
+    --accent-secondary: 14 116 144;
+    --success: 21 128 61;
+    --warning: 180 83 9;
+    --danger: 220 38 38;
+    --surface-valid: rgba(34, 197, 94, 0.12);
+    --surface-invalid: rgba(239, 68, 68, 0.12);
+
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+  }
+
   html, body {
     @apply bg-bg-primary text-text-primary;
     font-family: 'Inter', system-ui, sans-serif;
@@ -89,7 +151,7 @@
   }
 
   body {
-    background: radial-gradient(ellipse at 50% 0%, #111827 0%, #0A0E1A 100%);
+    background: radial-gradient(ellipse at 50% 0%, rgb(var(--bg-secondary)) 0%, rgb(var(--bg-primary)) 100%);
     min-height: 100dvh;
     margin: 0;
   }
@@ -104,17 +166,21 @@
   html {
     color-scheme: dark;
     scroll-behavior: smooth;
-    scrollbar-color: var(--border-active) var(--bg-primary);
+    scrollbar-color: rgb(var(--border-active)) rgb(var(--bg-primary));
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent-secondary);
+    outline: 2px solid rgb(var(--accent-secondary));
     outline-offset: 3px;
   }
 
   ::selection {
-    color: var(--text-primary);
-    background: rgba(59, 130, 246, 0.4);
+    color: rgb(var(--text-primary));
+    background: rgb(var(--accent-primary) / 0.4);
   }
 }
 
@@ -209,7 +275,7 @@
   .bg-stat-spe { background-color: var(--stat-spe); }
 
   .bg-gradient-app {
-    background: radial-gradient(ellipse at 50% 0%, #111827 0%, #0A0E1A 100%);
+    background: radial-gradient(ellipse at 50% 0%, rgb(var(--bg-secondary)) 0%, rgb(var(--bg-primary)) 100%);
   }
 
   .bg-gradient-card-valid {
@@ -217,7 +283,7 @@
   }
 
   .bg-gradient-nav-active {
-    background: linear-gradient(180deg, var(--accent-primary) 0%, #2563EB 100%);
+    background: linear-gradient(180deg, rgb(var(--accent-primary)) 0%, #2563EB 100%);
   }
 
   /* Bottom sheet backdrop */
@@ -230,6 +296,24 @@
   .touch-target {
     min-height: 48px;
     min-width: 48px;
+  }
+
+  /* Expands a small chip/pill's *hit area* to >=44px tall via a pseudo-element,
+     without changing its visual size — for rows of compact filter/toggle
+     chips where growing the box itself would blow the layout. Needs
+     `relative` on the element (or add it here) since the pseudo is
+     positioned against it. */
+  .tap-target-y {
+    position: relative;
+  }
+  .tap-target-y::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    min-height: 44px;
+    transform: translateY(-50%);
   }
 
   /* Safe area bottom padding */

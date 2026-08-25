@@ -743,7 +743,7 @@ IVs: 0 Atk
   );
 
   // Every method the TS bridge calls must exist on the Kotlin side, and vice versa.
-  for (const method of ['ping', 'pickModelFile', 'chatOnce', 'startServer', 'stopServer', 'getServerStatus']) {
+  for (const method of ['ping', 'pickModelFile', 'chatOnce', 'startServer', 'stopServer', 'getServerStatus', 'listModelFiles', 'deleteModelFile']) {
     assert(pluginKt.includes(`fun ${method}(`), `LocalLlmPlugin.kt must implement ${method}`);
     assert(localLlmTs.includes(`${method}(`), `localLlm.ts bridge must expose ${method}`);
   }

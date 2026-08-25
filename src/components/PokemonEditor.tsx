@@ -2,8 +2,10 @@
 // PocketForge — Full-Screen Pokemon Editor
 // ============================================================================
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { pushBackGuard } from '../hooks/use-back-guard';
 import {
   ChevronLeft,
   ChevronDown,
@@ -17,6 +19,7 @@ import {
 import PokemonSprite from './PokemonSprite';
 import TypeBadge from './TypeBadge';
 import BottomSheet from './BottomSheet';
+import ConfirmSheet from './ConfirmSheet';
 import BattleDataPanel from './battle-data/BattleDataPanel';
 import StepperInput from './StepperInput';
 import StatBar from './StatBar';
@@ -59,7 +62,7 @@ import {
   getStatColorClass,
 } from '../utils';
 import type { Pokemon, EVs, IVs } from '../types';
-import { springSnappy, transitionFast } from '../lib/motion';
+import { springSnappy, transitionFast, EASE_OUT } from '../lib/motion';
 
 export type TeammateAddResult = 'added' | 'duplicate' | 'full' | 'invalid';
 
@@ -101,18 +104,17 @@ export default function PokemonEditor({
 
   // Bottom sheet state
   const [sheet, setSheet] = useState<{
-    type: 'species' | 'ability' | 'item' | 'tera' | 'move' | 'nature' | null;
+    type: 'species' | 'ability' | 'item' | 'tera' | 'move' | 'nature' | 'optimizeSpeed' | null;
     moveIndex?: number;
   }>({ type: null });
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestedMoveToAdd, setSuggestedMoveToAdd] = useState<string | null>(null);
-  const [recommendationFeedback, setRecommendationFeedback] = useState<{
-    message: string;
-    type: 'success' | 'info';
-  } | null>(null);
+  const [optimizeSpeedTarget, setOptimizeSpeedTarget] = useState(100);
 
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showResetEVsConfirm, setShowResetEVsConfirm] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Mega Evolution active toggle (local, not persisted directly)
   const [megaActive, setMegaActive] = useState(pokemon.megaActive || false);
@@ -124,6 +126,44 @@ export default function PokemonEditor({
     setDraft({ ...pokemon });
     setMegaActive(pokemon.megaActive || false);
   }
+
+  // Unsaved-changes guard: prevPokemon (above) is the last-synced-from-prop
+  // baseline, so comparing draft/megaActive against it is exactly "has this
+  // session edited anything since it was last in sync with the saved team".
+  const isDirty =
+    JSON.stringify(draft) !== JSON.stringify(prevPokemon) ||
+    megaActive !== (prevPokemon.megaActive || false);
+
+  const handleBack = useCallback(() => {
+    if (isDirty) setShowDiscardConfirm(true);
+    else onBack();
+  }, [isDirty, onBack]);
+
+  // pushBackGuard's handler is registered once (below) and invoked from
+  // outside React's render cycle by the native backButton listener, so it
+  // needs refs rather than the closed-over isDirty/onBack from this render —
+  // refs are synced in an effect (not during render) to satisfy the
+  // no-ref-writes-during-render rule.
+  const isDirtyRef = useRef(isDirty);
+  const onBackRef = useRef(onBack);
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+    onBackRef.current = onBack;
+  }, [isDirty, onBack]);
+
+  // Hardware back on Android: PokemonEditor is a fixed-overlay, not a route,
+  // so without this the global backButton listener (use-native-shell.ts)
+  // would navigate the Builder page underneath it instead of respecting this
+  // guard — see use-back-guard.ts for why a plain second addListener can't
+  // do this safely. Always consumes back while mounted (close-or-confirm,
+  // never "fall through to page navigation").
+  useEffect(() => {
+    return pushBackGuard(() => {
+      if (isDirtyRef.current) setShowDiscardConfirm(true);
+      else onBackRef.current();
+      return true;
+    });
+  }, []);
 
   const dexEntry = useMemo(
     () => getPokemonByName(draft.species),
@@ -164,6 +204,27 @@ export default function PokemonEditor({
   const remainingEVs = getRemainingEVs(draft.evs);
   const evValid = totalEVs <= MAX_TOTAL_EVS;
 
+  // The most Speed EVs updateEV would actually accept right now, given what's
+  // already invested in the other five stats — the Optimize Speed sheet needs
+  // this to know whether its suggested evsNeeded can really be applied (see
+  // speEvBudget's use below) rather than silently clamping to less than what
+  // it told the user it was setting.
+  const speEvBudget = Math.max(0, Math.min(MAX_STAT_EVS, MAX_TOTAL_EVS - (totalEVs - draft.evs.spe)));
+
+  // Live preview for the Optimize Speed sheet — recomputed as the target
+  // stepper changes so the result is visible before the user commits to it,
+  // instead of the old prompt()/alert() pair that only showed it after.
+  // calculateMinSpeedEVs loops up to 64 times building a throwaway
+  // SmogonPokemon each time, so this is gated to only run while the sheet is
+  // actually open — otherwise it would re-run on every draft edit (a
+  // nickname keystroke, an EV step) even with the sheet closed, since draft
+  // is a dependency.
+  const optimizeSpeedResult = useMemo(
+    () =>
+      sheet.type === 'optimizeSpeed' ? calculateMinSpeedEVs(draft, optimizeSpeedTarget) : null,
+    [sheet.type, draft, optimizeSpeedTarget]
+  );
+
   // ---- Update helpers ----
   const updateField = useCallback(<K extends keyof Pokemon>(
     field: K,
@@ -182,6 +243,13 @@ export default function PokemonEditor({
         evs: { ...prev.evs, [stat]: clamped },
       };
     });
+  }, []);
+
+  const resetEVs = useCallback(() => {
+    setDraft((prev) => ({
+      ...prev,
+      evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+    }));
   }, []);
 
   const updateIV = useCallback((stat: keyof IVs, value: number) => {
@@ -236,6 +304,21 @@ export default function PokemonEditor({
       moves: set.moves.slice(0, 4),
     }));
   }, []);
+
+  // Tapping a sample set overwrites item/EVs/IVs/moves with no way back — only
+  // worth confirming once the slot actually holds something to lose; a still-
+  // essentially-blank slot (no item, no EV investment, no moves picked yet)
+  // applies immediately.
+  const [pendingSampleSet, setPendingSampleSet] = useState<SmogonSet | null>(null);
+  const handleTapSampleSet = useCallback(
+    (set: SmogonSet) => {
+      const hasExistingSetData =
+        draft.item || getTotalEVs(draft.evs) > 0 || draft.moves.some((m) => m);
+      if (hasExistingSetData) setPendingSampleSet(set);
+      else applySampleSet(set);
+    },
+    [draft.item, draft.evs, draft.moves, applySampleSet]
+  );
 
   const handleSave = useCallback(() => {
     const updates: Partial<Pokemon> = { ...draft };
@@ -329,9 +412,14 @@ export default function PokemonEditor({
     [sheet.moveIndex, updateMove]
   );
 
+  // 'success' vs 'info' previously picked between two banner colors/icons in a
+  // hand-rolled, never-auto-dismissing banner (it stayed until manually X'd or
+  // replaced by the next call) — sonner's default and success toasts cover the
+  // same distinction and dismiss on their own.
   const showRecommendationFeedback = useCallback(
     (message: string, type: 'success' | 'info' = 'success') => {
-      setRecommendationFeedback({ message, type });
+      if (type === 'success') toast.success(message);
+      else toast(message, { icon: <Sparkles size={16} /> });
     },
     [],
   );
@@ -391,7 +479,7 @@ export default function PokemonEditor({
       {/* Top App Bar */}
       <div className="shrink-0 flex items-center justify-between px-4 h-14 bg-bg-primary/95 backdrop-blur-sm border-b border-border-subtle z-10">
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="w-12 h-12 flex items-center justify-center -ml-2 touch-target"
         >
           <ChevronLeft size={24} className="text-text-primary" />
@@ -610,7 +698,7 @@ export default function PokemonEditor({
                   <motion.button
                     key={`${s.species}-${s.name}`}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => applySampleSet(s)}
+                    onClick={() => handleTapSampleSet(s)}
                     className="w-full text-left rounded-xl bg-bg-tertiary border border-border-subtle p-3 touch-target hover:border-accent-primary/50 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -676,27 +764,6 @@ export default function PokemonEditor({
                 <p className="font-caption text-text-tertiary">
                   Tap a recommendation to apply it.
                 </p>
-                {recommendationFeedback && (
-                  <div
-                    role="status"
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 font-caption ${
-                      recommendationFeedback.type === 'success'
-                        ? 'bg-success/10 text-success'
-                        : 'bg-accent-primary/10 text-accent-primary'
-                    }`}
-                  >
-                    {recommendationFeedback.type === 'success' ? <Check size={14} /> : <Sparkles size={14} />}
-                    <span>{recommendationFeedback.message}</span>
-                    <button
-                      type="button"
-                      onClick={() => setRecommendationFeedback(null)}
-                      className="ml-auto p-1"
-                      aria-label="Dismiss message"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
                 {/* Top Moves */}
                 {usageData.moves.length > 0 && (
                   <div>
@@ -916,31 +983,20 @@ export default function PokemonEditor({
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      const target = prompt('Enter target Speed stat to outspeed (e.g. 150):');
-                      if (target) {
-                        const targetNum = parseInt(target, 10);
-                        if (!isNaN(targetNum)) {
-                          const opt = calculateMinSpeedEVs(draft, targetNum);
-                          if (opt.success) {
-                            updateEV('spe', opt.evsNeeded);
-                            alert(opt.description);
-                          } else {
-                            alert(opt.description);
-                          }
-                        }
-                      }
-                    }}
+                    onClick={() => setSheet({ type: 'optimizeSpeed' })}
                     className="font-caption text-accent-primary touch-target px-2 py-1"
                   >
                     Optimize Speed
                   </button>
                   <button
                     onClick={() => {
-                      setDraft((prev) => ({
-                        ...prev,
-                        evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
-                      }));
+                      const hasNonZeroEVs = Object.values(draft.evs).some((v) => v > 0);
+                      if (hasNonZeroEVs) {
+                        setShowResetEVsConfirm(true);
+                      } else {
+                        // Already all zero — nothing to confirm away.
+                        resetEVs();
+                      }
                     }}
                     className="font-caption text-danger touch-target px-2 py-1"
                   >
@@ -1343,36 +1399,117 @@ export default function PokemonEditor({
         </div>
       </BottomSheet>
 
-      {/* Delete Confirmation Sheet */}
+      {/* Optimize Speed */}
       <BottomSheet
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        title={`Delete ${draft.species}?`}
+        isOpen={sheet.type === 'optimizeSpeed'}
+        onClose={() => setSheet({ type: null })}
+        title="Optimize Speed"
         showSearch={false}
       >
         <div className="space-y-4 pt-2">
           <p className="font-body text-text-secondary text-center">
-            This Pokemon will be removed from your team. This action cannot be undone.
+            Find the minimum Speed EVs needed to outspeed a target Speed stat.
           </p>
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            onClick={() => {
-              setShowDeleteConfirm(false);
-              onDelete();
-            }}
-            className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-danger font-body-medium text-white touch-target"
-          >
-            <Trash2 size={18} />
-            Delete {draft.species}
-          </motion.button>
+          <div className="flex flex-col items-center gap-2">
+            <span className="font-caption text-text-secondary">Target Speed to outspeed</span>
+            <StepperInput
+              value={optimizeSpeedTarget}
+              min={1}
+              max={999}
+              onChange={setOptimizeSpeedTarget}
+            />
+          </div>
+          {optimizeSpeedResult && (
+            <>
+              <p
+                className={`font-body text-center ${
+                  optimizeSpeedResult.success ? 'text-text-primary' : 'text-danger'
+                }`}
+              >
+                {optimizeSpeedResult.description}
+              </p>
+              {(() => {
+                // evsNeeded can exceed what's actually left in the 508-EV
+                // budget once the other five stats are accounted for —
+                // applying less than that wouldn't actually outspeed the
+                // target, so this disables Apply and says so rather than
+                // silently letting updateEV's own clamp apply a smaller,
+                // insufficient amount while the toast still claimed success.
+                const fits = optimizeSpeedResult.success && optimizeSpeedResult.evsNeeded <= speEvBudget;
+                return (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    disabled={!fits}
+                    onClick={() => {
+                      updateEV('spe', optimizeSpeedResult.evsNeeded);
+                      setSheet({ type: null });
+                      toast.success(`Speed EVs set to ${optimizeSpeedResult.evsNeeded}.`);
+                    }}
+                    className="w-full h-12 flex items-center justify-center rounded-xl font-body-medium text-white bg-accent-primary touch-target disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {optimizeSpeedResult.success && !fits
+                      ? `Only ${speEvBudget} Spe EVs available`
+                      : `Apply ${optimizeSpeedResult.evsNeeded} Spe EVs`}
+                  </motion.button>
+                );
+              })()}
+            </>
+          )}
           <button
-            onClick={() => setShowDeleteConfirm(false)}
+            onClick={() => setSheet({ type: null })}
             className="w-full h-12 flex items-center justify-center rounded-xl bg-bg-tertiary font-body text-text-primary touch-target"
           >
             Cancel
           </button>
         </div>
       </BottomSheet>
+
+      {/* Delete Confirmation Sheet */}
+      <ConfirmSheet
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title={`Delete ${draft.species}?`}
+        message="This Pokemon will be removed from your team. This action cannot be undone."
+        confirmLabel={`Delete ${draft.species}`}
+        onConfirm={onDelete}
+      />
+
+      {/* Reset EVs Confirmation Sheet — only shown when there's actually
+          something non-zero to lose (see the Reset EVs button above). */}
+      <ConfirmSheet
+        isOpen={showResetEVsConfirm}
+        onClose={() => setShowResetEVsConfirm(false)}
+        title="Reset EVs?"
+        message="All EV values for this Pokemon will be set back to 0."
+        confirmLabel="Reset EVs"
+        onConfirm={resetEVs}
+      />
+
+      {/* Load Set Confirmation Sheet — only shown when the current slot
+          already has item/EV/move data worth losing (see handleTapSampleSet). */}
+      <ConfirmSheet
+        isOpen={pendingSampleSet !== null}
+        onClose={() => setPendingSampleSet(null)}
+        title="Load this set?"
+        message="It replaces the current item, EVs, IVs, and moves."
+        confirmLabel="Load Set"
+        danger={false}
+        onConfirm={() => {
+          if (pendingSampleSet) applySampleSet(pendingSampleSet);
+        }}
+      />
+
+      {/* Discard Changes Confirmation Sheet — back chevron and Android hardware
+          back both route through handleBack / the pushBackGuard handler above,
+          so this covers both. */}
+      <ConfirmSheet
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        title="Discard changes?"
+        message="Your edits to this Pokemon haven't been saved."
+        confirmLabel="Discard"
+        onConfirm={onBack}
+      />
     </motion.div>
   );
 }
@@ -1393,10 +1530,13 @@ function Accordion({
   children: React.ReactNode;
   rightLabel?: string;
 }) {
+  const contentId = useId();
   return (
     <div className="rounded-2xl bg-bg-secondary border border-border-subtle overflow-hidden">
       <button
         onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={contentId}
         className="w-full h-[52px] flex items-center justify-between px-4 touch-target"
       >
         <span className="font-subtitle text-text-primary">{title}</span>
@@ -1406,7 +1546,7 @@ function Accordion({
           )}
           <motion.div
             animate={{ rotate: expanded ? 180 : 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }}
+            transition={{ duration: 0.2, ease: EASE_OUT }}
           >
             <ChevronDown size={20} className="text-text-tertiary" />
           </motion.div>
@@ -1415,6 +1555,7 @@ function Accordion({
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
+            id={contentId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

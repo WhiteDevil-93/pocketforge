@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TYPE_NAMES, getTypeColor } from '../data/typesData';
 import { Check, X, AlertTriangle } from 'lucide-react';
+import { EASE_BOUNCE } from '../lib/motion';
 
 interface TypeCoverageChartProps {
   coverage: Record<string, boolean>;
@@ -33,7 +34,7 @@ function TypeSlot({
       transition={{
         delay: index * 0.03,
         duration: 0.3,
-        ease: [0.34, 1.56, 0.64, 1] as [number, number, number, number],
+        ease: EASE_BOUNCE,
       }}
       whileTap={{ scale: 0.9 }}
       onClick={onTap}

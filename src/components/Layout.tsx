@@ -6,16 +6,23 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import BottomNav from './BottomNav';
+import { Toaster } from './ui/sonner';
 import { transitionFast } from '../lib/motion';
+import { useTheme } from '../hooks/use-theme';
+import { useNavigationDepthTracking } from '../hooks/use-navigation-depth';
+import { useEscapeConsumesBackGuard } from '../hooks/use-back-guard';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 /** Routes that should NOT show the bottom navigation */
-const HIDE_NAV_ROUTES = ['/onboarding', '/welcome'];
+const HIDE_NAV_ROUTES = ['/onboarding'];
 
 export default function Layout({ children }: LayoutProps) {
+  useTheme();
+  useNavigationDepthTracking();
+  useEscapeConsumesBackGuard();
   const location = useLocation();
   const showNav = !HIDE_NAV_ROUTES.some(route => location.pathname === route);
 
@@ -54,6 +61,8 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Bottom Navigation */}
         {showNav && <BottomNav />}
+
+        <Toaster />
       </div>
     </MotionConfig>
   );

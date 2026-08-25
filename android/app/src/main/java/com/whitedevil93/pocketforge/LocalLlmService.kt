@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -13,6 +14,10 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.whitedevil93.pocketforge.engine.InferenceEngine
+import com.whitedevil93.pocketforge.engine.LiteRtLmEngine
+import com.whitedevil93.pocketforge.engine.LlamaCppEngine
+import com.whitedevil93.pocketforge.engine.ModelFormat
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -26,7 +31,7 @@ import java.net.Socket
 import java.nio.charset.StandardCharsets
 
 /**
- * Streaming callback invoked from nativeGenerate on the HTTP worker thread.
+ * Streaming callback invoked from InferenceEngine.generate on the HTTP worker thread.
  * Each invocation is written to the client as ONE SSE frame by the service.
  */
 interface GenerationCallback {
@@ -53,13 +58,27 @@ class LocalLlmService : Service() {
             private set
         @Volatile var error: String? = null
             private set
-        @Volatile var nativeHandle: Long = 0
+        /** Which InferenceEngine backend served the current 'ready' state, e.g.
+         *  "llamaCpp" or "litertLm:GPU" — null outside 'ready'. Surfaced to the UI so
+         *  "running on NPU" vs "fell back to CPU" is visible, and so sampler settings
+         *  showing as inert on NPU (docs/litertlm-android-adapter.md §4.2) has an
+         *  explanation on screen rather than looking broken. */
+        @Volatile var backend: String? = null
             private set
-
+        /** Whether the loaded engine can accept image content — see
+         *  docs/litertlm-vl-integration.md §8. Always false outside 'ready'. */
+        @Volatile var visionAvailable: Boolean = false
+            private set
         /** True only while a LocalLlmService instance is actually alive (onCreate→onDestroy).
          *  Distinguishes a genuinely running server from a stale companion state left
          *  behind when the OS destroyed the service without killing the process. */
         @Volatile var isServiceRunning: Boolean = false
+            private set
+        /** Absolute path of the model this instance is loading/serving, set at the
+         *  top of [handleStart] and cleared in [onDestroy] — the single source of
+         *  truth LocalLlmPlugin.deleteModelFile checks before allowing a delete, so
+         *  the file backing a live server can't be pulled out from under it. */
+        @Volatile var currentModelPath: String? = null
             private set
 
         /** True between start() dispatching the FGS intent and the new instance's onCreate. */
@@ -86,13 +105,13 @@ class LocalLlmService : Service() {
             if (instance == null || !isServiceRunning) {
                 transition("error", null, "The server stopped while loading the model — tap Start to retry")
             } else {
-                instance.abortLoad(
+                instance.forceStop(
                     "Model load timed out after ${LOAD_WATCHDOG_MS / 60000} minutes — tap Start to retry"
                 )
             }
         }
 
-        var statusListener: ((String, Int?, String?) -> Unit)? = null
+        var statusListener: ((String, Int?, String?, String?, Boolean) -> Unit)? = null
 
         fun getStatusSnapshot(): Map<String, Any?> {
             // If the service instance is gone, 'ready'/'loading' are stale: report
@@ -107,6 +126,8 @@ class LocalLlmService : Service() {
             if (effectiveState != "stopped") {
                 port?.let { m["port"] = it }
                 error?.let { m["error"] = it }
+                backend?.let { m["backend"] = it }
+                m["visionAvailable"] = visionAvailable
             }
             return m
         }
@@ -158,12 +179,23 @@ class LocalLlmService : Service() {
             }
         }
 
-        fun transition(newState: String, newPort: Int?, newError: String?) {
+        fun transition(
+            newState: String,
+            newPort: Int?,
+            newError: String?,
+            newBackend: String? = null,
+            newVisionAvailable: Boolean = false,
+        ) {
             state = newState
             port = newPort
             error = newError
-            Log.i(TAG, "state=$newState port=$newPort error=$newError")
-            statusListener?.invoke(newState, newPort, newError)
+            backend = newBackend
+            visionAvailable = newVisionAvailable
+            Log.i(
+                TAG,
+                "state=$newState port=$newPort error=$newError backend=$newBackend visionAvailable=$newVisionAvailable"
+            )
+            statusListener?.invoke(newState, newPort, newError, newBackend, newVisionAvailable)
         }
     }
 
@@ -171,6 +203,14 @@ class LocalLlmService : Service() {
     private var acceptThread: Thread? = null
     private var loadThread: Thread? = null
     @Volatile private var isStopping = false
+    @Volatile private var engine: InferenceEngine? = null
+
+    /** Closes the engine if one is loaded and clears the reference. Idempotent —
+     *  InferenceEngine.close() is documented safe to call more than once. */
+    private fun teardownEngine() {
+        engine?.close()
+        engine = null
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -197,15 +237,14 @@ class LocalLlmService : Service() {
         isStopping = true
         stopHttpServer()
         interruptLoad()
-        nativeCancel(nativeHandle)
-        nativeUnloadModel(nativeHandle)
-        nativeFreeModel(nativeHandle)
-        nativeHandle = 0
+        engine?.cancel()
+        teardownEngine()
         // Keep an error visible: stopSelf() after a failed load must not erase
         // the reason the server is down.
         if (state != "error") transition("stopped", null, null)
         isServiceRunning = false
         serviceInstance = null
+        currentModelPath = null
         super.onDestroy()
     }
 
@@ -229,6 +268,7 @@ class LocalLlmService : Service() {
             stopSelf()
             return
         }
+        currentModelPath = modelPath
         if (state != "loading") transition("loading", null, null)
         isStopping = false
         startForegroundWithType()
@@ -244,15 +284,15 @@ class LocalLlmService : Service() {
                 if (file.length() < 1024 * 1024) {
                     throw IllegalStateException("Model file too small (${file.length()} bytes)")
                 }
-                val handle = nativeLoadModel(modelPath)
-                if (handle == 0L) {
-                    throw IllegalStateException("Native model load failed for $modelPath")
+                val format = ModelFormat.entries.firstOrNull {
+                    modelPath.endsWith(".${it.extension}", ignoreCase = true)
+                } ?: throw IllegalStateException("Unrecognized model file extension: $modelPath")
+                engine = when (format) {
+                    ModelFormat.GGUF -> LlamaCppEngine.load(modelPath)
+                    ModelFormat.LITERTLM -> LiteRtLmEngine.load(modelPath, applicationContext)
                 }
-                nativeHandle = handle
                 if (isStopping || Thread.currentThread().isInterrupted) {
-                    nativeUnloadModel(nativeHandle)
-                    nativeFreeModel(nativeHandle)
-                    nativeHandle = 0
+                    teardownEngine()
                     if (state != "error") transition("stopped", null, null)
                     stopSelf()
                     return@Thread
@@ -260,28 +300,22 @@ class LocalLlmService : Service() {
                 startHttpServer(chosenPort)
                 if (isStopping) {
                     stopHttpServer()
-                    nativeUnloadModel(nativeHandle)
-                    nativeFreeModel(nativeHandle)
-                    nativeHandle = 0
+                    teardownEngine()
                     if (state != "error") transition("stopped", null, null)
                     stopSelf()
                     return@Thread
                 }
-                transition("ready", chosenPort, null)
+                transition("ready", chosenPort, null, engine?.backendId, engine?.visionAvailable ?: false)
                 updateNotification()
                 Log.i(TAG, "ready on port $chosenPort")
             } catch (e: InterruptedException) {
                 Log.i(TAG, "load interrupted")
-                nativeUnloadModel(nativeHandle)
-                nativeFreeModel(nativeHandle)
-                nativeHandle = 0
+                teardownEngine()
                 if (state != "error") transition("stopped", null, null)
                 stopSelf()
             } catch (e: Throwable) {
                 Log.e(TAG, "load failed", e)
-                nativeUnloadModel(nativeHandle)
-                nativeFreeModel(nativeHandle)
-                nativeHandle = 0
+                teardownEngine()
                 stopHttpServer()
                 transition("error", null, e.message ?: "Failed to load model")
                 updateNotification()
@@ -295,13 +329,15 @@ class LocalLlmService : Service() {
         isStopping = true
         interruptLoad()
         stopHttpServer()
-        // Abort any in-flight generation: nativeCancel only flips the atomic
-        // flag, the decode loop observes it between tokens and exits, then
-        // unload/free (which take the same mutex) can proceed safely.
-        nativeCancel(nativeHandle)
-        nativeUnloadModel(nativeHandle)
-        nativeFreeModel(nativeHandle)
-        nativeHandle = 0
+        // Abort any in-flight generation: cancel() only flips the atomic flag
+        // on the native side, and the decode loop observes it between tokens
+        // and exits. close()/teardownEngine() then wait on the same native
+        // generateMutex nativeGenerate holds for its whole call (not just the
+        // decode loop — see the lock's acquisition site in pokekit-llm.cpp),
+        // so it can't free the model out from under a request that's still in
+        // its JSON-parse/prompt-build setup instead of decoding yet.
+        engine?.cancel()
+        teardownEngine()
         transition("stopped", null, null)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -312,20 +348,47 @@ class LocalLlmService : Service() {
         loadThread = null
     }
 
-    /** Watchdog path: a load that outlives its generous budget is declared failed,
-     *  the load thread is torn down, and the UI gets a retryable 'error' state. */
-    private fun abortLoad(message: String) {
-        Log.e(TAG, "abortLoad: $message")
+    /** Unconditional teardown to a retryable 'error' state, for anything that stops
+     *  the server involuntarily — a stuck load (the watchdog) or the OS reclaiming
+     *  memory ([onTrimMemory]). Safe to call regardless of current state: cancel()/
+     *  teardownEngine()/stopHttpServer() are all no-ops on nothing loaded. */
+    private fun forceStop(message: String) {
+        Log.e(TAG, "forceStop: $message")
         isStopping = true
         interruptLoad()
         stopHttpServer()
-        nativeCancel(nativeHandle)
-        nativeUnloadModel(nativeHandle)
-        nativeFreeModel(nativeHandle)
-        nativeHandle = 0
+        engine?.cancel()
+        teardownEngine()
         transition("error", null, message)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    /**
+     * The OS is reclaiming memory. At the two most severe levels, unload the model
+     * unconditionally rather than risk the process being killed with the server
+     * mid-request — and, just as important, leave the UI in a state that says why: a
+     * silent transition to 'stopped' would look identical to the user tapping Stop,
+     * when what actually happened is the system pulled the rug out from under a model
+     * still using several GB. Named-constant checks against exactly the two levels
+     * docs/litertlm-android-adapter.md §6 calls out (COMPLETE, RUNNING_CRITICAL) —
+     * this fires only when the OS is deciding what to kill next, not on ordinary
+     * background/UI-hidden trims that don't warrant losing a loaded model.
+     *
+     * Was a gap before LiteRT-LM: nothing here handled memory pressure at all, and a
+     * 3-4 GB resident model makes this the single highest-value addition in the whole
+     * LiteRT-LM adapter — it also benefits the existing GGUF path, since llama.cpp
+     * models are large too and this override isn't format-specific.
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level != ComponentCallbacks2.TRIM_MEMORY_COMPLETE &&
+            level != ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL
+        ) {
+            return
+        }
+        if (state != "ready" && state != "loading") return
+        forceStop("The server was stopped because the system reclaimed memory — tap Start to reload the model")
     }
 
     private fun startForegroundWithType() {
@@ -478,7 +541,8 @@ class LocalLlmService : Service() {
     }
 
     private fun handleChatCompletions(reader: BufferedReader, contentLength: Int, out: OutputStream) {
-        if (nativeHandle == 0L) {
+        val activeEngine = engine
+        if (activeEngine == null) {
             writeJsonResponse(out, "HTTP/1.1 500 Internal Server Error", """{"error":"model not loaded"}""")
             return
         }
@@ -491,7 +555,7 @@ class LocalLlmService : Service() {
         val callback = object : GenerationCallback {
             override fun onToken(piece: String) {
                 if (!writeSse(out, """{"choices":[{"delta":{"content":"${jsonEscape(piece)}"}}]}""")) {
-                    nativeCancel(nativeHandle)
+                    activeEngine.cancel()
                 }
             }
 
@@ -499,7 +563,7 @@ class LocalLlmService : Service() {
                 val frame = """{"choices":[{"delta":{"tool_calls":[{"index":$index,""" +
                     """"function":{"name":"${jsonEscape(nameDelta)}","arguments":"${jsonEscape(argsDelta)}"}}]}}]}"""
                 if (!writeSse(out, frame)) {
-                    nativeCancel(nativeHandle)
+                    activeEngine.cancel()
                 }
             }
 
@@ -516,12 +580,12 @@ class LocalLlmService : Service() {
             }
         }
         try {
-            nativeGenerate(nativeHandle, body, callback)
+            activeEngine.generate(body, callback)
         } catch (e: Throwable) {
-            // Last-resort guard: never let a JNI escape crash the process.
-            Log.e(TAG, "nativeGenerate threw", e)
+            // Last-resort guard: never let a native/engine escape crash the process.
+            Log.e(TAG, "engine.generate threw", e)
             try {
-                writeSse(out, """{"error":"${jsonEscape(e.message ?: "nativeGenerate failed")}"}""")
+                writeSse(out, """{"error":"${jsonEscape(e.message ?: "generate failed")}"}""")
             } catch (_: Exception) {}
         }
     }
@@ -555,10 +619,4 @@ class LocalLlmService : Service() {
             }
         }
     }
-
-    private external fun nativeLoadModel(path: String): Long
-    private external fun nativeUnloadModel(handle: Long)
-    private external fun nativeFreeModel(handle: Long)
-    private external fun nativeGenerate(handle: Long, requestBodyJson: String, callback: GenerationCallback)
-    private external fun nativeCancel(handle: Long)
 }

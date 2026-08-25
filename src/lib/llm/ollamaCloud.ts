@@ -43,6 +43,13 @@ interface WireChunk {
 }
 
 function toWireMessage(message: ChatMessage): WireMessage {
+  if (typeof message.content !== 'string') {
+    // Image content (docs/litertlm-vl-integration.md) is a LiteRT-LM-only feature —
+    // the attach UI gates on the local backend, so this should never actually fire in
+    // practice, but a silent flatten-to-text would answer as if Ollama saw an image
+    // it never received. Reject instead of guessing what the user wanted.
+    throw new Error('Image content is not supported on the Ollama Cloud backend.');
+  }
   const wire: WireMessage = { role: message.role, content: message.content };
   if (message.toolCalls?.length) {
     wire.tool_calls = message.toolCalls.map((c) => ({

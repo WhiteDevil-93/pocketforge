@@ -6,11 +6,13 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Skull, Archive, Heart, ChevronLeft, ChevronDown, ChevronUp, Swords, MapPin, Crosshair, Dices, Star, Search, Zap, Target, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import { useStore } from '../store/useStore';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import { NUZLOCKE_GAMES, getGameById } from '../data/nuzlockeRoutes';
 import PokemonSprite from '../components/PokemonSprite';
 import TypeBadge from '../components/TypeBadge';
+import ConfirmSheet from '../components/ConfirmSheet';
 import { getEffectiveness } from '../data/typesData';
 import { getAllPokemonNames, getPokemonByName } from '../data/pokemonData';
 import type { NuzlockeEncounter, TeraRaidDen, NuzlockeRun } from '../store/useNuzlockeStore';
@@ -160,8 +162,8 @@ function RunCard({ run, isActive, onSelect, onDelete }: { run: NuzlockeRun; isAc
           <p className="text-body font-semibold text-text-primary truncate">{run.name}</p>
           <p className="text-caption text-text-secondary">{game?.name}</p>
           <div className="flex gap-3 mt-1">
-            <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={12} /> {alive}</span>
-            <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><Skull size={12} /> {dead}</span>
+            <span className="text-caption text-success flex items-center gap-1"><Heart size={12} /> {alive}</span>
+            <span className="text-caption text-danger flex items-center gap-1"><Skull size={12} /> {dead}</span>
           </div>
         </button>
         <button type="button" onClick={onDelete} aria-label={`Delete ${run.name}`} title="Delete run" className="w-9 h-9 flex items-center justify-center rounded-lg touch-target shrink-0">
@@ -418,7 +420,7 @@ function BossCard({ boss, teamTypes, onVS }: { boss: BossData; teamTypes: string
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <TypeBadge type={boss.type.toLowerCase()} />
-          <span className="text-caption font-bold" style={{ color: '#EAB308' }}>Lv.{boss.levelCap}</span>
+          <span className="text-caption text-warning font-bold">Lv.{boss.levelCap}</span>
           {open ? <ChevronUp size={16} className="text-text-tertiary" /> : <ChevronDown size={16} className="text-text-tertiary" />}
         </div>
       </button>
@@ -454,7 +456,13 @@ function BossCard({ boss, teamTypes, onVS }: { boss: BossData; teamTypes: string
 // ---- Pokemon Card for Box/Graveyard ----
 function PokemonCard({ encounter }: { encounter: NuzlockeEncounter }) {
   const game = useNuzlockeStore((s) => s.runs.find((r) => r.id === s.currentRunId));
-  const route = game ? getGameById(game.gameId)?.routes.find((r) => r.id === encounter.routeId) : null;
+  // Check the run's own customLocations too — a Pokemon caught at a
+  // hand-added location otherwise silently lost its route name here, since
+  // it isn't in the built-in NuzlockeGame.routes list.
+  const route = game
+    ? getGameById(game.gameId)?.routes.find((r) => r.id === encounter.routeId) ??
+      game.customLocations?.find((r) => r.id === encounter.routeId)
+    : null;
   const display = encounter.evolvedSpecies || encounter.species;
   return (
     <div className="bg-bg-secondary rounded-xl border border-border-subtle p-3 flex items-center gap-3">
@@ -485,6 +493,7 @@ export default function Nuzlocke() {
   const removeEncounter = useNuzlockeStore((s) => s.removeEncounter);
   const addTeraRaid = useNuzlockeStore((s) => s.addTeraRaid);
   const updateTeraRaid = useNuzlockeStore((s) => s.updateTeraRaid);
+  const storeAddCustomLocation = useNuzlockeStore((s) => s.addCustomLocation);
 
   const currentRun = runs.find((r) => r.id === currentRunId);
 
@@ -522,6 +531,7 @@ export default function Nuzlocke() {
   }, [currentRun, importTeam, setCurrentTeam, navigate]);
 
   const [showNew, setShowNew] = useState(false);
+  const [deleteRunId, setDeleteRunId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [selGame, setSelGame] = useState('scarlet');
   const [tab, setTab] = useState<'routes' | 'bosses' | 'box' | 'graveyard' | 'upcoming'>('routes');
@@ -542,6 +552,13 @@ export default function Nuzlocke() {
 
   const game = currentRun ? getGameById(currentRun.gameId) : null;
   const teamTypes = useMemo(() => currentRun ? currentRun.encounters.filter((e) => e.status === 'caught' && e.species).map((e) => e.evolvedSpecies || e.species) : [], [currentRun]);
+  // The run's own persisted customLocations, appended after the game's built-in
+  // routes — this is the single place every route list/lookup below reads from,
+  // so a custom location behaves identically to a built-in one everywhere.
+  const allRoutes = useMemo(
+    () => [...(game?.routes ?? []), ...(currentRun?.customLocations ?? [])],
+    [game, currentRun]
+  );
 
   const handleUpdate = (routeId: string, sp: string, nick: string, st: string, nat: string, ev: string) => {
     if (!currentRunId) return;
@@ -568,20 +585,26 @@ export default function Nuzlocke() {
     else addTeraRaid(currentRunId, { routeId, species, status, rolledAt: new Date().toISOString() });
   };
 
-  const addCustomLocation = () => {
+  const handleAddCustomLocation = () => {
     if (!currentRunId || !customName.trim() || !game) return;
     const prefix = game.routes[0]?.id.split('_')[0] || 'custom';
     const newId = `${prefix}_custom_${Date.now()}`;
-    const newRoute = { id: newId, name: customName.trim(), order: game.routes.length + 1 };
-    game.routes.push(newRoute);
+    // Previously this pushed onto the shared, in-memory NuzlockeGame.routes
+    // array (data/nuzlockeRoutes.ts) — not persisted anywhere, so the
+    // location vanished on reload, and shared across every run using that
+    // game, so it would have leaked into other runs too. Persisting it on
+    // the run itself (useNuzlockeStore) fixes both.
+    const newRoute = { id: newId, name: customName.trim(), order: allRoutes.length + 1 };
+    storeAddCustomLocation(currentRunId, newRoute);
     setCustomName('');
     setShowCustom(false);
+    toast.success('Location added');
   };
 
   // Filtered routes
   const filteredRoutes = useMemo(() => {
     if (!game) return [];
-    let routes = game.routes;
+    let routes = allRoutes;
     if (routeSearch.trim()) {
       const q = routeSearch.toLowerCase();
       routes = routes.filter((r) => r.name.toLowerCase().includes(q));
@@ -594,7 +617,7 @@ export default function Nuzlocke() {
       routes = routes.filter((r) => !currentRun?.encounters.some((e) => e.routeId === r.id));
     }
     return routes;
-  }, [game, routeSearch, routeFilter, currentRun]);
+  }, [game, allRoutes, routeSearch, routeFilter, currentRun]);
 
   // Filtered bosses
   const filteredBosses = useMemo(() => {
@@ -606,8 +629,8 @@ export default function Nuzlocke() {
   // Next upcoming route
   const nextRoute = useMemo(() => {
     if (!game || !currentRun) return null;
-    return game.routes.find((r) => !currentRun.encounters.some((e) => e.routeId === r.id));
-  }, [game, currentRun]);
+    return allRoutes.find((r) => !currentRun.encounters.some((e) => e.routeId === r.id));
+  }, [game, allRoutes, currentRun]);
 
   // ---- Run Selection View ----
   if (!currentRun) {
@@ -632,7 +655,7 @@ export default function Nuzlocke() {
             </div>
           ) : (
             <div className="space-y-3">
-              {runs.map((r) => <RunCard key={r.id} run={r} isActive={r.id === currentRunId} onSelect={() => setCurrentRun(r.id)} onDelete={() => deleteRun(r.id)} />)}
+              {runs.map((r) => <RunCard key={r.id} run={r} isActive={r.id === currentRunId} onSelect={() => setCurrentRun(r.id)} onDelete={() => setDeleteRunId(r.id)} />)}
             </div>
           )}
         </div>
@@ -658,6 +681,16 @@ export default function Nuzlocke() {
             </motion.div>
           )}
         </AnimatePresence>
+        <ConfirmSheet
+          isOpen={deleteRunId !== null}
+          onClose={() => setDeleteRunId(null)}
+          title={`Delete "${runs.find((r) => r.id === deleteRunId)?.name ?? ''}"?`}
+          message="All encounters, box, and graveyard data for this run will be permanently removed. This cannot be undone."
+          confirmLabel="Delete run"
+          onConfirm={() => {
+            if (deleteRunId) deleteRun(deleteRunId);
+          }}
+        />
       </div>
     );
   }
@@ -695,9 +728,9 @@ export default function Nuzlocke() {
         </div>
         <div className="flex items-center justify-between mt-2 ml-7">
           <div className="flex gap-4">
-            <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={14} /> {alive}</span>
-            <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><Skull size={14} /> {dead}</span>
-            <span className="text-caption flex items-center gap-1" style={{ color: '#3B82F6' }}><Archive size={14} /> {boxed}</span>
+            <span className="text-caption text-success flex items-center gap-1"><Heart size={14} /> {alive}</span>
+            <span className="text-caption text-danger flex items-center gap-1"><Skull size={14} /> {dead}</span>
+            <span className="text-caption text-accent-primary flex items-center gap-1"><Archive size={14} /> {boxed}</span>
           </div>
           {upcomingBoss && (
             <span className="text-caption font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 flex items-center gap-1">
@@ -746,7 +779,7 @@ export default function Nuzlocke() {
                   { key: 'missed' as const, label: 'Missed' },
                 ].map((f) => (
                   <button key={f.key} onClick={() => setRouteFilter(f.key)}
-                    className={`px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${routeFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
+                    className={`tap-target-y px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${routeFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
                 ))}
               </div>
 
@@ -784,7 +817,7 @@ export default function Nuzlocke() {
                   { key: 'titan', label: 'Titans' },
                 ].map((f) => (
                   <button key={f.key} onClick={() => setBossFilter(f.key)}
-                    className={`px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${bossFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
+                    className={`tap-target-y px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${bossFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
                 ))}
               </div>
               {filteredBosses.map((b) => (
@@ -858,7 +891,7 @@ export default function Nuzlocke() {
                         <p className="text-caption text-text-secondary">{b.location}</p>
                       </div>
                       <TypeBadge type={b.type.toLowerCase()} />
-                      <span className="text-caption font-bold" style={{ color: '#EAB308' }}>Lv.{b.levelCap}</span>
+                      <span className="text-caption text-warning font-bold">Lv.{b.levelCap}</span>
                     </div>
                   );
                 }) || <p className="text-sm text-text-tertiary">No boss data</p>}
@@ -866,7 +899,7 @@ export default function Nuzlocke() {
 
               <div>
                 <p className="text-caption font-medium text-text-secondary mb-2 flex items-center gap-1"><MapPin size={12} /> NEXT ROUTES</p>
-                {game?.routes.filter((r) => !currentRun?.encounters.some((e) => e.routeId === r.id)).slice(0, 8).map((r) => (
+                {allRoutes.filter((r) => !currentRun?.encounters.some((e) => e.routeId === r.id)).slice(0, 8).map((r) => (
                   <div key={r.id} className="flex items-center gap-3 py-2 border-b border-border-subtle last:border-0">
                     <MapPin size={14} className="text-text-tertiary shrink-0" />
                     <p className="text-sm text-text-primary flex-1">{r.name}</p>
@@ -909,7 +942,7 @@ export default function Nuzlocke() {
               <h2 className="text-headline font-semibold text-text-primary text-center">Add Custom Location</h2>
               <input type="text" value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Location name (e.g., Safari Zone)"
                 className="w-full h-12 px-4 rounded-xl bg-bg-tertiary border border-border-subtle text-text-primary placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none" />
-              <button onClick={addCustomLocation} disabled={!customName.trim()} className="w-full h-12 rounded-xl bg-accent-primary text-white font-medium disabled:opacity-50 active:scale-[0.98] transition-transform">Add Location</button>
+              <button onClick={handleAddCustomLocation} disabled={!customName.trim()} className="w-full h-12 rounded-xl bg-accent-primary text-white font-medium disabled:opacity-50 active:scale-[0.98] transition-transform">Add Location</button>
             </motion.div>
           </motion.div>
         )}

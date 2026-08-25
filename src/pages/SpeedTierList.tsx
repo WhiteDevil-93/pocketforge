@@ -205,7 +205,7 @@ export default function SpeedTierList() {
               </h2>
               {ranking.length === 0 ? (
                 <p className="font-body text-text-tertiary py-8 text-center">
-                  Add Pokémon to this team to see speed rankings.
+                  Add Pokemon to this team to see speed rankings.
                 </p>
               ) : (
                 <div className="flex flex-col gap-2" role="list">

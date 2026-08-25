@@ -4,6 +4,7 @@
 
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import Layout from './components/Layout';
 import { useStore } from './store/useStore';
 import { DEFAULT_FORMAT } from './data/formatsData';
@@ -26,6 +27,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const CustomFormatsPage = lazy(() => import('./pages/CustomFormatsPage'));
 const WeaknessAnalyzer = lazy(() => import('./pages/WeaknessAnalyzer'));
 const Assistant = lazy(() => import('./pages/Assistant'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const hasCompletedOnboarding = useStore((s) => s.settings.hasCompletedOnboarding);
@@ -148,6 +150,9 @@ export default function App() {
         }
       } catch (err) {
         console.error('Failed to unpack shared team from URL:', err);
+        toast.error(
+          'Could not import the shared team — the link may be truncated or from a newer version.'
+        );
       }
     };
 
@@ -277,7 +282,7 @@ export default function App() {
           />
           <Route path="/home" element={<Navigate to={HOME_PATH} replace />} />
           <Route path="/" element={<Navigate to={HOME_PATH} replace />} />
-          <Route path="*" element={<Navigate to={HOME_PATH} replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </Layout>

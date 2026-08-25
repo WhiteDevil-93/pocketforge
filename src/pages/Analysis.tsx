@@ -2,7 +2,8 @@
 // PocketForge — Team Analysis Dashboard
 // ============================================================================
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useId } from 'react';
+import { EASE_SMOOTH, EASE_BOUNCE } from '../lib/motion';
 import { useNavigate, useParams } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -58,11 +59,11 @@ const itemVariants = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] },
+    transition: { duration: 0.3, ease: EASE_SMOOTH },
   },
 };
 
-const easeSmooth = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
+const easeSmooth = EASE_SMOOTH;
 
 // ---- Accordion Section Component -------------------------------------------
 
@@ -78,11 +79,14 @@ function AccordionSection({
   badge?: string | number;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const contentId = useId();
 
   return (
     <motion.div variants={itemVariants} className="mb-3">
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={contentId}
         className="flex items-center justify-between w-full py-3 touch-target"
       >
         <div className="flex items-center gap-2">
@@ -103,6 +107,7 @@ function AccordionSection({
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
+            id={contentId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -191,7 +196,7 @@ function RoleCard({
       transition={{
         delay,
         duration: 0.3,
-        ease: [0.34, 1.56, 0.64, 1] as [number, number, number, number],
+        ease: EASE_BOUNCE,
       }}
       className="flex flex-col items-center justify-center bg-bg-secondary rounded-xl border border-border-subtle p-3 gap-1"
     >

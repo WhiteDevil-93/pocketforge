@@ -81,6 +81,10 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    // LiteRT-LM Kotlin runtime — not wired to an engine yet (see
+    // docs/litertlm-android-adapter.md step 4); pulled in now so the classpath and
+    // release/R8 build are proven before LiteRtLmEngine depends on it.
+    implementation "com.google.ai.edge.litertlm:litertlm-android:$litertLmVersion"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

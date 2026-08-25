@@ -38,6 +38,18 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="on-device LLM inference server" />
         </service>
+
+        <!-- LiteRT-LM's GPU backend (Backend.GPU()) — not loaded yet (see
+             docs/litertlm-android-adapter.md step 4), added now so the release/R8
+             build is proven with these present. required="false" so a device
+             without OpenCL still installs and LiteRT-LM's NPU->GPU->CPU fallback
+             falls through to CPU instead of failing to install. -->
+        <uses-native-library
+            android:name="libvndksupport.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
     </application>
 
     <!-- Permissions -->
@@ -46,4 +58,17 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- @capacitor/camera's getPhoto(): declaring this is what makes the plugin
+         actually prompt for camera permission at runtime — confirmed from its
+         Android source (LegacyCameraFlow.checkCameraPermissions): an
+         undeclared CAMERA permission is treated as "not required" and the
+         plugin never asks, silently misbehaving instead of failing loudly.
+         Gallery picking needs no permission of its own on API 29+ (this
+         app's realistic target hardware) as long as saveToGallery is false,
+         which src/lib/native/imagePicker.ts always passes. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Without this, Play Store infers camera hardware as required from the
+         CAMERA permission alone and filters out camera-less devices (tablets,
+         Chromebooks) that can still use the app fine via gallery picking. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

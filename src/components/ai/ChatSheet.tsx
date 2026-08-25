@@ -19,7 +19,7 @@ export default function ChatSheet({ isOpen, onClose }: ChatSheetProps) {
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="AI Assistant" showSearch={false}>
-      <ChatPanel isActive={isOpen} className="h-[60vh]" />
+      <ChatPanel isActive={isOpen} className="h-[60vh]" onRequestClose={onClose} />
     </BottomSheet>
   );
 }

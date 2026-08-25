@@ -18,6 +18,7 @@ import { useStore } from '../store/useStore';
 import type { CustomFormat } from '../types';
 import CustomFormatEditor from '../components/CustomFormatEditor';
 import EmptyState from '../components/EmptyState';
+import ConfirmSheet from '../components/ConfirmSheet';
 
 // ---- Format card ------------------------------------------------------------
 
@@ -84,59 +85,6 @@ function FormatCard({
   );
 }
 
-// ---- Delete confirmation bottom sheet ---------------------------------------
-
-function DeleteSheet({
-  formatName,
-  onConfirm,
-  onCancel,
-}: {
-  formatName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/50"
-      onClick={onCancel}
-    >
-      <motion.div
-        initial={{ y: 200 }}
-        animate={{ y: 0 }}
-        exit={{ y: 200 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="bg-bg-secondary rounded-t-3xl p-6 space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="w-10 h-1 rounded-full bg-text-tertiary/30 mx-auto" />
-        <h2 className="text-headline font-semibold text-text-primary text-center">
-          Delete &ldquo;{formatName}&rdquo;?
-        </h2>
-        <p className="text-body text-text-secondary text-center">
-          Teams using this format will keep it, but the format definition will be removed.
-        </p>
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={onCancel}
-            className="flex-1 h-12 rounded-xl bg-bg-tertiary text-text-primary font-medium text-sm active:scale-95 transition-transform"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 h-12 rounded-xl bg-danger text-white font-medium text-sm active:scale-95 transition-transform"
-          >
-            Delete
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 // ---- Main page --------------------------------------------------------------
 
 export default function CustomFormatsPage() {
@@ -148,9 +96,16 @@ export default function CustomFormatsPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingFormat, setEditingFormat] = useState<CustomFormat | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // The 'new' key alone only reinitializes CustomFormatEditor between editing
+  // an existing format and creating one — every "New" open reuses that same
+  // key, so a second New after abandoning/creating the first would keep
+  // showing the first attempt's stale field values. Bumped on every
+  // handleCreate to force a remount each time.
+  const [newFormatSession, setNewFormatSession] = useState(0);
 
   const handleCreate = useCallback(() => {
     setEditingFormat(null);
+    setNewFormatSession((n) => n + 1);
     setEditorOpen(true);
   }, []);
 
@@ -219,7 +174,16 @@ export default function CustomFormatsPage() {
       </div>
 
       {/* Editor */}
+      {/* Keyed on the target format's id, or a session counter while creating:
+          CustomFormatEditor seeds all its field state from `editingFormat`
+          via useState-on-mount only, and it stays mounted across opens (only
+          `isOpen` toggles) — without the id half of this key, editing a
+          second format after the first would show (and on Save, overwrite
+          the second format with) the first format's stale values; without
+          the session-counter half, repeated "New" opens would do the same
+          to each other, since they'd all share the same 'new' id. */}
       <CustomFormatEditor
+        key={editingFormat?.id ?? `new-${newFormatSession}`}
         isOpen={editorOpen}
         onClose={() => setEditorOpen(false)}
         editingFormat={editingFormat}
@@ -227,15 +191,14 @@ export default function CustomFormatsPage() {
       />
 
       {/* Delete confirmation */}
-      <AnimatePresence>
-        {deleteId && deleteFormat && (
-          <DeleteSheet
-            formatName={deleteFormat.name}
-            onConfirm={handleDelete}
-            onCancel={() => setDeleteId(null)}
-          />
-        )}
-      </AnimatePresence>
+      <ConfirmSheet
+        isOpen={!!(deleteId && deleteFormat)}
+        onClose={() => setDeleteId(null)}
+        title={`Delete "${deleteFormat?.name ?? ''}"?`}
+        message="Teams using this format will keep it, but the format definition will be removed."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

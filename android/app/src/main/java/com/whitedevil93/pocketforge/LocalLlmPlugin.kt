@@ -20,6 +20,7 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.whitedevil93.pocketforge.engine.ModelFormat
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -34,12 +35,20 @@ import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Result of sniffing the header window read at the start of an imported file. */
+private sealed class FormatSniffResult {
+    data class Recognized(val format: ModelFormat) : FormatSniffResult()
+    data class Rejected(val message: String) : FormatSniffResult()
+}
+
 /**
- * Native bridge for the on-device llama.cpp backend.
+ * Native bridge for the on-device inference backends (llama.cpp today, LiteRT-LM
+ * planned — see docs/litertlm-android-adapter.md).
  *
  * Phase 0 added the toolchain + a trivial [ping]. Phase 1 adds [pickModelFile],
- * which imports a GGUF model from the SAF document picker into app-private
- * storage. No server/inference logic yet.
+ * which imports a model (GGUF or .litertlm, sniffed by content — see [ModelFormat])
+ * from the SAF document picker into app-private storage. No server/inference logic
+ * yet in this file; that lives in LocalLlmService.
  */
 @CapacitorPlugin(name = "LocalLlm")
 class LocalLlmPlugin : Plugin() {
@@ -55,9 +64,25 @@ class LocalLlmPlugin : Plugin() {
         private const val PICK_MODEL_CALLBACK = "onPickModelResult"
 
         /** GGUF files start with the ASCII magic "GGUF" at offset 0. */
-        private const val GGUF_MAGIC = "GGUF"
+        private val GGUF_MAGIC = "GGUF".toByteArray(Charsets.US_ASCII)
 
-        /** A real GGUF model is far larger; anything below this is not a model. */
+        /** LiteRT-LM files start with the ASCII magic "LITERTLM" at offset 0, followed
+         *  by three little-endian uint32 version fields (major/minor/patch) — see
+         *  schema/core/litertlm_read.cc / litertlm_header.h upstream. */
+        private val LITERTLM_MAGIC = "LITERTLM".toByteArray(Charsets.US_ASCII)
+
+        /** The only .litertlm major version this app's LiteRT-LM dependency supports.
+         *  A mismatch means the file was built for a newer/older format and must be
+         *  rejected at import time rather than failing opaquely at engine load. */
+        private const val LITERTLM_SUPPORTED_MAJOR = 1
+
+        /** Bytes read up front to sniff the format: 8 for the "LITERTLM" magic plus
+         *  12 for its three uint32 version fields — GGUF_MAGIC (4 bytes) fits well within. */
+        private const val HEADER_WINDOW_BYTES = 20
+
+        private const val DEFAULT_IMPORT_NAME = "imported-model"
+
+        /** A real model is far larger; anything below this is not a model. */
         private const val MIN_MODEL_BYTES = 1024L * 1024L
 
         /** 256 KiB streaming buffer — never buffer the whole (multi-GB) file. */
@@ -97,7 +122,7 @@ class LocalLlmPlugin : Plugin() {
 
     /**
      * Opens the system document picker (SAF, ACTION_OPEN_DOCUMENT) so the user can
-     * select the GGUF model. SAF hands back a content:// Uri directly — no storage
+     * select the model file (GGUF or .litertlm). SAF hands back a content:// Uri directly — no storage
      * permission needed, and direct-path Downloads access is blocked on API 30+.
      *
      * The result arrives in [onPickModelResult] (see Capacitor 8's ActivityCallback
@@ -142,24 +167,29 @@ class LocalLlmPlugin : Plugin() {
         val resolver = appContext.contentResolver
         val totalBytes = querySize(resolver, uri)
         if (totalBytes != null && totalBytes < MIN_MODEL_BYTES) {
-            call.reject("Selected file is only $totalBytes bytes; expected a GGUF model of at least $MIN_MODEL_BYTES bytes")
+            call.reject("Selected file is only $totalBytes bytes; expected a model of at least $MIN_MODEL_BYTES bytes")
             return
         }
 
-        val safeName = sanitizeFileName(queryDisplayName(resolver, uri) ?: "model.gguf")
-        val destination = File(appContext.filesDir, safeName)
+        val safeName = sanitizeFileName(queryDisplayName(resolver, uri))
 
-        // The copy is a real-time operation for a 2.78 GB file; never block the
+        // The copy is a real-time operation for a multi-GB file; never block the
         // plugin-call (main) thread.
         Thread({
             var partial: File? = null
             try {
                 val partialFile = File(appContext.filesDir, "$safeName.partial")
                 partial = partialFile
-                val bytesCopied = copyInChunks(resolver, uri, partialFile, totalBytes, activity)
-                if (bytesCopied < MIN_MODEL_BYTES) {
-                    throw IllegalStateException("Copied file is only $bytesCopied bytes; too small to be a GGUF model")
+                val imported = copyInChunks(resolver, uri, partialFile, totalBytes, activity)
+                if (imported.bytesCopied < MIN_MODEL_BYTES) {
+                    throw IllegalStateException("Copied file is only ${imported.bytesCopied} bytes; too small to be a valid model")
                 }
+                // The display name's extension (if any) is trusted for cosmetics only —
+                // the sniffed format from the file's own bytes decides the final one, so
+                // a mislabeled or extension-less pick still lands with a matching
+                // extension for dispatchStart's later auto-discovery.
+                val finalName = ensureFormatExtension(safeName, imported.format)
+                val destination = File(appContext.filesDir, finalName)
                 if (destination.exists()) {
                     destination.delete()
                 }
@@ -168,8 +198,8 @@ class LocalLlmPlugin : Plugin() {
                 }
                 val result = JSObject().apply {
                     put("path", destination.absolutePath)
-                    put("name", safeName)
-                    put("size", bytesCopied)
+                    put("name", finalName)
+                    put("size", imported.bytesCopied)
                 }
                 activity.runOnUiThread { call.resolve(result) }
             } catch (e: Exception) {
@@ -181,10 +211,15 @@ class LocalLlmPlugin : Plugin() {
         }, "llm-model-import").start()
     }
 
+    private data class ImportedFile(val bytesCopied: Long, val format: ModelFormat)
+
     /**
-     * Streams [uri] into [destination] in fixed-size chunks, validating the GGUF
-     * magic before writing anything. Emits throttled modelImportProgress events.
-     * Returns the number of bytes copied. Never loads the file into memory.
+     * Streams [uri] into [destination] in fixed-size chunks, sniffing the model
+     * format (GGUF or LiteRT-LM) from its own header bytes before writing anything.
+     * Emits throttled modelImportProgress events. Never loads the file into memory.
+     *
+     * @throws IllegalArgumentException if the header doesn't match a recognized format,
+     *   or matches LITERTLM at an unsupported major version.
      */
     private fun copyInChunks(
         resolver: ContentResolver,
@@ -192,29 +227,30 @@ class LocalLlmPlugin : Plugin() {
         destination: File,
         totalBytes: Long?,
         activity: Activity,
-    ): Long {
+    ): ImportedFile {
         val inputStream = resolver.openInputStream(uri)
             ?: throw IllegalStateException("Unable to open the selected file")
         inputStream.use { rawInput ->
             BufferedInputStream(rawInput).use { input ->
-                // GGUF spec: the first four bytes are the magic, ASCII "GGUF".
-                val magic = ByteArray(GGUF_MAGIC.length)
-                var magicRead = 0
-                while (magicRead < magic.size) {
-                    val read = input.read(magic, magicRead, magic.size - magicRead)
+                val header = ByteArray(HEADER_WINDOW_BYTES)
+                var headerRead = 0
+                while (headerRead < header.size) {
+                    val read = input.read(header, headerRead, header.size - headerRead)
                     if (read == -1) break
-                    magicRead += read
+                    headerRead += read
                 }
-                if (magicRead < magic.size || String(magic, Charsets.US_ASCII) != GGUF_MAGIC) {
-                    throw IllegalArgumentException("Not a GGUF model: the file does not start with the 'GGUF' magic bytes")
+                val sniffed = sniffFormat(header, headerRead)
+                val format = when (sniffed) {
+                    is FormatSniffResult.Rejected -> throw IllegalArgumentException(sniffed.message)
+                    is FormatSniffResult.Recognized -> sniffed.format
                 }
 
-                var bytesCopied = magicRead.toLong()
+                var bytesCopied = headerRead.toLong()
                 var lastReportedPercent = -1
                 var lastReportedBytes = 0L
                 FileOutputStream(destination).use { rawOutput ->
                     BufferedOutputStream(rawOutput).use { output ->
-                        output.write(magic, 0, magicRead)
+                        output.write(header, 0, headerRead)
                         val buffer = ByteArray(COPY_BUFFER_SIZE)
                         while (true) {
                             val read = input.read(buffer)
@@ -229,9 +265,60 @@ class LocalLlmPlugin : Plugin() {
                         output.flush()
                     }
                 }
-                return bytesCopied
+                return ImportedFile(bytesCopied, format)
             }
         }
+    }
+
+    /**
+     * Identifies the model format from up to [HEADER_WINDOW_BYTES] header bytes.
+     * GGUF is recognized by its 4-byte ASCII magic alone. LITERTLM additionally checks
+     * the major-version field when enough bytes were read, so a file built for a
+     * future/incompatible format version is rejected here rather than failing opaquely
+     * inside the LiteRT-LM engine at load time.
+     */
+    private fun sniffFormat(header: ByteArray, headerLen: Int): FormatSniffResult {
+        if (headerLen >= GGUF_MAGIC.size && header.copyOf(GGUF_MAGIC.size).contentEquals(GGUF_MAGIC)) {
+            return FormatSniffResult.Recognized(ModelFormat.GGUF)
+        }
+        if (headerLen >= LITERTLM_MAGIC.size && header.copyOf(LITERTLM_MAGIC.size).contentEquals(LITERTLM_MAGIC)) {
+            val versionFieldsEnd = LITERTLM_MAGIC.size + 12
+            if (headerLen >= versionFieldsEnd) {
+                val major = readLittleEndianUInt32(header, LITERTLM_MAGIC.size)
+                if (major != LITERTLM_SUPPORTED_MAJOR.toLong()) {
+                    return FormatSniffResult.Rejected(
+                        "This .litertlm file is format version $major.x, but this app only supports " +
+                            "format $LITERTLM_SUPPORTED_MAJOR.x — it was likely built by a newer LiteRT-LM"
+                    )
+                }
+            }
+            return FormatSniffResult.Recognized(ModelFormat.LITERTLM)
+        }
+        return FormatSniffResult.Rejected(
+            "Not a recognized model file: the file does not start with the 'GGUF' or 'LITERTLM' magic bytes"
+        )
+    }
+
+    /** Reads a 4-byte little-endian unsigned int (as a Long, to hold the full u32 range)
+     *  at [offset] — matches the on-disk layout of the LITERTLM header's version fields. */
+    private fun readLittleEndianUInt32(bytes: ByteArray, offset: Int): Long {
+        return (bytes[offset].toLong() and 0xFF) or
+            ((bytes[offset + 1].toLong() and 0xFF) shl 8) or
+            ((bytes[offset + 2].toLong() and 0xFF) shl 16) or
+            ((bytes[offset + 3].toLong() and 0xFF) shl 24)
+    }
+
+    /** Appends [format]'s extension if [name] doesn't already carry it, first
+     *  stripping any other known-format extension so a misdetected pick doesn't
+     *  end up as e.g. "model.gguf.litertlm". */
+    private fun ensureFormatExtension(name: String, format: ModelFormat): String {
+        val wanted = ".${format.extension}"
+        if (name.endsWith(wanted, ignoreCase = true)) return name
+        val stripped = ModelFormat.entries.fold(name) { acc, other ->
+            val suffix = ".${other.extension}"
+            if (acc.endsWith(suffix, ignoreCase = true)) acc.dropLast(suffix.length) else acc
+        }
+        return "$stripped$wanted"
     }
 
     /**
@@ -289,9 +376,102 @@ class LocalLlmPlugin : Plugin() {
         }
     }
 
-    private fun sanitizeFileName(name: String): String {
-        val sanitized = name.replace(Regex("[/\\\\]"), "_").trim()
-        return if (sanitized.isBlank()) "model.gguf" else sanitized
+    /** [name] is the SAF display name, when the content provider supplied one — not
+     *  every provider does, and none of them guarantee an extension that matches the
+     *  file's real format, so the blank/generic fallback here carries no extension;
+     *  [ensureFormatExtension] adds the correct one once the format is sniffed. */
+    private fun sanitizeFileName(name: String?): String {
+        val sanitized = name?.replace(Regex("[/\\\\]"), "_")?.trim()
+        return if (sanitized.isNullOrBlank()) DEFAULT_IMPORT_NAME else sanitized
+    }
+
+    /**
+     * Lists every imported model file in app-private storage — the same filter
+     * predicate [dispatchStart]'s own fallback discovery uses — so Settings can
+     * show what has accumulated there (each import writes a new file; nothing
+     * before this ever deleted one) instead of only ever showing the currently
+     * selected path.
+     */
+    @PluginMethod
+    fun listModelFiles(call: PluginCall) {
+        val ctx = context
+        if (ctx == null) {
+            call.reject("Plugin context unavailable")
+            return
+        }
+        val files = ctx.filesDir.listFiles()
+            ?.filter { file ->
+                ModelFormat.entries.any { file.name.endsWith(".${it.extension}", ignoreCase = true) }
+            }
+            ?.sortedByDescending { it.lastModified() }
+            .orEmpty()
+        val result = JSObject().apply {
+            put(
+                "files",
+                JSONArray().apply {
+                    for (file in files) {
+                        put(
+                            JSObject().apply {
+                                put("path", file.absolutePath)
+                                put("name", file.name)
+                                put("size", file.length())
+                            }
+                        )
+                    }
+                }
+            )
+        }
+        call.resolve(result)
+    }
+
+    /**
+     * Deletes an imported model file. Refuses while that exact path is the one
+     * [LocalLlmService] is currently loading or serving — deleting the file
+     * backing a live server out from under it would corrupt an in-flight load
+     * or crash the next generate() call.
+     */
+    @PluginMethod
+    fun deleteModelFile(call: PluginCall) {
+        val ctx = context
+        if (ctx == null) {
+            call.reject("Plugin context unavailable")
+            return
+        }
+        val path = call.getString("path")
+        if (path.isNullOrBlank()) {
+            call.reject("path is required")
+            return
+        }
+        val activeState = LocalLlmService.getStatusSnapshot()["state"] as? String
+        if (LocalLlmService.currentModelPath == path && (activeState == "ready" || activeState == "loading")) {
+            call.reject("Can't delete a model while it's loaded — stop the server first")
+            return
+        }
+        val file = File(path)
+        // The WebView sends this path back verbatim from listModelFiles's own
+        // output, but nothing stops a wrong or malicious value reaching this
+        // call directly — resolve symlinks/".." with canonicalFile and refuse
+        // anything outside app-private storage or without a recognized model
+        // extension, so this can only ever delete a file it itself listed
+        // (not, say, WebView storage or the Capacitor database).
+        val canonical = file.canonicalFile
+        val root = ctx.filesDir.canonicalFile
+        val isModelFile = ModelFormat.entries.any {
+            canonical.name.endsWith(".${it.extension}", ignoreCase = true)
+        }
+        if (canonical.parentFile != root || !isModelFile) {
+            call.reject("Not an imported model file: $path")
+            return
+        }
+        if (!file.exists()) {
+            call.resolve(JSObject())
+            return
+        }
+        if (!file.delete()) {
+            call.reject("Could not delete the model file")
+            return
+        }
+        call.resolve(JSObject())
     }
 
     private external fun nativePing(): String
@@ -309,7 +489,29 @@ class LocalLlmPlugin : Plugin() {
             put("state", snapshot["state"] as? String ?: "stopped")
             (snapshot["port"] as? Int)?.let { put("port", it) }
             (snapshot["error"] as? String)?.let { put("error", it) }
+            (snapshot["backend"] as? String)?.let { put("backend", it) }
+            put("visionAvailable", snapshot["visionAvailable"] as? Boolean ?: false)
         }
+    }
+
+    /** Shared body for both LocalLlmService.statusListener assignments below —
+     *  they were identical duplicated closures; kept as one function reference so
+     *  the two call sites can't drift out of sync with each other. */
+    private fun emitServerStatusChanged(
+        state: String,
+        port: Int?,
+        error: String?,
+        backend: String?,
+        visionAvailable: Boolean,
+    ) {
+        val data = JSObject().apply {
+            put("state", state)
+            if (port != null) put("port", port)
+            if (error != null) put("error", error)
+            if (backend != null) put("backend", backend)
+            put("visionAvailable", visionAvailable)
+        }
+        notifyListeners("serverStatusChanged", data)
     }
 
     /** POST_NOTIFICATIONS permission launcher, registered in [load] via the bridge
@@ -321,14 +523,7 @@ class LocalLlmPlugin : Plugin() {
 
     override fun load() {
         super.load()
-        LocalLlmService.statusListener = { state, port, error ->
-            val data = JSObject().apply {
-                put("state", state)
-                if (port != null) put("port", port)
-                if (error != null) put("error", error)
-            }
-            notifyListeners("serverStatusChanged", data)
-        }
+        LocalLlmService.statusListener = ::emitServerStatusChanged
         notificationPermissionLauncher = bridge.registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions -> onNotificationPermissionResult(permissions) }
@@ -413,14 +608,16 @@ class LocalLlmPlugin : Plugin() {
         var modelPath = call.getString("modelPath")
         if (modelPath.isNullOrBlank()) {
             val filesDir = ctx.filesDir
-            val discovered = filesDir.listFiles()?.firstOrNull { it.name.endsWith(".gguf", ignoreCase = true) }
+            val discovered = filesDir.listFiles()?.firstOrNull { file ->
+                ModelFormat.entries.any { file.name.endsWith(".${it.extension}", ignoreCase = true) }
+            }
             if (discovered != null) modelPath = discovered.absolutePath
         }
         Log.i(TAG, "startServer: resolved modelPath=$modelPath")
         if (modelPath.isNullOrBlank()) {
             val err = JSObject().apply {
                 put("state", "error")
-                put("error", "No model imported — modelPath is required and no .gguf found in app storage")
+                put("error", "No model imported — modelPath is required and no .gguf or .litertlm found in app storage")
             }
             Log.w(TAG, "startServer: no model available")
             call.resolve(err)
@@ -437,14 +634,7 @@ class LocalLlmPlugin : Plugin() {
             return
         }
         Log.i(TAG, "startServer: dispatching LocalLlmService.start for $modelPath")
-        LocalLlmService.statusListener = { state, port, error ->
-            val data = JSObject().apply {
-                put("state", state)
-                if (port != null) put("port", port)
-                if (error != null) put("error", error)
-            }
-            notifyListeners("serverStatusChanged", data)
-        }
+        LocalLlmService.statusListener = ::emitServerStatusChanged
         LocalLlmService.start(ctx, modelPath)
         val snapshot = LocalLlmService.getStatusSnapshot()
         Log.i(TAG, "startServer: resolved state=${snapshot["state"]} error=${snapshot["error"]}")

@@ -113,7 +113,7 @@ function validateMegaOnce(pokemon: Pokemon[]): string[] {
   const megaHolders = pokemon.filter((p) => p.item && isMegaStone(p.item));
   if (megaHolders.length > 1) {
     return [
-      `Mega Once: ${megaHolders.length} Pokémon hold Mega Stones (${megaHolders.map((p) => p.species).join(', ')}). Only one may Mega Evolve per battle.`,
+      `Mega Once: ${megaHolders.length} Pokemon hold Mega Stones (${megaHolders.map((p) => p.species).join(', ')}). Only one may Mega Evolve per battle.`,
     ];
   }
   return [];
