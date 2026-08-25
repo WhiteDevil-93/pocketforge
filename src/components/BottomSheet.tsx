@@ -64,11 +64,10 @@ export default function BottomSheet({
     closeButtonRef.current?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCloseRef.current();
-        return;
-      }
+      // Escape is handled by the single app-wide listener in Layout.tsx
+      // (useEscapeConsumesBackGuard) via the same backGuard stack pushed
+      // below — not here, where every open sheet would otherwise register
+      // its own Escape handler and all of them would fire on one keypress.
       if (e.key !== 'Tab') return;
       const container = sheetRef.current;
       if (!container) return;

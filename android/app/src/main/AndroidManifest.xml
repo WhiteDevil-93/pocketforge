@@ -67,4 +67,8 @@
          app's realistic target hardware) as long as saveToGallery is false,
          which src/lib/native/imagePicker.ts always passes. -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Without this, Play Store infers camera hardware as required from the
+         CAMERA permission alone and filters out camera-less devices (tablets,
+         Chromebooks) that can still use the app fine via gallery picking. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

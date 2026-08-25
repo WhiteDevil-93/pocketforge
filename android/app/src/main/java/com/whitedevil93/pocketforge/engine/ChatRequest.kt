@@ -7,6 +7,7 @@ import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.OpenApiTool
 import com.google.ai.edge.litertlm.RepetitionPenaltyConfig
 import com.google.ai.edge.litertlm.SamplerConfig
+import com.google.ai.edge.litertlm.ToolCall
 import com.google.ai.edge.litertlm.ToolProvider
 import com.google.ai.edge.litertlm.tool
 import org.json.JSONArray
@@ -62,10 +63,20 @@ internal fun parseChatRequest(requestBodyJson: String, visionAvailable: Boolean)
         )
     }
 
+    // Wire tool messages (localLlamaCpp.ts's own OpenAI-shaped output, which this
+    // service's HTTP request body always is regardless of which engine is loaded)
+    // carry a tool_call_id, not the tool's name — but LiteRT-LM's Content.ToolResponse
+    // needs the name, not an id. Recovering it means walking the same
+    // request-tool_calls-then-consume-in-order pairing localLlamaCpp.ts's own
+    // toWireMessage uses in reverse: every assistant message's tool_calls[] pushes
+    // its call names here, in order, and each following role:"tool" message consumes
+    // the next one. Shared across both initialMessages and lastMessage below since a
+    // pairing can span that boundary.
+    val pendingToolCallNames = ArrayDeque<String>()
     val initialMessages = (startIndex until lastIndex).map { i ->
-        toLiteRtMessage(messages.getJSONObject(i), visionAvailable)
+        toLiteRtMessage(messages.getJSONObject(i), visionAvailable, pendingToolCallNames)
     }
-    val lastMessage = toLiteRtMessage(messages.getJSONObject(lastIndex), visionAvailable)
+    val lastMessage = toLiteRtMessage(messages.getJSONObject(lastIndex), visionAvailable, pendingToolCallNames)
 
     return ChatRequest(
         systemInstruction = systemInstruction,
@@ -81,16 +92,73 @@ internal fun parseChatRequest(requestBodyJson: String, visionAvailable: Boolean)
     )
 }
 
-private fun toLiteRtMessage(wire: JSONObject, visionAvailable: Boolean): Message {
-    val contents = parseContent(wire.opt("content"), visionAvailable)
+private fun toLiteRtMessage(
+    wire: JSONObject,
+    visionAvailable: Boolean,
+    pendingToolCallNames: ArrayDeque<String>,
+): Message {
     return when (wire.optString("role")) {
-        "user" -> Message.user(contents)
-        "assistant" -> Message.model(contents)
-        "tool" -> Message.tool(contents)
+        "user" -> Message.user(parseContent(wire.opt("content"), visionAvailable))
+        "assistant" -> Message.model(
+            parseContent(wire.opt("content"), visionAvailable),
+            parseToolCalls(wire.optJSONArray("tool_calls"), pendingToolCallNames),
+        )
+        "tool" -> {
+            // Falls back to a placeholder name only if the id-pairing above ever runs
+            // out (malformed history) — never actually expected in practice, since
+            // every tool message this app sends follows the assistant message that
+            // requested it, one result per call, same as localLlamaCpp.ts assumes.
+            val name = pendingToolCallNames.removeFirstOrNull() ?: "unknown_tool"
+            Message.tool(Contents.of(Content.ToolResponse(name, wire.optString("content"))))
+        }
         // An unrecognized role degrades to a user turn rather than failing the whole
         // request — the model still sees the content, just without special framing.
-        else -> Message.user(contents)
+        else -> Message.user(parseContent(wire.opt("content"), visionAvailable))
     }
+}
+
+/** Parses an assistant message's `tool_calls` array (`localLlamaCpp.ts`'s
+ *  `{id?, type:'function', function:{name, arguments: <JSON string>}}` shape) into
+ *  LiteRT-LM's [ToolCall]s, and records each call's name onto [pendingToolCallNames]
+ *  so the `role:"tool"` result(s) that follow can be attributed back to it — see the
+ *  call site in [parseChatRequest] for why this needs to be an ordered queue rather
+ *  than a lookup by id (LiteRT-LM's ToolCall/ToolResponse API has no id field at all). */
+private fun parseToolCalls(array: JSONArray?, pendingToolCallNames: ArrayDeque<String>): List<ToolCall> {
+    if (array == null) return emptyList()
+    val calls = mutableListOf<ToolCall>()
+    for (i in 0 until array.length()) {
+        val function = array.optJSONObject(i)?.optJSONObject("function") ?: continue
+        val name = function.optString("name")
+        if (name.isEmpty()) continue
+        val arguments = try {
+            jsonObjectToMap(JSONObject(function.optString("arguments", "{}")))
+        } catch (e: org.json.JSONException) {
+            emptyMap()
+        }
+        calls.add(ToolCall(name, arguments))
+        pendingToolCallNames.addLast(name)
+    }
+    return calls
+}
+
+/** Recursively converts an `org.json` tree into plain Kotlin collections — no
+ *  equivalent already exists in this app; LiteRT-LM's own JsonConverters.kt is
+ *  internal to its package. */
+private fun jsonObjectToMap(obj: JSONObject): Map<String, Any?> {
+    val map = mutableMapOf<String, Any?>()
+    val keys = obj.keys()
+    while (keys.hasNext()) {
+        val key = keys.next()
+        map[key] = jsonValueToAny(obj.get(key))
+    }
+    return map
+}
+
+private fun jsonValueToAny(value: Any?): Any? = when (value) {
+    JSONObject.NULL -> null
+    is JSONObject -> jsonObjectToMap(value)
+    is JSONArray -> (0 until value.length()).map { jsonValueToAny(value.get(it)) }
+    else -> value
 }
 
 /** Bytes read from a decoded data: URL above this are rejected rather than sent on —

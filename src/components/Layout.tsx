@@ -10,6 +10,7 @@ import { Toaster } from './ui/sonner';
 import { transitionFast } from '../lib/motion';
 import { useTheme } from '../hooks/use-theme';
 import { useNavigationDepthTracking } from '../hooks/use-navigation-depth';
+import { useEscapeConsumesBackGuard } from '../hooks/use-back-guard';
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ const HIDE_NAV_ROUTES = ['/onboarding'];
 export default function Layout({ children }: LayoutProps) {
   useTheme();
   useNavigationDepthTracking();
+  useEscapeConsumesBackGuard();
   const location = useLocation();
   const showNav = !HIDE_NAV_ROUTES.some(route => location.pathname === route);
 

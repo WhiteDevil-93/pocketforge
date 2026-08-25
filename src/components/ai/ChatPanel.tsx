@@ -296,7 +296,20 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
       const controller = new AbortController();
       abortRef.current = controller;
 
+      // The local backend's native request can't actually be cancelled mid-flight
+      // (see localLlamaCpp.ts's own comment on this) — aborting only stops this
+      // turn's JS side from caring, so the old request keeps running and its
+      // eventual result still reaches every callback below. Without this guard,
+      // "New chat" during an active local turn would let that stale completion
+      // land on whatever's current by then — appending the old reply into a
+      // fresh conversation, or clobbering a genuinely new turn's isStreaming/
+      // toolTrace/history mid-stream. abortRef.current is this turn's own
+      // identity: it only still points at `controller` if nothing newer (another
+      // runTurn call, or handleNewChat's abort+reset) has superseded it.
+      const isCurrentTurn = () => abortRef.current === controller;
+
       const handleEvent = (event: LlmStreamEvent) => {
+        if (!isCurrentTurn()) return;
         if (event.type === 'token') {
           streamingTextRef.current += event.text;
           // Accumulate raw (don't trim during streaming, which would collapse spaces between tokens)
@@ -342,6 +355,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
               signal: controller.signal,
               onEvent: handleEvent,
             });
+        if (!isCurrentTurn()) return;
         // Strip special tokens from final message(s) before storing, and tag
         // every message this turn actually added with turnSeq so its tool
         // trace pills can be found again once it's a plain history entry.
@@ -354,6 +368,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
         const lastAssistant = [...cleanedHistory].reverse().find((m) => m.role === 'assistant');
         setSrAnnouncement(lastAssistant ? contentToText(lastAssistant.content) : 'Reply complete');
       } catch (err) {
+        if (!isCurrentTurn()) return;
         // Preserve tool call history even when a later round fails, so the user sees what succeeded.
         const partialMessages =
           typeof err === 'object' &&
@@ -382,17 +397,19 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
         }
         setSrAnnouncement('');
       } finally {
-        setStreamingText('');
-        streamingTextRef.current = '';
-        // A tool call that never got a matching toolResult (a hung/dropped
-        // connection) would otherwise show a permanently-spinning pill in a
-        // conversation that has already ended.
-        setToolTrace((prev) =>
-          prev.map((t) => (t.turnSeq === turnSeq && t.status === 'running' ? { ...t, status: 'error' } : t))
-        );
-        setIsStreaming(false);
-        setCurrentTurnSeq(null);
-        abortRef.current = null;
+        if (isCurrentTurn()) {
+          setStreamingText('');
+          streamingTextRef.current = '';
+          // A tool call that never got a matching toolResult (a hung/dropped
+          // connection) would otherwise show a permanently-spinning pill in a
+          // conversation that has already ended.
+          setToolTrace((prev) =>
+            prev.map((t) => (t.turnSeq === turnSeq && t.status === 'running' ? { ...t, status: 'error' } : t))
+          );
+          setIsStreaming(false);
+          setCurrentTurnSeq(null);
+          abortRef.current = null;
+        }
       }
     },
     [isLocalBackend, settings.ollamaApiKey, settings.ollamaModel, team, setHistory]

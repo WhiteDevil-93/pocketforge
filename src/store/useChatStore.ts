@@ -14,7 +14,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CHAT_STORAGE_KEY } from '../lib/storage';
-import type { ChatMessage, ContentPart } from '../lib/llm/types';
+import { contentToText, type ChatMessage, type ContentPart } from '../lib/llm/types';
 
 /** Keeps the persisted conversation bounded — a chat that ran to 40 messages
  *  has likely long since drifted past what's worth restoring anyway. */
@@ -49,7 +49,14 @@ function stripImageForPersist(msg: StoredChatMessage): StoredChatMessage {
   if (!Array.isArray(msg.content)) return msg;
   if (!msg.content.some((p) => p.type === 'image_url')) return msg;
   const withoutImage: ContentPart[] = msg.content.filter((p) => p.type !== 'image_url');
-  return { ...msg, content: withoutImage, imageOmitted: true, turnSeq: undefined };
+  // Flatten to a plain string once the image is gone. Leaving it as a
+  // ContentPart[] of just text parts isn't wrong per the ChatMessage type,
+  // but ollamaCloud's toWireMessage treats ANY non-string content as "this
+  // message carries an image" and refuses to send it — a restored
+  // conversation would become permanently unsendable after switching to
+  // Ollama Cloud otherwise. No image parts remain at this point, so
+  // contentToText's own image placeholder never actually applies here.
+  return { ...msg, content: contentToText(withoutImage), imageOmitted: true, turnSeq: undefined };
 }
 
 /** Trims to MAX_MESSAGES while keeping the leading system message (ChatPanel

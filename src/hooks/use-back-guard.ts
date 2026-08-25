@@ -17,6 +17,17 @@
 // (navigate(-1) / exit app) proceed". Registering unconditionally (not just
 // on native) is fine — the stack is only ever consulted from the native
 // backButton listener, so it is inert on web/PWA.
+//
+// Escape (web/PWA) reuses this exact stack — see useEscapeConsumesBackGuard
+// below — rather than each overlay owning its own `keydown` listener: two
+// listeners on the same `document` target both fire for one keypress (one
+// handler's preventDefault/stopPropagation doesn't stop the other), so two
+// nested sheets (e.g. a confirm sheet stacked over a list sheet) would both
+// close on a single Escape press instead of just the topmost. Routing Escape
+// through the same "topmost guard only" stack the hardware back button
+// already uses fixes that for both.
+
+import { useEffect } from 'react';
 
 type BackGuardHandler = () => boolean;
 
@@ -37,4 +48,18 @@ export function pushBackGuard(handler: BackGuardHandler): () => void {
 export function consumeBackGuard(): boolean {
   const top = stack[stack.length - 1];
   return top ? top() : false;
+}
+
+/** Mount once, app-wide (in Layout) — a single document-level Escape listener
+ *  that defers to the same topmost-guard stack the hardware back button uses,
+ *  instead of every overlay installing its own Escape handler. */
+export function useEscapeConsumesBackGuard() {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (consumeBackGuard()) e.preventDefault();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 }

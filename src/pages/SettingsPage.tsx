@@ -1418,7 +1418,14 @@ export default function SettingsPage() {
     // transitioned state at all, so no such event is coming — a toast is the
     // only way this failure reaches the user.
     try {
-      await startServer(settings.localModelPath);
+      // A denied notification-permission request (Android 13+, required before a
+      // foreground service can start) resolves with state:'error' rather than
+      // rejecting — dispatchStart's own rejections cover everything else, but this
+      // one path needs its own check or it'd silently do nothing.
+      const result = await startServer(settings.localModelPath);
+      if (result.state === 'error') {
+        toast.error(result.error ?? 'Failed to start server');
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to start server');
     }
