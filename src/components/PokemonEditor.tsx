@@ -2,7 +2,7 @@
 // PocketForge — Full-Screen Pokemon Editor
 // ============================================================================
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { pushBackGuard } from '../hooks/use-back-guard';
@@ -62,7 +62,7 @@ import {
   getStatColorClass,
 } from '../utils';
 import type { Pokemon, EVs, IVs } from '../types';
-import { springSnappy, transitionFast } from '../lib/motion';
+import { springSnappy, transitionFast, EASE_OUT } from '../lib/motion';
 
 export type TeammateAddResult = 'added' | 'duplicate' | 'full' | 'invalid';
 
@@ -104,11 +104,12 @@ export default function PokemonEditor({
 
   // Bottom sheet state
   const [sheet, setSheet] = useState<{
-    type: 'species' | 'ability' | 'item' | 'tera' | 'move' | 'nature' | null;
+    type: 'species' | 'ability' | 'item' | 'tera' | 'move' | 'nature' | 'optimizeSpeed' | null;
     moveIndex?: number;
   }>({ type: null });
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestedMoveToAdd, setSuggestedMoveToAdd] = useState<string | null>(null);
+  const [optimizeSpeedTarget, setOptimizeSpeedTarget] = useState(100);
 
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -202,6 +203,14 @@ export default function PokemonEditor({
   const totalEVs = getTotalEVs(draft.evs);
   const remainingEVs = getRemainingEVs(draft.evs);
   const evValid = totalEVs <= MAX_TOTAL_EVS;
+
+  // Live preview for the Optimize Speed sheet — recomputed as the target
+  // stepper changes so the result is visible before the user commits to it,
+  // instead of the old prompt()/alert() pair that only showed it after.
+  const optimizeSpeedResult = useMemo(
+    () => calculateMinSpeedEVs(draft, optimizeSpeedTarget),
+    [draft, optimizeSpeedTarget]
+  );
 
   // ---- Update helpers ----
   const updateField = useCallback(<K extends keyof Pokemon>(
@@ -961,21 +970,7 @@ export default function PokemonEditor({
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      const target = prompt('Enter target Speed stat to outspeed (e.g. 150):');
-                      if (target) {
-                        const targetNum = parseInt(target, 10);
-                        if (!isNaN(targetNum)) {
-                          const opt = calculateMinSpeedEVs(draft, targetNum);
-                          if (opt.success) {
-                            updateEV('spe', opt.evsNeeded);
-                            alert(opt.description);
-                          } else {
-                            alert(opt.description);
-                          }
-                        }
-                      }
-                    }}
+                    onClick={() => setSheet({ type: 'optimizeSpeed' })}
                     className="font-caption text-accent-primary touch-target px-2 py-1"
                   >
                     Optimize Speed
@@ -1391,6 +1386,54 @@ export default function PokemonEditor({
         </div>
       </BottomSheet>
 
+      {/* Optimize Speed */}
+      <BottomSheet
+        isOpen={sheet.type === 'optimizeSpeed'}
+        onClose={() => setSheet({ type: null })}
+        title="Optimize Speed"
+        showSearch={false}
+      >
+        <div className="space-y-4 pt-2">
+          <p className="font-body text-text-secondary text-center">
+            Find the minimum Speed EVs needed to outspeed a target Speed stat.
+          </p>
+          <div className="flex flex-col items-center gap-2">
+            <span className="font-caption text-text-secondary">Target Speed to outspeed</span>
+            <StepperInput
+              value={optimizeSpeedTarget}
+              min={1}
+              max={999}
+              onChange={setOptimizeSpeedTarget}
+            />
+          </div>
+          <p
+            className={`font-body text-center ${
+              optimizeSpeedResult.success ? 'text-text-primary' : 'text-danger'
+            }`}
+          >
+            {optimizeSpeedResult.description}
+          </p>
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            disabled={!optimizeSpeedResult.success}
+            onClick={() => {
+              updateEV('spe', optimizeSpeedResult.evsNeeded);
+              setSheet({ type: null });
+              toast.success(`Speed EVs set to ${optimizeSpeedResult.evsNeeded}.`);
+            }}
+            className="w-full h-12 flex items-center justify-center rounded-xl font-body-medium text-white bg-accent-primary touch-target disabled:opacity-40 disabled:pointer-events-none"
+          >
+            Apply {optimizeSpeedResult.evsNeeded} Spe EVs
+          </motion.button>
+          <button
+            onClick={() => setSheet({ type: null })}
+            className="w-full h-12 flex items-center justify-center rounded-xl bg-bg-tertiary font-body text-text-primary touch-target"
+          >
+            Cancel
+          </button>
+        </div>
+      </BottomSheet>
+
       {/* Delete Confirmation Sheet */}
       <ConfirmSheet
         isOpen={showDeleteConfirm}
@@ -1457,10 +1500,13 @@ function Accordion({
   children: React.ReactNode;
   rightLabel?: string;
 }) {
+  const contentId = useId();
   return (
     <div className="rounded-2xl bg-bg-secondary border border-border-subtle overflow-hidden">
       <button
         onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={contentId}
         className="w-full h-[52px] flex items-center justify-between px-4 touch-target"
       >
         <span className="font-subtitle text-text-primary">{title}</span>
@@ -1470,7 +1516,7 @@ function Accordion({
           )}
           <motion.div
             animate={{ rotate: expanded ? 180 : 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }}
+            transition={{ duration: 0.2, ease: EASE_OUT }}
           >
             <ChevronDown size={20} className="text-text-tertiary" />
           </motion.div>
@@ -1479,6 +1525,7 @@ function Accordion({
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
+            id={contentId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

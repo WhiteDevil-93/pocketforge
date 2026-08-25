@@ -18,6 +18,7 @@ import {
   Snowflake,
   Wind,
   CircleDot,
+  Swords,
 } from 'lucide-react';
 import {
   searchPokemon,
@@ -27,6 +28,8 @@ import {
   getMoveByName,
 } from '../data';
 import BottomSheet from '../components/BottomSheet';
+import PageHeader from '../components/PageHeader';
+import EmptyState from '../components/EmptyState';
 import PokemonSprite from '../components/PokemonSprite';
 import TypeBadge from '../components/TypeBadge';
 import {
@@ -484,7 +487,7 @@ export default function Calculator() {
                     <button
                       key={opt.value}
                       onClick={() => onUpdateStatus(opt.value)}
-                      className={`px-2.5 py-1 rounded-full font-micro transition-all ${
+                      className={`tap-target-y px-2.5 py-1 rounded-full font-micro transition-all ${
                         pokemon.status === opt.value
                           ? 'bg-accent-primary text-white font-bold'
                           : 'bg-bg-tertiary text-text-tertiary'
@@ -531,9 +534,10 @@ export default function Calculator() {
 
   return (
     <div className="min-h-full pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-bg-primary/95 backdrop-blur-xl border-b border-border-subtle px-4 py-3 flex items-center justify-between">
-        <h1 className="font-headline text-xl text-text-primary">Damage Calculator</h1>
+      {/* Header — Calc is a BottomNav tab root, so no back button (matches
+          Teams/Builder/Nuzlocke/Analysis/Assistant); PageHeader still gives
+          it the same sticky/blur chrome as every other page. */}
+      <PageHeader title="Damage Calculator" showBack={false}>
         <div className="flex items-center gap-1.5">
           <span className="font-micro text-text-tertiary">Gen</span>
           <select
@@ -549,7 +553,7 @@ export default function Calculator() {
             <option value={6}>Gen 6</option>
           </select>
         </div>
-      </header>
+      </PageHeader>
 
       <main className="px-4 py-4 space-y-4">
         {/* Attacker Panel */}
@@ -644,6 +648,18 @@ export default function Calculator() {
           </div>
         </div>
 
+        {/* Nudge shown before the user has picked anything — once an
+            attacker or a move is selected, the per-move hints above (Status
+            moves, unset slots) take over. */}
+        {!attacker.name && selectedMoves.every((m) => !m) && (
+          <EmptyState
+            icon={Swords}
+            iconSize={48}
+            title="No calculation yet"
+            description="Pick an attacker and a move to see damage calculations."
+          />
+        )}
+
         {/* Field Conditions (Collapsible) */}
         <div className="rounded-2xl bg-bg-secondary border border-border-subtle overflow-hidden">
           <button
@@ -676,7 +692,7 @@ export default function Calculator() {
                         <button
                           key={opt.value}
                           onClick={() => setField((f) => ({ ...f, weather: opt.value }))}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-micro transition-all ${
+                          className={`tap-target-y flex items-center gap-1.5 px-3 py-1.5 rounded-full font-micro transition-all ${
                             field.weather === opt.value
                               ? 'bg-accent-primary text-white'
                               : 'bg-bg-tertiary text-text-tertiary'
@@ -697,7 +713,7 @@ export default function Calculator() {
                         <button
                           key={opt.value}
                           onClick={() => setField((f) => ({ ...f, terrain: opt.value }))}
-                          className={`px-3 py-1.5 rounded-full font-micro transition-all ${
+                          className={`tap-target-y px-3 py-1.5 rounded-full font-micro transition-all ${
                             field.terrain === opt.value
                               ? 'bg-accent-primary text-white font-bold'
                               : 'bg-bg-tertiary text-text-tertiary'
@@ -732,7 +748,7 @@ export default function Calculator() {
                               },
                             }))
                           }
-                          className={`px-3 py-1.5 rounded-full font-micro transition-all ${
+                          className={`tap-target-y px-3 py-1.5 rounded-full font-micro transition-all ${
                             field.attackerSide[toggle.key]
                               ? 'bg-success/20 text-success border border-success/30'
                               : 'bg-bg-tertiary text-text-tertiary'
@@ -801,7 +817,7 @@ export default function Calculator() {
                               },
                             }))
                           }
-                          className={`px-3 py-1.5 rounded-full font-micro transition-all ${
+                          className={`tap-target-y px-3 py-1.5 rounded-full font-micro transition-all ${
                             field.defenderSide[toggle.key]
                               ? 'bg-danger/20 text-danger border border-danger/30'
                               : 'bg-bg-tertiary text-text-tertiary'
@@ -855,7 +871,7 @@ export default function Calculator() {
                         onClick={() =>
                           setField((f) => ({ ...f, defenderMultiscale: !f.defenderMultiscale }))
                         }
-                        className={`px-3 py-1.5 rounded-full font-micro transition-all ${
+                        className={`tap-target-y px-3 py-1.5 rounded-full font-micro transition-all ${
                           field.defenderMultiscale
                             ? 'bg-success/20 text-success border border-success/30'
                             : 'bg-bg-tertiary text-text-tertiary'

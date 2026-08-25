@@ -7,6 +7,7 @@ import { TYPE_NAMES, getTypeColor, getEffectiveness } from '../data/typesData';
 import { getPokemonByName } from '../data/pokemonData';
 import type { Team } from '../types';
 import { Shield } from 'lucide-react';
+import { EASE_SMOOTH } from '../lib/motion';
 
 interface SynergyMatrixProps {
   team: Team;
@@ -80,7 +81,7 @@ export default function SynergyMatrix({ team }: SynergyMatrixProps) {
                 transition={{
                   delay: rowIndex * 0.02,
                   duration: 0.2,
-                  ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+                  ease: EASE_SMOOTH,
                 }}
                 className="flex items-center gap-0.5"
               >

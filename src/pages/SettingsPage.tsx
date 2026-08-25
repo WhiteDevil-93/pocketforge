@@ -67,8 +67,9 @@ import {
   LEGACY_NUZLOCKE_STORAGE_KEYS,
   NUZLOCKE_STORAGE_KEY,
 } from '../lib/storage';
+import { EASE_SMOOTH } from '../lib/motion';
 
-const easeSmooth = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
+const easeSmooth = EASE_SMOOTH;
 
 /** Human-readable byte size (B/KB/MB/GB) for the on-device model import UI. */
 function formatBytes(bytes: number): string {

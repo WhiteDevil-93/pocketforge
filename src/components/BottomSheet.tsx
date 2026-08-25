@@ -2,11 +2,12 @@
 // PocketForge — Reusable Bottom Sheet Component
 // ============================================================================
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { useVisualViewport } from '../hooks/use-visual-viewport';
+import { pushBackGuard } from '../hooks/use-back-guard';
 import { transitionBackdrop, transitionSheet } from '../lib/motion';
 
 interface BottomSheetProps {
@@ -19,12 +20,8 @@ interface BottomSheetProps {
   showSearch?: boolean;
 }
 
-function blurActiveElement() {
-  const active = document.activeElement;
-  if (active instanceof HTMLElement) {
-    active.blur();
-  }
-}
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export default function BottomSheet({
   isOpen,
@@ -37,25 +34,75 @@ export default function BottomSheet({
 }: BottomSheetProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const viewport = useVisualViewport(isOpen);
+  const titleId = useId();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
+  const handleClose = useCallback(() => {
+    setSearchQuery('');
+    onSearch?.('');
+    onClose();
+  }, [onClose, onSearch]);
+
+  // Read by the effect below without re-subscribing its keydown/back-guard
+  // listeners on every render that changes handleClose's identity.
+  const handleCloseRef = useRef(handleClose);
+  useEffect(() => {
+    handleCloseRef.current = handleClose;
+  }, [handleClose]);
+
+  // Dialog semantics: lock scroll, move focus in, trap Tab, close on Escape
+  // or Android hardware back, restore focus to whatever opened the sheet.
   useEffect(() => {
     if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCloseRef.current();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const container = sheetRef.current;
+      if (!container) return;
+      const focusable = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Sheets are overlays, not routes — without this, Android's hardware
+    // back would navigate the page underneath instead of closing the sheet
+    // (see use-back-guard.ts).
+    const popBackGuard = pushBackGuard(() => {
+      handleCloseRef.current();
+      return true;
+    });
+
     return () => {
       document.body.style.overflow = previousOverflow;
-      blurActiveElement();
+      document.removeEventListener('keydown', handleKeyDown);
+      popBackGuard();
+      if (previouslyFocused && document.contains(previouslyFocused)) {
+        previouslyFocused.focus();
+      }
     };
   }, [isOpen]);
-
-  const handleClose = useCallback(() => {
-    setSearchQuery('');
-    onSearch?.('');
-    blurActiveElement();
-    onClose();
-  }, [onClose, onSearch]);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,6 +137,10 @@ export default function BottomSheet({
 
           {/* Sheet */}
           <motion.div
+            ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -108,8 +159,9 @@ export default function BottomSheet({
 
             {/* Header */}
             <div className="px-4 pb-3 flex items-center justify-between shrink-0">
-              <h2 className="font-headline text-lg text-text-primary">{title}</h2>
+              <h2 id={titleId} className="font-headline text-lg text-text-primary">{title}</h2>
               <button
+                ref={closeButtonRef}
                 type="button"
                 onClick={handleClose}
                 aria-label={`Close ${title}`}

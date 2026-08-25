@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   ClipboardPaste,
   Copy,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { springSnappy, transitionFast } from '../lib/motion';
+import { springSnappy, transitionFast, EASE_BOUNCE } from '../lib/motion';
 import PageHeader from '../components/PageHeader';
 import { useStore } from '../store/useStore';
 import { importTeamFromPSFormat, exportTeamToPSFormat } from '../utils';
@@ -153,8 +153,20 @@ export default function ImportExport() {
   const importTeam = useStore((s) => s.importTeam);
   const setCurrentTeam = useStore((s) => s.setCurrentTeam);
 
-  // Tabs
-  const [activeTab, setActiveTab] = useState<TabId>('import');
+  // Tabs — driven by ?tab= so callers elsewhere (Teams swipe-Export, Builder's
+  // Export button) can land directly on the Export tab instead of Import.
+  // Reading straight from useSearchParams (rather than seeding a useState
+  // once) keeps it correct even when this instance is reused for a
+  // same-path navigation with a new ?tab= value, and setSearchParams with
+  // replace:true keeps in-page tab clicks from stacking up back-history.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: TabId = searchParams.get('tab') === 'export' ? 'export' : 'import';
+  const setActiveTab = useCallback(
+    (tab: TabId) => {
+      setSearchParams(tab === 'export' ? { tab } : {}, { replace: true });
+    },
+    [setSearchParams]
+  );
 
   // Import state
   const [importText, setImportText] = useState('');
@@ -469,7 +481,7 @@ export default function ImportExport() {
                     transition={{
                       delay: i * 0.08,
                       duration: 0.3,
-                      ease: [0.34, 1.56, 0.64, 1] as [number, number, number, number],
+                      ease: EASE_BOUNCE,
                     }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleImportSample(sample.psFormat)}

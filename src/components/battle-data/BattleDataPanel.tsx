@@ -41,7 +41,7 @@ import {
   formatDisplayName,
   formatUsage,
 } from './formatHelpers';
-import { springSnappy, transitionFast } from '../../lib/motion';
+import { springSnappy, transitionFast, EASE_OUT } from '../../lib/motion';
 import type {
   BattleData,
   BattleFormatId,
@@ -213,7 +213,7 @@ export default function BattleDataPanel({
       >
         <motion.div
           animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.2, ease: EASE_OUT }}
           className="shrink-0 text-text-tertiary"
         >
           <ChevronDown size={18} />

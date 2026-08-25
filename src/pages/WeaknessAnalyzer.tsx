@@ -59,6 +59,7 @@ export default function WeaknessAnalyzer() {
               <select
                 value={selectedTeamId}
                 onChange={(e) => setSelectedTeamId(e.target.value)}
+                aria-label="Select team"
                 className="w-full h-[48px] px-4 rounded-card-md bg-bg-tertiary border border-border-subtle font-body text-text-primary outline-none focus:border-accent-primary/50"
               >
                 {teams.map((t) => (

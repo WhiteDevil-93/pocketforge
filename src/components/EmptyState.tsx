@@ -4,6 +4,7 @@
 
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
+import { EASE_SMOOTH } from '../lib/motion';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -35,7 +36,7 @@ const itemVariants = {
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+      ease: EASE_SMOOTH,
     },
   },
 };

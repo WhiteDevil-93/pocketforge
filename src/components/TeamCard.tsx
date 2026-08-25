@@ -8,6 +8,7 @@ import { Copy, Trash2, Download, AlertTriangle, Check } from 'lucide-react';
 import type { Team } from '../types';
 import { getFormatById } from '../data/formatsData';
 import PokemonSprite from './PokemonSprite';
+import { EASE_SMOOTH } from '../lib/motion';
 
 interface TeamCardProps {
   team: Team;
@@ -15,7 +16,6 @@ interface TeamCardProps {
   onCopy: (teamId: string) => void;
   onDelete: (teamId: string) => void;
   onExport: (teamId: string) => void;
-  onDuplicate: (teamId: string) => void;
   index?: number;
 }
 
@@ -86,7 +86,6 @@ export default function TeamCard({
   onCopy,
   onDelete,
   onExport,
-  onDuplicate,
   index = 0,
 }: TeamCardProps) {
   const [isSwiped, setIsSwiped] = useState<'left' | 'right' | null>(null);
@@ -165,16 +164,6 @@ export default function TeamCard({
     [onDelete, team.id]
   );
 
-  const _handleDuplicate = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setIsSwiped(null);
-      onDuplicate(team.id);
-    },
-    [onDuplicate, team.id]
-  );
-  void _handleDuplicate;
-
   return (
     <motion.div
       className="relative w-full"
@@ -183,7 +172,7 @@ export default function TeamCard({
       transition={{
         duration: 0.2,
         delay: index * 0.05,
-        ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+        ease: EASE_SMOOTH,
       }}
     >
       {/* Right-side delete action (revealed on swipe left) */}

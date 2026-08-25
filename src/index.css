@@ -28,6 +28,11 @@
     --surface-valid: rgba(34, 197, 94, 0.1);
     --surface-invalid: rgba(239, 68, 68, 0.1);
 
+    /* BottomNav's own height (`h-space-16` = 64px in tailwind.config.js) —
+       defined here so callers that need to size around it (Assistant.tsx)
+       read the real value instead of only ever hitting their var() fallback. */
+    --bottom-nav-height: 64px;
+
     /* Stat Colors */
     --stat-hp: #FF4444;
     --stat-hp-light: #FF6B6B;
@@ -291,6 +296,24 @@
   .touch-target {
     min-height: 48px;
     min-width: 48px;
+  }
+
+  /* Expands a small chip/pill's *hit area* to >=44px tall via a pseudo-element,
+     without changing its visual size — for rows of compact filter/toggle
+     chips where growing the box itself would blow the layout. Needs
+     `relative` on the element (or add it here) since the pseudo is
+     positioned against it. */
+  .tap-target-y {
+    position: relative;
+  }
+  .tap-target-y::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    min-height: 44px;
+    transform: translateY(-50%);
   }
 
   /* Safe area bottom padding */

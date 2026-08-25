@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Smartphone, BarChart3, ArrowLeftRight, ChevronDown, Gamepad2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { getFormatsGrouped, DEFAULT_FORMAT, getFormatById } from '../data/formatsData';
+import { EASE_SMOOTH, EASE_BOUNCE } from '../lib/motion';
 import type { Format } from '../types';
 
 const FEATURES = [
@@ -33,8 +34,8 @@ const FEATURES = [
 
 const ANIMATION_CONFIG = {
   spring: { type: 'spring' as const, stiffness: 300, damping: 24 },
-  easeSmooth: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
-  easeSpring: [0.34, 1.56, 0.64, 1] as [number, number, number, number],
+  easeSmooth: EASE_SMOOTH,
+  easeSpring: EASE_BOUNCE,
 };
 
 function AnimatedPokeball() {

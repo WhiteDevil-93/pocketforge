@@ -779,7 +779,7 @@ export default function Nuzlocke() {
                   { key: 'missed' as const, label: 'Missed' },
                 ].map((f) => (
                   <button key={f.key} onClick={() => setRouteFilter(f.key)}
-                    className={`px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${routeFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
+                    className={`tap-target-y px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${routeFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
                 ))}
               </div>
 
@@ -817,7 +817,7 @@ export default function Nuzlocke() {
                   { key: 'titan', label: 'Titans' },
                 ].map((f) => (
                   <button key={f.key} onClick={() => setBossFilter(f.key)}
-                    className={`px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${bossFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
+                    className={`tap-target-y px-3 h-7 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${bossFilter === f.key ? 'bg-accent-primary text-white' : 'bg-bg-tertiary text-text-secondary border border-border-subtle'}`}>{f.label}</button>
                 ))}
               </div>
               {filteredBosses.map((b) => (

@@ -541,7 +541,7 @@ export default function Builder() {
             Import
           </button>
           <button
-            onClick={() => navigate('/import-export')}
+            onClick={() => navigate('/import-export?tab=export')}
             className="h-12 flex items-center justify-center gap-2 rounded-xl bg-bg-secondary border border-border-subtle font-body-medium text-text-primary touch-target"
           >
             <Upload size={18} className="text-accent-secondary" />
@@ -713,7 +713,7 @@ export default function Builder() {
           >
             <button
               onClick={() => {
-                navigate('/import-export');
+                navigate('/import-export?tab=export');
                 setShowContextMenu(false);
               }}
               className="w-full h-12 flex items-center gap-3 px-4 font-body text-text-primary hover:bg-bg-secondary transition-colors text-left"

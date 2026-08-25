@@ -12,12 +12,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { transitionFast } from '../lib/motion';
+import { transitionFast, EASE_SMOOTH } from '../lib/motion';
 import { useStore } from '../store/useStore';
 import { useNuzlockeStore } from '../store/useNuzlockeStore';
 import type { Team } from '../types';
 import SearchInput from '../components/SearchInput';
 import TeamCard from '../components/TeamCard';
+import EmptyState from '../components/EmptyState';
 import PokemonSprite from '../components/PokemonSprite';
 import {
   CHAMPIONS_USAGE_META,
@@ -239,13 +240,8 @@ export default function Teams() {
 
   const handleExportTeam = useCallback((teamId: string) => {
     setCurrentTeam(teamId);
-    navigate('/import-export');
+    navigate('/import-export?tab=export');
   }, [setCurrentTeam, navigate]);
-
-  const handleDuplicateTeam = useCallback((teamId: string) => {
-    const newId = duplicateTeam(teamId);
-    if (newId) toast.success('Team duplicated');
-  }, [duplicateTeam]);
 
   const toggleFolder = useCallback((folder: string) => {
     setExpandedFolders((prev) => ({ ...prev, [folder]: !(prev[folder] ?? true) }));
@@ -274,7 +270,7 @@ export default function Teams() {
       <AnimatePresence>
         {showSearch && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] }}
+            transition={{ duration: 0.2, ease: EASE_SMOOTH }}
             className="sticky top-[56px] z-30 bg-bg-primary/95 backdrop-blur-xl px-4 py-2 border-b border-border-subtle overflow-hidden">
             <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." autoFocus />
           </motion.div>
@@ -305,7 +301,7 @@ export default function Teams() {
               <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                 {FORMAT_FILTERS.map((format) => (
                   <button key={format.id} onClick={() => setActiveFormat(format.id)}
-                    className={`flex-shrink-0 h-[34px] px-3 rounded-full text-xs font-medium transition-colors ${activeFormat === format.id ? 'bg-accent-primary/15 text-accent-primary' : 'bg-bg-secondary text-text-secondary border border-border-subtle'}`}>
+                    className={`tap-target-y flex-shrink-0 h-[34px] px-3 rounded-full text-xs font-medium transition-colors ${activeFormat === format.id ? 'bg-accent-primary/15 text-accent-primary' : 'bg-bg-secondary text-text-secondary border border-border-subtle'}`}>
                     {format.label}
                   </button>
                 ))}
@@ -314,22 +310,22 @@ export default function Teams() {
           )}
 
           {isEmpty && (
-            <div className="rounded-2xl bg-bg-secondary border border-border-subtle px-5 py-8 flex flex-col items-center text-center mb-6">
-              <Users size={42} className="text-text-tertiary mb-3" />
-              <p className="font-subtitle text-text-primary mb-1">Build your first team</p>
-              <p className="font-caption text-text-tertiary max-w-[280px]">
-                Choose a format, add Pokemon, then use analysis to check the result.
-              </p>
-            </div>
+            <EmptyState
+              icon={Users}
+              iconSize={42}
+              title="Build your first team"
+              description="Choose a format, add Pokemon, then use analysis to check the result."
+              action={{ label: 'New Team', onClick: handleCreateTeam }}
+            />
           )}
 
         {/* ---- Search Results ---- */}
         {noSearchResults && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center text-center py-16">
-            <Search size={64} className="text-text-tertiary mb-4" />
-            <h2 className="font-headline text-text-primary mb-2">No teams found</h2>
-            <p className="font-body text-text-secondary max-w-[280px]">Try adjusting your search or filters.</p>
-          </motion.div>
+          <EmptyState
+            icon={Search}
+            title="No teams found"
+            description="Try adjusting your search or filters."
+          />
         )}
 
         {/* ---- Folder Groupings ---- */}
@@ -348,7 +344,7 @@ export default function Teams() {
                 {(expandedFolders[folder] ?? true) && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="flex flex-col gap-2 overflow-hidden">
                     {groupedTeams[folder]?.map((team, i) => (
-                      <TeamCard key={team.id} team={team} onTap={handleTapTeam} onCopy={handleCopyTeam} onDelete={handleDeleteTeam} onExport={handleExportTeam} onDuplicate={handleDuplicateTeam} index={i} />
+                      <TeamCard key={team.id} team={team} onTap={handleTapTeam} onCopy={handleCopyTeam} onDelete={handleDeleteTeam} onExport={handleExportTeam} index={i} />
                     ))}
                   </motion.div>
                 )}

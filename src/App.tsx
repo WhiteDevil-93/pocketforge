@@ -27,6 +27,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const CustomFormatsPage = lazy(() => import('./pages/CustomFormatsPage'));
 const WeaknessAnalyzer = lazy(() => import('./pages/WeaknessAnalyzer'));
 const Assistant = lazy(() => import('./pages/Assistant'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const hasCompletedOnboarding = useStore((s) => s.settings.hasCompletedOnboarding);
@@ -281,7 +282,7 @@ export default function App() {
           />
           <Route path="/home" element={<Navigate to={HOME_PATH} replace />} />
           <Route path="/" element={<Navigate to={HOME_PATH} replace />} />
-          <Route path="*" element={<Navigate to={HOME_PATH} replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </Layout>
