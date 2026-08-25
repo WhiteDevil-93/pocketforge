@@ -385,6 +385,75 @@ class LocalLlmPlugin : Plugin() {
         return if (sanitized.isNullOrBlank()) DEFAULT_IMPORT_NAME else sanitized
     }
 
+    /**
+     * Lists every imported model file in app-private storage — the same filter
+     * predicate [dispatchStart]'s own fallback discovery uses — so Settings can
+     * show what has accumulated there (each import writes a new file; nothing
+     * before this ever deleted one) instead of only ever showing the currently
+     * selected path.
+     */
+    @PluginMethod
+    fun listModelFiles(call: PluginCall) {
+        val ctx = context
+        if (ctx == null) {
+            call.reject("Plugin context unavailable")
+            return
+        }
+        val files = ctx.filesDir.listFiles()
+            ?.filter { file ->
+                ModelFormat.entries.any { file.name.endsWith(".${it.extension}", ignoreCase = true) }
+            }
+            ?.sortedByDescending { it.lastModified() }
+            .orEmpty()
+        val result = JSObject().apply {
+            put(
+                "files",
+                JSONArray().apply {
+                    for (file in files) {
+                        put(
+                            JSObject().apply {
+                                put("path", file.absolutePath)
+                                put("name", file.name)
+                                put("size", file.length())
+                            }
+                        )
+                    }
+                }
+            )
+        }
+        call.resolve(result)
+    }
+
+    /**
+     * Deletes an imported model file. Refuses while that exact path is the one
+     * [LocalLlmService] is currently loading or serving — deleting the file
+     * backing a live server out from under it would corrupt an in-flight load
+     * or crash the next generate() call.
+     */
+    @PluginMethod
+    fun deleteModelFile(call: PluginCall) {
+        val path = call.getString("path")
+        if (path.isNullOrBlank()) {
+            call.reject("path is required")
+            return
+        }
+        val activeState = LocalLlmService.getStatusSnapshot()["state"] as? String
+        if (LocalLlmService.currentModelPath == path && (activeState == "ready" || activeState == "loading")) {
+            call.reject("Can't delete a model while it's loaded — stop the server first")
+            return
+        }
+        val file = File(path)
+        if (!file.exists()) {
+            call.resolve(JSObject())
+            return
+        }
+        if (!file.delete()) {
+            call.reject("Could not delete the model file")
+            return
+        }
+        call.resolve(JSObject())
+    }
+
     private external fun nativePing(): String
 
     // ------------------------------------------------------------------

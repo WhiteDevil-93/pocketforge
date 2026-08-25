@@ -26,6 +26,14 @@ export interface PickModelResult {
   size: number;
 }
 
+/** One model file sitting in app-private storage — every import writes a new
+ *  file and nothing before this ever deleted one, so this can list several. */
+export interface ModelFile {
+  path: string;
+  name: string;
+  size: number;
+}
+
 /** Server lifecycle snapshot, mirroring LocalLlmPlugin's serverStatusChanged events. */
 export interface LocalLlmServerStatus {
   state: 'stopped' | 'loading' | 'ready' | 'error';
@@ -87,6 +95,8 @@ export interface LocalLlmPlugin {
   startServer(options: { modelPath?: string }): Promise<LocalLlmServerStatus>;
   stopServer(): Promise<LocalLlmServerStatus>;
   getServerStatus(): Promise<LocalLlmServerStatus>;
+  listModelFiles(): Promise<{ files: ModelFile[] }>;
+  deleteModelFile(options: { path: string }): Promise<void>;
   addListener(
     eventName: 'modelImportProgress',
     listenerFunc: (progress: ModelImportProgress) => void,
@@ -111,6 +121,17 @@ export function pingLocalLlm(): Promise<{ message: string; nativeInfo: string }>
 /** Launches the SAF picker and imports the selected GGUF into app-private storage. */
 export function pickModelFile(): Promise<PickModelResult> {
   return localLlm.pickModelFile();
+}
+
+/** Lists every imported model file sitting in app-private storage. */
+export function listModelFiles(): Promise<{ files: ModelFile[] }> {
+  return localLlm.listModelFiles();
+}
+
+/** Deletes an imported model file. Rejects if that path is the one currently
+ *  loaded/serving — stop the server first. */
+export function deleteModelFile(path: string): Promise<void> {
+  return localLlm.deleteModelFile({ path });
 }
 
 /**

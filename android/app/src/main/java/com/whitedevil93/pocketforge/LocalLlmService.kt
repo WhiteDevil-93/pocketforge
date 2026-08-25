@@ -74,6 +74,12 @@ class LocalLlmService : Service() {
          *  behind when the OS destroyed the service without killing the process. */
         @Volatile var isServiceRunning: Boolean = false
             private set
+        /** Absolute path of the model this instance is loading/serving, set at the
+         *  top of [handleStart] and cleared in [onDestroy] — the single source of
+         *  truth LocalLlmPlugin.deleteModelFile checks before allowing a delete, so
+         *  the file backing a live server can't be pulled out from under it. */
+        @Volatile var currentModelPath: String? = null
+            private set
 
         /** True between start() dispatching the FGS intent and the new instance's onCreate. */
         @Volatile var startInFlight: Boolean = false
@@ -238,6 +244,7 @@ class LocalLlmService : Service() {
         if (state != "error") transition("stopped", null, null)
         isServiceRunning = false
         serviceInstance = null
+        currentModelPath = null
         super.onDestroy()
     }
 
@@ -261,6 +268,7 @@ class LocalLlmService : Service() {
             stopSelf()
             return
         }
+        currentModelPath = modelPath
         if (state != "loading") transition("loading", null, null)
         isStopping = false
         startForegroundWithType()
