@@ -27,18 +27,22 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--bg-elevated)",
-          "--normal-text": "var(--text-primary)",
-          "--normal-border": "var(--border-active)",
-          "--success-bg": "var(--bg-elevated)",
-          "--success-text": "var(--success)",
-          "--success-border": "var(--border-active)",
-          "--error-bg": "var(--bg-elevated)",
-          "--error-text": "var(--danger)",
-          "--error-border": "var(--border-active)",
-          "--warning-bg": "var(--bg-elevated)",
-          "--warning-text": "var(--warning)",
-          "--warning-border": "var(--border-active)",
+          // PocketForge's own tokens are space-separated RGB components (not
+          // a valid color on their own — see index.css's :root comment), so
+          // every reference here needs the rgb(...) wrapper sonner's internal
+          // stylesheet expects a real color value from.
+          "--normal-bg": "rgb(var(--bg-elevated))",
+          "--normal-text": "rgb(var(--text-primary))",
+          "--normal-border": "rgb(var(--border-active))",
+          "--success-bg": "rgb(var(--bg-elevated))",
+          "--success-text": "rgb(var(--success))",
+          "--success-border": "rgb(var(--border-active))",
+          "--error-bg": "rgb(var(--bg-elevated))",
+          "--error-text": "rgb(var(--danger))",
+          "--error-border": "rgb(var(--border-active))",
+          "--warning-bg": "rgb(var(--bg-elevated))",
+          "--warning-text": "rgb(var(--warning))",
+          "--warning-border": "rgb(var(--border-active))",
           "--border-radius": "var(--radius)",
           // Above BottomSheet's sheet layer (z-[100]) so a toast (e.g. an
           // import-error toast fired while a sheet is open) is never hidden

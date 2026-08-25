@@ -8,6 +8,7 @@ import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import BottomNav from './BottomNav';
 import { Toaster } from './ui/sonner';
 import { transitionFast } from '../lib/motion';
+import { useTheme } from '../hooks/use-theme';
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ interface LayoutProps {
 const HIDE_NAV_ROUTES = ['/onboarding', '/welcome'];
 
 export default function Layout({ children }: LayoutProps) {
+  useTheme();
   const location = useLocation();
   const showNav = !HIDE_NAV_ROUTES.some(route => location.pathname === route);
 

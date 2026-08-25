@@ -162,8 +162,8 @@ function RunCard({ run, isActive, onSelect, onDelete }: { run: NuzlockeRun; isAc
           <p className="text-body font-semibold text-text-primary truncate">{run.name}</p>
           <p className="text-caption text-text-secondary">{game?.name}</p>
           <div className="flex gap-3 mt-1">
-            <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={12} /> {alive}</span>
-            <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><Skull size={12} /> {dead}</span>
+            <span className="text-caption text-success flex items-center gap-1"><Heart size={12} /> {alive}</span>
+            <span className="text-caption text-danger flex items-center gap-1"><Skull size={12} /> {dead}</span>
           </div>
         </button>
         <button type="button" onClick={onDelete} aria-label={`Delete ${run.name}`} title="Delete run" className="w-9 h-9 flex items-center justify-center rounded-lg touch-target shrink-0">
@@ -420,7 +420,7 @@ function BossCard({ boss, teamTypes, onVS }: { boss: BossData; teamTypes: string
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <TypeBadge type={boss.type.toLowerCase()} />
-          <span className="text-caption font-bold" style={{ color: '#EAB308' }}>Lv.{boss.levelCap}</span>
+          <span className="text-caption text-warning font-bold">Lv.{boss.levelCap}</span>
           {open ? <ChevronUp size={16} className="text-text-tertiary" /> : <ChevronDown size={16} className="text-text-tertiary" />}
         </div>
       </button>
@@ -728,9 +728,9 @@ export default function Nuzlocke() {
         </div>
         <div className="flex items-center justify-between mt-2 ml-7">
           <div className="flex gap-4">
-            <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={14} /> {alive}</span>
-            <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><Skull size={14} /> {dead}</span>
-            <span className="text-caption flex items-center gap-1" style={{ color: '#3B82F6' }}><Archive size={14} /> {boxed}</span>
+            <span className="text-caption text-success flex items-center gap-1"><Heart size={14} /> {alive}</span>
+            <span className="text-caption text-danger flex items-center gap-1"><Skull size={14} /> {dead}</span>
+            <span className="text-caption text-accent-primary flex items-center gap-1"><Archive size={14} /> {boxed}</span>
           </div>
           {upcomingBoss && (
             <span className="text-caption font-semibold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 flex items-center gap-1">
@@ -891,7 +891,7 @@ export default function Nuzlocke() {
                         <p className="text-caption text-text-secondary">{b.location}</p>
                       </div>
                       <TypeBadge type={b.type.toLowerCase()} />
-                      <span className="text-caption font-bold" style={{ color: '#EAB308' }}>Lv.{b.levelCap}</span>
+                      <span className="text-caption text-warning font-bold">Lv.{b.levelCap}</span>
                     </div>
                   );
                 }) || <p className="text-sm text-text-tertiary">No boss data</p>}

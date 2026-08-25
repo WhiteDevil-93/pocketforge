@@ -147,8 +147,8 @@ function NuzlockeProgressCard({ navigate }: { navigate: (path: string) => void }
         <ArrowRight size={16} className="text-text-tertiary" />
       </div>
       <div className="flex items-center gap-4">
-        <span className="text-caption flex items-center gap-1" style={{ color: '#22C55E' }}><Heart size={12} /> {runData.alive}</span>
-        <span className="text-caption flex items-center gap-1" style={{ color: '#EF4444' }}><AlertTriangle size={12} /> {runData.dead}</span>
+        <span className="text-caption text-success flex items-center gap-1"><Heart size={12} /> {runData.alive}</span>
+        <span className="text-caption text-danger flex items-center gap-1"><AlertTriangle size={12} /> {runData.dead}</span>
         <span className="text-caption text-text-tertiary">{runData.total} encounters</span>
       </div>
     </button>
