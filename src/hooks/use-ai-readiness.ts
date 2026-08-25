@@ -3,9 +3,26 @@ import { useStore } from '../store/useStore';
 import { isNativeApp } from '../lib/platform';
 import type { LocalLlmServerStatus } from '../lib/native/localLlm';
 
+/**
+ * Discriminated readiness state — replaces the old single isConfigured
+ * boolean, which collapsed 'the server is still loading the model' and 'the
+ * server crashed with an error' into the identical "AI Assistant isn't set
+ * up yet" presentation, and made the Ask-AI launcher vanish in both cases
+ * exactly when a user watching it load would expect it to appear soon.
+ */
+export type AiReadinessStatus =
+  | 'ready'
+  | 'starting'
+  | 'server-error'
+  | 'server-stopped'
+  | 'no-model'
+  | 'not-configured'
+  | 'disabled';
+
 export interface AiReadiness {
-  /** True when a chat request could actually be sent right now. */
+  /** True when a chat request could actually be sent right now — equivalent to status === 'ready'. */
   isConfigured: boolean;
+  status: AiReadinessStatus;
   isLocalBackend: boolean;
   /**
    * Live on-device server status. Always null in the browser and on the cloud
@@ -30,22 +47,36 @@ export function useAiReadiness(): AiReadiness {
 
   // Any on-device backend counts as local — llama.cpp and LiteRT-LM share the
   // same OpenAI-shaped HTTP contract, so nothing here needs to distinguish them.
-  const isLocalBackend = settings.aiBackend !== 'ollamaCloud';
+  // Gating on isNativeApp() here (not just at the call sites) matters: without
+  // it, a web session left with a persisted aiBackend of 'localLlamaCpp' (e.g.
+  // after restoring an Android backup in the browser) would evaluate every
+  // local-only branch below even though nothing local can ever run — the
+  // actual dead end this fixes.
+  const isLocalBackend = isNativeApp() && settings.aiBackend !== 'ollamaCloud';
 
   // Only the native shell has a local server to be ready; the browser build's
   // status state is meaningless (and would otherwise gate the cloud path).
-  const effectiveServerStatus = isNativeApp() && isLocalBackend ? serverStatus : null;
+  const effectiveServerStatus = isLocalBackend ? serverStatus : null;
 
-  // The local backend needs a model imported AND the llama-server live — NOT an
-  // API key (there is none). The cloud backend keeps the existing key+model check.
-  const isConfigured = settings.aiEnabled
-    ? isLocalBackend
-      ? settings.localModelPath.trim().length > 0 && effectiveServerStatus?.state === 'ready'
+  const status: AiReadinessStatus = !settings.aiEnabled
+    ? 'disabled'
+    : isLocalBackend
+      ? settings.localModelPath.trim().length === 0
+        ? 'no-model'
+        : effectiveServerStatus?.state === 'ready'
+          ? 'ready'
+          : effectiveServerStatus?.state === 'error'
+            ? 'server-error'
+            : effectiveServerStatus?.state === 'stopped'
+              ? 'server-stopped'
+              // 'loading', or no snapshot has arrived yet — both read as "wait".
+              : 'starting'
       : settings.ollamaApiKey.trim().length > 0 && settings.ollamaModel.trim().length > 0
-    : false;
+        ? 'ready'
+        : 'not-configured';
 
   useEffect(() => {
-    if (!isNativeApp() || !isLocalBackend) return;
+    if (!isLocalBackend) return;
     let cancelled = false;
     let remove: (() => void) | undefined;
     void (async () => {
@@ -76,5 +107,5 @@ export function useAiReadiness(): AiReadiness {
     };
   }, [isLocalBackend]);
 
-  return { isConfigured, isLocalBackend, serverStatus: effectiveServerStatus };
+  return { isConfigured: status === 'ready', status, isLocalBackend, serverStatus: effectiveServerStatus };
 }

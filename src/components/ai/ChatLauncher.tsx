@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { lazy, Suspense, useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { Loader2, MessageCircle } from 'lucide-react';
 import { useAiReadiness } from '../../hooks/use-ai-readiness';
 import ChatSheetLoadingFallback from './ChatSheetLoadingFallback';
 
@@ -19,20 +19,37 @@ interface ChatLauncherProps {
 }
 
 /**
- * Renders nothing unless the assistant is actually usable, so pages can drop it
- * in unconditionally. A dead button that opens a sheet saying "not configured"
- * is worse than no button — Settings is where you go to fix that, and Settings
- * already explains what is missing.
+ * Renders nothing unless the assistant is at least on its way to usable, so
+ * pages can drop it in unconditionally. A dead button that opens a sheet
+ * saying "not configured" is worse than no button — Settings is where you go
+ * to fix that, and Settings already explains what is missing. 'starting' is
+ * the one exception: a server mid-load isn't a fixable problem the way "no
+ * model imported" is, so instead of vanishing (and reappearing once ready,
+ * with no visible reason why) the pill stays up, disabled, saying so.
  */
 export default function ChatLauncher({ className = '' }: ChatLauncherProps) {
-  const { isConfigured } = useAiReadiness();
+  const { status } = useAiReadiness();
   const [isOpen, setIsOpen] = useState(false);
   // Once true, stays true for the rest of the session — gates whether the lazy
   // chunk is fetched at all, independent of isOpen's open/close toggling (which
   // drives the sheet's slide in/out animation).
   const [hasOpened, setHasOpened] = useState(false);
 
-  if (!isConfigured) return null;
+  if (status !== 'ready' && status !== 'starting') return null;
+
+  if (status === 'starting') {
+    return (
+      <button
+        type="button"
+        disabled
+        aria-label="AI assistant is starting"
+        className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-medium border border-border-subtle text-text-tertiary bg-bg-tertiary opacity-70 touch-target shrink-0 ${className}`}
+      >
+        <Loader2 size={14} className="animate-spin" />
+        AI loading…
+      </button>
+    );
+  }
 
   return (
     <>

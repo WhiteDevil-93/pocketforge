@@ -9,16 +9,14 @@
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { Bot, Settings as SettingsIcon } from 'lucide-react';
+import { Settings as SettingsIcon } from 'lucide-react';
 import ChatPanel from '../components/ai/ChatPanel';
 import { useStore } from '../store/useStore';
-import { useAiReadiness } from '../hooks/use-ai-readiness';
 
 export default function Assistant() {
   const navigate = useNavigate();
   const teams = useStore((s) => s.teams);
   const currentTeamId = useStore((s) => s.currentTeamId);
-  const { isConfigured } = useAiReadiness();
 
   const team = useMemo(
     () => teams.find((t) => t.id === currentTeamId) ?? teams[0] ?? null,
@@ -47,30 +45,12 @@ export default function Assistant() {
         </button>
       </div>
 
-      {isConfigured ? (
-        <ChatPanel className="flex-1" />
-      ) : (
-        // ChatPanel renders its own not-configured state, but this surface is a
-        // destination rather than something opened on purpose — a first-time
-        // visitor lands here with nothing set up, so send them somewhere useful.
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 pb-10">
-          <Bot size={36} className="text-text-tertiary" />
-          <div>
-            <p className="text-sm text-text-primary">AI Assistant isn't set up yet</p>
-            <p className="text-[12px] text-text-secondary leading-relaxed mt-1 max-w-xs">
-              Turn it on in Settings, then either add an Ollama Cloud key or import a model and
-              start the on-device server.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/settings')}
-            className="h-9 px-4 rounded-full text-[12px] font-medium bg-accent-primary text-white touch-target"
-          >
-            Open Settings
-          </button>
-        </div>
-      )}
+      {/* ChatPanel renders AiEmptyState itself when not configured — the same
+          status-aware presentation ChatSheet and ChatLauncher use, so a
+          first-time visitor landing here with nothing set up sees exactly
+          the same guidance (and the same "Open Settings" CTA) as everywhere
+          else in the app. */}
+      <ChatPanel className="flex-1" />
     </div>
   );
 }

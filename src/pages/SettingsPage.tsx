@@ -56,11 +56,13 @@ import { CHAMPIONS_META } from '../data/championsLegality';
 import { CHAMPIONS_USAGE_META } from '../data/championsUsageRankings';
 import { checkForAppUpdate } from '../lib/pwaUpdate';
 import { isNativeApp } from '../lib/platform';
+import { useAiReadiness } from '../hooks/use-ai-readiness';
 // Type-only: the native module itself is imported dynamically behind isNativeApp()
 // so the web/PWA bundle never pulls the Capacitor plugin registration in.
-import type { LocalLlmServerStatus, ModelImportProgress } from '../lib/native/localLlm';
+import type { ModelImportProgress } from '../lib/native/localLlm';
 import {
   APP_STORAGE_KEY,
+  CHAT_STORAGE_KEY,
   LEGACY_NUZLOCKE_STORAGE_KEYS,
   NUZLOCKE_STORAGE_KEY,
 } from '../lib/storage';
@@ -846,19 +848,25 @@ export default function SettingsPage() {
   const [importProgress, setImportProgress] = useState<ModelImportProgress | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importedModelSize, setImportedModelSize] = useState<number | null>(null);
-  const [serverStatus, setServerStatus] = useState<LocalLlmServerStatus | null>(null);
+  // isLocalBackend/serverStatus come from the shared readiness hook (it owns
+  // the actual native subscription) rather than a second independent one here
+  // — the two used to disagree on web with a leftover on-device setting (a
+  // restored Android backup opened in the browser build), where this page's
+  // own isLocalBackend stayed true forever since it never checked
+  // isNativeApp(). A rejection that never reaches the native service at all
+  // (a missing notification permission, an unavailable plugin context) can't
+  // produce a serverStatusChanged event for the hook to pick up — those
+  // surface as a toast in handleStartServer/handleStopServer below instead of
+  // trying to force an ad-hoc status onto this value.
+  const { isLocalBackend, serverStatus } = useAiReadiness();
   // Matches ChatSheet's own configured-check — a whitespace-only key/model should
   // read as "not configured" everywhere, not just where the actual request is sent.
   // Backend-aware: the local llama.cpp path needs an imported model (and a live
   // server on-device), never an API key; the cloud path keeps the key+model check.
-  // Any on-device backend counts as local — see use-ai-readiness.ts's own note.
-  const isLocalBackend = settings.aiBackend !== 'ollamaCloud';
-  // Native-only controls (import row, server row) only exist in the Android shell.
-  const localUiActive = isNativeApp() && isLocalBackend;
+  const localUiActive = isLocalBackend;
   const localModelReady = settings.localModelPath.trim().length > 0;
-  const localServerReady = isNativeApp() ? serverStatus?.state === 'ready' : false;
   const hasAiConfig = isLocalBackend
-    ? localModelReady && (!isNativeApp() || localServerReady)
+    ? localModelReady && (!isNativeApp() || serverStatus?.state === 'ready')
     : settings.ollamaApiKey.trim().length > 0 && settings.ollamaModel.trim().length > 0;
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [activeTab, setActiveTab] = useState<SettingsTab>('preferences');
@@ -938,38 +946,6 @@ export default function SettingsPage() {
   // Track the on-device llama-server's live state (native + local backend only).
   // No-ops in the browser — the native module is imported dynamically so the
   // web/PWA bundle never pulls it in (same convention as ChatSheet).
-  useEffect(() => {
-    if (!isNativeApp() || !isLocalBackend) return;
-    let cancelled = false;
-    let remove: (() => void) | undefined;
-    void (async () => {
-      const { getServerStatus, addServerStatusChangedListener } = await import(
-        '../lib/native/localLlm'
-      );
-      if (cancelled) return;
-      const apply = (status: LocalLlmServerStatus) => {
-        if (!cancelled) setServerStatus(status);
-      };
-      const handle = await addServerStatusChangedListener(apply);
-      if (cancelled) {
-        void handle.remove();
-        return;
-      }
-      remove = () => void handle.remove();
-      // Snapshot first — serverStatusChanged only fires on transitions, so a server
-      // already ready before Settings opened would otherwise never surface. A
-      // failed snapshot must still resolve to *something* other than the
-      // initial null, or the row is stuck reading "Checking…" forever.
-      void getServerStatus()
-        .then(apply)
-        .catch(() => apply({ state: 'error', error: 'Could not read server status' }));
-    })();
-    return () => {
-      cancelled = true;
-      remove?.();
-    };
-  }, [isLocalBackend]);
-
   // Export all teams
   const handleExport = useCallback(() => {
     if (teams.length === 0) {
@@ -1105,6 +1081,7 @@ export default function SettingsPage() {
   const handleClearAll = useCallback(() => {
     localStorage.removeItem(APP_STORAGE_KEY);
     localStorage.removeItem(NUZLOCKE_STORAGE_KEY);
+    localStorage.removeItem(CHAT_STORAGE_KEY);
     for (const key of LEGACY_NUZLOCKE_STORAGE_KEYS) localStorage.removeItem(key);
     window.location.reload();
   }, []);
@@ -1168,21 +1145,15 @@ export default function SettingsPage() {
       return;
     }
     const { startServer } = await import('../lib/native/localLlm');
-    // Resolves immediately with 'loading'; readiness arrives via the
-    // serverStatusChanged listener. A failure still lands as an error status —
-    // applied directly so an immediate error (permission denied, missing model)
-    // is never silently swallowed.
+    // Resolves immediately with 'loading'; readiness arrives via the shared
+    // readiness hook's serverStatusChanged subscription. A rejection here
+    // (permission denied, plugin context gone) means the native service never
+    // transitioned state at all, so no such event is coming — a toast is the
+    // only way this failure reaches the user.
     try {
-      const status = await startServer(settings.localModelPath);
-      setServerStatus(status);
+      await startServer(settings.localModelPath);
     } catch (e) {
-      // Native call failed entirely — surface the rejection reason rather than
-      // swallowing it; the next serverStatusChanged event or getServerStatus
-      // snapshot still reports the true state.
-      setServerStatus({
-        state: 'error',
-        error: e instanceof Error ? e.message : 'Failed to start server',
-      });
+      toast.error(e instanceof Error ? e.message : 'Failed to start server');
     }
   }, [localModelReady, settings.localModelPath]);
 
@@ -1190,19 +1161,13 @@ export default function SettingsPage() {
     if (!isNativeApp()) return;
     const { stopServer } = await import('../lib/native/localLlm');
     try {
-      const status = await stopServer();
-      setServerStatus(status);
+      await stopServer();
     } catch (e) {
       // The serverStatusChanged event usually still lands even on a rejected
-      // call, but if the plugin context is gone (LocalLlmPlugin.kt's
-      // teardown case) that event never arrives either — applying an error
-      // status directly here is the same "never leave a stale label" pattern
-      // as handleStartServer, so the row can't get stuck reading "Ready"
-      // forever with a Stop button that silently does nothing.
-      setServerStatus({
-        state: 'error',
-        error: e instanceof Error ? e.message : 'Failed to stop server',
-      });
+      // call, but if the plugin context is gone (LocalLlmPlugin.kt's teardown
+      // case) that event never arrives either — a toast is the only way this
+      // failure reaches the user, so the Stop tap doesn't silently do nothing.
+      toast.error(e instanceof Error ? e.message : 'Failed to stop server');
     }
   }, []);
 

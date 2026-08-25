@@ -1,5 +1,6 @@
 export const APP_STORAGE_KEY = 'pocketforge-storage';
 export const NUZLOCKE_STORAGE_KEY = 'pocketforge-nuzlocke';
+export const CHAT_STORAGE_KEY = 'pocketforge-chat';
 
 // These inconsistent keys were used by older Settings and home-screen code.
 export const LEGACY_NUZLOCKE_STORAGE_KEYS = [
