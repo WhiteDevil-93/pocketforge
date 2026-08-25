@@ -1290,6 +1290,26 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // A running server keeps serving whatever model it already loaded — without
+  // this, switching the selected/imported model while the server is up would
+  // leave Settings and chat both looking like the new model is active while
+  // requests are still answered by the old one. Stop-and-require-a-restart
+  // (matching this page's "server never starts implicitly" rule) instead of
+  // trying to hot-swap.
+  const stopRunningServerIfNeeded = useCallback(async () => {
+    if (serverStatus?.state !== 'ready' && serverStatus?.state !== 'loading') return;
+    try {
+      const { stopServer } = await import('../lib/native/localLlm');
+      await stopServer();
+    } catch (e) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : 'Could not stop the running server — restart it manually before using the new model.'
+      );
+    }
+  }, [serverStatus?.state]);
+
   // On-device model import: SAF picker → app-private storage (native only). The
   // result commits straight to settings on completion — no local draft needed.
   const handleImportModel = useCallback(async () => {
@@ -1299,6 +1319,7 @@ export default function SettingsPage() {
     try {
       const { pickModelFile } = await import('../lib/native/localLlm');
       const result = await pickModelFile();
+      await stopRunningServerIfNeeded();
       setImportedModelSize(result.size);
       updateSettings({
         localModelPath: result.path,
@@ -1319,15 +1340,16 @@ export default function SettingsPage() {
     } finally {
       setIsImporting(false);
     }
-  }, [isImporting, updateSettings]);
+  }, [isImporting, updateSettings, stopRunningServerIfNeeded]);
 
   const handleSelectModelFile = useCallback(
-    (file: ModelFile) => {
+    async (file: ModelFile) => {
+      await stopRunningServerIfNeeded();
       setImportedModelSize(file.size);
       updateSettings({ localModelPath: file.path, localModelName: file.name, localModelVision: undefined });
       setModelFilesSheetOpen(false);
     },
-    [updateSettings]
+    [updateSettings, stopRunningServerIfNeeded]
   );
 
   // Fetched on the "Manage models" row's own click (see handleOpenModelFiles)
@@ -1359,6 +1381,14 @@ export default function SettingsPage() {
           const { deleteModelFile } = await import('../lib/native/localLlm');
           await deleteModelFile(file.path);
           toast.success(`Deleted ${file.name}`);
+          // The native side only refuses this while the file is the one
+          // actively ready/loading — deleting the *selected* file while the
+          // server is merely stopped is allowed, and without this Settings
+          // would keep pointing Start at a path that no longer exists.
+          if (file.path === settings.localModelPath) {
+            setImportedModelSize(null);
+            updateSettings({ localModelPath: '', localModelName: '', localModelVision: undefined });
+          }
           await refreshModelFiles();
         } catch (e) {
           toast.error(e instanceof Error ? e.message : 'Could not delete the model file');
@@ -1367,7 +1397,7 @@ export default function SettingsPage() {
         }
       })();
     },
-    [refreshModelFiles]
+    [refreshModelFiles, settings.localModelPath, updateSettings]
   );
 
   // Server start/stop are explicit user actions only — the service never boots

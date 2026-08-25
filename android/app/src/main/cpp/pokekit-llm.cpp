@@ -693,6 +693,24 @@ Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeGenerate(
         }
     }
 
+    // Acquired here — before any session member is touched — rather than just
+    // around the decode loop as before. teardown_session takes this same
+    // mutex before freeing tmpls/ctx/model, but reg_lock above is released as
+    // soon as the handle is validated; a Stop/unload racing in right after
+    // that release (and before this thread reached the old, later lock point)
+    // could free those members while the JSON-parse/prompt-build steps below
+    // were still reading them with no lock held at all — a real use-after-free,
+    // not just a theoretical one, since teardown_session's own reg_lock hold
+    // only blocks other reg_lock callers, not this gap. Holding generateMutex
+    // for the whole request (setup through decode) closes that window.
+    std::lock_guard<std::mutex> gen_lock(session->generateMutex);
+    if (session->model == nullptr) {
+        // Lost the race: torn down (Stop, unload, or memory-pressure teardown)
+        // between the reg_lock check above and acquiring generateMutex here.
+        LOGE("nativeGenerate: session torn down before generation could start");
+        return;
+    }
+
     GenerationCallback cb;
     if (!callback_init(env, callback, cb)) {
         LOGE("nativeGenerate: callback init failed");
@@ -772,10 +790,9 @@ Java_com_whitedevil93_pocketforge_engine_LlamaCppEngine_nativeGenerate(
         }
         apply_parser_format_override(parser_params);
 
-        // Serialize overlapping requests: the whole decode loop (and cleanup)
-        // holds generateMutex so concurrent /v1/chat/completions requests queue
-        // instead of corrupting the shared context.
-        std::lock_guard<std::mutex> gen_lock(session->generateMutex);
+        // generateMutex (acquired above, before this try block) already
+        // serializes overlapping requests for the whole call, not just the
+        // decode loop below — see the comment at its acquisition site.
         session->cancelled = false;
 
         // Each request carries the whole conversation and the chat template

@@ -432,6 +432,11 @@ class LocalLlmPlugin : Plugin() {
      */
     @PluginMethod
     fun deleteModelFile(call: PluginCall) {
+        val ctx = context
+        if (ctx == null) {
+            call.reject("Plugin context unavailable")
+            return
+        }
         val path = call.getString("path")
         if (path.isNullOrBlank()) {
             call.reject("path is required")
@@ -443,6 +448,21 @@ class LocalLlmPlugin : Plugin() {
             return
         }
         val file = File(path)
+        // The WebView sends this path back verbatim from listModelFiles's own
+        // output, but nothing stops a wrong or malicious value reaching this
+        // call directly — resolve symlinks/".." with canonicalFile and refuse
+        // anything outside app-private storage or without a recognized model
+        // extension, so this can only ever delete a file it itself listed
+        // (not, say, WebView storage or the Capacitor database).
+        val canonical = file.canonicalFile
+        val root = ctx.filesDir.canonicalFile
+        val isModelFile = ModelFormat.entries.any {
+            canonical.name.endsWith(".${it.extension}", ignoreCase = true)
+        }
+        if (canonical.parentFile != root || !isModelFile) {
+            call.reject("Not an imported model file: $path")
+            return
+        }
         if (!file.exists()) {
             call.resolve(JSObject())
             return

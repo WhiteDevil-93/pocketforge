@@ -14,6 +14,7 @@ import com.google.ai.edge.litertlm.ToolException
 import com.whitedevil93.pocketforge.GenerationCallback
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONArray
 import org.json.JSONObject
@@ -143,7 +144,9 @@ class LiteRtLmEngine private constructor(
                 repetitionPenaltyConfig = parsed.repetitionPenaltyConfig,
             )
             try {
-                latch.await()
+                if (!latch.await(GENERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                    throw IllegalStateException("Timed out waiting for LiteRT-LM generation to complete")
+                }
             } catch (e: InterruptedException) {
                 Thread.currentThread().interrupt()
                 throw IllegalStateException("Interrupted while waiting for LiteRT-LM generation", e)
@@ -176,6 +179,13 @@ class LiteRtLmEngine private constructor(
 
     companion object {
         private const val TAG = "LiteRtLmEngine"
+
+        // Bounds the wait for the LiteRT-LM callback below — without it, a
+        // library bug that never calls onDone/onError would park the HTTP
+        // worker thread forever. Matches LocalLlmPlugin's own READ_TIMEOUT_MS,
+        // an existing precedent for "how long a generation is allowed to take"
+        // in this codebase, generous enough for a long on-device reply.
+        private const val GENERATION_TIMEOUT_MS = 300_000L
 
         init {
             // Quiets LiteRT-LM's native logging; harmless to call more than once,

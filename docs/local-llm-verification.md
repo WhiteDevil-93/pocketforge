@@ -485,7 +485,10 @@ With the VL bundle `ready`:
 ### 8.6 Regression
 
 1. With `vgc_gemma2.gguf` (llama.cpp, section 1–5) imported and running — **Expect:** no
-   attach control anywhere, no vision subtitle text, everything in sections 1–7 unaffected.
+   attach control anywhere (llama.cpp never sets `visionAvailable`); the Settings "ready"
+   subtitle does still show "Vision not available — this model is text-only..." for this
+   model, same as any other text-only backend — that subtitle isn't LiteRT-LM-specific.
+   Everything else in sections 1–7 unaffected.
 2. Switch back to **Ollama Cloud** — **Expect:** unaffected; no image affordance appears
    anywhere in the app for the cloud backend, on any device.
 

@@ -1,7 +1,8 @@
 # Integrating the VL `.litertlm` bundle into PocketForge
 
-**Status:** plan only — no code written. Blocked on steps 1–7 of
-`docs/litertlm-android-adapter.md`, which are also unimplemented.
+**Status:** implemented, building on `docs/litertlm-android-adapter.md`'s now-implemented
+adapter. Not yet device-verified — see
+[`local-llm-verification.md`](./local-llm-verification.md) §8.
 
 ## Context
 
@@ -28,7 +29,7 @@ below (§4.2, §4.4 …) point into that document.
 |---|---|
 | Feature | Both — build the plumbing once, ship the structured team importer as the headline, expose generic attach on top |
 | Image source | Gallery **and** camera |
-| Backends | Local LiteRT only; image controls hidden when `aiBackend !== 'localLiteRt'` |
+| Backends | Local LiteRT only; image controls gated on live vision state (`isNativeApp() && isLocalBackend && serverStatus?.visionAvailable === true`), not `aiBackend === 'localLiteRt'` — Settings writes `localLlamaCpp` even when a `.litertlm` engine loaded, since the engine is file-sniffed, not settings-selected |
 
 ## What already exists and must be reused
 

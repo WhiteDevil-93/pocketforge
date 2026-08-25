@@ -1,6 +1,9 @@
 # Kotlin adapter plan: running `.litertlm` via LiteRT-LM alongside llama.cpp
 
-**Status:** plan only — no code written yet.
+**Status:** implemented (`android/app/src/main/java/com/whitedevil93/pocketforge/engine/LiteRtLmEngine.kt`
+and `InferenceEngine.kt`'s backend fallback). Not yet device-verified — see
+[`local-llm-verification.md`](./local-llm-verification.md) §8 for that checklist, which is
+the source of truth for what has actually been observed on real hardware.
 **Target artefacts:** `vgc_e4b_v5_heretic.litertlm` (3.87 GB, text) and
 `vgc_e4b_v5_heretic_vl.litertlm` (4.03 GB, text + vision), both in
 `WhiteDevil6969/vgc-e4b-v5-litert`.
@@ -163,9 +166,11 @@ Prior art worth knowing: `timmyy123/LLM-Hub` is a shipping open-source Android/i
 that imports `.task`, `.litertlm`, `.gguf`, `.mnn` and QNN models side by side — the same
 multi-format import this section describes, already in production.
 
-`copyInChunks` then reads `MAGIC_WINDOW` bytes instead of four, sniffs, rejects `null`
-with a message naming both accepted formats, and prepends the window to the output
-exactly as it does today (`:217`). Everything else in the import path — the SAF
+`copyInChunks` then reads a 20-byte header window instead of four (enough for both magic
+detection — `MAGIC_WINDOW`'s own 8 bytes — and the major-version check above; the two
+aren't the same read), sniffs, rejects `null` with a message naming both accepted formats,
+and prepends the window to the output exactly as it does today (`:217`). Everything else in
+the import path — the SAF
 `ACTION_OPEN_DOCUMENT` flow, `MIN_MODEL_BYTES`, throttled `modelImportProgress` events,
 `COPY_BUFFER_SIZE` — is format-agnostic and unchanged. Worth noting: 3.87 GB through
 `copyInChunks` at 256 KB a time is a long copy with the progress UI as the only feedback;
@@ -430,10 +435,12 @@ needed for tool calling.
 
 ## 5. Gradle, manifest, R8
 
-Latest release is **v0.16.0** (per the repo README, "a quick follow up to v0.15.0"), so
-the version question from the previous draft resolves upward — the gallery's 0.10.0 is
-simply old. Pin explicitly; never `latest.release`, which the upstream docs use for
-brevity and which makes builds irreproducible.
+**v0.16.0** (per the repo README, "a quick follow up to v0.15.0") is the version this
+adapter is written and tested against, so the version question from the previous draft
+resolves upward — the gallery's 0.10.0 is simply old. Newer releases (e.g. v0.16.1) may
+exist by the time you read this; re-verify against §"Verification" before bumping the pin.
+Pin explicitly; never `latest.release`, which the upstream docs use for brevity and which
+makes builds irreproducible.
 
 ```kotlin
 implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.0")
@@ -454,7 +461,9 @@ to CPU.
   `tool(ToolSet)` path uses Kotlin reflection (`toolClass.functions`, annotation
   scanning) — PocketForge does not use that path, but if it ever does, those classes need
   full member keeps. Verify against a **release** build.
-- APK/AAB size is unaffected — the model is side-loaded via SAF, never bundled.
+- Model size does not affect APK/AAB size — the multi-GB `.litertlm`/GGUF file is side-loaded
+  via SAF, never bundled. The LiteRT-LM dependency and its native binaries are still linked
+  into the app like any other library and do add some package size of their own.
 
 ## 6. Memory
 

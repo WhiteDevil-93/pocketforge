@@ -52,6 +52,22 @@ function stripImageForPersist(msg: StoredChatMessage): StoredChatMessage {
   return { ...msg, content: withoutImage, imageOmitted: true, turnSeq: undefined };
 }
 
+/** Trims to MAX_MESSAGES while keeping the leading system message (ChatPanel
+ *  inserts it once, at index 0, on the first turn of a conversation — losing
+ *  it mid-conversation means every later turn goes to the model without the
+ *  tool rules or the team-building sequence) and dropping any leading
+ *  orphaned `role: 'tool'` message the cut can leave without its preceding
+ *  assistant tool_calls (toWireMessage has no pending id for it, and the
+ *  OpenAI-shaped local server rejects a tool message without tool_call_id). */
+function trimHistory(messages: StoredChatMessage[]): StoredChatMessage[] {
+  if (messages.length <= MAX_MESSAGES) return messages;
+  const head = messages[0]?.role === 'system' ? [messages[0]] : [];
+  const rest = messages.slice(head.length);
+  let tail = rest.slice(Math.max(0, rest.length - (MAX_MESSAGES - head.length)));
+  while (tail.length > 0 && tail[0].role === 'tool') tail = tail.slice(1);
+  return [...head, ...tail];
+}
+
 export const useChatStore = create<ChatState>()(
   persist(
     (set) => ({
@@ -59,7 +75,7 @@ export const useChatStore = create<ChatState>()(
       setHistory: (updater) =>
         set((s) => {
           const next = typeof updater === 'function' ? updater(s.history) : updater;
-          return { history: next.length > MAX_MESSAGES ? next.slice(next.length - MAX_MESSAGES) : next };
+          return { history: trimHistory(next) };
         }),
       clear: () => set({ history: [] }),
     }),

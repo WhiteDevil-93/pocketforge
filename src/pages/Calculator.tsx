@@ -639,7 +639,9 @@ export default function Calculator() {
                 ) : (
                   move && (move.category === 'Status' || move.power === 0) && (
                     <p className="px-3 pb-2 text-[11px] text-text-tertiary">
-                      Status moves don't deal damage — pick an attacking move.
+                      {move.category === 'Status'
+                        ? "Status moves don't deal damage — pick an attacking move."
+                        : "This move has 0 power and won't deal damage — pick an attacking move."}
                     </p>
                   )
                 )}

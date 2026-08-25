@@ -91,10 +91,14 @@ export default function MovePoolExplorer() {
                 <li key={p.id}>
                   <button
                     onClick={() => {
+                      // Selecting the species already shown wouldn't change
+                      // `selectedSpecies`, so the fetch effect wouldn't re-run
+                      // to ever clear this — only set it when it actually
+                      // will.
+                      if (p.name !== selectedSpecies) setIsLoadingMovepool(true);
                       setSelectedSpecies(p.name);
                       setSpeciesQuery('');
                       setHasPickedSpecies(true);
-                      setIsLoadingMovepool(true);
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-bg-tertiary"
                   >

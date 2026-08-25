@@ -330,8 +330,12 @@ class LocalLlmService : Service() {
         interruptLoad()
         stopHttpServer()
         // Abort any in-flight generation: cancel() only flips the atomic flag
-        // on the native side, the decode loop observes it between tokens and
-        // exits, then close() (which takes the same mutex) can proceed safely.
+        // on the native side, and the decode loop observes it between tokens
+        // and exits. close()/teardownEngine() then wait on the same native
+        // generateMutex nativeGenerate holds for its whole call (not just the
+        // decode loop — see the lock's acquisition site in pokekit-llm.cpp),
+        // so it can't free the model out from under a request that's still in
+        // its JSON-parse/prompt-build setup instead of decoding yet.
         engine?.cancel()
         teardownEngine()
         transition("stopped", null, null)

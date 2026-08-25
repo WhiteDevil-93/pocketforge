@@ -96,9 +96,16 @@ export default function CustomFormatsPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingFormat, setEditingFormat] = useState<CustomFormat | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // The 'new' key alone only reinitializes CustomFormatEditor between editing
+  // an existing format and creating one — every "New" open reuses that same
+  // key, so a second New after abandoning/creating the first would keep
+  // showing the first attempt's stale field values. Bumped on every
+  // handleCreate to force a remount each time.
+  const [newFormatSession, setNewFormatSession] = useState(0);
 
   const handleCreate = useCallback(() => {
     setEditingFormat(null);
+    setNewFormatSession((n) => n + 1);
     setEditorOpen(true);
   }, []);
 
@@ -167,14 +174,16 @@ export default function CustomFormatsPage() {
       </div>
 
       {/* Editor */}
-      {/* Keyed on the target format's id (or 'new'): CustomFormatEditor seeds
-          all its field state from `editingFormat` via useState-on-mount only,
-          and it stays mounted across opens (only `isOpen` toggles) — without
-          this key, editing a second format after the first would show (and
-          on Save, overwrite the second format with) the first format's
-          stale values. */}
+      {/* Keyed on the target format's id, or a session counter while creating:
+          CustomFormatEditor seeds all its field state from `editingFormat`
+          via useState-on-mount only, and it stays mounted across opens (only
+          `isOpen` toggles) — without the id half of this key, editing a
+          second format after the first would show (and on Save, overwrite
+          the second format with) the first format's stale values; without
+          the session-counter half, repeated "New" opens would do the same
+          to each other, since they'd all share the same 'new' id. */}
       <CustomFormatEditor
-        key={editingFormat?.id ?? 'new'}
+        key={editingFormat?.id ?? `new-${newFormatSession}`}
         isOpen={editorOpen}
         onClose={() => setEditorOpen(false)}
         editingFormat={editingFormat}

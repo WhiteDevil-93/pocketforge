@@ -204,12 +204,25 @@ export default function PokemonEditor({
   const remainingEVs = getRemainingEVs(draft.evs);
   const evValid = totalEVs <= MAX_TOTAL_EVS;
 
+  // The most Speed EVs updateEV would actually accept right now, given what's
+  // already invested in the other five stats — the Optimize Speed sheet needs
+  // this to know whether its suggested evsNeeded can really be applied (see
+  // speEvBudget's use below) rather than silently clamping to less than what
+  // it told the user it was setting.
+  const speEvBudget = Math.max(0, Math.min(MAX_STAT_EVS, MAX_TOTAL_EVS - (totalEVs - draft.evs.spe)));
+
   // Live preview for the Optimize Speed sheet — recomputed as the target
   // stepper changes so the result is visible before the user commits to it,
   // instead of the old prompt()/alert() pair that only showed it after.
+  // calculateMinSpeedEVs loops up to 64 times building a throwaway
+  // SmogonPokemon each time, so this is gated to only run while the sheet is
+  // actually open — otherwise it would re-run on every draft edit (a
+  // nickname keystroke, an EV step) even with the sheet closed, since draft
+  // is a dependency.
   const optimizeSpeedResult = useMemo(
-    () => calculateMinSpeedEVs(draft, optimizeSpeedTarget),
-    [draft, optimizeSpeedTarget]
+    () =>
+      sheet.type === 'optimizeSpeed' ? calculateMinSpeedEVs(draft, optimizeSpeedTarget) : null,
+    [sheet.type, draft, optimizeSpeedTarget]
   );
 
   // ---- Update helpers ----
@@ -1406,25 +1419,42 @@ export default function PokemonEditor({
               onChange={setOptimizeSpeedTarget}
             />
           </div>
-          <p
-            className={`font-body text-center ${
-              optimizeSpeedResult.success ? 'text-text-primary' : 'text-danger'
-            }`}
-          >
-            {optimizeSpeedResult.description}
-          </p>
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            disabled={!optimizeSpeedResult.success}
-            onClick={() => {
-              updateEV('spe', optimizeSpeedResult.evsNeeded);
-              setSheet({ type: null });
-              toast.success(`Speed EVs set to ${optimizeSpeedResult.evsNeeded}.`);
-            }}
-            className="w-full h-12 flex items-center justify-center rounded-xl font-body-medium text-white bg-accent-primary touch-target disabled:opacity-40 disabled:pointer-events-none"
-          >
-            Apply {optimizeSpeedResult.evsNeeded} Spe EVs
-          </motion.button>
+          {optimizeSpeedResult && (
+            <>
+              <p
+                className={`font-body text-center ${
+                  optimizeSpeedResult.success ? 'text-text-primary' : 'text-danger'
+                }`}
+              >
+                {optimizeSpeedResult.description}
+              </p>
+              {(() => {
+                // evsNeeded can exceed what's actually left in the 508-EV
+                // budget once the other five stats are accounted for —
+                // applying less than that wouldn't actually outspeed the
+                // target, so this disables Apply and says so rather than
+                // silently letting updateEV's own clamp apply a smaller,
+                // insufficient amount while the toast still claimed success.
+                const fits = optimizeSpeedResult.success && optimizeSpeedResult.evsNeeded <= speEvBudget;
+                return (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    disabled={!fits}
+                    onClick={() => {
+                      updateEV('spe', optimizeSpeedResult.evsNeeded);
+                      setSheet({ type: null });
+                      toast.success(`Speed EVs set to ${optimizeSpeedResult.evsNeeded}.`);
+                    }}
+                    className="w-full h-12 flex items-center justify-center rounded-xl font-body-medium text-white bg-accent-primary touch-target disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {optimizeSpeedResult.success && !fits
+                      ? `Only ${speEvBudget} Spe EVs available`
+                      : `Apply ${optimizeSpeedResult.evsNeeded} Spe EVs`}
+                  </motion.button>
+                );
+              })()}
+            </>
+          )}
           <button
             onClick={() => setSheet({ type: null })}
             className="w-full h-12 flex items-center justify-center rounded-xl bg-bg-tertiary font-body text-text-primary touch-target"

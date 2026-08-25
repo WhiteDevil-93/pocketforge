@@ -528,9 +528,13 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
           <>
             {/* Announces turn-start and the final reply once, instead of the
                 old aria-live="polite" on the streaming bubble re-announcing
-                the whole growing buffer on every token. */}
+                the whole growing buffer on every token. runTurn sets the
+                final-reply text and flips isStreaming false in the same
+                batch, so gating this on isStreaming raced the region back to
+                empty before screen readers ever got the completed announcement
+                — render it unconditionally instead. */}
             <div aria-live="polite" className="sr-only">
-              {isStreaming ? srAnnouncement : ''}
+              {srAnnouncement}
             </div>
 
             {displayMessages.length > 0 && (
