@@ -19,7 +19,7 @@ import { runToolCall } from './toolRunner';
 const CHAT_URL = 'https://ollama.com/api/chat';
 // Allow enough iterations for prescribed workflow: create_team, 6 members with
 // get_legal_moves/lookup_pokemon/add_pokemon per member, validate_team, and corrections
-const MAX_TOOL_ITERATIONS = 20;
+const MAX_TOOL_ITERATIONS = 60;
 // Per-model-turn ceiling, re-armed at the start of every loop iteration so each
 // cloud turn gets a full 90s budget instead of a single timer spanning the whole
 // multi-turn conversation.

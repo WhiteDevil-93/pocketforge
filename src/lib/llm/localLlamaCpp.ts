@@ -20,7 +20,7 @@ import type { ChatOnceEvent, ChatOnceResult } from '../native/localLlm';
 
 // Allow enough iterations for prescribed workflow: create_team, 6 members with
 // get_legal_moves/lookup_pokemon/add_pokemon per member, validate_team, and corrections
-const MAX_TOOL_ITERATIONS = 20;
+const MAX_TOOL_ITERATIONS = 60;
 // Per-model-turn ceiling, re-armed at the start of every loop iteration so a single
 // slow on-device generation gets the full budget the native layer grants it
 // (LiteRtLmEngine.GENERATION_TIMEOUT_MS = 300_000) instead of a single timer spanning
