@@ -338,7 +338,7 @@ export const TOOLS: ToolDefinition[] = [
       const teamArg = 'error' in liveTeam ? null : liveTeam;
       const subject = resolveSpeedSubject(teamArg, String(args.species));
       if ('error' in subject) return subject;
-      const format = getLiveActiveTeamFormat();
+      const format = getLiveActiveTeamFormat(ctx?.team);
       const speed = calculateSpeed(
         subject,
         {
@@ -419,7 +419,7 @@ export const TOOLS: ToolDefinition[] = [
         if (defenderMember?.teraType) defender.teraType = defenderMember.teraType;
       }
 
-      const format = getLiveActiveTeamFormat();
+      const format = getLiveActiveTeamFormat(ctx?.team);
       const result = calculateDamage(
         attacker,
         defender,
