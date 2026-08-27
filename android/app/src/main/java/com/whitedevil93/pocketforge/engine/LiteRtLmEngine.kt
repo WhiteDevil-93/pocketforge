@@ -1,6 +1,7 @@
 package com.whitedevil93.pocketforge.engine
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Conversation
@@ -12,6 +13,8 @@ import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import com.google.ai.edge.litertlm.ToolException
 import com.whitedevil93.pocketforge.GenerationCallback
+import java.io.File
+import java.util.UUID
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -239,9 +242,16 @@ class LiteRtLmEngine private constructor(
         // "we wrote KEY_PENDING_LABEL before the call and never got to clear it," so a
         // dangling value found on the *next* load() is treated as proof that label
         // killed the process and is skipped permanently on this device from then on.
+        // Excluded from Android backup/device-transfer (see res/xml/data_extraction_rules.xml,
+        // res/xml/backup_rules.xml) — this records what crashes *this device's*
+        // drivers, and must never follow a restore onto different hardware.
         private const val PREFS_NAME = "litertlm_crash_guard"
         private const val KEY_PENDING_LABEL = "pending_label"
-        private const val KEY_KNOWN_CRASH_LABELS = "known_crash_labels"
+        // Suffixed per model file name (LiteRtLmEngine.load's modelId) rather than
+        // one device-wide set: a backend that crashes loading one bundle (e.g. a
+        // vision bundle needing more VRAM than a device's GPU has) must not also
+        // get blacklisted for a smaller, unrelated bundle that would load on it fine.
+        private const val KEY_KNOWN_CRASH_LABELS_PREFIX = "known_crash_labels:"
 
         init {
             // Quiets LiteRT-LM's native logging; harmless to call more than once,
@@ -272,23 +282,50 @@ class LiteRtLmEngine private constructor(
          * same code path serve both bundle types without the caller declaring which
          * one was imported.
          *
-         * A label that crashed the whole process on a previous call (see the
-         * PREFS_NAME/KEY_PENDING_LABEL guard above) is skipped without being retried.
+         * A label that crashed the whole process loading this same model file on a
+         * previous call (see the PREFS_NAME/KEY_PENDING_LABEL guard above) is skipped
+         * without being retried; the same label crashing while loading a *different*
+         * model does not affect this one.
          *
          * @throws EngineLoadError.BackendUnavailable if every non-skipped backend
          *   fails, with and without vision.
          */
         fun load(modelPath: String, context: Context): LiteRtLmEngine {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val knownCrashLabels = prefs.getStringSet(KEY_KNOWN_CRASH_LABELS, emptySet())!!.toMutableSet()
-            prefs.getString(KEY_PENDING_LABEL, null)?.let { crashedLastTime ->
-                Log.w(TAG, "backend=$crashedLastTime never returned on the previous load — " +
-                    "it crashed the process; skipping it on this device from now on")
-                knownCrashLabels += crashedLastTime
-                prefs.edit()
-                    .putStringSet(KEY_KNOWN_CRASH_LABELS, knownCrashLabels)
-                    .remove(KEY_PENDING_LABEL)
-                    .commit()
+
+            // commit() is synchronous specifically so a durability failure is knowable —
+            // silently proceeding as if a write landed would defeat the point of using
+            // commit() over apply() in the first place.
+            fun SharedPreferences.Editor.commitLogged(what: String) {
+                if (!commit()) Log.w(TAG, "SharedPreferences commit failed: $what")
+            }
+
+            // The imported bundle's file name — stable across reloads of the same
+            // model, distinct across different ones (see KEY_KNOWN_CRASH_LABELS_PREFIX).
+            val modelId = File(modelPath).name
+            fun knownCrashKey(id: String) = "$KEY_KNOWN_CRASH_LABELS_PREFIX$id"
+            val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
+
+            prefs.getString(KEY_PENDING_LABEL, null)?.let { raw ->
+                val marker = runCatching {
+                    JSONObject(raw).let { it.getString("modelId") to it.getString("label") }
+                }.getOrNull()
+                if (marker == null) {
+                    Log.w(TAG, "pending crash marker was malformed, discarding: $raw")
+                } else {
+                    val (crashedModelId, crashedLabel) = marker
+                    Log.w(TAG, "backend=$crashedLabel for model=$crashedModelId never returned on " +
+                        "the previous load — it crashed the process; skipping it for that model on " +
+                        "this device from now on")
+                    val crashedModelKnown =
+                        prefs.getStringSet(knownCrashKey(crashedModelId), emptySet())!!.toMutableSet()
+                    crashedModelKnown += crashedLabel
+                    prefs.edit()
+                        .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
+                        .commitLogged("recording crash for $crashedModelId/$crashedLabel")
+                    if (crashedModelId == modelId) knownCrashLabels += crashedLabel
+                }
+                prefs.edit().remove(KEY_PENDING_LABEL).commitLogged("clearing stale pending marker")
             }
 
             val attempted = mutableListOf<String>()
@@ -297,7 +334,8 @@ class LiteRtLmEngine private constructor(
                 for (withVision in booleanArrayOf(true, false)) {
                     val label = if (withVision) "$name+vision" else name
                     if (label in knownCrashLabels) {
-                        Log.i(TAG, "skipping backend=$label — crashed the process on a previous load")
+                        Log.i(TAG, "skipping backend=$label for model=$modelId — crashed the process on a previous load")
+                        attempted += "$label (skipped — crashed previously)"
                         continue
                     }
                     attempted += label
@@ -321,8 +359,22 @@ class LiteRtLmEngine private constructor(
                     // Written with commit() (synchronous, durable) rather than apply():
                     // if initialize() crashes the process on the next line, an async
                     // write might never have reached disk, and this whole guard exists
-                    // for exactly that moment.
-                    prefs.edit().putString(KEY_PENDING_LABEL, label).commit()
+                    // for exactly that moment. The random token lets this attempt's own
+                    // finally block below tell its marker apart from one written by a
+                    // second, overlapping load() for the same label — LocalLlmService's
+                    // interruptLoad() interrupts and drops the old Thread reference
+                    // without joining it, and Engine.initialize() isn't interruptible,
+                    // so a stop-then-immediately-retry can leave the old load() still
+                    // running when a new one starts. Without the token, whichever
+                    // attempt's finally runs first would erase the marker out from
+                    // under the other one.
+                    val pendingValue = JSONObject()
+                        .put("modelId", modelId)
+                        .put("label", label)
+                        .put("token", UUID.randomUUID().toString())
+                        .toString()
+                    prefs.edit().putString(KEY_PENDING_LABEL, pendingValue)
+                        .commitLogged("marking $label pending for $modelId")
                     try {
                         candidate.initialize()
                         Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
@@ -350,8 +402,12 @@ class LiteRtLmEngine private constructor(
                         // during normal unwinding regardless of throwable type) — the
                         // only way to skip it is the process dying outright before
                         // unwinding can happen, which is precisely the one case this
-                        // marker exists to detect. See KEY_PENDING_LABEL's declaration.
-                        prefs.edit().remove(KEY_PENDING_LABEL).commit()
+                        // marker exists to detect. Only clear it if it's still the
+                        // value *this* attempt wrote — see pendingValue's comment above.
+                        if (prefs.getString(KEY_PENDING_LABEL, null) == pendingValue) {
+                            prefs.edit().remove(KEY_PENDING_LABEL)
+                                .commitLogged("clearing pending marker for $label/$modelId")
+                        }
                     }
                 }
             }
