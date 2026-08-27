@@ -15,11 +15,29 @@ import { getBundledRegulationData } from './regulationsBundled';
 const regulationCache: Record<string, RegulationData> = {};
 
 /**
+ * Bumped on every write to [regulationCache].
+ *
+ * Consumers that derive their own structures from this data (championsLegality's
+ * roster/ban Sets) cannot rebuild them at their own module-load time: this cache
+ * is empty until preloadBundledRegulations() runs, which happens in an effect
+ * long after every module has been evaluated. Reading this version and comparing
+ * it against the one their derived data was built from lets them rebuild lazily
+ * on first use after any load — bundled preload or a later OTA refresh alike.
+ */
+let cacheVersion = 0;
+
+/** Increments whenever regulation data changes; see [cacheVersion]. */
+export function getRegulationCacheVersion(): number {
+  return cacheVersion;
+}
+
+/**
  * Initialize the cache with bundled data for the given regulation ID.
  * Called by the OTA preloader on app startup.
  */
 export function initializeRegulationCache(regulationId: string, data: RegulationData): void {
   regulationCache[regulationId] = data;
+  cacheVersion++;
 }
 
 /**
