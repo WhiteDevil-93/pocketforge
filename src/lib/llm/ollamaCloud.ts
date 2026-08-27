@@ -17,12 +17,22 @@ import { toOllamaToolSchema } from './tools';
 import { runToolCall } from './toolRunner';
 
 const CHAT_URL = 'https://ollama.com/api/chat';
-// Allow enough iterations for prescribed workflow: create_team, 6 members with
-// get_legal_moves/lookup_pokemon/add_pokemon per member, validate_team, and corrections
-const MAX_TOOL_ITERATIONS = 20;
-// Overall ceiling for one sendMessage call, covering every streamed reply and tool
-// round trip together — protects against Ollama Cloud accepting the request and then
-// stalling before the first chunk, which would otherwise hang the chat forever.
+// A full build is exactly 20 prescribed calls (create_team + 6 members ×
+// get_legal_moves/lookup_pokemon/add_pokemon + validate_team) with zero room left
+// over — the system prompt also tells the model to call update_pokemon to fix
+// whatever validate_team rejects, and any add_pokemon rejection needs a retry
+// call too, so the bare minimum leaves no headroom for the corrections the app
+// itself asks for. The extra 12 covers a realistic number of those without
+// letting a truly stuck loop run away. Kept identical to localLlamaCpp.ts's
+// bound — see that file's header comment for why the two mirror each other.
+const MAX_TOOL_ITERATIONS = 32;
+// Per-iteration ceiling, reset before each generation (see resetIterationTimeout
+// below) rather than a single budget for the whole sendMessage call — this
+// detects one stalled generation (Ollama Cloud accepted the request and never
+// streamed a first chunk), which is what the timer is actually meant to catch.
+// A single overall timeout here previously aborted mid-build on exactly the
+// workflow this file exists to support: a real team build is ~20 sequential
+// generations, and 90s was nowhere near enough to cover all of them.
 const REQUEST_TIMEOUT_MS = 90_000;
 
 interface WireToolCall {
@@ -162,7 +172,14 @@ export async function sendMessage({
   }
   const abort = () => controller.abort();
   signal?.addEventListener('abort', abort);
-  const overallTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  // Reset before each iteration's generation, not set once for the whole loop —
+  // see REQUEST_TIMEOUT_MS's comment for why a single budget here was wrong.
+  let iterationTimeout: ReturnType<typeof setTimeout> | undefined;
+  const resetIterationTimeout = () => {
+    if (iterationTimeout) clearTimeout(iterationTimeout);
+    iterationTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  };
+  resetIterationTimeout();
 
   let messages = [...history];
   // web_search/web_fetch need the API key to call ollama.com's web API, and this request's
@@ -173,6 +190,7 @@ export async function sendMessage({
 
   try {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+      if (iteration > 0) resetIterationTimeout();
       let content = '';
       let toolCalls: ToolCall[] = [];
 
@@ -227,7 +245,7 @@ export async function sendMessage({
     (err as unknown as Record<string, unknown>).partialMessages = messages;
     throw err;
   } finally {
-    clearTimeout(overallTimeout);
+    if (iterationTimeout) clearTimeout(iterationTimeout);
     signal?.removeEventListener('abort', abort);
   }
 }
