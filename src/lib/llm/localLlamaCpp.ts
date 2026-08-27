@@ -220,7 +220,7 @@ export async function sendMessage({
           : accumulatedByIndex;
 
       if (toolCalls.length === 0) {
-        const assistantMessage: ChatMessage = { role: 'assistant', content };
+        const assistantMessage: ChatMessage = { role: 'assistant', content: assembled.content ?? content };
         messages = [...messages, assistantMessage];
         onEvent({ type: 'done', message: assistantMessage });
         return messages;
