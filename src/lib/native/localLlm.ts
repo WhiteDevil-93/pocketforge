@@ -71,6 +71,7 @@ export interface ChatOnceOptions {
 export interface ChatOnceResult {
   role: string;
   content: string;
+  thought?: string;
   tool_calls?: Array<{
     id?: string;
     type: 'function';
@@ -81,6 +82,7 @@ export interface ChatOnceResult {
 /** Streaming events re-emitted by the native SSE parser while chatOnce runs. */
 export type ChatOnceEvent =
   | { type: 'token'; requestId: string; text: string }
+  | { type: 'thought'; requestId: string; text: string }
   | {
       type: 'toolCallDelta';
       requestId: string;

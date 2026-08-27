@@ -114,6 +114,12 @@ class LiteRtLmEngine private constructor(
             var toolCallIndex = 0
             val messageCallback = object : MessageCallback {
                 override fun onMessage(message: Message) {
+                    // Capture thinking channel (Gemma 4)
+                    val thought = message.channels["thought"]?.toString()
+                    if (!thought.isNullOrEmpty()) {
+                        callback.onThoughtToken(thought)
+                    }
+
                     // contents and toolCalls are independent fields on Message, not
                     // mutually exclusive — handle both rather than assuming a chunk is
                     // one or the other (e.g. lead-in text before a tool call).
@@ -438,7 +444,10 @@ class LiteRtLmEngine private constructor(
                             EngineConfig(
                                 modelPath = modelPath,
                                 backend = backendInstance,
-                                visionBackend = if (withVision) backendInstance else null,
+                                // ALWAYS use GPU for vision if available to avoid SIGSEGV on CPU;
+                                // a device without GPU support will throw here and trigger the
+                                // visionAvailable = false fallback (docs/litertlm-vl-integration.md §8).
+                                visionBackend = if (withVision) Backend.GPU() else null,
                                 // The importer sends one screenshot at a time; leaving this
                                 // at the model default risks a larger KV allocation than
                                 // needed on a device already carrying several GB of weights.

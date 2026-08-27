@@ -778,6 +778,14 @@ class LocalLlmPlugin : Plugin() {
                             }
                         }
 
+                        val thought = delta.optString("reasoning_content")
+                        if (thought.isNotEmpty()) {
+                            emitChatEvent(activity, requestId) {
+                                put("type", "thought")
+                                put("text", thought)
+                            }
+                        }
+
                         val toolCalls = delta.optJSONArray("tool_calls") ?: continue
                         for (i in 0 until toolCalls.length()) {
                             val tc = toolCalls.optJSONObject(i) ?: continue

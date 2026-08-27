@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets
  */
 interface GenerationCallback {
     fun onToken(piece: String)
+    fun onThoughtToken(piece: String)
     fun onToolCallDelta(index: Int, nameDelta: String, argsDelta: String)
     fun onDone(content: String, toolCallsJson: String)
     fun onError(message: String)
@@ -564,6 +565,12 @@ class LocalLlmService : Service() {
         val callback = object : GenerationCallback {
             override fun onToken(piece: String) {
                 if (!writeSse(out, """{"choices":[{"delta":{"content":"${jsonEscape(piece)}"}}]}""")) {
+                    activeEngine.cancel()
+                }
+            }
+
+            override fun onThoughtToken(piece: String) {
+                if (!writeSse(out, """{"choices":[{"delta":{"reasoning_content":"${jsonEscape(piece)}"}}]}""")) {
                     activeEngine.cancel()
                 }
             }

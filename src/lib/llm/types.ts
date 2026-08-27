@@ -34,6 +34,8 @@ export interface ChatMessage {
   toolCalls?: ToolCall[];
   /** Only on role: 'tool' messages — which tool produced this result. */
   toolName?: string;
+  /** Present on assistant messages that supported thinking (Gemma 4 / DeepSeek). */
+  thought?: string;
 }
 
 /**
@@ -78,7 +80,7 @@ export interface ToolDefinition {
 
 /** Streaming events surfaced to the UI while a reply is being generated. */
 export type LlmStreamEvent =
-  | { type: 'token'; text: string }
+  | { type: 'token'; text?: string; thought?: string }
   | { type: 'toolCall'; name: string }
   | { type: 'toolResult'; name: string; result: unknown }
   | { type: 'done'; message: ChatMessage }

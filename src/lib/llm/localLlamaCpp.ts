@@ -180,6 +180,7 @@ export async function sendMessage({
       turnTimeout = setTimeout(() => controller.abort(), TURN_TIMEOUT_MS);
 
       let content = '';
+      let thought = '';
       let toolCalls: ToolCall[] = [];
       // Index-keyed accumulation of the streamed tool_call deltas (the native side
       // accumulates the same deltas and returns the authoritative result on [DONE];
@@ -197,6 +198,9 @@ export async function sendMessage({
           if (!textToolProtocol || !isInsideToolCallBlock(content)) {
             onEvent({ type: 'token', text: event.text });
           }
+        } else if (event.type === 'thought') {
+          thought += event.text;
+          onEvent({ type: 'token', thought: event.text });
         } else if (event.type === 'toolCallDelta') {
           // ACCUMULATE BY INDEX: OpenAI streams a single tool call's name/argument
           // JSON across multiple chunks keyed by array position, so earlier calls in
@@ -251,13 +255,17 @@ export async function sendMessage({
       }
 
       if (toolCalls.length === 0) {
-        const assistantMessage: ChatMessage = { role: 'assistant', content: assembled.content ?? content };
+        const assistantMessage: ChatMessage = {
+          role: 'assistant',
+          content: assembled.content ?? content,
+          thought: assembled.thought ?? thought,
+        };
         messages = [...messages, assistantMessage];
         onEvent({ type: 'done', message: assistantMessage });
         return messages;
       }
 
-      messages = [...messages, { role: 'assistant', content, toolCalls }];
+      messages = [...messages, { role: 'assistant', content, thought, toolCalls }];
 
       for (const call of toolCalls) {
         onEvent({ type: 'toolCall', name: call.name });

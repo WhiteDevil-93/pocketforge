@@ -20,6 +20,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../../store/useStore';
 import { useChatStore, type StoredChatMessage } from '../../store/useChatStore';
 import { sendMessage } from '../../lib/llm/ollamaCloud';
@@ -28,6 +29,7 @@ import { buildSystemPrompt } from '../../lib/llm/systemPrompt';
 import { useAiReadiness } from '../../hooks/use-ai-readiness';
 import { isNativeApp } from '../../lib/platform';
 import { contentToText, type ChatMessage, type ContentPart, type LlmStreamEvent } from '../../lib/llm/types';
+import { EASE_SMOOTH } from '../../lib/motion';
 import ChatMarkdown from './ChatMarkdown';
 import ConfirmSheet from '../ConfirmSheet';
 import AiEmptyState from './AiEmptyState';
@@ -85,6 +87,7 @@ const TURN_HEADER_PATTERN = /<\/?start_of_turn>[ \t]*(?:model|user|system|assist
 
 const SPECIAL_TOKEN_PATTERN =
   /<end_of_turn>|<\/?s>|<pad>|<\|(?:im_start|im_end|eot_id|eom_id|begin_of_text|end_of_text|start_header_id|end_header_id)\|>/g;
+const THOUGHT_TOKEN_PATTERN = /<\/?thought>\n?/g;
 
 /**
  * Remove special tokens without trimming — preserves spacing between tokens during streaming.
@@ -92,7 +95,10 @@ const SPECIAL_TOKEN_PATTERN =
  * streamed chunks still matches once both halves have arrived.
  */
 function removeSpecialTokens(text: string): string {
-  return text.replace(TURN_HEADER_PATTERN, '').replace(SPECIAL_TOKEN_PATTERN, '');
+  return text
+    .replace(TURN_HEADER_PATTERN, '')
+    .replace(SPECIAL_TOKEN_PATTERN, '')
+    .replace(THOUGHT_TOKEN_PATTERN, '');
 }
 
 /**
@@ -167,6 +173,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   const [isPickingImage, setIsPickingImage] = useState(false);
   const [pendingScreenshotImport, setPendingScreenshotImport] = useState(false);
   const [streamingText, setStreamingText] = useState('');
+  const [streamingThought, setStreamingThought] = useState('');
   // Tool-call trace for the whole session, keyed by turnSeq (see runTurn) —
   // unlike the old toolActivity list, this is never cleared at turn end, so a
   // finished reply keeps a permanent record of which tools ran instead of the
@@ -184,6 +191,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   // Mirrors streamingText synchronously — state read inside the catch block below
   // would be stale (captured when handleSend started, not updated by onEvent since).
   const streamingTextRef = useRef('');
+  const streamingThoughtRef = useRef('');
   // Whether there's a turn to retry — state, not a ref read, since the Retry
   // button's presence is a render decision and refs may not be read during
   // render.
@@ -257,7 +265,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
       top: scrollRef.current.scrollHeight,
       behavior: isStreaming ? 'auto' : 'smooth',
     });
-  }, [displayMessages.length, streamingText, isStreaming]);
+  }, [displayMessages.length, streamingText, streamingThought, isStreaming]);
 
   // Auto-grow the composer up to max-h-24 (96px) instead of a fixed height —
   // a multi-line message no longer scrolls inside a tiny 44px box.
@@ -310,11 +318,18 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
       const handleEvent = (event: LlmStreamEvent) => {
         if (!isCurrentTurn()) return;
         if (event.type === 'token') {
-          streamingTextRef.current += event.text;
-          // Accumulate raw (don't trim during streaming, which would collapse spaces between tokens)
-          // Strip tokens only when displaying or saving to history
-          const cleaned = stripSpecialTokens(streamingTextRef.current);
-          setStreamingText(cleaned);
+          if (event.text) {
+            streamingTextRef.current += event.text;
+            // Accumulate raw (don't trim during streaming, which would collapse spaces between tokens)
+            // Strip tokens only when displaying or saving to history
+            const cleaned = stripSpecialTokens(streamingTextRef.current);
+            setStreamingText(cleaned);
+          }
+          if (event.thought) {
+            streamingThoughtRef.current += event.thought;
+            const cleaned = stripSpecialTokens(streamingThoughtRef.current);
+            setStreamingThought(cleaned);
+          }
         } else if (event.type === 'toolCall') {
           setToolTrace((prev) => [
             ...prev,
@@ -361,7 +376,11 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
         // trace pills can be found again once it's a plain history entry.
         const cleanedHistory: StoredChatMessage[] = updated.map((msg, i) => {
           if (msg.role !== 'assistant') return msg;
-          const stripped = { ...msg, content: stripSpecialTokens(contentToText(msg.content)) };
+          const stripped = {
+            ...msg,
+            content: stripSpecialTokens(contentToText(msg.content)),
+            thought: msg.thought ? stripSpecialTokens(msg.thought) : undefined,
+          };
           return i >= baseHistory.length ? { ...stripped, turnSeq } : stripped;
         });
         setHistory(cleanedHistory);
@@ -380,18 +399,29 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
         if (partialMessages && partialMessages.length > baseHistory.length) {
           const cleanedHistory: StoredChatMessage[] = partialMessages.map((msg, i) => {
             if (msg.role !== 'assistant') return msg;
-            const stripped = { ...msg, content: stripSpecialTokens(contentToText(msg.content)) };
+            const stripped = {
+              ...msg,
+              content: stripSpecialTokens(contentToText(msg.content)),
+              thought: msg.thought ? stripSpecialTokens(msg.thought) : undefined,
+            };
             return i >= baseHistory.length ? { ...stripped, turnSeq } : stripped;
           });
           setHistory(cleanedHistory);
         }
         // Also keep the partial reply when the user actually tapped stop.
-        else if (controller.signal.aborted && streamingTextRef.current) {
+        else if (controller.signal.aborted && (streamingTextRef.current || streamingThoughtRef.current)) {
           const cleanedContent = stripSpecialTokens(streamingTextRef.current);
-          if (cleanedContent.trim()) {
+          const cleanedThought = stripSpecialTokens(streamingThoughtRef.current);
+          if (cleanedContent.trim() || cleanedThought.trim()) {
             setHistory((h) => [
               ...h,
-              { role: 'assistant', content: cleanedContent, stopped: true, turnSeq },
+              {
+                role: 'assistant',
+                content: cleanedContent,
+                thought: cleanedThought || undefined,
+                stopped: true,
+                turnSeq,
+              },
             ]);
           }
         }
@@ -399,7 +429,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
       } finally {
         if (isCurrentTurn()) {
           setStreamingText('');
+          setStreamingThought('');
           streamingTextRef.current = '';
+          streamingThoughtRef.current = '';
           // A tool call that never got a matching toolResult (a hung/dropped
           // connection) would otherwise show a permanently-spinning pill in a
           // conversation that has already ended.
@@ -424,7 +456,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     setAttachedImage(null);
     setError(null);
     setStreamingText('');
+    setStreamingThought('');
     streamingTextRef.current = '';
+    streamingThoughtRef.current = '';
     isAtBottomRef.current = true;
     setIsStreaming(true);
 
@@ -465,7 +499,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     if (isStreaming || history.length === 0) return;
     setError(null);
     setStreamingText('');
+    setStreamingThought('');
     streamingTextRef.current = '';
+    streamingThoughtRef.current = '';
     isAtBottomRef.current = true;
     setIsStreaming(true);
     // Resume from the live history, not the pre-turn baseHistory the failed
@@ -484,7 +520,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     setToolTrace([]);
     setError(null);
     setStreamingText('');
+    setStreamingThought('');
     streamingTextRef.current = '';
+    streamingThoughtRef.current = '';
     setIsStreaming(false);
     setCurrentTurnSeq(null);
   }, [clearChat]);
@@ -514,7 +552,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     setAttachedImage(null);
     setError(null);
     setStreamingText('');
+    setStreamingThought('');
     streamingTextRef.current = '';
+    streamingThoughtRef.current = '';
     isAtBottomRef.current = true;
     setIsStreaming(true);
 
@@ -554,6 +594,8 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     () => (currentTurnSeq != null ? toolTrace.filter((t) => t.turnSeq === currentTurnSeq) : []),
     [toolTrace, currentTurnSeq]
   );
+
+  const [expandedThought, setExpandedThought] = useState<number | null>(null);
 
   return (
     <div className={`flex flex-col min-h-0 ${className}`}>
@@ -671,6 +713,41 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
                           ))}
                         </div>
                       )}
+
+                      {/* Thinking trace (Gemma 4 / DeepSeek) */}
+                      {message.thought && (
+                        <div className="mb-2 overflow-hidden rounded-lg border border-border-subtle bg-bg-elevated/50">
+                          <button
+                            onClick={() => setExpandedThought(expandedThought === i ? null : i)}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] font-body-medium text-text-secondary transition-colors hover:bg-bg-elevated"
+                          >
+                            <Bot className="h-3 w-3" />
+                            <span>Thought Process</span>
+                            <div className="ml-auto flex items-center gap-1.5 opacity-60">
+                              {expandedThought === i ? (
+                                <X className="h-2.5 w-2.5" />
+                              ) : (
+                                <ScanLine className="h-2.5 w-2.5" />
+                              )}
+                            </div>
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {expandedThought === i && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2, ease: EASE_SMOOTH }}
+                              >
+                                <div className="border-t border-border-subtle px-3 py-2.5 font-jetbrains-mono text-[11px] leading-relaxed text-text-secondary/80">
+                                  <ChatMarkdown>{message.thought}</ChatMarkdown>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
+
                       {imageUrl && (
                         <img src={imageUrl} alt="Attached" className="max-w-full rounded-lg" />
                       )}
@@ -723,6 +800,20 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
                         ))}
                       </div>
                     )}
+
+                    {/* Live Thinking trace */}
+                    {streamingThought && (
+                      <div className="mb-2 overflow-hidden rounded-lg border border-border-subtle bg-bg-elevated/30">
+                        <div className="flex items-center gap-2 px-3 py-2 text-[11px] font-body-medium text-text-secondary opacity-80">
+                          <Bot className="h-3 w-3 animate-pulse" />
+                          <span>Thinking…</span>
+                        </div>
+                        <div className="border-t border-border-subtle px-3 py-2.5 font-jetbrains-mono text-[11px] leading-relaxed text-text-secondary/60 italic">
+                          <ChatMarkdown>{streamingThought}</ChatMarkdown>
+                        </div>
+                      </div>
+                    )}
+
                     {streamingText ? (
                       <ChatMarkdown>{streamingText}</ChatMarkdown>
                     ) : (
