@@ -16,6 +16,7 @@ import com.whitedevil93.pocketforge.GenerationCallback
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -253,6 +254,18 @@ class LiteRtLmEngine private constructor(
         // get blacklisted for a smaller, unrelated bundle that would load on it fine.
         private const val KEY_KNOWN_CRASH_LABELS_PREFIX = "known_crash_labels:"
 
+        // Tokens (see pendingValue below) for load() attempts currently in flight in
+        // *this* process. A token found in SharedPreferences but missing from this
+        // set could only get there one way: the process that wrote it is gone — a
+        // real crash, since this set (unlike SharedPreferences) cannot survive a
+        // process restart. A token that IS in this set belongs to a still-running
+        // attempt in this same process — proof it hasn't crashed anything — which
+        // matters because LocalLlmService's interruptLoad() interrupts and drops the
+        // old Thread reference without joining it, and Engine.initialize() isn't
+        // interruptible, so a stop-then-immediately-retry can leave an old load()
+        // still running when a new one starts and reads the old one's own marker.
+        private val liveAttemptTokens = ConcurrentHashMap.newKeySet<String>()
+
         init {
             // Quiets LiteRT-LM's native logging; harmless to call more than once,
             // and this only runs once per process (companion init).
@@ -300,32 +313,50 @@ class LiteRtLmEngine private constructor(
                 if (!commit()) Log.w(TAG, "SharedPreferences commit failed: $what")
             }
 
-            // The imported bundle's file name — stable across reloads of the same
-            // model, distinct across different ones (see KEY_KNOWN_CRASH_LABELS_PREFIX).
-            val modelId = File(modelPath).name
+            // Content-derived, not just the file name: LocalLlmPlugin.importModel()
+            // deletes and replaces an existing file with the same display name on
+            // re-import (LocalLlmPlugin.kt ~191-196), so a filename-only identity
+            // would let a crash recorded against a broken bundle wrongly follow a
+            // later, fixed bundle imported under the same name. Size+mtime is a
+            // cheap stand-in for a full content hash — expensive to compute against
+            // a multi-GB file on every load — and changes on any real replacement.
+            val modelFile = File(modelPath)
+            val modelId = "${modelFile.name}:${modelFile.length()}:${modelFile.lastModified()}"
             fun knownCrashKey(id: String) = "$KEY_KNOWN_CRASH_LABELS_PREFIX$id"
             val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
 
             prefs.getString(KEY_PENDING_LABEL, null)?.let { raw ->
                 val marker = runCatching {
-                    JSONObject(raw).let { it.getString("modelId") to it.getString("label") }
+                    JSONObject(raw).let { Triple(it.getString("modelId"), it.getString("label"), it.getString("token")) }
                 }.getOrNull()
-                if (marker == null) {
-                    Log.w(TAG, "pending crash marker was malformed, discarding: $raw")
-                } else {
-                    val (crashedModelId, crashedLabel) = marker
-                    Log.w(TAG, "backend=$crashedLabel for model=$crashedModelId never returned on " +
-                        "the previous load — it crashed the process; skipping it for that model on " +
-                        "this device from now on")
-                    val crashedModelKnown =
-                        prefs.getStringSet(knownCrashKey(crashedModelId), emptySet())!!.toMutableSet()
-                    crashedModelKnown += crashedLabel
-                    prefs.edit()
-                        .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
-                        .commitLogged("recording crash for $crashedModelId/$crashedLabel")
-                    if (crashedModelId == modelId) knownCrashLabels += crashedLabel
+                when {
+                    marker == null -> {
+                        Log.w(TAG, "pending crash marker was malformed, discarding: $raw")
+                        prefs.edit().remove(KEY_PENDING_LABEL).commitLogged("clearing malformed pending marker")
+                    }
+                    marker.third in liveAttemptTokens -> {
+                        // Belongs to an attempt still running in *this* process — see
+                        // liveAttemptTokens' declaration for why that's proof it hasn't
+                        // crashed anything. Leave it alone entirely: it isn't stale, and
+                        // that attempt's own finally block owns clearing it.
+                        Log.i(TAG, "pending marker for ${marker.second}/${marker.first} belongs to " +
+                            "a still-running attempt in this process — not a crash, leaving it")
+                    }
+                    else -> {
+                        val (crashedModelId, crashedLabel, _) = marker
+                        Log.w(TAG, "backend=$crashedLabel for model=$crashedModelId never returned on " +
+                            "the previous load — it crashed the process; skipping it for that model on " +
+                            "this device from now on")
+                        val crashedModelKnown =
+                            prefs.getStringSet(knownCrashKey(crashedModelId), emptySet())!!.toMutableSet()
+                        crashedModelKnown += crashedLabel
+                        prefs.edit()
+                            .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
+                            .commitLogged("recording crash for $crashedModelId/$crashedLabel")
+                        if (crashedModelId == modelId) knownCrashLabels += crashedLabel
+                        prefs.edit().remove(KEY_PENDING_LABEL).commitLogged("clearing stale pending marker")
+                    }
                 }
-                prefs.edit().remove(KEY_PENDING_LABEL).commitLogged("clearing stale pending marker")
             }
 
             val attempted = mutableListOf<String>()
@@ -359,20 +390,23 @@ class LiteRtLmEngine private constructor(
                     // Written with commit() (synchronous, durable) rather than apply():
                     // if initialize() crashes the process on the next line, an async
                     // write might never have reached disk, and this whole guard exists
-                    // for exactly that moment. The random token lets this attempt's own
-                    // finally block below tell its marker apart from one written by a
-                    // second, overlapping load() for the same label — LocalLlmService's
-                    // interruptLoad() interrupts and drops the old Thread reference
-                    // without joining it, and Engine.initialize() isn't interruptible,
-                    // so a stop-then-immediately-retry can leave the old load() still
-                    // running when a new one starts. Without the token, whichever
-                    // attempt's finally runs first would erase the marker out from
-                    // under the other one.
+                    // for exactly that moment. The random token both lets this attempt's
+                    // own finally block tell its marker apart from one written by a
+                    // second, overlapping load() for the same label, and (via
+                    // liveAttemptTokens above) lets any load() distinguish "still
+                    // running in this process" from "the process that wrote this is
+                    // gone" — LocalLlmService's interruptLoad() interrupts and drops
+                    // the old Thread reference without joining it, and
+                    // Engine.initialize() isn't interruptible, so a stop-then-
+                    // immediately-retry can leave the old load() still running when a
+                    // new one starts and reads the old one's own marker.
+                    val attemptToken = UUID.randomUUID().toString()
                     val pendingValue = JSONObject()
                         .put("modelId", modelId)
                         .put("label", label)
-                        .put("token", UUID.randomUUID().toString())
+                        .put("token", attemptToken)
                         .toString()
+                    liveAttemptTokens += attemptToken
                     prefs.edit().putString(KEY_PENDING_LABEL, pendingValue)
                         .commitLogged("marking $label pending for $modelId")
                     try {
@@ -404,6 +438,7 @@ class LiteRtLmEngine private constructor(
                         // unwinding can happen, which is precisely the one case this
                         // marker exists to detect. Only clear it if it's still the
                         // value *this* attempt wrote — see pendingValue's comment above.
+                        liveAttemptTokens -= attemptToken
                         if (prefs.getString(KEY_PENDING_LABEL, null) == pendingValue) {
                             prefs.edit().remove(KEY_PENDING_LABEL)
                                 .commitLogged("clearing pending marker for $label/$modelId")
