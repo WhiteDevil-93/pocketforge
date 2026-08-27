@@ -266,9 +266,23 @@ class LiteRtLmEngine private constructor(
         // still running when a new one starts and reads the old one's own marker.
         private val liveAttemptTokens = ConcurrentHashMap.newKeySet<String>()
 
-        init {
-            // Quiets LiteRT-LM's native logging; harmless to call more than once,
-            // and this only runs once per process (companion init).
+        /** Guards the one-time [Engine.setNativeMinLogSeverity] call below. */
+        private val nativeLoggingConfigured = AtomicBoolean(false)
+
+        /**
+         * Deliberately NOT a companion `init {}` block, which is where this used to
+         * live. A companion init runs on first access to this class — i.e. the moment
+         * `LiteRtLmEngine.load(...)` is called, before a single line of [load]'s body.
+         * Touching [Engine] there is what triggers LiteRT-LM's own native library
+         * load and its static constructors, so a device where that `.so` aborts (a
+         * missing or incompatible vendor NPU stub, a failing static ctor) killed the
+         * process *before any crash marker could be written* — leaving [load]'s guard
+         * structurally unable to ever learn about it, no matter how many times the
+         * user retried. Called from inside the guarded span instead, so the very
+         * first native touch of this library is covered like every other one.
+         */
+        private fun configureNativeLoggingOnce() {
+            if (!nativeLoggingConfigured.compareAndSet(false, true)) return
             Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
         }
 
@@ -322,6 +336,20 @@ class LiteRtLmEngine private constructor(
             // a multi-GB file on every load — and changes on any real replacement.
             val modelFile = File(modelPath)
             val modelId = "${modelFile.name}:${modelFile.length()}:${modelFile.lastModified()}"
+
+            // Logged unconditionally, not enforced as a precondition: a backend may mmap
+            // rather than copy the weights, so "file is bigger than free RAM" is not by
+            // itself a reason to refuse the load. But when the OS low-memory killer takes
+            // the process during a load, it leaves no Java stack trace anywhere — this
+            // line is then the only evidence distinguishing that from a native abort.
+            runCatching {
+                val memInfo = android.app.ActivityManager.MemoryInfo()
+                (context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager)
+                    .getMemoryInfo(memInfo)
+                Log.i(TAG, "load starting: model=${modelFile.name} sizeMb=${modelFile.length() / (1024 * 1024)} " +
+                    "availMemMb=${memInfo.availMem / (1024 * 1024)} totalMemMb=${memInfo.totalMem / (1024 * 1024)} " +
+                    "lowMemory=${memInfo.lowMemory} thresholdMb=${memInfo.threshold / (1024 * 1024)}")
+            }.onFailure { Log.w(TAG, "could not read memory info: ${it.message}") }
             fun knownCrashKey(id: String) = "$KEY_KNOWN_CRASH_LABELS_PREFIX$id"
             val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
 
@@ -401,6 +429,10 @@ class LiteRtLmEngine private constructor(
                     // the last one, or a crash there leaves no marker to detect it by.
                     var candidate: Engine? = null
                     try {
+                        // First statement inside the guard on purpose: this is the call
+                        // that pulls in LiteRT-LM's native library on this process's very
+                        // first load attempt. See configureNativeLoggingOnce's KDoc.
+                        configureNativeLoggingOnce()
                         val backendInstance = makeBackend()
                         candidate = Engine(
                             EngineConfig(
