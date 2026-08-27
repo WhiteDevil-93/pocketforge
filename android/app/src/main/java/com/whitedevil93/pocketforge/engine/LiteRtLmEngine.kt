@@ -325,17 +325,15 @@ class LiteRtLmEngine private constructor(
                     prefs.edit().putString(KEY_PENDING_LABEL, label).commit()
                     try {
                         candidate.initialize()
-                        prefs.edit().remove(KEY_PENDING_LABEL).commit()
                         Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
                         return LiteRtLmEngine(candidate, name, visionAvailable = withVision)
                     } catch (e: Exception) {
-                        // Reaching this line at all proves initialize() didn't crash the
-                        // process this time — clear the marker so a normal, catchable
-                        // failure never gets mistaken for a crash on the next load().
-                        prefs.edit().remove(KEY_PENDING_LABEL).commit()
                         // Catching Exception, not Throwable: an Error (OOM,
                         // UnsatisfiedLinkError) is not this attempt's problem to retry
-                        // around and propagates immediately, failing the whole load.
+                        // around and propagates immediately, failing the whole load —
+                        // but the finally below still clears the marker for it, since
+                        // LocalLlmService's outer catch(Throwable) means an Error here
+                        // reaches Kotlin too and never actually crashes the process.
                         Log.w(TAG, "backend $label unavailable: ${e.message}")
                         // A half-initialized engine still holds native memory; free it
                         // before the next attempt so this fallback doesn't leak an
@@ -346,6 +344,14 @@ class LiteRtLmEngine private constructor(
                             Log.w(TAG, "close() after failed init also failed: ${closeError.message}")
                         }
                         last = e
+                    } finally {
+                        // Runs for the success return above, the caught Exception case,
+                        // and an uncaught Error alike (JVM finally semantics: it runs
+                        // during normal unwinding regardless of throwable type) — the
+                        // only way to skip it is the process dying outright before
+                        // unwinding can happen, which is precisely the one case this
+                        // marker exists to detect. See KEY_PENDING_LABEL's declaration.
+                        prefs.edit().remove(KEY_PENDING_LABEL).commit()
                     }
                 }
             }
