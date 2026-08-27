@@ -1756,6 +1756,27 @@ export default function SettingsPage() {
                 </div>
               )}
               <div className="h-px bg-border-subtle mx-4" />
+              {/* Escape hatch for a fine-tune that lost native function calling —
+                  see src/lib/llm/textToolProtocol.ts. Off by default: a model that
+                  does support native calls is better served by them. */}
+              <SettingsRow
+                icon={Wrench}
+                iconColor="#8B5CF6"
+                label="Text-based tool calls"
+                subtitle={
+                  settings.localToolProtocol === 'text'
+                    ? 'Tools taught in the prompt and parsed from replies'
+                    : 'Turn on if the model talks about building teams but never does'
+                }
+                rightElement={
+                  <ToggleSwitch
+                    value={settings.localToolProtocol === 'text'}
+                    onChange={(v) => updateSettings({ localToolProtocol: v ? 'text' : 'native' })}
+                    label="Toggle text-based tool calls"
+                  />
+                }
+              />
+              <div className="h-px bg-border-subtle mx-4" />
               <SettingsRow
                 icon={FolderOpen}
                 iconColor="#8B5CF6"

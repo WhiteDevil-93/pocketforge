@@ -196,6 +196,9 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   // Shared with ChatLauncher (and any future chat surface) so a launcher can
   // never appear while this sheet would report "not configured".
   const { isConfigured, status, isLocalBackend, serverStatus } = useAiReadiness();
+  // Only ever applies on-device: the cloud backend's models do support native
+  // function calling, so there is nothing for the text protocol to rescue there.
+  const useTextToolProtocol = isLocalBackend && settings.localToolProtocol === 'text';
 
   // docs/litertlm-vl-integration.md §12: images are LiteRT-LM-only. llama.cpp/GGUF
   // never sets visionAvailable, and Ollama Cloud has no server status at all — both
@@ -342,6 +345,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
               ctx: { team },
               signal: controller.signal,
               onEvent: handleEvent,
+              textToolProtocol: useTextToolProtocol,
             })
           : await sendMessage({
               apiKey: settings.ollamaApiKey,
@@ -408,7 +412,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
         }
       }
     },
-    [isLocalBackend, settings.ollamaApiKey, settings.ollamaModel, team, setHistory]
+    [isLocalBackend, useTextToolProtocol, settings.ollamaApiKey, settings.ollamaModel, team, setHistory]
   );
 
   const handleSend = useCallback(async () => {
@@ -435,7 +439,13 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
       history.length === 0
         ? [
             // The local backend has no web tools — don't tell its model to use them.
-            { role: 'system', content: buildSystemPrompt({ includeWebTools: !isLocalBackend }) },
+            {
+              role: 'system',
+              content: buildSystemPrompt({
+                includeWebTools: !isLocalBackend,
+                textToolProtocol: useTextToolProtocol,
+              }),
+            },
             userMessage,
           ]
         : [...history, userMessage];
@@ -444,6 +454,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     input,
     attachedImage,
     isStreaming,
+    useTextToolProtocol,
     isConfigured,
     history,
     isLocalBackend,
@@ -510,7 +521,11 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     const baseHistory: ChatMessage[] = [
       {
         role: 'system',
-        content: buildSystemPrompt({ includeWebTools: false, includeImageImport: true }),
+        content: buildSystemPrompt({
+          includeWebTools: false,
+          includeImageImport: true,
+          textToolProtocol: useTextToolProtocol,
+        }),
       },
       {
         role: 'user',
@@ -521,7 +536,7 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
       },
     ];
     await runTurn(baseHistory);
-  }, [clearChat, runTurn]);
+  }, [clearChat, runTurn, useTextToolProtocol]);
 
   // Chat history now survives a sheet close (see useChatStore), so importing a
   // screenshot into a non-empty conversation is a real, reachable case — not

@@ -209,6 +209,19 @@ export interface AppSettings {
    *  second session on without starting the server and waiting out a full
    *  load just to find out. Cleared on a new import (see handleImportModel). */
   localModelVision?: boolean;
+  /** How tool calls are obtained from the on-device model.
+   *
+   *  'native' (default) declares the tool schemas to the backend and reads
+   *  structured calls back — correct whenever the model actually supports
+   *  function calling.
+   *
+   *  'text' declares no tools and instead teaches the call format in the system
+   *  prompt, recovering calls by parsing the reply (src/lib/llm/textToolProtocol.ts).
+   *  For a fine-tune that lost native function calling: such a model will discuss
+   *  calling a tool while never emitting one, and declaring schemas it can't use
+   *  only crowds its context. Optional so an unset value keeps the existing
+   *  behaviour — mergeStoreState backfills nothing here. */
+  localToolProtocol?: 'native' | 'text';
 }
 
 export interface AppState {

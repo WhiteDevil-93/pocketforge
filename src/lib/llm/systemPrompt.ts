@@ -2,6 +2,12 @@
 // PocketForge — AI assistant system prompt
 // ============================================================================
 
+import { ALL_TOOLS } from './tools';
+import { buildTextToolCatalog } from './textToolProtocol';
+
+/** Registered only on the Ollama Cloud backend — see toLocalToolSchema(). */
+const WEB_TOOL_NAMES = new Set(['web_search', 'web_fetch']);
+
 /**
  * Builds the system prompt for an AI assistant turn.
  *
@@ -21,9 +27,15 @@
 export function buildSystemPrompt({
   includeWebTools,
   includeImageImport = false,
+  textToolProtocol = false,
 }: {
   includeWebTools: boolean;
   includeImageImport?: boolean;
+  /** Teach the text-based tool-call format in prose instead of relying on the
+   *  backend's native function calling — see textToolProtocol.ts for why a small
+   *  fine-tune may need this. The caller must also stop declaring tools natively;
+   *  doing both leaves the model two competing formats to choose between. */
+  textToolProtocol?: boolean;
 }): string {
   const webToolsGuidance = includeWebTools
     ? `- Use web_search / web_fetch for anything current or outside this app's data — rulings, patch \
@@ -54,6 +66,13 @@ can't actually make out.
 user can check it against the screenshot and correct anything you got wrong — the same \
 way they'd correct any other team you built, by telling you what to change.`
     : '';
+  // Appended last, and deliberately after the "be concise" line: the format spec is
+  // the instruction most likely to be dropped by a model with a short effective
+  // attention span, and recency is the cheapest defence available here.
+  const textToolGuidance = textToolProtocol
+    ? `\n\n${buildTextToolCatalog(ALL_TOOLS.filter((t) => includeWebTools || !WEB_TOOL_NAMES.has(t.name)))}`
+    : '';
+
   return `You are the AI assistant built into PocketForge, a Pokemon Champions \
 Regulation M-B and Showdown team builder.
 
@@ -76,7 +95,7 @@ only those moves. Same for ability: call lookup_pokemon to see the legal ability
 problems it reports and call update_pokemon to correct them.
 - Never guess moves, abilities, or EV spreads. Always check first with get_legal_moves or \
 lookup_pokemon. Illegal data will be rejected — use the rejection to correct yourself.${imageImportGuidance}
-${webToolsGuidance}- Be concise. This is a small mobile screen; short, direct answers read better than long ones.`;
+${webToolsGuidance}- Be concise. This is a small mobile screen; short, direct answers read better than long ones.${textToolGuidance}`;
 }
 
 /** System prompt for the Ollama Cloud backend (full tool set, including web tools). */
