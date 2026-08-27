@@ -266,9 +266,23 @@ class LiteRtLmEngine private constructor(
         // still running when a new one starts and reads the old one's own marker.
         private val liveAttemptTokens = ConcurrentHashMap.newKeySet<String>()
 
-        init {
-            // Quiets LiteRT-LM's native logging; harmless to call more than once,
-            // and this only runs once per process (companion init).
+        /** Guards the one-time [Engine.setNativeMinLogSeverity] call below. */
+        private val nativeLoggingConfigured = AtomicBoolean(false)
+
+        /**
+         * Deliberately NOT a companion `init {}` block, which is where this used to
+         * live. A companion init runs on first access to this class — i.e. the moment
+         * `LiteRtLmEngine.load(...)` is called, before a single line of [load]'s body.
+         * Touching [Engine] there is what triggers LiteRT-LM's own native library
+         * load and its static constructors, so a device where that `.so` aborts (a
+         * missing or incompatible vendor NPU stub, a failing static ctor) killed the
+         * process *before any crash marker could be written* — leaving [load]'s guard
+         * structurally unable to ever learn about it, no matter how many times the
+         * user retried. Called from inside the guarded span instead, so the very
+         * first native touch of this library is covered like every other one.
+         */
+        private fun configureNativeLoggingOnce() {
+            if (!nativeLoggingConfigured.compareAndSet(false, true)) return
             Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
         }
 
@@ -322,6 +336,20 @@ class LiteRtLmEngine private constructor(
             // a multi-GB file on every load — and changes on any real replacement.
             val modelFile = File(modelPath)
             val modelId = "${modelFile.name}:${modelFile.length()}:${modelFile.lastModified()}"
+
+            // Logged unconditionally, not enforced as a precondition: a backend may mmap
+            // rather than copy the weights, so "file is bigger than free RAM" is not by
+            // itself a reason to refuse the load. But when the OS low-memory killer takes
+            // the process during a load, it leaves no Java stack trace anywhere — this
+            // line is then the only evidence distinguishing that from a native abort.
+            runCatching {
+                val memInfo = android.app.ActivityManager.MemoryInfo()
+                (context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager)
+                    .getMemoryInfo(memInfo)
+                Log.i(TAG, "load starting: model=${modelFile.name} sizeMb=${modelFile.length() / (1024 * 1024)} " +
+                    "availMemMb=${memInfo.availMem / (1024 * 1024)} totalMemMb=${memInfo.totalMem / (1024 * 1024)} " +
+                    "lowMemory=${memInfo.lowMemory} thresholdMb=${memInfo.threshold / (1024 * 1024)}")
+            }.onFailure { Log.w(TAG, "could not read memory info: ${it.message}") }
             fun knownCrashKey(id: String) = "$KEY_KNOWN_CRASH_LABELS_PREFIX$id"
             val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
 
@@ -370,36 +398,18 @@ class LiteRtLmEngine private constructor(
                         continue
                     }
                     attempted += label
-                    val backendInstance = makeBackend()
-                    val candidate = Engine(
-                        EngineConfig(
-                            modelPath = modelPath,
-                            backend = backendInstance,
-                            visionBackend = if (withVision) backendInstance else null,
-                            // The importer sends one screenshot at a time; leaving this
-                            // at the model default risks a larger KV allocation than
-                            // needed on a device already carrying several GB of weights.
-                            maxNumImages = if (withVision) 1 else null,
-                            // Defaults to the model's own directory otherwise — for a
-                            // model imported into filesDir that means unevictable
-                            // compiled kernels parked next to a multi-GB file.
-                            // cacheDir is OS-reclaimable.
-                            cacheDir = context.cacheDir.absolutePath,
-                        )
-                    )
                     // Written with commit() (synchronous, durable) rather than apply():
-                    // if initialize() crashes the process on the next line, an async
-                    // write might never have reached disk, and this whole guard exists
-                    // for exactly that moment. The random token both lets this attempt's
-                    // own finally block tell its marker apart from one written by a
-                    // second, overlapping load() for the same label, and (via
-                    // liveAttemptTokens above) lets any load() distinguish "still
-                    // running in this process" from "the process that wrote this is
-                    // gone" — LocalLlmService's interruptLoad() interrupts and drops
-                    // the old Thread reference without joining it, and
-                    // Engine.initialize() isn't interruptible, so a stop-then-
-                    // immediately-retry can leave the old load() still running when a
-                    // new one starts and reads the old one's own marker.
+                    // if anything below crashes the process, an async write might never
+                    // have reached disk, and this whole guard exists for exactly that
+                    // moment. The random token both lets this attempt's own finally
+                    // block tell its marker apart from one written by a second,
+                    // overlapping load() for the same label, and (via liveAttemptTokens
+                    // above) lets any load() distinguish "still running in this process"
+                    // from "the process that wrote this is gone" — LocalLlmService's
+                    // interruptLoad() interrupts and drops the old Thread reference
+                    // without joining it, and Engine.initialize() isn't interruptible,
+                    // so a stop-then-immediately-retry can leave the old load() still
+                    // running when a new one starts and reads the old one's own marker.
                     val attemptToken = UUID.randomUUID().toString()
                     val pendingValue = JSONObject()
                         .put("modelId", modelId)
@@ -409,7 +419,37 @@ class LiteRtLmEngine private constructor(
                     liveAttemptTokens += attemptToken
                     prefs.edit().putString(KEY_PENDING_LABEL, pendingValue)
                         .commitLogged("marking $label pending for $modelId")
+                    // candidate is constructed *inside* the guarded span, not before it:
+                    // a bad NPU/GPU delegate can crash the process while its native
+                    // library is being loaded during Backend.NPU()/Backend.GPU() or
+                    // during Engine(EngineConfig(...)) construction itself, not only
+                    // inside initialize() — LiteRT-LM issue #2114 documents the latter,
+                    // but a construction-time crash is exactly as real and this guard
+                    // must cover every native-adjacent call for this attempt, not just
+                    // the last one, or a crash there leaves no marker to detect it by.
+                    var candidate: Engine? = null
                     try {
+                        // First statement inside the guard on purpose: this is the call
+                        // that pulls in LiteRT-LM's native library on this process's very
+                        // first load attempt. See configureNativeLoggingOnce's KDoc.
+                        configureNativeLoggingOnce()
+                        val backendInstance = makeBackend()
+                        candidate = Engine(
+                            EngineConfig(
+                                modelPath = modelPath,
+                                backend = backendInstance,
+                                visionBackend = if (withVision) backendInstance else null,
+                                // The importer sends one screenshot at a time; leaving this
+                                // at the model default risks a larger KV allocation than
+                                // needed on a device already carrying several GB of weights.
+                                maxNumImages = if (withVision) 1 else null,
+                                // Defaults to the model's own directory otherwise — for a
+                                // model imported into filesDir that means unevictable
+                                // compiled kernels parked next to a multi-GB file.
+                                // cacheDir is OS-reclaimable.
+                                cacheDir = context.cacheDir.absolutePath,
+                            )
+                        )
                         candidate.initialize()
                         Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
                         return LiteRtLmEngine(candidate, name, visionAvailable = withVision)
@@ -424,8 +464,10 @@ class LiteRtLmEngine private constructor(
                         // A half-initialized engine still holds native memory; free it
                         // before the next attempt so this fallback doesn't leak an
                         // engine's worth of allocation on the way to the next one.
+                        // candidate can be null here if makeBackend()/Engine(...) itself
+                        // is what threw, before ever reaching initialize().
                         try {
-                            candidate.close()
+                            candidate?.close()
                         } catch (closeError: Exception) {
                             Log.w(TAG, "close() after failed init also failed: ${closeError.message}")
                         }
