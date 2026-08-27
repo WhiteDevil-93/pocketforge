@@ -97,6 +97,11 @@ class LocalLlmService : Service() {
          *  the watchdog declares the load stuck and hands control back to the UI. */
         private const val LOAD_WATCHDOG_MS = 15 * 60 * 1000L
 
+        // HTTP server hardening limits — prevents a runaway or malformed client from
+        // exhausting heap by sending an unbounded header list or huge header values.
+        private const val HTTP_MAX_HEADERS = 50
+        private const val HTTP_MAX_HEADER_BYTES = 8192
+
         private val loadWatchdog = Handler(Looper.getMainLooper())
         private val loadWatchdogRunnable = Runnable {
             if (state != "loading") return@Runnable
@@ -481,7 +486,11 @@ class LocalLlmService : Service() {
                 // afterwards would lose the buffered bytes.
                 var contentLength = 0
                 var line: String?
+                var headerCount = 0
                 while (reader.readLine().also { line = it } != null && line!!.isNotEmpty()) {
+                    if (++headerCount > HTTP_MAX_HEADERS || line!!.toByteArray(StandardCharsets.UTF_8).size > HTTP_MAX_HEADER_BYTES) {
+                        throw IOException("HTTP request headers exceed server limits")
+                    }
                     val header = line!!
                     if (header.startsWith("Content-Length:", ignoreCase = true)) {
                         contentLength = header.substringAfter(':').trim().toIntOrNull() ?: 0
