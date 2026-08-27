@@ -20,10 +20,10 @@ const CHAT_URL = 'https://ollama.com/api/chat';
 // Allow enough iterations for prescribed workflow: create_team, 6 members with
 // get_legal_moves/lookup_pokemon/add_pokemon per member, validate_team, and corrections
 const MAX_TOOL_ITERATIONS = 20;
-// Overall ceiling for one sendMessage call, covering every streamed reply and tool
-// round trip together — protects against Ollama Cloud accepting the request and then
-// stalling before the first chunk, which would otherwise hang the chat forever.
-const REQUEST_TIMEOUT_MS = 90_000;
+// Per-model-turn ceiling, re-armed at the start of every loop iteration so each
+// cloud turn gets a full 90s budget instead of a single timer spanning the whole
+// multi-turn conversation.
+const TURN_TIMEOUT_MS = 90_000;
 
 interface WireToolCall {
   function: { name: string; arguments: Record<string, unknown> };
@@ -162,17 +162,19 @@ export async function sendMessage({
   }
   const abort = () => controller.abort();
   signal?.addEventListener('abort', abort);
-  const overallTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let turnTimeout: ReturnType<typeof setTimeout> | undefined;
 
   let messages = [...history];
   // web_search/web_fetch need the API key to call ollama.com's web API, and this request's
-  // own abort signal so a user stop / overall timeout cancels an in-flight web request
+  // own abort signal so a user stop / per-turn timeout cancels an in-flight web request
   // instead of leaving it running for no reason — forwarded here rather than requiring
   // every caller of sendMessage to include them in ctx themselves.
   const toolCtx: ToolContext = { ...ctx, apiKey, signal: controller.signal };
 
   try {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+      turnTimeout = setTimeout(() => controller.abort(), TURN_TIMEOUT_MS);
+
       let content = '';
       let toolCalls: ToolCall[] = [];
 
@@ -197,6 +199,7 @@ export async function sendMessage({
           ];
         }
       }
+      clearTimeout(turnTimeout);
 
       if (toolCalls.length === 0) {
         const assistantMessage: ChatMessage = { role: 'assistant', content };
@@ -227,7 +230,7 @@ export async function sendMessage({
     (err as unknown as Record<string, unknown>).partialMessages = messages;
     throw err;
   } finally {
-    clearTimeout(overallTimeout);
+    clearTimeout(turnTimeout);
     signal?.removeEventListener('abort', abort);
   }
 }

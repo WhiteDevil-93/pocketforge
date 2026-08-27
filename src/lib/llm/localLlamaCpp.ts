@@ -21,10 +21,11 @@ import type { ChatOnceEvent, ChatOnceResult } from '../native/localLlm';
 // Allow enough iterations for prescribed workflow: create_team, 6 members with
 // get_legal_moves/lookup_pokemon/add_pokemon per member, validate_team, and corrections
 const MAX_TOOL_ITERATIONS = 20;
-// Overall ceiling for one sendMessage call, covering every streamed reply and tool
-// round trip together — protects against the local server accepting the request and
-// then stalling before the first chunk, which would otherwise hang the chat forever.
-const REQUEST_TIMEOUT_MS = 90_000;
+// Per-model-turn ceiling, re-armed at the start of every loop iteration so a single
+// slow on-device generation gets the full budget the native layer grants it
+// (LiteRtLmEngine.GENERATION_TIMEOUT_MS = 300_000) instead of a single timer spanning
+// the whole multi-turn conversation.
+const TURN_TIMEOUT_MS = 300_000;
 
 // ---- OpenAI wire format (what the local llama-server speaks) ----------------
 
@@ -152,7 +153,7 @@ export async function sendMessage({
   }
   const abort = () => controller.abort();
   signal?.addEventListener('abort', abort);
-  const overallTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let turnTimeout: ReturnType<typeof setTimeout> | undefined;
 
   let messages = [...history];
   // No apiKey on the local backend — the web tools are excluded from the schema
@@ -161,6 +162,8 @@ export async function sendMessage({
 
   try {
     for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+      turnTimeout = setTimeout(() => controller.abort(), TURN_TIMEOUT_MS);
+
       let content = '';
       let toolCalls: ToolCall[] = [];
       // Index-keyed accumulation of the streamed tool_call deltas (the native side
@@ -169,7 +172,7 @@ export async function sendMessage({
       const deltaAccumulator: Array<{ id?: string; name: string; argumentsRaw: string }> = [];
 
       const assembled = await chatOnceBridge(messages, (event) => {
-        // A user stop / overall timeout aborts the controller; the native request may
+        // A user stop / per-turn timeout aborts the controller; the native request may
         // keep streaming for a moment — don't surface those late events as if live.
         if (controller.signal.aborted) return;
         if (event.type === 'token') {
@@ -188,6 +191,7 @@ export async function sendMessage({
           if (event.argumentsDelta) entry.argumentsRaw += event.argumentsDelta;
         }
       });
+      clearTimeout(turnTimeout);
 
       // The native request can't be cancelled mid-flight, so an aborted stream still
       // resolves here — bail out so the loop mirrors ollamaCloud's abort semantics
@@ -244,7 +248,7 @@ export async function sendMessage({
     (err as unknown as Record<string, unknown>).partialMessages = messages;
     throw err;
   } finally {
-    clearTimeout(overallTimeout);
+    clearTimeout(turnTimeout);
     signal?.removeEventListener('abort', abort);
   }
 }
