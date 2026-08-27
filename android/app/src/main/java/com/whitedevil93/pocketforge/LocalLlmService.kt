@@ -488,7 +488,7 @@ class LocalLlmService : Service() {
                 var line: String?
                 var headerCount = 0
                 while (reader.readLine().also { line = it } != null && line!!.isNotEmpty()) {
-                    if (++headerCount > HTTP_MAX_HEADERS || line!!.length > HTTP_MAX_HEADER_BYTES) {
+                    if (++headerCount > HTTP_MAX_HEADERS || line!!.toByteArray(StandardCharsets.UTF_8).size > HTTP_MAX_HEADER_BYTES) {
                         throw IOException("HTTP request headers exceed server limits")
                     }
                     val header = line!!
