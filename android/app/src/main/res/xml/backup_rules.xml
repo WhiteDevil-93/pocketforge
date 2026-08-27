@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pre-Android-12 (API < 31) backup rules — see data_extraction_rules.xml for
+  the Android 12+ mechanism and why litertlm_crash_guard is excluded from both.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="litertlm_crash_guard.xml" />
+</full-backup-content>

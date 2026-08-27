@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31+) Auto Backup / device-transfer rules.
+
+  litertlm_crash_guard (LiteRtLmEngine.kt) records which LiteRT-LM backends have
+  crashed the process on *this specific device's* GPU/NPU drivers. Restoring it
+  onto different hardware — a cloud backup restore or a device-to-device
+  migration — would carry the old device's crash history onto new hardware
+  where those backends may work fine, permanently and wrongly suppressing them.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="litertlm_crash_guard.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="litertlm_crash_guard.xml" />
+    </device-transfer>
+</data-extraction-rules>
