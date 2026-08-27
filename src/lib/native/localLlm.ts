@@ -60,6 +60,11 @@ export interface ChatOnceOptions {
   messages: unknown[];
   /** OpenAI-shaped function schemas (see toLocalToolSchema), JSON-serializable. */
   tools: unknown[];
+  /** When true, the native side renders history as plain-text tool-call blocks
+   *  instead of LiteRT-LM's native ToolCall/Content.ToolResponse types — see
+   *  ChatRequest.kt's parseChatRequest and textToolProtocol.ts. Omitted/false is
+   *  the native-calling path, unaffected. */
+  textToolProtocol?: boolean;
 }
 
 /** Fully-assembled assistant turn, resolved once the native SSE stream hits [DONE]. */

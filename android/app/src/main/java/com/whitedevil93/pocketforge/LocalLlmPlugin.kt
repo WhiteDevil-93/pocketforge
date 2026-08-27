@@ -686,11 +686,16 @@ class LocalLlmPlugin : Plugin() {
         }
         val tools = call.getArray("tools")
         val requestId = call.getString("requestId") ?: ""
+        val textToolProtocol = call.getBoolean("textToolProtocol") ?: false
 
         val body = JSObject().apply {
             put("messages", messages)
             if (tools != null) put("tools", tools)
             put("stream", true)
+            // Read back out by ChatRequest.parseChatRequest — tells it whether to
+            // replay assistant/tool history as plain-text tool-call blocks instead
+            // of LiteRT-LM's native ToolCall/Content.ToolResponse types.
+            put("textToolProtocol", textToolProtocol)
         }
 
         // Never block the plugin-call (main) thread — a model turn can take minutes.

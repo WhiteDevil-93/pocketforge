@@ -49,6 +49,18 @@ internal fun parseChatRequest(requestBodyJson: String, visionAvailable: Boolean)
         throw IllegalArgumentException("\"messages\" must not be empty")
     }
 
+    // Set by localLlamaCpp.ts's chatOnceBridge whenever AppSettings.localToolProtocol
+    // is 'text' (src/lib/llm/textToolProtocol.ts). When true, past assistant tool_calls
+    // and role:"tool" results in history must NOT be rendered through LiteRT-LM's own
+    // ToolCall/Content.ToolResponse types below: a model taught the plain-text
+    // <tool_call>{...}</tool_call> format never produced those types and has no reason
+    // to recognize whatever native format the library's own chat template renders them
+    // into. Its own prior turns would look foreign to it — a real, observed cause of
+    // the model "forgetting" what it just did and restarting the conversation. In this
+    // mode every history message is plain text instead, in the exact shape the model
+    // was taught and (if it followed the prompt) itself produced.
+    val textToolProtocol = body.optBoolean("textToolProtocol", false)
+
     var systemInstruction: Contents? = null
     var startIndex = 0
     if (messages.getJSONObject(0).optString("role") == "system") {
@@ -71,12 +83,14 @@ internal fun parseChatRequest(requestBodyJson: String, visionAvailable: Boolean)
     // toWireMessage uses in reverse: every assistant message's tool_calls[] pushes
     // its call names here, in order, and each following role:"tool" message consumes
     // the next one. Shared across both initialMessages and lastMessage below since a
-    // pairing can span that boundary.
+    // pairing can span that boundary. Unused (and left empty) under textToolProtocol,
+    // which never builds a Content.ToolResponse in the first place.
     val pendingToolCallNames = ArrayDeque<String>()
     val initialMessages = (startIndex until lastIndex).map { i ->
-        toLiteRtMessage(messages.getJSONObject(i), visionAvailable, pendingToolCallNames)
+        toLiteRtMessage(messages.getJSONObject(i), visionAvailable, pendingToolCallNames, textToolProtocol)
     }
-    val lastMessage = toLiteRtMessage(messages.getJSONObject(lastIndex), visionAvailable, pendingToolCallNames)
+    val lastMessage =
+        toLiteRtMessage(messages.getJSONObject(lastIndex), visionAvailable, pendingToolCallNames, textToolProtocol)
 
     return ChatRequest(
         systemInstruction = systemInstruction,
@@ -96,14 +110,30 @@ private fun toLiteRtMessage(
     wire: JSONObject,
     visionAvailable: Boolean,
     pendingToolCallNames: ArrayDeque<String>,
+    textToolProtocol: Boolean,
 ): Message {
     return when (wire.optString("role")) {
         "user" -> Message.user(parseContent(wire.opt("content"), visionAvailable))
-        "assistant" -> Message.model(
-            parseContent(wire.opt("content"), visionAvailable),
-            parseToolCalls(wire.optJSONArray("tool_calls"), pendingToolCallNames),
-        )
-        "tool" -> {
+        "assistant" -> if (textToolProtocol) {
+            val toolCallText = renderTextToolCalls(wire.optJSONArray("tool_calls"))
+            val prose = wire.optString("content")
+            val combined = listOf(prose, toolCallText).filter { it.isNotBlank() }.joinToString("\n")
+            // Empty tool list, not parseToolCalls(...): a native ToolCall here would
+            // put us right back in the mismatch this whole branch exists to avoid.
+            Message.model(Contents.of(combined), emptyList())
+        } else {
+            Message.model(
+                parseContent(wire.opt("content"), visionAvailable),
+                parseToolCalls(wire.optJSONArray("tool_calls"), pendingToolCallNames),
+            )
+        }
+        "tool" -> if (textToolProtocol) {
+            // A plain turn, not Content.ToolResponse — the prompt tells the model
+            // "the results come back as a new message", never mentions a distinct
+            // tool role, and Message.tool() would render through the library's
+            // native tool-response format regardless of textToolProtocol.
+            Message.user(Contents.of("Tool result: ${wire.optString("content")}"))
+        } else {
             // Falls back to a placeholder name only if the id-pairing above ever runs
             // out (malformed history) — never actually expected in practice, since
             // every tool message this app sends follows the assistant message that
@@ -115,6 +145,32 @@ private fun toLiteRtMessage(
         // request — the model still sees the content, just without special framing.
         else -> Message.user(parseContent(wire.opt("content"), visionAvailable))
     }
+}
+
+/**
+ * Re-renders a wire `tool_calls` array back into the exact plain-text shape the
+ * text-tool-call system prompt teaches (`textToolProtocol.ts`'s OPEN_TAG/CLOSE_TAG):
+ * `<tool_call>{"name":"...","arguments":{...}}</tool_call>`, one per call, newline-
+ * joined. Normalizing through JSONObject rather than string-splicing the wire
+ * arguments in also means a call the parser recovered from a malformed model
+ * output (a bare name, no arguments — see textToolProtocol.ts's toToolCall) is
+ * replayed to the model as a *well-formed* example of its own history, which
+ * reinforces the correct format going forward rather than repeating the mistake.
+ */
+private fun renderTextToolCalls(array: JSONArray?): String {
+    if (array == null || array.length() == 0) return ""
+    return (0 until array.length())
+        .mapNotNull { i -> array.optJSONObject(i)?.optJSONObject("function") }
+        .joinToString("\n") { function ->
+            val name = function.optString("name")
+            val argsObj = try {
+                JSONObject(function.optString("arguments", "{}"))
+            } catch (e: org.json.JSONException) {
+                JSONObject()
+            }
+            val call = JSONObject().put("name", name).put("arguments", argsObj)
+            "<tool_call>$call</tool_call>"
+        }
 }
 
 /** Parses an assistant message's `tool_calls` array (`localLlamaCpp.ts`'s

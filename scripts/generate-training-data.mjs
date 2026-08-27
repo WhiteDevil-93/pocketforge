@@ -315,18 +315,71 @@ async function editing(species) {
 /**
  * No-tool answers. Without these the model learns "always call something", and
  * starts calling create_team when the user says hello — an over-trigger that is
- * just as broken as never calling at all.
+ * just as broken as never calling at all. Kept deliberately varied across three
+ * shapes, not just greetings: plain small talk, in-domain VGC questions that
+ * are answerable from knowledge alone (no roster/legality lookup needed), and
+ * a vague request the assistant should ask about before acting on — teaching
+ * that "call something" is not the default response to every message, even a
+ * team-building one, when the ask doesn't yet have enough in it to act on.
  */
-function chitchat() {
+async function chitchat() {
   const pairs = [
     ['Hello', 'Hi — I can build teams, check legality, and run damage and speed calcs. What are you working on?'],
     ['What can you do?', 'I can build and edit your team, look up legal moves and abilities, run damage and speed calculations, and validate a team against the current regulation.'],
     ['Thanks!', 'Any time.'],
+    ['Thanks, that helped a lot', "Glad it helped — let me know if you want to keep going on the team."],
+    ['Are you a real person?', "No, I'm the assistant built into PocketForge — I work with your teams, movesets, and the current regulation, not general chat."],
     ['What does VGC stand for?', 'Video Game Championships — the official doubles format run by The Pokemon Company.'],
+    ['What is the difference between Regulation A and Regulation B?', 'Regulations are periodic rule changes VGC runs under — each one can restrict which Pokemon, forms, or items are legal. Check the current one in Settings or ask me to validate your team and I\'ll tell you what it\'s allowed under.'],
+    ['Why does Trick Room matter in doubles?', "Trick Room reverses turn order for five turns, so your slowest Pokemon move first — it's built around teams with heavy, hard-hitting Pokemon that are normally too slow to act before faster threats."],
+    ['What is Tera Type and how does it work?', "Terastallizing changes a Pokemon's type for the rest of the battle, which can shore up a weakness, unlock a same-type-attack bonus on a coverage move, or make a predicted counter miss. Each Pokemon has a fixed Tera Type once set on its set."],
+    ["What's the point of Helping Hand in doubles?", "It boosts your partner's next move by 50% for that turn — a common way to let a slower, harder-hitting partner secure a KO it would otherwise miss."],
+    ['Can you play my matches for me?', "No — I build, edit, and validate your team and answer questions about it, but I don't play or simulate battles."],
+    ['Can you tell me what the weather is like today?', "That's outside what I can help with — I only work with your Pokemon teams, movesets, and battle calculations."],
+    ['Good game earlier, lost in the semis though', "Rough finish — if you want to look at what didn't work, I can pull up the team and check for a weakness or a legality issue that might have played a part."],
+    ['Give me some general advice on building a good doubles core, nothing specific', "A solid doubles core usually pairs a speed-control or setup move (Tailwind, Trick Room, Follow Me/Rage Powder) with something that converts the opening into damage — Helping Hand and Follow Me are the two most common glue moves. If you want, tell me a Pokemon you like and I can build a real team around it instead of speaking in generalities."],
   ];
   for (const [q, a] of pairs) {
     const c = new Conversation(q);
     c.finish(a);
+    add(c);
+  }
+
+  // Vague team-building asks: enough of the domain is present that a
+  // trigger-happy model reaches for create_team anyway, but there isn't a
+  // Pokemon, role, or format to build around yet — the right move is asking,
+  // not guessing at arguments and hoping they're what the user meant.
+  const clarifications = [
+    ['Build me a team', "Happy to — give me a Pokemon, playstyle, or archetype to build around (e.g. \"around Tsareena\" or \"a Trick Room team\") and I'll put it together."],
+    ['I need a good team for the tournament this weekend', "I can build one — what format is the tournament (Regulation A/B/etc.), and is there a Pokemon or strategy you want it built around?"],
+    ["What's the best team right now?", "There isn't a single best team — it depends on the format and what you want to play. Tell me a Pokemon, role, or playstyle you like and I'll build something around it."],
+  ];
+  for (const [q, a] of clarifications) {
+    const c = new Conversation(q);
+    c.finish(a);
+    add(c);
+  }
+
+  // Chitchat followed by a real request in the same conversation — proves a
+  // no-tool turn doesn't confuse the model about what's already happened, and
+  // that it still acts once the ask actually arrives, rather than treating the
+  // whole conversation as "the no-tool kind" once it's started that way.
+  {
+    resetStore();
+    const c = new Conversation("Hey, how's it going?");
+    c.finish('Doing well — what can I help you build or check today?');
+    c.messages.push({ role: 'user', content: 'Can you tell me what abilities Garchomp can have?' });
+    const dex = await c.call('lookup_pokemon', { species: 'Garchomp' });
+    c.finish(`Garchomp is ${(dex.types ?? []).join('/')} with ${(dex.abilities ?? []).join(', ')}.`);
+    add(c);
+  }
+  {
+    resetStore();
+    const c = new Conversation('What does VGC stand for?');
+    c.finish('Video Game Championships — the official doubles format run by The Pokemon Company.');
+    c.messages.push({ role: 'user', content: 'Cool. Build me a team around Tsareena then.' });
+    await c.call('create_team', { name: 'Tsareena Core' });
+    c.finish("Team created — I'll build it out around Tsareena now.");
     add(c);
   }
 }
@@ -389,7 +442,7 @@ for (let i = 0; i + 4 <= Math.min(species.length, 24); i += 4) {
   await singleCalls(species.slice(i, i + 4));
   await editing(species.slice(i, i + 4));
 }
-chitchat();
+await chitchat();
 
 // ---- write ------------------------------------------------------------------
 

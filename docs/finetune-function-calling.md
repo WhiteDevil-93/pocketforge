@@ -51,7 +51,7 @@ Hand-written examples drift from the app the moment either changes, and worse,
 teach movesets that do not exist — the exact failure being trained out. Re-run
 the generator whenever the tools or the regulation data change.
 
-Current output: ~94 conversations, ~660 tool calls, all 12 non-web tools covered.
+Current output: ~109 conversations, ~660 tool calls, all 12 non-web tools covered, ~16% pure no-tool conversations (chitchat, in-domain questions answerable without a lookup, and vague requests the assistant asks about instead of guessing).
 
 ### What is in it, and why
 

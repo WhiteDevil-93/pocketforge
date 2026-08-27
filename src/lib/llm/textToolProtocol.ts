@@ -28,6 +28,15 @@ import { ALL_TOOLS } from './tools';
  *  to reproduce exactly — angle-bracket tags appear throughout instruct-tuning data. */
 const OPEN_TAG = '<tool_call>';
 const CLOSE_TAG = '</tool_call>';
+// Every terminator extractBlocks treats as ending a block, besides CLOSE_TAG
+// itself: the observed on-device failure was the model closing with `</tool>`
+// (the tag learned, the exact spelling not) instead of CLOSE_TAG. Shared here —
+// rather than hard-coded separately in extractBlocks' regex and
+// isInsideToolCallBlock — precisely because that duplication is what let the
+// two drift apart the first time: extractBlocks was widened to accept `</tool>`
+// without isInsideToolCallBlock learning about it, so a block closed that way
+// parsed correctly but streaming stayed suppressed for the rest of the turn.
+const CLOSE_MARKERS = [CLOSE_TAG, '</tool>'];
 
 /** Renders one parameter as `name: type` (marking optionals), compact enough that the
  *  whole catalog stays affordable in a small model's context window. Full JSON Schema
@@ -114,11 +123,11 @@ interface ParsedBlock {
  */
 function extractBlocks(content: string): ParsedBlock[] {
   const blocks: ParsedBlock[] = [];
+  // Opening tag through any plausible close (CLOSE_MARKERS), or the next opening
+  // tag / end of string when the model never closed it at all.
+  const closeAlternation = CLOSE_MARKERS.map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const patterns = [
-    // Opening tag through any plausible close: the documented </tool_call>, a
-    // truncated </tool>, or the next opening tag / end of string when the model
-    // never closed it at all.
-    /<tool_call>\s*([\s\S]*?)\s*(?:<\/tool_call>|<\/tool>|(?=<tool_call>)|$)/g,
+    new RegExp(`${OPEN_TAG}\\s*([\\s\\S]*?)\\s*(?:${closeAlternation}|(?=${OPEN_TAG})|$)`, 'g'),
     // A fenced block whose body looks like a call — tolerated, not advertised.
     /```(?:json)?\s*(\{[\s\S]*?"name"[\s\S]*?\})\s*```/g,
   ];
@@ -137,18 +146,41 @@ function extractBlocks(content: string): ParsedBlock[] {
   return kept;
 }
 
-/** Real tool names, so a hallucinated token never becomes a phantom call. */
-const KNOWN_TOOL_NAMES = new Set(ALL_TOOLS.map((t) => t.name));
+/** Lowercase name → canonical registry name, so a hallucinated token never
+ *  becomes a phantom call. Keyed lowercase because the bare-name regex below
+ *  matches case-insensitively (a small model reproduces `Create_Team` or
+ *  `CREATE_TEAM` as readily as `create_team`) — a case-sensitive Set.has()
+ *  here would silently drop every call whose case the model got wrong. */
+const TOOL_NAME_BY_LOWERCASE = new Map(ALL_TOOLS.map((t) => [t.name.toLowerCase(), t.name]));
+
+/** Resolves any-case tool name text to its canonical registry name, or null. */
+function resolveToolName(name: string): string | null {
+  return TOOL_NAME_BY_LOWERCASE.get(name.toLowerCase()) ?? null;
+}
 
 /** First balanced {...} run in a string, or null. Avoids a greedy match
- *  swallowing trailing prose after the arguments object. */
+ *  swallowing trailing prose after the arguments object.
+ *
+ *  Tracks whether it is inside a JSON string literal so a brace inside a value —
+ *  a team named "Team }{" — doesn't unbalance the count and truncate the object
+ *  early. Backslash-escapes the scanner past an escaped quote inside a string. */
 function firstJsonObject(text: string): string | null {
   const start = text.indexOf('{');
   if (start === -1) return null;
   let depth = 0;
+  let inString = false;
+  let escaped = false;
   for (let i = start; i < text.length; i++) {
-    if (text[i] === '{') depth++;
-    else if (text[i] === '}' && --depth === 0) return text.slice(start, i + 1);
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}' && --depth === 0) return text.slice(start, i + 1);
   }
   return null;
 }
@@ -178,13 +210,17 @@ function toToolCall(raw: string): ToolCall | null {
   if (objectText) {
     try {
       const parsed = JSON.parse(objectText) as Record<string, unknown>;
-      if (typeof parsed.name === 'string' && KNOWN_TOOL_NAMES.has(parsed.name)) {
-        return { name: parsed.name, arguments: asArgs(parsed.arguments ?? parsed.parameters ?? parsed.args) };
+      if (typeof parsed.name === 'string') {
+        const resolved = resolveToolName(parsed.name);
+        if (resolved) {
+          return { name: resolved, arguments: asArgs(parsed.arguments ?? parsed.parameters ?? parsed.args) };
+        }
       }
       // {"create_team": {...}}
       const keys = Object.keys(parsed);
-      if (keys.length === 1 && KNOWN_TOOL_NAMES.has(keys[0])) {
-        return { name: keys[0], arguments: asArgs(parsed[keys[0]]) };
+      if (keys.length === 1) {
+        const resolved = resolveToolName(keys[0]);
+        if (resolved) return { name: resolved, arguments: asArgs(parsed[keys[0]]) };
       }
     } catch {
       // fall through to the bare-name forms
@@ -195,8 +231,9 @@ function toToolCall(raw: string): ToolCall | null {
   // Leading identifier, optionally followed by an arguments object.
   const named = /^([a-z_][a-z0-9_]*)\s*\(?\s*([\s\S]*)$/i.exec(text);
   if (!named) return null;
-  const [, name, rest] = named;
-  if (!KNOWN_TOOL_NAMES.has(name)) return null;
+  const [, rawName, rest] = named;
+  const name = resolveToolName(rawName);
+  if (!name) return null;
 
   const argText = firstJsonObject(rest);
   if (!argText) return { name, arguments: {} };
@@ -254,5 +291,10 @@ export function hasTextToolCalls(content: string): boolean {
 export function isInsideToolCallBlock(content: string): boolean {
   const lastOpen = content.lastIndexOf(OPEN_TAG);
   if (lastOpen === -1) return false;
-  return content.indexOf(CLOSE_TAG, lastOpen) === -1;
+  const searchFrom = lastOpen + OPEN_TAG.length;
+  // Terminated by any marker extractBlocks accepts (CLOSE_MARKERS), or by a
+  // later opening tag — extractBlocks treats that as implicitly closing the
+  // previous block too (the (?=OPEN_TAG) lookahead in its pattern).
+  if (CLOSE_MARKERS.some((marker) => content.indexOf(marker, searchFrom) !== -1)) return false;
+  return content.indexOf(OPEN_TAG, searchFrom) === -1;
 }

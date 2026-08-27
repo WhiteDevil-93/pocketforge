@@ -105,6 +105,7 @@ async function chatOnceBridge(
   messages: ChatMessage[],
   onEvent: (event: ChatOnceEvent) => void,
   declareTools: boolean,
+  textToolProtocol: boolean,
 ): Promise<ChatOnceResult> {
   // Dynamically imported behind the isNativeApp() convention: the web/PWA build
   // must never pull the native plugin registration into the bundle.
@@ -123,6 +124,9 @@ async function chatOnceBridge(
       // instead, and declaring them here too would hand the model two competing
       // call formats — the native one it can't produce, and the text one it can.
       tools: declareTools ? toLocalToolSchema() : [],
+      // Tells the native side how to render prior assistant/tool turns when
+      // re-sending history — see ChatOnceOptions.textToolProtocol.
+      textToolProtocol,
     });
   } finally {
     await handle.remove();
@@ -205,7 +209,7 @@ export async function sendMessage({
           if (event.name) entry.name += event.name;
           if (event.argumentsDelta) entry.argumentsRaw += event.argumentsDelta;
         }
-      }, !textToolProtocol);
+      }, !textToolProtocol, textToolProtocol);
       clearTimeout(turnTimeout);
 
       // The native request can't be cancelled mid-flight, so an aborted stream still
