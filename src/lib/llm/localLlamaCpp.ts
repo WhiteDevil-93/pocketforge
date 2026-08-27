@@ -15,6 +15,7 @@
 
 import type { ChatMessage, ContentPart, LlmStreamEvent, ToolCall, ToolContext } from './types';
 import { toLocalToolSchema } from './tools';
+import { isInsideToolCallBlock, parseTextToolCalls } from './textToolProtocol';
 import { runToolCall } from './toolRunner';
 import type { ChatOnceEvent, ChatOnceResult } from '../native/localLlm';
 
@@ -103,6 +104,7 @@ function parseToolCallArguments(raw: string): Record<string, unknown> {
 async function chatOnceBridge(
   messages: ChatMessage[],
   onEvent: (event: ChatOnceEvent) => void,
+  declareTools: boolean,
 ): Promise<ChatOnceResult> {
   // Dynamically imported behind the isNativeApp() convention: the web/PWA build
   // must never pull the native plugin registration into the bundle.
@@ -117,7 +119,10 @@ async function chatOnceBridge(
     return await chatOnce({
       requestId,
       messages: messages.map((m) => toWireMessage(m, pendingToolCallIds)),
-      tools: toLocalToolSchema(),
+      // Empty under the text protocol: the schemas are taught in the system prompt
+      // instead, and declaring them here too would hand the model two competing
+      // call formats — the native one it can't produce, and the text one it can.
+      tools: declareTools ? toLocalToolSchema() : [],
     });
   } finally {
     await handle.remove();
@@ -131,6 +136,11 @@ export interface LocalSendMessageOptions {
   ctx: ToolContext;
   onEvent: (event: LlmStreamEvent) => void;
   signal?: AbortSignal;
+  /** Recover tool calls by parsing the model's text instead of declaring tools to
+   *  the backend — for a fine-tune that lost native function calling. The caller
+   *  must pair this with buildSystemPrompt({ textToolProtocol: true }), which is
+   *  what teaches the model the format; see textToolProtocol.ts. */
+  textToolProtocol?: boolean;
 }
 
 /**
@@ -144,6 +154,7 @@ export async function sendMessage({
   ctx,
   onEvent,
   signal,
+  textToolProtocol = false,
 }: LocalSendMessageOptions): Promise<ChatMessage[]> {
   const controller = new AbortController();
   if (signal?.aborted) {
@@ -177,7 +188,11 @@ export async function sendMessage({
         if (controller.signal.aborted) return;
         if (event.type === 'token') {
           content += event.text;
-          onEvent({ type: 'token', text: event.text });
+          // Under the text protocol the call syntax arrives as ordinary tokens; hold
+          // it back so half-written JSON never paints into the transcript.
+          if (!textToolProtocol || !isInsideToolCallBlock(content)) {
+            onEvent({ type: 'token', text: event.text });
+          }
         } else if (event.type === 'toolCallDelta') {
           // ACCUMULATE BY INDEX: OpenAI streams a single tool call's name/argument
           // JSON across multiple chunks keyed by array position, so earlier calls in
@@ -190,7 +205,7 @@ export async function sendMessage({
           if (event.name) entry.name += event.name;
           if (event.argumentsDelta) entry.argumentsRaw += event.argumentsDelta;
         }
-      });
+      }, !textToolProtocol);
       clearTimeout(turnTimeout);
 
       // The native request can't be cancelled mid-flight, so an aborted stream still
@@ -218,6 +233,18 @@ export async function sendMessage({
               arguments: parseToolCallArguments(tc.function.arguments),
             }))
           : accumulatedByIndex;
+
+      // Text protocol: the calls are in the prose, not in tool_calls. Recover them
+      // and strip them from what the user sees. Checked only when the native path
+      // produced nothing, so enabling this can never suppress a real native call —
+      // a model that manages both is still served by the stronger mechanism.
+      if (textToolProtocol && toolCalls.length === 0) {
+        const recovered = parseTextToolCalls(content);
+        if (recovered.calls.length > 0) {
+          toolCalls = recovered.calls;
+          content = recovered.cleanedContent;
+        }
+      }
 
       if (toolCalls.length === 0) {
         const assistantMessage: ChatMessage = { role: 'assistant', content: assembled.content ?? content };

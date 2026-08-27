@@ -4,3 +4,6 @@ dist
 
 # tsc -b incremental build cache
 *.tsbuildinfo
+
+# Generated fine-tuning dataset — reproducible via npm run generate-training-data
+training-data/
