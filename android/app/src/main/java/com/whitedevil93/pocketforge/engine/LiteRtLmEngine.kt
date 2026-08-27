@@ -232,6 +232,17 @@ class LiteRtLmEngine private constructor(
         // in this codebase, generous enough for a long on-device reply.
         private const val GENERATION_TIMEOUT_MS = 300_000L
 
+        // Crash-loop guard: a bad GPU/NPU delegate can abort the whole process during
+        // Engine.initialize() (LiteRT-LM issue #2114) rather than throwing a catchable
+        // Exception — `catch (e: Exception)` below never sees it, because there's no
+        // Kotlin frame left to catch into. The only signal available after that is
+        // "we wrote KEY_PENDING_LABEL before the call and never got to clear it," so a
+        // dangling value found on the *next* load() is treated as proof that label
+        // killed the process and is skipped permanently on this device from then on.
+        private const val PREFS_NAME = "litertlm_crash_guard"
+        private const val KEY_PENDING_LABEL = "pending_label"
+        private const val KEY_KNOWN_CRASH_LABELS = "known_crash_labels"
+
         init {
             // Quiets LiteRT-LM's native logging; harmless to call more than once,
             // and this only runs once per process (companion init).
@@ -261,15 +272,34 @@ class LiteRtLmEngine private constructor(
          * same code path serve both bundle types without the caller declaring which
          * one was imported.
          *
-         * @throws EngineLoadError.BackendUnavailable if every backend fails, with and
-         *   without vision.
+         * A label that crashed the whole process on a previous call (see the
+         * PREFS_NAME/KEY_PENDING_LABEL guard above) is skipped without being retried.
+         *
+         * @throws EngineLoadError.BackendUnavailable if every non-skipped backend
+         *   fails, with and without vision.
          */
         fun load(modelPath: String, context: Context): LiteRtLmEngine {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val knownCrashLabels = prefs.getStringSet(KEY_KNOWN_CRASH_LABELS, emptySet())!!.toMutableSet()
+            prefs.getString(KEY_PENDING_LABEL, null)?.let { crashedLastTime ->
+                Log.w(TAG, "backend=$crashedLastTime never returned on the previous load — " +
+                    "it crashed the process; skipping it on this device from now on")
+                knownCrashLabels += crashedLastTime
+                prefs.edit()
+                    .putStringSet(KEY_KNOWN_CRASH_LABELS, knownCrashLabels)
+                    .remove(KEY_PENDING_LABEL)
+                    .commit()
+            }
+
             val attempted = mutableListOf<String>()
             var last: Throwable? = null
             for ((name, makeBackend) in backends(context.applicationInfo.nativeLibraryDir)) {
                 for (withVision in booleanArrayOf(true, false)) {
                     val label = if (withVision) "$name+vision" else name
+                    if (label in knownCrashLabels) {
+                        Log.i(TAG, "skipping backend=$label — crashed the process on a previous load")
+                        continue
+                    }
                     attempted += label
                     val backendInstance = makeBackend()
                     val candidate = Engine(
@@ -288,11 +318,21 @@ class LiteRtLmEngine private constructor(
                             cacheDir = context.cacheDir.absolutePath,
                         )
                     )
+                    // Written with commit() (synchronous, durable) rather than apply():
+                    // if initialize() crashes the process on the next line, an async
+                    // write might never have reached disk, and this whole guard exists
+                    // for exactly that moment.
+                    prefs.edit().putString(KEY_PENDING_LABEL, label).commit()
                     try {
                         candidate.initialize()
+                        prefs.edit().remove(KEY_PENDING_LABEL).commit()
                         Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
                         return LiteRtLmEngine(candidate, name, visionAvailable = withVision)
                     } catch (e: Exception) {
+                        // Reaching this line at all proves initialize() didn't crash the
+                        // process this time — clear the marker so a normal, catchable
+                        // failure never gets mistaken for a crash on the next load().
+                        prefs.edit().remove(KEY_PENDING_LABEL).commit()
                         // Catching Exception, not Throwable: an Error (OOM,
                         // UnsatisfiedLinkError) is not this attempt's problem to retry
                         // around and propagates immediately, failing the whole load.
