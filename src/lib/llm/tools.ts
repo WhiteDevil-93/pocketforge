@@ -27,7 +27,7 @@ import { getCoverageGaps, getTeamBalanceScore } from '../../utils/typeChart';
 import { analyzeTeamWeaknesses, suggestCoverageMoves } from '../../utils/weaknessAnalyzer';
 import { explainEVSpread } from '../../utils/evExplainer';
 import { getMovepoolForSpecies, getPokedexEntry } from '../../utils/movepoolQuery';
-import { getDefaultLevelForFormat } from '../format';
+import { getDefaultLevelForFormat, isDoublesFormat } from '../format';
 import { getCalcGenForFormat } from '../showdown';
 import { WRITE_TOOLS } from './writeTools';
 import type { ToolDefinition } from './types';
@@ -99,6 +99,10 @@ async function callOllamaWebApi(
 function isWebApiError(data: unknown): data is { error: string } {
   return typeof data === 'object' && data !== null && 'error' in data;
 }
+
+/** Move `target` values that hit more than one Pokemon, and so take the
+ *  spread-damage reduction in a doubles battle. */
+const SPREAD_MOVE_TARGETS = new Set(['allAdjacent', 'allAdjacentFoes']);
 
 /** Tool-call arguments are declared as JSON-Schema booleans, but not every backend is strict
  *  about sending an actual boolean back — accept true, "true", and "1" defensively. */
@@ -420,12 +424,24 @@ export const TOOLS: ToolDefinition[] = [
       }
 
       const format = getLiveActiveTeamFormat(ctx?.team);
+      // Whether a move spreads is a property of the move and the format, both of
+      // which this app already knows — movesData carries `target`, and the active
+      // team's format says whether the battle is doubles. Requiring the model to
+      // pass isSpreadMove made an omitted flag silently produce single-target
+      // numbers for Earthquake in a doubles game: wrong, and indistinguishable
+      // from a correct single-target answer, because nothing here could tell
+      // "not a spread move" apart from "the model forgot". Derive it instead, and
+      // let an explicit flag still win for a caller describing an odd scenario.
+      const isSpread =
+        args.isSpreadMove === undefined
+          ? isDoublesFormat(format) && SPREAD_MOVE_TARGETS.has(moveEntry.target)
+          : isTruthyFlag(args.isSpreadMove);
       const result = calculateDamage(
         attacker,
         defender,
         move,
         field,
-        isTruthyFlag(args.isSpreadMove),
+        isSpread,
         useTera,
         getCalcGenForFormat(format)
       );
@@ -444,6 +460,9 @@ export const TOOLS: ToolDefinition[] = [
         koChance: result.koChance,
         effectiveness,
         isStab: result.isStab,
+        // Reported so the answer states its own assumption: a spread calc applies
+        // a 0.75x multiplier, and the reader should be able to see that happened.
+        isSpreadMove: isSpread,
       };
     },
   },
