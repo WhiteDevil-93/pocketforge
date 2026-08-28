@@ -81,7 +81,10 @@ export interface ToolDefinition {
 /** Streaming events surfaced to the UI while a reply is being generated. */
 export type LlmStreamEvent =
   | { type: 'token'; text?: string; thought?: string }
-  | { type: 'toolCall'; name: string }
+  /** [args] are the arguments the model actually passed — carried so the tool
+   *  log can show what was called, not just that something was. A name alone
+   *  ("Added a Pokemon") can't tell you which Pokemon, or why it was rejected. */
+  | { type: 'toolCall'; name: string; args?: Record<string, unknown> }
   | { type: 'toolResult'; name: string; result: unknown }
   | { type: 'done'; message: ChatMessage }
   | { type: 'error'; message: string };

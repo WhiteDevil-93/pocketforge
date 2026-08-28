@@ -268,7 +268,7 @@ export async function sendMessage({
       messages = [...messages, { role: 'assistant', content, thought, toolCalls }];
 
       for (const call of toolCalls) {
-        onEvent({ type: 'toolCall', name: call.name });
+        onEvent({ type: 'toolCall', name: call.name, args: call.arguments });
         const result = await runToolCall(call, toolCtx);
         onEvent({ type: 'toolResult', name: call.name, result });
         messages = [
