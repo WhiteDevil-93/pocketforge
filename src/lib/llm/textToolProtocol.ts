@@ -95,9 +95,14 @@ ${lines.join('\n')}`;
 }
 
 /** One parsed block plus the span it occupied, so the caller can strip it from the
- *  text shown to the user. */
+ *  text shown to the user.
+ *
+ *  [call] is null for a block that opened with the real ${OPEN_TAG} tag but whose
+ *  name resolves to no tool. That span is still stripped — protocol syntax must
+ *  never reach the transcript — but it produces no call, so an invented name
+ *  never becomes a phantom one. */
 interface ParsedBlock {
-  call: ToolCall;
+  call: ToolCall | null;
   start: number;
   end: number;
 }
@@ -109,33 +114,47 @@ interface ParsedBlock {
  *
  *     <tool_call>create_team</tool_call>          bare name, no arguments
  *     <tool_call>void</tool>                      garbage, malformed close tag
+ *     <tool_call>add_to_friendship_list</tool>     hallucinated tool name
  *
- * It had learned the tag from the prompt but not the JSON body. A strict parser
- * scored that as "no calls", let the raw tags leak into the transcript, and the
- * model then narrated a success that never happened. Every shape below is one a
- * small model actually reaches for, so each is accepted and normalised rather
- * than discarded — a recovered call with missing arguments still reaches the
- * validator, whose rejection the model can act on, which is strictly better than
- * silence.
+ * It had learned the tag from the prompt but not which names or bodies are real.
+ * Every shape above is one a small model actually reaches for, so each is
+ * accepted and normalised rather than discarded — a recovered call with missing
+ * arguments still reaches the validator, whose rejection the model can act on,
+ * which is strictly better than silence.
  *
- * The tool name is checked against the real registry, so `void` and other
- * hallucinated tokens are dropped instead of becoming phantom calls.
+ * Names are resolved against the real registry with a conservative nearest-match
+ * (see resolveToolName), so a fumbled `get_active_info` becomes `get_active_team`
+ * while an invented `add_to_friendship_list` still resolves to nothing and never
+ * becomes a phantom call.
+ *
+ * An unresolved block is nonetheless STRIPPED when it was delimited by the real
+ * ${OPEN_TAG} tag. Leaving those in place is what put raw
+ * `<tool_call>add_to_friendship_list</tool>` in front of the user in the
+ * transcript. Whether a name resolves is a question about tool dispatch; whether
+ * protocol syntax is shown to the user is a separate one, and its answer is
+ * always no. A fenced ```json block is a weaker signal — it may be ordinary
+ * content worth reading — so that pattern is left alone unless it really parses
+ * as a call.
  */
 function extractBlocks(content: string): ParsedBlock[] {
   const blocks: ParsedBlock[] = [];
   // Opening tag through any plausible close (CLOSE_MARKERS), or the next opening
   // tag / end of string when the model never closed it at all.
   const closeAlternation = CLOSE_MARKERS.map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-  const patterns = [
-    new RegExp(`${OPEN_TAG}\\s*([\\s\\S]*?)\\s*(?:${closeAlternation}|(?=${OPEN_TAG})|$)`, 'g'),
+  const patterns: Array<{ regex: RegExp; stripWhenUnresolved: boolean }> = [
+    {
+      regex: new RegExp(`${OPEN_TAG}\\s*([\\s\\S]*?)\\s*(?:${closeAlternation}|(?=${OPEN_TAG})|$)`, 'g'),
+      stripWhenUnresolved: true,
+    },
     // A fenced block whose body looks like a call — tolerated, not advertised.
-    /```(?:json)?\s*(\{[\s\S]*?"name"[\s\S]*?\})\s*```/g,
+    { regex: /```(?:json)?\s*(\{[\s\S]*?"name"[\s\S]*?\})\s*```/g, stripWhenUnresolved: false },
   ];
-  for (const pattern of patterns) {
+  for (const { regex, stripWhenUnresolved } of patterns) {
     let match: RegExpExecArray | null;
-    while ((match = pattern.exec(content)) !== null) {
+    while ((match = regex.exec(content)) !== null) {
       const call = toToolCall(match[1]);
-      if (call) blocks.push({ call, start: match.index, end: match.index + match[0].length });
+      if (!call && !stripWhenUnresolved) continue;
+      blocks.push({ call, start: match.index, end: match.index + match[0].length });
     }
   }
   blocks.sort((a, b) => a.start - b.start);
@@ -153,9 +172,64 @@ function extractBlocks(content: string): ParsedBlock[] {
  *  here would silently drop every call whose case the model got wrong. */
 const TOOL_NAME_BY_LOWERCASE = new Map(ALL_TOOLS.map((t) => [t.name.toLowerCase(), t.name]));
 
-/** Resolves any-case tool name text to its canonical registry name, or null. */
+/** Levenshtein distance, iterative single-row. Only ever run against the ~14-name
+ *  tool registry on a name the exact lookup already missed, so the O(n·m) cost is
+ *  irrelevant here. */
+function editDistance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/** Max share of the written name that may differ from the tool it resolves to.
+ *  Observed on-device: `get_active_info` for `get_active_team` — 4 edits over 15
+ *  characters (0.27). Pure hallucinations sat far outside it in the same
+ *  transcript (`add_to_friendship_list` at 0.73, `void` at 2.25), so this cleanly
+ *  separates a fumbled name from an invented one. */
+const FUZZY_MAX_RATIO = 0.4;
+/** How much better the winner must be than the runner-up. Several real tools are
+ *  only 3-5 edits apart (web_search/web_fetch, update_pokemon/remove_pokemon), so
+ *  a distance threshold ALONE could silently resolve to the wrong tool and edit
+ *  the user's team in a way they never asked for. When two candidates are close,
+ *  guessing is worse than reporting an unknown tool, so this bails instead. */
+const FUZZY_MIN_MARGIN = 2;
+
+/**
+ * Resolves any-case tool name text to its canonical registry name, or null.
+ *
+ * Falls back to a nearest-match when the exact lookup misses, because a degraded
+ * fine-tune reproduces a name approximately even with the real catalog in front
+ * of it — recovering `get_active_team` from `get_active_info` turns a dead turn
+ * into a real call. Deliberately conservative on both axes (see the constants
+ * above): a near-miss resolves, an invented name still returns null and is
+ * dropped rather than becoming a phantom call.
+ */
 function resolveToolName(name: string): string | null {
-  return TOOL_NAME_BY_LOWERCASE.get(name.toLowerCase()) ?? null;
+  const lowered = name.toLowerCase();
+  const exact = TOOL_NAME_BY_LOWERCASE.get(lowered);
+  if (exact) return exact;
+
+  let best: { name: string; distance: number } | null = null;
+  let runnerUp = Infinity;
+  for (const [candidateLower, canonical] of TOOL_NAME_BY_LOWERCASE) {
+    const distance = editDistance(lowered, candidateLower);
+    if (!best || distance < best.distance) {
+      if (best) runnerUp = best.distance;
+      best = { name: canonical, distance };
+    } else if (distance < runnerUp) {
+      runnerUp = distance;
+    }
+  }
+  if (!best) return null;
+  if (best.distance > lowered.length * FUZZY_MAX_RATIO) return null;
+  if (runnerUp - best.distance < FUZZY_MIN_MARGIN) return null;
+  return best.name;
 }
 
 /** First balanced {...} run in a string, or null. Avoids a greedy match
@@ -268,14 +342,18 @@ export function parseTextToolCalls(content: string): { calls: ToolCall[]; cleane
   cleaned += content.slice(cursor);
 
   return {
-    calls: blocks.map((b) => b.call),
+    // Null-call blocks were stripped above but contribute no call — an invented
+    // name must not become a phantom one.
+    calls: blocks.map((b) => b.call).filter((c): c is ToolCall => c !== null),
     cleanedContent: cleaned.replace(/\n{3,}/g, '\n\n').trim(),
   };
 }
 
-/** True when the reply contains at least one recoverable call. */
+/** True when the reply contains at least one recoverable call. Blocks whose name
+ *  resolved to nothing don't count — they are stripped from the transcript, but
+ *  there is no call to make. */
 export function hasTextToolCalls(content: string): boolean {
-  return extractBlocks(content).length > 0;
+  return extractBlocks(content).some((b) => b.call !== null);
 }
 
 /**
