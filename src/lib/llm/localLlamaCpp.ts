@@ -246,18 +246,26 @@ export async function sendMessage({
       // and strip them from what the user sees. Checked only when the native path
       // produced nothing, so enabling this can never suppress a real native call —
       // a model that manages both is still served by the stronger mechanism.
+      // Parse the AUTHORITATIVE text, not just the streamed mirror: the no-call
+      // branch below shows `assembled.content` when the native side supplied it,
+      // so cleaning only `content` left the raw tag on screen in exactly the case
+      // this exists to handle — a block whose name resolved to nothing, which is
+      // stripped but yields no call. Assign the cleaned text unconditionally
+      // (not just when a call was recovered) for the same reason.
+      let cleanedByTextProtocol = false;
       if (textToolProtocol && toolCalls.length === 0) {
-        const recovered = parseTextToolCalls(content);
-        if (recovered.calls.length > 0) {
-          toolCalls = recovered.calls;
-          content = recovered.cleanedContent;
-        }
+        const recovered = parseTextToolCalls(assembled.content ?? content);
+        content = recovered.cleanedContent;
+        cleanedByTextProtocol = true;
+        if (recovered.calls.length > 0) toolCalls = recovered.calls;
       }
 
       if (toolCalls.length === 0) {
         const assistantMessage: ChatMessage = {
           role: 'assistant',
-          content: assembled.content ?? content,
+          // `content` is already the cleaned form of assembled.content here, so
+          // preferring assembled.content again would undo the stripping.
+          content: cleanedByTextProtocol ? content : (assembled.content ?? content),
           thought: assembled.thought ?? thought,
         };
         messages = [...messages, assistantMessage];
