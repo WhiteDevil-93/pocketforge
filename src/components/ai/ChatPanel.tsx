@@ -9,7 +9,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
-  Check,
   ImagePlus,
   Loader2,
   Plus,
@@ -33,6 +32,7 @@ import { EASE_SMOOTH } from '../../lib/motion';
 import ChatMarkdown from './ChatMarkdown';
 import ConfirmSheet from '../ConfirmSheet';
 import AiEmptyState from './AiEmptyState';
+import ToolLogSheet from './ToolLogSheet';
 
 interface ChatPanelProps {
   /**
@@ -47,30 +47,6 @@ interface ChatPanelProps {
    *  away from AiEmptyState's "Open Settings" — omitted on a full page,
    *  where there's nothing to close first. */
   onRequestClose?: () => void;
-}
-
-// Explicit phrasing for the write/read tools the assistant actually calls —
-// falls back to the old underscore-swap for anything unmapped (a future tool
-// this list hasn't caught up with yet).
-const TOOL_NAMES: Record<string, string> = {
-  create_team: 'Created a team',
-  add_pokemon: 'Added a Pokemon',
-  update_pokemon: 'Edited a Pokemon',
-  remove_pokemon: 'Removed a Pokemon',
-  get_active_team: 'Checked your team',
-  analyze_team: 'Analyzed the team',
-  validate_team: 'Validated the team',
-  explain_evs: 'Explained an EV spread',
-  calculate_speed: 'Calculated speed',
-  calculate_damage: 'Calculated damage',
-  lookup_pokemon: 'Looked up a Pokemon',
-  get_legal_moves: 'Checked legal moves',
-  web_search: 'Searched the web',
-  web_fetch: 'Read a web page',
-};
-
-function friendlyToolName(name: string): string {
-  return TOOL_NAMES[name] ?? name.replace(/_/g, ' ');
 }
 
 function friendlyErrorHeadline(message: string): string {
@@ -122,32 +98,6 @@ function getTextPart(content: string | ContentPart[]): string {
     .join('');
 }
 
-interface ToolTraceEntry {
-  id: string;
-  turnSeq: number;
-  name: string;
-  status: 'running' | 'ok' | 'error';
-}
-
-function ToolPill({ entry }: { entry: ToolTraceEntry }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] ${
-        entry.status === 'error' ? 'bg-danger/10 text-danger' : 'bg-accent-primary/10 text-accent-primary'
-      }`}
-    >
-      {entry.status === 'running' ? (
-        <Wrench size={10} />
-      ) : entry.status === 'error' ? (
-        <X size={10} />
-      ) : (
-        <Check size={10} />
-      )}
-      {friendlyToolName(entry.name)}
-    </span>
-  );
-}
-
 export default function ChatPanel({ isActive = true, className = 'flex-1', onRequestClose }: ChatPanelProps) {
   const settings = useStore((s) => s.settings);
   const teams = useStore((s) => s.teams);
@@ -162,6 +112,10 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   const history = useChatStore((s) => s.history);
   const setHistory = useChatStore((s) => s.setHistory);
   const clearChat = useChatStore((s) => s.clear);
+  const toolLog = useChatStore((s) => s.toolLog);
+  const startToolLogEntry = useChatStore((s) => s.startToolLogEntry);
+  const finishToolLogEntry = useChatStore((s) => s.finishToolLogEntry);
+  const failStuckToolLogEntries = useChatStore((s) => s.failStuckToolLogEntries);
 
   const [input, setInput] = useState('');
   // The full "data:image/<format>;base64,<data>" URL — not { base64, format } — so
@@ -174,13 +128,14 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   const [pendingScreenshotImport, setPendingScreenshotImport] = useState(false);
   const [streamingText, setStreamingText] = useState('');
   const [streamingThought, setStreamingThought] = useState('');
-  // Tool-call trace for the whole session, keyed by turnSeq (see runTurn) —
-  // unlike the old toolActivity list, this is never cleared at turn end, so a
-  // finished reply keeps a permanent record of which tools ran instead of the
-  // pills vanishing into nothing. Session-only (not persisted): a message
-  // survives a reload, its trace pills don't (see StoredChatMessage.turnSeq).
-  const [toolTrace, setToolTrace] = useState<ToolTraceEntry[]>([]);
-  const [currentTurnSeq, setCurrentTurnSeq] = useState<number | null>(null);
+  // Tool activity is recorded in the persisted chat store and shown in the
+  // separate tool log (ToolLogSheet), not drawn into the transcript — the
+  // conversation is for the conversation.
+  const [showToolLog, setShowToolLog] = useState(false);
+  const toolLogErrorCount = useMemo(
+    () => toolLog.filter((t) => t.status === 'error').length,
+    [toolLog]
+  );
   const turnSeqRef = useRef(0);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -296,7 +251,6 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     async (baseHistory: ChatMessage[]) => {
       setCanRetry(true);
       const turnSeq = ++turnSeqRef.current;
-      setCurrentTurnSeq(turnSeq);
       setSrAnnouncement('Assistant is replying');
       setHistory(baseHistory);
 
@@ -331,22 +285,14 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
             setStreamingThought(cleaned);
           }
         } else if (event.type === 'toolCall') {
-          setToolTrace((prev) => [
-            ...prev,
-            { id: `${turnSeq}-${prev.length}`, turnSeq, name: event.name, status: 'running' },
-          ]);
-        } else if (event.type === 'toolResult') {
-          const isErr =
-            typeof event.result === 'object' && event.result !== null && 'error' in event.result;
-          setToolTrace((prev) => {
-            const idx = prev.findIndex(
-              (t) => t.turnSeq === turnSeq && t.name === event.name && t.status === 'running'
-            );
-            if (idx === -1) return prev;
-            const next = [...prev];
-            next[idx] = { ...next[idx], status: isErr ? 'error' : 'ok' };
-            return next;
+          startToolLogEntry({
+            id: `${turnSeq}-${event.name}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            turnSeq,
+            name: event.name,
+            args: event.args,
           });
+        } else if (event.type === 'toolResult') {
+          finishToolLogEntry(turnSeq, event.name, event.result);
         }
         // A user-initiated cancel (closing the sheet, tapping stop) surfaces here as
         // an abort "error" — that's not a failure worth showing, just report real ones.
@@ -433,18 +379,25 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
           streamingTextRef.current = '';
           streamingThoughtRef.current = '';
           // A tool call that never got a matching toolResult (a hung/dropped
-          // connection) would otherwise show a permanently-spinning pill in a
+          // connection) would otherwise sit in the log spinning forever in a
           // conversation that has already ended.
-          setToolTrace((prev) =>
-            prev.map((t) => (t.turnSeq === turnSeq && t.status === 'running' ? { ...t, status: 'error' } : t))
-          );
+          failStuckToolLogEntries(turnSeq);
           setIsStreaming(false);
-          setCurrentTurnSeq(null);
           abortRef.current = null;
         }
       }
     },
-    [isLocalBackend, useTextToolProtocol, settings.ollamaApiKey, settings.ollamaModel, team, setHistory]
+    [
+      isLocalBackend,
+      useTextToolProtocol,
+      settings.ollamaApiKey,
+      settings.ollamaModel,
+      team,
+      setHistory,
+      startToolLogEntry,
+      finishToolLogEntry,
+      failStuckToolLogEntries,
+    ]
   );
 
   const handleSend = useCallback(async () => {
@@ -517,14 +470,12 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
   const handleNewChat = useCallback(() => {
     abortRef.current?.abort();
     clearChat();
-    setToolTrace([]);
     setError(null);
     setStreamingText('');
     setStreamingThought('');
     streamingTextRef.current = '';
     streamingThoughtRef.current = '';
     setIsStreaming(false);
-    setCurrentTurnSeq(null);
   }, [clearChat]);
 
   // "Import team from screenshot" (docs/litertlm-vl-integration.md step 13): a
@@ -590,10 +541,6 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     void doImportScreenshot();
   }, [isStreaming, displayMessages.length, doImportScreenshot]);
 
-  const liveTrace = useMemo(
-    () => (currentTurnSeq != null ? toolTrace.filter((t) => t.turnSeq === currentTurnSeq) : []),
-    [toolTrace, currentTurnSeq]
-  );
 
   const [expandedThought, setExpandedThought] = useState<number | null>(null);
 
@@ -614,16 +561,40 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
               {srAnnouncement}
             </div>
 
-            {displayMessages.length > 0 && (
-              <div className="flex justify-end shrink-0 pb-2">
-                <button
-                  type="button"
-                  onClick={handleNewChat}
-                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] text-text-secondary active:bg-bg-tertiary touch-target"
-                >
-                  <Plus size={12} />
-                  New chat
-                </button>
+            {(displayMessages.length > 0 || toolLog.length > 0) && (
+              <div className="flex items-center justify-end gap-1 shrink-0 pb-2">
+                {/* The transcript no longer shows tool activity inline; this is
+                    how it stays reachable. Badged with the failure count, since
+                    a rejected call is the thing worth opening the log for. */}
+                {toolLog.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowToolLog(true)}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] text-text-secondary active:bg-bg-tertiary touch-target"
+                  >
+                    <Wrench size={12} />
+                    Tool log
+                    <span
+                      className={`rounded-full px-1.5 text-[10px] ${
+                        toolLogErrorCount > 0
+                          ? 'bg-danger/15 text-danger'
+                          : 'bg-bg-tertiary text-text-tertiary'
+                      }`}
+                    >
+                      {toolLogErrorCount > 0 ? `${toolLogErrorCount}!` : toolLog.length}
+                    </span>
+                  </button>
+                )}
+                {displayMessages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleNewChat}
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] text-text-secondary active:bg-bg-tertiary touch-target"
+                  >
+                    <Plus size={12} />
+                    New chat
+                  </button>
+                )}
               </div>
             )}
 
@@ -681,10 +652,6 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
                   message.role === 'user' && Array.isArray(message.content)
                     ? getTextPart(message.content)
                     : contentToText(message.content);
-                const pills =
-                  message.role === 'assistant' && message.turnSeq != null
-                    ? toolTrace.filter((t) => t.turnSeq === message.turnSeq)
-                    : [];
                 return (
                   <div
                     key={i}
@@ -706,13 +673,6 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
                       }`}
                     >
                       <span className="sr-only">{message.role === 'user' ? 'You: ' : 'Assistant: '}</span>
-                      {pills.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {pills.map((p) => (
-                            <ToolPill key={p.id} entry={p} />
-                          ))}
-                        </div>
-                      )}
 
                       {/* Thinking trace (Gemma 4 / DeepSeek) */}
                       {message.thought && (
@@ -793,13 +753,6 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
                     <Bot size={14} className="text-accent-primary" />
                   </div>
                   <div className="max-w-[80%] rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm bg-bg-tertiary text-text-primary space-y-1.5">
-                    {liveTrace.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {liveTrace.map((p) => (
-                          <ToolPill key={p.id} entry={p} />
-                        ))}
-                      </div>
-                    )}
 
                     {/* Live Thinking trace */}
                     {streamingThought && (
@@ -938,6 +891,12 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
               confirmLabel="Start new chat"
               danger={false}
               onConfirm={() => void doImportScreenshot()}
+            />
+
+            <ToolLogSheet
+              open={showToolLog}
+              onClose={() => setShowToolLog(false)}
+              entries={toolLog}
             />
           </>
         )}
