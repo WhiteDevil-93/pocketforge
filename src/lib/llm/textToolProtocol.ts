@@ -229,11 +229,15 @@ function resolveToolName(name: string): string | null {
   const exact = TOOL_NAME_BY_LOWERCASE.get(lowered);
   if (exact) return exact;
 
+  // Rank EVERY candidate, writes included, then reject if a write wins. Removing
+  // writes from consideration first looks equivalent but is not: it hides the
+  // true nearest match and lets a distant read take its place. `criate_team` is
+  // one edit from `create_team`, so skipping that candidate handed the match to
+  // `validate_team` at distance 4 — running a validator against the active team
+  // and feeding the model misleading output, instead of the intended no-op.
   let best: { name: string; distance: number } | null = null;
   let runnerUp = Infinity;
   for (const [candidateLower, canonical] of TOOL_NAME_BY_LOWERCASE) {
-    // A write tool is only ever reachable by an exact name, checked above.
-    if (MUTATING_TOOL_NAMES.has(candidateLower)) continue;
     const distance = editDistance(lowered, candidateLower);
     if (!best || distance < best.distance) {
       if (best) runnerUp = best.distance;
@@ -245,6 +249,9 @@ function resolveToolName(name: string): string | null {
   if (!best) return null;
   if (best.distance > lowered.length * FUZZY_MAX_RATIO) return null;
   if (runnerUp - best.distance < FUZZY_MIN_MARGIN) return null;
+  // A fumbled write name resolves to nothing at all — never to the write it
+  // resembles, and never to some further-off read either.
+  if (MUTATING_TOOL_NAMES.has(best.name.toLowerCase())) return null;
   return best.name;
 }
 
