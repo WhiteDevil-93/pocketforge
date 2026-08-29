@@ -1,5 +1,6 @@
 import type { ToolCall, ToolDefinition, ToolParameterSchema } from './types';
 import { ALL_TOOLS } from './tools';
+import { WRITE_TOOLS } from './writeTools';
 
 /**
  * A text-based tool-calling protocol for on-device models that can't emit native
@@ -200,21 +201,40 @@ const FUZZY_MAX_RATIO = 0.4;
  *  guessing is worse than reporting an unknown tool, so this bails instead. */
 const FUZZY_MIN_MARGIN = 2;
 
+/** Tools that mutate the user's team. Never reached by fuzzy matching — see
+ *  resolveToolName. */
+const MUTATING_TOOL_NAMES = new Set(WRITE_TOOLS.map((t) => t.name.toLowerCase()));
+
 /**
  * Resolves any-case tool name text to its canonical registry name, or null.
  *
  * Falls back to a nearest-match when the exact lookup misses, because a degraded
  * fine-tune reproduces a name approximately even with the real catalog in front
  * of it — recovering `get_active_team` from `get_active_info` turns a dead turn
- * into a real call. Deliberately conservative on both axes (see the constants
- * above): a near-miss resolves, an invented name still returns null and is
- * dropped rather than becoming a phantom call.
+ * into a real call.
+ *
+ * That fallback is restricted to READ-ONLY tools. Lexical distance does not
+ * preserve meaning: `remove_team` is 4 edits from `create_team` over 11
+ * characters with its runner-up 6 away, so it clears both the ratio and the
+ * margin — and a model trying to remove a team would have silently created and
+ * activated one instead. The margin rule only rules out ambiguity between two
+ * candidates; it cannot tell that two names mean opposite things. Since a wrong
+ * guess here edits the user's data, a fumbled write name is dropped instead: the
+ * model gets no call rather than the wrong one, which is recoverable. Reads
+ * carry no such cost, and the one failure actually observed on-device
+ * (`get_active_info`) is a read.
  */
 function resolveToolName(name: string): string | null {
   const lowered = name.toLowerCase();
   const exact = TOOL_NAME_BY_LOWERCASE.get(lowered);
   if (exact) return exact;
 
+  // Rank EVERY candidate, writes included, then reject if a write wins. Removing
+  // writes from consideration first looks equivalent but is not: it hides the
+  // true nearest match and lets a distant read take its place. `criate_team` is
+  // one edit from `create_team`, so skipping that candidate handed the match to
+  // `validate_team` at distance 4 — running a validator against the active team
+  // and feeding the model misleading output, instead of the intended no-op.
   let best: { name: string; distance: number } | null = null;
   let runnerUp = Infinity;
   for (const [candidateLower, canonical] of TOOL_NAME_BY_LOWERCASE) {
@@ -229,6 +249,9 @@ function resolveToolName(name: string): string | null {
   if (!best) return null;
   if (best.distance > lowered.length * FUZZY_MAX_RATIO) return null;
   if (runnerUp - best.distance < FUZZY_MIN_MARGIN) return null;
+  // A fumbled write name resolves to nothing at all — never to the write it
+  // resembles, and never to some further-off read either.
+  if (MUTATING_TOOL_NAMES.has(best.name.toLowerCase())) return null;
   return best.name;
 }
 

@@ -115,7 +115,11 @@ export default function ToolLogSheet({ open, onClose, entries }: ToolLogSheetPro
   const errorCount = useMemo(() => entries.filter((e) => e.status === 'error').length, [entries]);
 
   return (
-    <BottomSheet isOpen={open} onClose={onClose} title="Tool activity">
+    // showSearch is opt-OUT on BottomSheet (defaults true). Without this the log
+    // rendered a search box wired to nothing: it accepted typing and filtered
+    // nothing, which is worst precisely here, where someone is scanning a long
+    // call history for the one that failed.
+    <BottomSheet isOpen={open} onClose={onClose} title="Tool activity" showSearch={false}>
       {entries.length === 0 ? (
         <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
           <Wrench size={24} className="text-text-tertiary" />

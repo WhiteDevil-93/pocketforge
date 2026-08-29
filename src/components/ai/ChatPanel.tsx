@@ -136,7 +136,16 @@ export default function ChatPanel({ isActive = true, className = 'flex-1', onReq
     () => toolLog.filter((t) => t.status === 'error').length,
     [toolLog]
   );
-  const turnSeqRef = useRef(0);
+  // Seeded from the persisted log, not from zero. ChatSheet unmounts ChatPanel
+  // whenever the sheet closes, so a component-local counter restarts at 1 on
+  // reopen — which, now that toolLog outlives the mount, collided with the
+  // previous session's turn 1: ToolLogSheet grouped old and new calls under one
+  // heading, and failStuckToolLogEntries(1) could mark a live call failed
+  // because an older turn-1 entry was still 'running'. The ref initializer runs
+  // once per mount, which is exactly when the persisted log has already hydrated.
+  const turnSeqRef = useRef(
+    useChatStore.getState().toolLog.reduce((max, entry) => Math.max(max, entry.turnSeq), 0)
+  );
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [srAnnouncement, setSrAnnouncement] = useState('');
