@@ -17,6 +17,7 @@ import {
   Plus,
 } from 'lucide-react';
 import PokemonSprite from './PokemonSprite';
+import SpeciesPickerList from './SpeciesPickerList';
 import TypeBadge from './TypeBadge';
 import BottomSheet from './BottomSheet';
 import ConfirmSheet from './ConfirmSheet';
@@ -1112,29 +1113,7 @@ export default function PokemonEditor({
         searchPlaceholder="Search Pokemon..."
         onSearch={setSearchQuery}
       >
-        <div className="space-y-1">
-          {filteredPokemon.map((p) => (
-            <button
-              key={p.name}
-              onClick={() => handleSelectSpecies(p.name)}
-              className="w-full h-14 flex items-center gap-3 px-3 rounded-xl hover:bg-bg-secondary transition-colors text-left touch-target"
-            >
-              <PokemonSprite name={p.name} size={40} />
-              <div className="flex-1 min-w-0">
-                <span className="font-body text-text-primary block">{p.name}</span>
-              </div>
-              <div className="flex gap-1">
-                {p.types.map((t) => (
-                  <div
-                    key={t}
-                    className="w-5 h-5 rounded-full"
-                    style={{ backgroundColor: getTypeColor(t) }}
-                  />
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
+        <SpeciesPickerList results={filteredPokemon} onSelect={handleSelectSpecies} />
       </BottomSheet>
 
       {/* Ability Picker */}

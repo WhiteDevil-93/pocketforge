@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-08-30T00:57:20.741Z
+// Last updated: 2026-08-30T22:47:51.356Z
 
 export interface PokedexEntry {
   id: number;
@@ -8,7 +8,14 @@ export interface PokedexEntry {
   baseStats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
   abilities: string[];
   hiddenAbility: string;
+  /** Species id (lowercase alphanumerics). Used as a slug for lookups — this is
+   *  NOT the sprite filename; see spriteId. */
   sprite: string;
+  /** Filename Showdown serves this species' sprite under, hyphenating a forme
+   *  onto its base species ("Charizard-Mega-X" -> charizard-megax) while leaving
+   *  a hyphenated base species alone ("Ho-Oh" -> hooh). getSpriteUrl reads this;
+   *  deriving it from the display name or from sprite 404s on 355 formes. */
+  spriteId: string;
   learnset: string[];
 }
 
@@ -33,6 +40,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Chlorophyll",
     "sprite": "bulbasaur",
+    "spriteId": "bulbasaur",
     "learnset": []
   },
   {
@@ -55,6 +63,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Chlorophyll",
     "sprite": "ivysaur",
+    "spriteId": "ivysaur",
     "learnset": []
   },
   {
@@ -77,6 +86,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Chlorophyll",
     "sprite": "venusaur",
+    "spriteId": "venusaur",
     "learnset": []
   },
   {
@@ -99,6 +109,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "venusaurmega",
+    "spriteId": "venusaur-mega",
     "learnset": []
   },
   {
@@ -121,6 +132,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Chlorophyll",
     "sprite": "venusaurgmax",
+    "spriteId": "venusaur-gmax",
     "learnset": []
   },
   {
@@ -142,6 +154,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Solar Power",
     "sprite": "charmander",
+    "spriteId": "charmander",
     "learnset": []
   },
   {
@@ -163,6 +176,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Solar Power",
     "sprite": "charmeleon",
+    "spriteId": "charmeleon",
     "learnset": []
   },
   {
@@ -185,6 +199,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Solar Power",
     "sprite": "charizard",
+    "spriteId": "charizard",
     "learnset": []
   },
   {
@@ -207,6 +222,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "charizardmegax",
+    "spriteId": "charizard-megax",
     "learnset": []
   },
   {
@@ -229,6 +245,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "charizardmegay",
+    "spriteId": "charizard-megay",
     "learnset": []
   },
   {
@@ -251,6 +268,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Solar Power",
     "sprite": "charizardgmax",
+    "spriteId": "charizard-gmax",
     "learnset": []
   },
   {
@@ -272,6 +290,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "squirtle",
+    "spriteId": "squirtle",
     "learnset": []
   },
   {
@@ -293,6 +312,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "wartortle",
+    "spriteId": "wartortle",
     "learnset": []
   },
   {
@@ -314,6 +334,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "blastoise",
+    "spriteId": "blastoise",
     "learnset": []
   },
   {
@@ -335,6 +356,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "blastoisemega",
+    "spriteId": "blastoise-mega",
     "learnset": []
   },
   {
@@ -356,6 +378,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "blastoisegmax",
+    "spriteId": "blastoise-gmax",
     "learnset": []
   },
   {
@@ -377,6 +400,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "caterpie",
+    "spriteId": "caterpie",
     "learnset": []
   },
   {
@@ -398,6 +422,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "metapod",
+    "spriteId": "metapod",
     "learnset": []
   },
   {
@@ -420,6 +445,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "butterfree",
+    "spriteId": "butterfree",
     "learnset": []
   },
   {
@@ -442,6 +468,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "butterfreegmax",
+    "spriteId": "butterfree-gmax",
     "learnset": []
   },
   {
@@ -464,6 +491,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "weedle",
+    "spriteId": "weedle",
     "learnset": []
   },
   {
@@ -486,6 +514,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kakuna",
+    "spriteId": "kakuna",
     "learnset": []
   },
   {
@@ -508,6 +537,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "beedrill",
+    "spriteId": "beedrill",
     "learnset": []
   },
   {
@@ -530,6 +560,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "beedrillmega",
+    "spriteId": "beedrill-mega",
     "learnset": []
   },
   {
@@ -553,6 +584,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Big Pecks",
     "sprite": "pidgey",
+    "spriteId": "pidgey",
     "learnset": []
   },
   {
@@ -576,6 +608,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Big Pecks",
     "sprite": "pidgeotto",
+    "spriteId": "pidgeotto",
     "learnset": []
   },
   {
@@ -599,6 +632,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Big Pecks",
     "sprite": "pidgeot",
+    "spriteId": "pidgeot",
     "learnset": []
   },
   {
@@ -621,6 +655,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pidgeotmega",
+    "spriteId": "pidgeot-mega",
     "learnset": []
   },
   {
@@ -643,6 +678,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "rattata",
+    "spriteId": "rattata",
     "learnset": []
   },
   {
@@ -666,6 +702,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "rattataalola",
+    "spriteId": "rattata-alola",
     "learnset": []
   },
   {
@@ -688,6 +725,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "raticate",
+    "spriteId": "raticate",
     "learnset": []
   },
   {
@@ -711,6 +749,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "raticatealola",
+    "spriteId": "raticate-alola",
     "learnset": []
   },
   {
@@ -733,6 +772,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "raticatealolatotem",
+    "spriteId": "raticate-alolatotem",
     "learnset": []
   },
   {
@@ -755,6 +795,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "spearow",
+    "spriteId": "spearow",
     "learnset": []
   },
   {
@@ -777,6 +818,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "fearow",
+    "spriteId": "fearow",
     "learnset": []
   },
   {
@@ -799,6 +841,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "ekans",
+    "spriteId": "ekans",
     "learnset": []
   },
   {
@@ -821,6 +864,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "arbok",
+    "spriteId": "arbok",
     "learnset": []
   },
   {
@@ -842,6 +886,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachu",
+    "spriteId": "pikachu",
     "learnset": []
   },
   {
@@ -863,6 +908,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pikachucosplay",
+    "spriteId": "pikachu-cosplay",
     "learnset": []
   },
   {
@@ -884,6 +930,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pikachurockstar",
+    "spriteId": "pikachu-rockstar",
     "learnset": []
   },
   {
@@ -905,6 +952,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pikachubelle",
+    "spriteId": "pikachu-belle",
     "learnset": []
   },
   {
@@ -926,6 +974,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pikachupopstar",
+    "spriteId": "pikachu-popstar",
     "learnset": []
   },
   {
@@ -947,6 +996,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pikachuphd",
+    "spriteId": "pikachu-phd",
     "learnset": []
   },
   {
@@ -968,6 +1018,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pikachulibre",
+    "spriteId": "pikachu-libre",
     "learnset": []
   },
   {
@@ -989,6 +1040,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachuoriginal",
+    "spriteId": "pikachu-original",
     "learnset": []
   },
   {
@@ -1010,6 +1062,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachuhoenn",
+    "spriteId": "pikachu-hoenn",
     "learnset": []
   },
   {
@@ -1031,6 +1084,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachusinnoh",
+    "spriteId": "pikachu-sinnoh",
     "learnset": []
   },
   {
@@ -1052,6 +1106,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachuunova",
+    "spriteId": "pikachu-unova",
     "learnset": []
   },
   {
@@ -1073,6 +1128,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachukalos",
+    "spriteId": "pikachu-kalos",
     "learnset": []
   },
   {
@@ -1094,6 +1150,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachualola",
+    "spriteId": "pikachu-alola",
     "learnset": []
   },
   {
@@ -1115,6 +1172,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachupartner",
+    "spriteId": "pikachu-partner",
     "learnset": []
   },
   {
@@ -1136,6 +1194,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachustarter",
+    "spriteId": "pikachu-starter",
     "learnset": []
   },
   {
@@ -1157,6 +1216,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachugmax",
+    "spriteId": "pikachu-gmax",
     "learnset": []
   },
   {
@@ -1178,6 +1238,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pikachuworld",
+    "spriteId": "pikachu-world",
     "learnset": []
   },
   {
@@ -1199,6 +1260,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "raichu",
+    "spriteId": "raichu",
     "learnset": []
   },
   {
@@ -1221,6 +1283,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "raichualola",
+    "spriteId": "raichu-alola",
     "learnset": []
   },
   {
@@ -1242,6 +1305,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "raichumegax",
+    "spriteId": "raichu-megax",
     "learnset": []
   },
   {
@@ -1263,6 +1327,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "raichumegay",
+    "spriteId": "raichu-megay",
     "learnset": []
   },
   {
@@ -1284,6 +1349,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Rush",
     "sprite": "sandshrew",
+    "spriteId": "sandshrew",
     "learnset": []
   },
   {
@@ -1306,6 +1372,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Slush Rush",
     "sprite": "sandshrewalola",
+    "spriteId": "sandshrew-alola",
     "learnset": []
   },
   {
@@ -1327,6 +1394,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Rush",
     "sprite": "sandslash",
+    "spriteId": "sandslash",
     "learnset": []
   },
   {
@@ -1349,6 +1417,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Slush Rush",
     "sprite": "sandslashalola",
+    "spriteId": "sandslash-alola",
     "learnset": []
   },
   {
@@ -1371,6 +1440,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "nidoranf",
+    "spriteId": "nidoranf",
     "learnset": []
   },
   {
@@ -1393,6 +1463,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "nidorina",
+    "spriteId": "nidorina",
     "learnset": []
   },
   {
@@ -1416,6 +1487,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "nidoqueen",
+    "spriteId": "nidoqueen",
     "learnset": []
   },
   {
@@ -1438,6 +1510,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "nidoranm",
+    "spriteId": "nidoranm",
     "learnset": []
   },
   {
@@ -1460,6 +1533,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "nidorino",
+    "spriteId": "nidorino",
     "learnset": []
   },
   {
@@ -1483,6 +1557,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "nidoking",
+    "spriteId": "nidoking",
     "learnset": []
   },
   {
@@ -1505,6 +1580,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "clefairy",
+    "spriteId": "clefairy",
     "learnset": []
   },
   {
@@ -1527,6 +1603,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "clefable",
+    "spriteId": "clefable",
     "learnset": []
   },
   {
@@ -1549,6 +1626,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "clefablemega",
+    "spriteId": "clefable-mega",
     "learnset": []
   },
   {
@@ -1570,6 +1648,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Drought",
     "sprite": "vulpix",
+    "spriteId": "vulpix",
     "learnset": []
   },
   {
@@ -1591,6 +1670,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Snow Warning",
     "sprite": "vulpixalola",
+    "spriteId": "vulpix-alola",
     "learnset": []
   },
   {
@@ -1612,6 +1692,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Drought",
     "sprite": "ninetales",
+    "spriteId": "ninetales",
     "learnset": []
   },
   {
@@ -1634,6 +1715,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Snow Warning",
     "sprite": "ninetalesalola",
+    "spriteId": "ninetales-alola",
     "learnset": []
   },
   {
@@ -1657,6 +1739,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "jigglypuff",
+    "spriteId": "jigglypuff",
     "learnset": []
   },
   {
@@ -1680,6 +1763,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "wigglytuff",
+    "spriteId": "wigglytuff",
     "learnset": []
   },
   {
@@ -1702,6 +1786,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "zubat",
+    "spriteId": "zubat",
     "learnset": []
   },
   {
@@ -1724,6 +1809,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "golbat",
+    "spriteId": "golbat",
     "learnset": []
   },
   {
@@ -1746,6 +1832,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "oddish",
+    "spriteId": "oddish",
     "learnset": []
   },
   {
@@ -1768,6 +1855,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stench",
     "sprite": "gloom",
+    "spriteId": "gloom",
     "learnset": []
   },
   {
@@ -1790,6 +1878,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Effect Spore",
     "sprite": "vileplume",
+    "spriteId": "vileplume",
     "learnset": []
   },
   {
@@ -1813,6 +1902,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "paras",
+    "spriteId": "paras",
     "learnset": []
   },
   {
@@ -1836,6 +1926,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "parasect",
+    "spriteId": "parasect",
     "learnset": []
   },
   {
@@ -1859,6 +1950,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "venonat",
+    "spriteId": "venonat",
     "learnset": []
   },
   {
@@ -1882,6 +1974,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Wonder Skin",
     "sprite": "venomoth",
+    "spriteId": "venomoth",
     "learnset": []
   },
   {
@@ -1904,6 +1997,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "diglett",
+    "spriteId": "diglett",
     "learnset": []
   },
   {
@@ -1927,6 +2021,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "diglettalola",
+    "spriteId": "diglett-alola",
     "learnset": []
   },
   {
@@ -1949,6 +2044,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "dugtrio",
+    "spriteId": "dugtrio",
     "learnset": []
   },
   {
@@ -1972,6 +2068,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "dugtrioalola",
+    "spriteId": "dugtrio-alola",
     "learnset": []
   },
   {
@@ -1994,6 +2091,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "meowth",
+    "spriteId": "meowth",
     "learnset": []
   },
   {
@@ -2016,6 +2114,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "meowthalola",
+    "spriteId": "meowth-alola",
     "learnset": []
   },
   {
@@ -2038,6 +2137,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "meowthgalar",
+    "spriteId": "meowth-galar",
     "learnset": []
   },
   {
@@ -2060,6 +2160,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "meowthgmax",
+    "spriteId": "meowth-gmax",
     "learnset": []
   },
   {
@@ -2082,6 +2183,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "persian",
+    "spriteId": "persian",
     "learnset": []
   },
   {
@@ -2104,6 +2206,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "persianalola",
+    "spriteId": "persian-alola",
     "learnset": []
   },
   {
@@ -2126,6 +2229,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "psyduck",
+    "spriteId": "psyduck",
     "learnset": []
   },
   {
@@ -2148,6 +2252,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "golduck",
+    "spriteId": "golduck",
     "learnset": []
   },
   {
@@ -2170,6 +2275,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "mankey",
+    "spriteId": "mankey",
     "learnset": []
   },
   {
@@ -2192,6 +2298,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "primeape",
+    "spriteId": "primeape",
     "learnset": []
   },
   {
@@ -2214,6 +2321,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Justified",
     "sprite": "growlithe",
+    "spriteId": "growlithe",
     "learnset": []
   },
   {
@@ -2237,6 +2345,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rock Head",
     "sprite": "growlithehisui",
+    "spriteId": "growlithe-hisui",
     "learnset": []
   },
   {
@@ -2259,6 +2368,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Justified",
     "sprite": "arcanine",
+    "spriteId": "arcanine",
     "learnset": []
   },
   {
@@ -2282,6 +2392,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rock Head",
     "sprite": "arcaninehisui",
+    "spriteId": "arcanine-hisui",
     "learnset": []
   },
   {
@@ -2304,6 +2415,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "poliwag",
+    "spriteId": "poliwag",
     "learnset": []
   },
   {
@@ -2326,6 +2438,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "poliwhirl",
+    "spriteId": "poliwhirl",
     "learnset": []
   },
   {
@@ -2349,6 +2462,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "poliwrath",
+    "spriteId": "poliwrath",
     "learnset": []
   },
   {
@@ -2371,6 +2485,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Guard",
     "sprite": "abra",
+    "spriteId": "abra",
     "learnset": []
   },
   {
@@ -2393,6 +2508,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Guard",
     "sprite": "kadabra",
+    "spriteId": "kadabra",
     "learnset": []
   },
   {
@@ -2415,6 +2531,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Guard",
     "sprite": "alakazam",
+    "spriteId": "alakazam",
     "learnset": []
   },
   {
@@ -2436,6 +2553,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "alakazammega",
+    "spriteId": "alakazam-mega",
     "learnset": []
   },
   {
@@ -2458,6 +2576,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "machop",
+    "spriteId": "machop",
     "learnset": []
   },
   {
@@ -2480,6 +2599,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "machoke",
+    "spriteId": "machoke",
     "learnset": []
   },
   {
@@ -2502,6 +2622,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "machamp",
+    "spriteId": "machamp",
     "learnset": []
   },
   {
@@ -2524,6 +2645,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "machampgmax",
+    "spriteId": "machamp-gmax",
     "learnset": []
   },
   {
@@ -2546,6 +2668,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "bellsprout",
+    "spriteId": "bellsprout",
     "learnset": []
   },
   {
@@ -2568,6 +2691,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "weepinbell",
+    "spriteId": "weepinbell",
     "learnset": []
   },
   {
@@ -2590,6 +2714,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "victreebel",
+    "spriteId": "victreebel",
     "learnset": []
   },
   {
@@ -2612,6 +2737,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "victreebelmega",
+    "spriteId": "victreebel-mega",
     "learnset": []
   },
   {
@@ -2635,6 +2761,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "tentacool",
+    "spriteId": "tentacool",
     "learnset": []
   },
   {
@@ -2658,6 +2785,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "tentacruel",
+    "spriteId": "tentacruel",
     "learnset": []
   },
   {
@@ -2681,6 +2809,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "geodude",
+    "spriteId": "geodude",
     "learnset": []
   },
   {
@@ -2704,6 +2833,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Galvanize",
     "sprite": "geodudealola",
+    "spriteId": "geodude-alola",
     "learnset": []
   },
   {
@@ -2727,6 +2857,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "graveler",
+    "spriteId": "graveler",
     "learnset": []
   },
   {
@@ -2750,6 +2881,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Galvanize",
     "sprite": "graveleralola",
+    "spriteId": "graveler-alola",
     "learnset": []
   },
   {
@@ -2773,6 +2905,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "golem",
+    "spriteId": "golem",
     "learnset": []
   },
   {
@@ -2796,6 +2929,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Galvanize",
     "sprite": "golemalola",
+    "spriteId": "golem-alola",
     "learnset": []
   },
   {
@@ -2818,6 +2952,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "ponyta",
+    "spriteId": "ponyta",
     "learnset": []
   },
   {
@@ -2840,6 +2975,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anticipation",
     "sprite": "ponytagalar",
+    "spriteId": "ponyta-galar",
     "learnset": []
   },
   {
@@ -2862,6 +2998,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "rapidash",
+    "spriteId": "rapidash",
     "learnset": []
   },
   {
@@ -2885,6 +3022,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anticipation",
     "sprite": "rapidashgalar",
+    "spriteId": "rapidash-galar",
     "learnset": []
   },
   {
@@ -2908,6 +3046,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "slowpoke",
+    "spriteId": "slowpoke",
     "learnset": []
   },
   {
@@ -2930,6 +3069,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "slowpokegalar",
+    "spriteId": "slowpoke-galar",
     "learnset": []
   },
   {
@@ -2953,6 +3093,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "slowbro",
+    "spriteId": "slowbro",
     "learnset": []
   },
   {
@@ -2975,6 +3116,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "slowbromega",
+    "spriteId": "slowbro-mega",
     "learnset": []
   },
   {
@@ -2998,6 +3140,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "slowbrogalar",
+    "spriteId": "slowbro-galar",
     "learnset": []
   },
   {
@@ -3021,6 +3164,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "magnemite",
+    "spriteId": "magnemite",
     "learnset": []
   },
   {
@@ -3044,6 +3188,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "magneton",
+    "spriteId": "magneton",
     "learnset": []
   },
   {
@@ -3067,6 +3212,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "farfetchd",
+    "spriteId": "farfetchd",
     "learnset": []
   },
   {
@@ -3088,6 +3234,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "farfetchdgalar",
+    "spriteId": "farfetchd-galar",
     "learnset": []
   },
   {
@@ -3111,6 +3258,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tangled Feet",
     "sprite": "doduo",
+    "spriteId": "doduo",
     "learnset": []
   },
   {
@@ -3134,6 +3282,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tangled Feet",
     "sprite": "dodrio",
+    "spriteId": "dodrio",
     "learnset": []
   },
   {
@@ -3156,6 +3305,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "seel",
+    "spriteId": "seel",
     "learnset": []
   },
   {
@@ -3179,6 +3329,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "dewgong",
+    "spriteId": "dewgong",
     "learnset": []
   },
   {
@@ -3201,6 +3352,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Poison Touch",
     "sprite": "grimer",
+    "spriteId": "grimer",
     "learnset": []
   },
   {
@@ -3224,6 +3376,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Power of Alchemy",
     "sprite": "grimeralola",
+    "spriteId": "grimer-alola",
     "learnset": []
   },
   {
@@ -3246,6 +3399,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Poison Touch",
     "sprite": "muk",
+    "spriteId": "muk",
     "learnset": []
   },
   {
@@ -3269,6 +3423,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Power of Alchemy",
     "sprite": "mukalola",
+    "spriteId": "muk-alola",
     "learnset": []
   },
   {
@@ -3291,6 +3446,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "shellder",
+    "spriteId": "shellder",
     "learnset": []
   },
   {
@@ -3314,6 +3470,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "cloyster",
+    "spriteId": "cloyster",
     "learnset": []
   },
   {
@@ -3336,6 +3493,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gastly",
+    "spriteId": "gastly",
     "learnset": []
   },
   {
@@ -3358,6 +3516,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "haunter",
+    "spriteId": "haunter",
     "learnset": []
   },
   {
@@ -3380,6 +3539,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gengar",
+    "spriteId": "gengar",
     "learnset": []
   },
   {
@@ -3402,6 +3562,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gengarmega",
+    "spriteId": "gengar-mega",
     "learnset": []
   },
   {
@@ -3424,6 +3585,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gengargmax",
+    "spriteId": "gengar-gmax",
     "learnset": []
   },
   {
@@ -3447,6 +3609,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "onix",
+    "spriteId": "onix",
     "learnset": []
   },
   {
@@ -3469,6 +3632,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "drowzee",
+    "spriteId": "drowzee",
     "learnset": []
   },
   {
@@ -3491,6 +3655,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "hypno",
+    "spriteId": "hypno",
     "learnset": []
   },
   {
@@ -3513,6 +3678,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "krabby",
+    "spriteId": "krabby",
     "learnset": []
   },
   {
@@ -3535,6 +3701,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "kingler",
+    "spriteId": "kingler",
     "learnset": []
   },
   {
@@ -3557,6 +3724,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "kinglergmax",
+    "spriteId": "kingler-gmax",
     "learnset": []
   },
   {
@@ -3579,6 +3747,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aftermath",
     "sprite": "voltorb",
+    "spriteId": "voltorb",
     "learnset": []
   },
   {
@@ -3602,6 +3771,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aftermath",
     "sprite": "voltorbhisui",
+    "spriteId": "voltorb-hisui",
     "learnset": []
   },
   {
@@ -3624,6 +3794,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aftermath",
     "sprite": "electrode",
+    "spriteId": "electrode",
     "learnset": []
   },
   {
@@ -3647,6 +3818,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aftermath",
     "sprite": "electrodehisui",
+    "spriteId": "electrode-hisui",
     "learnset": []
   },
   {
@@ -3669,6 +3841,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "exeggcute",
+    "spriteId": "exeggcute",
     "learnset": []
   },
   {
@@ -3691,6 +3864,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "exeggutor",
+    "spriteId": "exeggutor",
     "learnset": []
   },
   {
@@ -3713,6 +3887,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "exeggutoralola",
+    "spriteId": "exeggutor-alola",
     "learnset": []
   },
   {
@@ -3735,6 +3910,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Battle Armor",
     "sprite": "cubone",
+    "spriteId": "cubone",
     "learnset": []
   },
   {
@@ -3757,6 +3933,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Battle Armor",
     "sprite": "marowak",
+    "spriteId": "marowak",
     "learnset": []
   },
   {
@@ -3780,6 +3957,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rock Head",
     "sprite": "marowakalola",
+    "spriteId": "marowak-alola",
     "learnset": []
   },
   {
@@ -3802,6 +3980,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "marowakalolatotem",
+    "spriteId": "marowak-alolatotem",
     "learnset": []
   },
   {
@@ -3824,6 +4003,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unburden",
     "sprite": "hitmonlee",
+    "spriteId": "hitmonlee",
     "learnset": []
   },
   {
@@ -3846,6 +4026,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "hitmonchan",
+    "spriteId": "hitmonchan",
     "learnset": []
   },
   {
@@ -3868,6 +4049,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cloud Nine",
     "sprite": "lickitung",
+    "spriteId": "lickitung",
     "learnset": []
   },
   {
@@ -3890,6 +4072,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stench",
     "sprite": "koffing",
+    "spriteId": "koffing",
     "learnset": []
   },
   {
@@ -3912,6 +4095,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stench",
     "sprite": "weezing",
+    "spriteId": "weezing",
     "learnset": []
   },
   {
@@ -3935,6 +4119,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Misty Surge",
     "sprite": "weezinggalar",
+    "spriteId": "weezing-galar",
     "learnset": []
   },
   {
@@ -3958,6 +4143,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "rhyhorn",
+    "spriteId": "rhyhorn",
     "learnset": []
   },
   {
@@ -3981,6 +4167,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "rhydon",
+    "spriteId": "rhydon",
     "learnset": []
   },
   {
@@ -4003,6 +4190,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Healer",
     "sprite": "chansey",
+    "spriteId": "chansey",
     "learnset": []
   },
   {
@@ -4025,6 +4213,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "tangela",
+    "spriteId": "tangela",
     "learnset": []
   },
   {
@@ -4047,6 +4236,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "kangaskhan",
+    "spriteId": "kangaskhan",
     "learnset": []
   },
   {
@@ -4068,6 +4258,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kangaskhanmega",
+    "spriteId": "kangaskhan-mega",
     "learnset": []
   },
   {
@@ -4090,6 +4281,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "horsea",
+    "spriteId": "horsea",
     "learnset": []
   },
   {
@@ -4112,6 +4304,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "seadra",
+    "spriteId": "seadra",
     "learnset": []
   },
   {
@@ -4134,6 +4327,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "goldeen",
+    "spriteId": "goldeen",
     "learnset": []
   },
   {
@@ -4156,6 +4350,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "seaking",
+    "spriteId": "seaking",
     "learnset": []
   },
   {
@@ -4178,6 +4373,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "staryu",
+    "spriteId": "staryu",
     "learnset": []
   },
   {
@@ -4201,6 +4397,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "starmie",
+    "spriteId": "starmie",
     "learnset": []
   },
   {
@@ -4223,6 +4420,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "starmiemega",
+    "spriteId": "starmie-mega",
     "learnset": []
   },
   {
@@ -4246,6 +4444,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "mrmime",
+    "spriteId": "mrmime",
     "learnset": []
   },
   {
@@ -4269,6 +4468,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "mrmimegalar",
+    "spriteId": "mrmime-galar",
     "learnset": []
   },
   {
@@ -4292,6 +4492,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "scyther",
+    "spriteId": "scyther",
     "learnset": []
   },
   {
@@ -4315,6 +4516,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Dry Skin",
     "sprite": "jynx",
+    "spriteId": "jynx",
     "learnset": []
   },
   {
@@ -4336,6 +4538,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Vital Spirit",
     "sprite": "electabuzz",
+    "spriteId": "electabuzz",
     "learnset": []
   },
   {
@@ -4357,6 +4560,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Vital Spirit",
     "sprite": "magmar",
+    "spriteId": "magmar",
     "learnset": []
   },
   {
@@ -4379,6 +4583,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "pinsir",
+    "spriteId": "pinsir",
     "learnset": []
   },
   {
@@ -4401,6 +4606,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pinsirmega",
+    "spriteId": "pinsir-mega",
     "learnset": []
   },
   {
@@ -4423,6 +4629,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "tauros",
+    "spriteId": "tauros",
     "learnset": []
   },
   {
@@ -4445,6 +4652,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cud Chew",
     "sprite": "taurospaldeacombat",
+    "spriteId": "tauros-paldeacombat",
     "learnset": []
   },
   {
@@ -4468,6 +4676,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cud Chew",
     "sprite": "taurospaldeablaze",
+    "spriteId": "tauros-paldeablaze",
     "learnset": []
   },
   {
@@ -4491,6 +4700,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cud Chew",
     "sprite": "taurospaldeaaqua",
+    "spriteId": "tauros-paldeaaqua",
     "learnset": []
   },
   {
@@ -4512,6 +4722,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "magikarp",
+    "spriteId": "magikarp",
     "learnset": []
   },
   {
@@ -4534,6 +4745,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "gyarados",
+    "spriteId": "gyarados",
     "learnset": []
   },
   {
@@ -4556,6 +4768,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gyaradosmega",
+    "spriteId": "gyarados-mega",
     "learnset": []
   },
   {
@@ -4579,6 +4792,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "lapras",
+    "spriteId": "lapras",
     "learnset": []
   },
   {
@@ -4602,6 +4816,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "laprasgmax",
+    "spriteId": "lapras-gmax",
     "learnset": []
   },
   {
@@ -4623,6 +4838,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Imposter",
     "sprite": "ditto",
+    "spriteId": "ditto",
     "learnset": []
   },
   {
@@ -4645,6 +4861,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anticipation",
     "sprite": "eevee",
+    "spriteId": "eevee",
     "learnset": []
   },
   {
@@ -4667,6 +4884,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anticipation",
     "sprite": "eeveestarter",
+    "spriteId": "eevee-starter",
     "learnset": []
   },
   {
@@ -4689,6 +4907,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anticipation",
     "sprite": "eeveegmax",
+    "spriteId": "eevee-gmax",
     "learnset": []
   },
   {
@@ -4710,6 +4929,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "vaporeon",
+    "spriteId": "vaporeon",
     "learnset": []
   },
   {
@@ -4731,6 +4951,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Quick Feet",
     "sprite": "jolteon",
+    "spriteId": "jolteon",
     "learnset": []
   },
   {
@@ -4752,6 +4973,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Guts",
     "sprite": "flareon",
+    "spriteId": "flareon",
     "learnset": []
   },
   {
@@ -4774,6 +4996,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "porygon",
+    "spriteId": "porygon",
     "learnset": []
   },
   {
@@ -4797,6 +5020,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "omanyte",
+    "spriteId": "omanyte",
     "learnset": []
   },
   {
@@ -4820,6 +5044,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "omastar",
+    "spriteId": "omastar",
     "learnset": []
   },
   {
@@ -4843,6 +5068,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "kabuto",
+    "spriteId": "kabuto",
     "learnset": []
   },
   {
@@ -4866,6 +5092,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "kabutops",
+    "spriteId": "kabutops",
     "learnset": []
   },
   {
@@ -4889,6 +5116,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "aerodactyl",
+    "spriteId": "aerodactyl",
     "learnset": []
   },
   {
@@ -4911,6 +5139,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "aerodactylmega",
+    "spriteId": "aerodactyl-mega",
     "learnset": []
   },
   {
@@ -4933,6 +5162,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "snorlax",
+    "spriteId": "snorlax",
     "learnset": []
   },
   {
@@ -4955,6 +5185,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "snorlaxgmax",
+    "spriteId": "snorlax-gmax",
     "learnset": []
   },
   {
@@ -4977,6 +5208,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Snow Cloak",
     "sprite": "articuno",
+    "spriteId": "articuno",
     "learnset": []
   },
   {
@@ -4999,6 +5231,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "articunogalar",
+    "spriteId": "articuno-galar",
     "learnset": []
   },
   {
@@ -5021,6 +5254,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Static",
     "sprite": "zapdos",
+    "spriteId": "zapdos",
     "learnset": []
   },
   {
@@ -5043,6 +5277,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zapdosgalar",
+    "spriteId": "zapdos-galar",
     "learnset": []
   },
   {
@@ -5065,6 +5300,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "moltres",
+    "spriteId": "moltres",
     "learnset": []
   },
   {
@@ -5087,6 +5323,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "moltresgalar",
+    "spriteId": "moltres-galar",
     "learnset": []
   },
   {
@@ -5108,6 +5345,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Marvel Scale",
     "sprite": "dratini",
+    "spriteId": "dratini",
     "learnset": []
   },
   {
@@ -5129,6 +5367,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Marvel Scale",
     "sprite": "dragonair",
+    "spriteId": "dragonair",
     "learnset": []
   },
   {
@@ -5151,6 +5390,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Multiscale",
     "sprite": "dragonite",
+    "spriteId": "dragonite",
     "learnset": []
   },
   {
@@ -5173,6 +5413,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "dragonitemega",
+    "spriteId": "dragonite-mega",
     "learnset": []
   },
   {
@@ -5194,6 +5435,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "mewtwo",
+    "spriteId": "mewtwo",
     "learnset": []
   },
   {
@@ -5216,6 +5458,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mewtwomegax",
+    "spriteId": "mewtwo-megax",
     "learnset": []
   },
   {
@@ -5237,6 +5480,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mewtwomegay",
+    "spriteId": "mewtwo-megay",
     "learnset": []
   },
   {
@@ -5258,6 +5502,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mew",
+    "spriteId": "mew",
     "learnset": []
   },
   {
@@ -5279,6 +5524,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "chikorita",
+    "spriteId": "chikorita",
     "learnset": []
   },
   {
@@ -5300,6 +5546,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "bayleef",
+    "spriteId": "bayleef",
     "learnset": []
   },
   {
@@ -5321,6 +5568,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "meganium",
+    "spriteId": "meganium",
     "learnset": []
   },
   {
@@ -5343,6 +5591,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "meganiummega",
+    "spriteId": "meganium-mega",
     "learnset": []
   },
   {
@@ -5364,6 +5613,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flash Fire",
     "sprite": "cyndaquil",
+    "spriteId": "cyndaquil",
     "learnset": []
   },
   {
@@ -5385,6 +5635,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flash Fire",
     "sprite": "quilava",
+    "spriteId": "quilava",
     "learnset": []
   },
   {
@@ -5406,6 +5657,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flash Fire",
     "sprite": "typhlosion",
+    "spriteId": "typhlosion",
     "learnset": []
   },
   {
@@ -5428,6 +5680,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "typhlosionhisui",
+    "spriteId": "typhlosion-hisui",
     "learnset": []
   },
   {
@@ -5449,6 +5702,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "totodile",
+    "spriteId": "totodile",
     "learnset": []
   },
   {
@@ -5470,6 +5724,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "croconaw",
+    "spriteId": "croconaw",
     "learnset": []
   },
   {
@@ -5491,6 +5746,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "feraligatr",
+    "spriteId": "feraligatr",
     "learnset": []
   },
   {
@@ -5513,6 +5769,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "feraligatrmega",
+    "spriteId": "feraligatr-mega",
     "learnset": []
   },
   {
@@ -5535,6 +5792,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "sentret",
+    "spriteId": "sentret",
     "learnset": []
   },
   {
@@ -5557,6 +5815,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "furret",
+    "spriteId": "furret",
     "learnset": []
   },
   {
@@ -5580,6 +5839,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "hoothoot",
+    "spriteId": "hoothoot",
     "learnset": []
   },
   {
@@ -5603,6 +5863,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "noctowl",
+    "spriteId": "noctowl",
     "learnset": []
   },
   {
@@ -5626,6 +5887,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "ledyba",
+    "spriteId": "ledyba",
     "learnset": []
   },
   {
@@ -5649,6 +5911,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "ledian",
+    "spriteId": "ledian",
     "learnset": []
   },
   {
@@ -5672,6 +5935,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "spinarak",
+    "spriteId": "spinarak",
     "learnset": []
   },
   {
@@ -5695,6 +5959,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "ariados",
+    "spriteId": "ariados",
     "learnset": []
   },
   {
@@ -5717,6 +5982,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "crobat",
+    "spriteId": "crobat",
     "learnset": []
   },
   {
@@ -5740,6 +6006,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "chinchou",
+    "spriteId": "chinchou",
     "learnset": []
   },
   {
@@ -5763,6 +6030,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "lanturn",
+    "spriteId": "lanturn",
     "learnset": []
   },
   {
@@ -5784,6 +6052,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "pichu",
+    "spriteId": "pichu",
     "learnset": []
   },
   {
@@ -5805,6 +6074,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pichuspikyeared",
+    "spriteId": "pichu-spikyeared",
     "learnset": []
   },
   {
@@ -5827,6 +6097,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "cleffa",
+    "spriteId": "cleffa",
     "learnset": []
   },
   {
@@ -5850,6 +6121,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "igglybuff",
+    "spriteId": "igglybuff",
     "learnset": []
   },
   {
@@ -5872,6 +6144,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Super Luck",
     "sprite": "togepi",
+    "spriteId": "togepi",
     "learnset": []
   },
   {
@@ -5895,6 +6168,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Super Luck",
     "sprite": "togetic",
+    "spriteId": "togetic",
     "learnset": []
   },
   {
@@ -5918,6 +6192,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Bounce",
     "sprite": "natu",
+    "spriteId": "natu",
     "learnset": []
   },
   {
@@ -5941,6 +6216,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Bounce",
     "sprite": "xatu",
+    "spriteId": "xatu",
     "learnset": []
   },
   {
@@ -5962,6 +6238,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Plus",
     "sprite": "mareep",
+    "spriteId": "mareep",
     "learnset": []
   },
   {
@@ -5983,6 +6260,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Plus",
     "sprite": "flaaffy",
+    "spriteId": "flaaffy",
     "learnset": []
   },
   {
@@ -6004,6 +6282,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Plus",
     "sprite": "ampharos",
+    "spriteId": "ampharos",
     "learnset": []
   },
   {
@@ -6026,6 +6305,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ampharosmega",
+    "spriteId": "ampharos-mega",
     "learnset": []
   },
   {
@@ -6047,6 +6327,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Healer",
     "sprite": "bellossom",
+    "spriteId": "bellossom",
     "learnset": []
   },
   {
@@ -6070,6 +6351,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "marill",
+    "spriteId": "marill",
     "learnset": []
   },
   {
@@ -6093,6 +6375,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "azumarill",
+    "spriteId": "azumarill",
     "learnset": []
   },
   {
@@ -6115,6 +6398,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "sudowoodo",
+    "spriteId": "sudowoodo",
     "learnset": []
   },
   {
@@ -6137,6 +6421,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Drizzle",
     "sprite": "politoed",
+    "spriteId": "politoed",
     "learnset": []
   },
   {
@@ -6160,6 +6445,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "hoppip",
+    "spriteId": "hoppip",
     "learnset": []
   },
   {
@@ -6183,6 +6469,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "skiploom",
+    "spriteId": "skiploom",
     "learnset": []
   },
   {
@@ -6206,6 +6493,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "jumpluff",
+    "spriteId": "jumpluff",
     "learnset": []
   },
   {
@@ -6228,6 +6516,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Skill Link",
     "sprite": "aipom",
+    "spriteId": "aipom",
     "learnset": []
   },
   {
@@ -6250,6 +6539,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Early Bird",
     "sprite": "sunkern",
+    "spriteId": "sunkern",
     "learnset": []
   },
   {
@@ -6272,6 +6562,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Early Bird",
     "sprite": "sunflora",
+    "spriteId": "sunflora",
     "learnset": []
   },
   {
@@ -6295,6 +6586,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "yanma",
+    "spriteId": "yanma",
     "learnset": []
   },
   {
@@ -6318,6 +6610,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "wooper",
+    "spriteId": "wooper",
     "learnset": []
   },
   {
@@ -6341,6 +6634,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "wooperpaldea",
+    "spriteId": "wooper-paldea",
     "learnset": []
   },
   {
@@ -6364,6 +6658,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "quagsire",
+    "spriteId": "quagsire",
     "learnset": []
   },
   {
@@ -6385,6 +6680,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Bounce",
     "sprite": "espeon",
+    "spriteId": "espeon",
     "learnset": []
   },
   {
@@ -6406,6 +6702,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "umbreon",
+    "spriteId": "umbreon",
     "learnset": []
   },
   {
@@ -6429,6 +6726,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "murkrow",
+    "spriteId": "murkrow",
     "learnset": []
   },
   {
@@ -6452,6 +6750,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "slowking",
+    "spriteId": "slowking",
     "learnset": []
   },
   {
@@ -6475,6 +6774,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "slowkinggalar",
+    "spriteId": "slowking-galar",
     "learnset": []
   },
   {
@@ -6496,6 +6796,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "misdreavus",
+    "spriteId": "misdreavus",
     "learnset": []
   },
   {
@@ -6517,6 +6818,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "unown",
+    "spriteId": "unown",
     "learnset": []
   },
   {
@@ -6538,6 +6840,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "wobbuffet",
+    "spriteId": "wobbuffet",
     "learnset": []
   },
   {
@@ -6561,6 +6864,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "girafarig",
+    "spriteId": "girafarig",
     "learnset": []
   },
   {
@@ -6582,6 +6886,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "pineco",
+    "spriteId": "pineco",
     "learnset": []
   },
   {
@@ -6604,6 +6909,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "forretress",
+    "spriteId": "forretress",
     "learnset": []
   },
   {
@@ -6626,6 +6932,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "dunsparce",
+    "spriteId": "dunsparce",
     "learnset": []
   },
   {
@@ -6649,6 +6956,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Immunity",
     "sprite": "gligar",
+    "spriteId": "gligar",
     "learnset": []
   },
   {
@@ -6672,6 +6980,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "steelix",
+    "spriteId": "steelix",
     "learnset": []
   },
   {
@@ -6694,6 +7003,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "steelixmega",
+    "spriteId": "steelix-mega",
     "learnset": []
   },
   {
@@ -6716,6 +7026,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "snubbull",
+    "spriteId": "snubbull",
     "learnset": []
   },
   {
@@ -6738,6 +7049,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "granbull",
+    "spriteId": "granbull",
     "learnset": []
   },
   {
@@ -6761,6 +7073,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "qwilfish",
+    "spriteId": "qwilfish",
     "learnset": []
   },
   {
@@ -6784,6 +7097,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "qwilfishhisui",
+    "spriteId": "qwilfish-hisui",
     "learnset": []
   },
   {
@@ -6807,6 +7121,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Light Metal",
     "sprite": "scizor",
+    "spriteId": "scizor",
     "learnset": []
   },
   {
@@ -6829,6 +7144,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "scizormega",
+    "spriteId": "scizor-mega",
     "learnset": []
   },
   {
@@ -6852,6 +7168,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "shuckle",
+    "spriteId": "shuckle",
     "learnset": []
   },
   {
@@ -6875,6 +7192,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "heracross",
+    "spriteId": "heracross",
     "learnset": []
   },
   {
@@ -6897,6 +7215,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "heracrossmega",
+    "spriteId": "heracross-mega",
     "learnset": []
   },
   {
@@ -6920,6 +7239,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "sneasel",
+    "spriteId": "sneasel",
     "learnset": []
   },
   {
@@ -6943,6 +7263,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "sneaselhisui",
+    "spriteId": "sneasel-hisui",
     "learnset": []
   },
   {
@@ -6965,6 +7286,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Honey Gather",
     "sprite": "teddiursa",
+    "spriteId": "teddiursa",
     "learnset": []
   },
   {
@@ -6987,6 +7309,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "ursaring",
+    "spriteId": "ursaring",
     "learnset": []
   },
   {
@@ -7009,6 +7332,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "slugma",
+    "spriteId": "slugma",
     "learnset": []
   },
   {
@@ -7032,6 +7356,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "magcargo",
+    "spriteId": "magcargo",
     "learnset": []
   },
   {
@@ -7055,6 +7380,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "swinub",
+    "spriteId": "swinub",
     "learnset": []
   },
   {
@@ -7078,6 +7404,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "piloswine",
+    "spriteId": "piloswine",
     "learnset": []
   },
   {
@@ -7101,6 +7428,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "corsola",
+    "spriteId": "corsola",
     "learnset": []
   },
   {
@@ -7122,6 +7450,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "corsolagalar",
+    "spriteId": "corsola-galar",
     "learnset": []
   },
   {
@@ -7144,6 +7473,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "remoraid",
+    "spriteId": "remoraid",
     "learnset": []
   },
   {
@@ -7166,6 +7496,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "octillery",
+    "spriteId": "octillery",
     "learnset": []
   },
   {
@@ -7189,6 +7520,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "delibird",
+    "spriteId": "delibird",
     "learnset": []
   },
   {
@@ -7212,6 +7544,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "mantine",
+    "spriteId": "mantine",
     "learnset": []
   },
   {
@@ -7235,6 +7568,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "skarmory",
+    "spriteId": "skarmory",
     "learnset": []
   },
   {
@@ -7257,6 +7591,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "skarmorymega",
+    "spriteId": "skarmory-mega",
     "learnset": []
   },
   {
@@ -7280,6 +7615,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "houndour",
+    "spriteId": "houndour",
     "learnset": []
   },
   {
@@ -7303,6 +7639,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "houndoom",
+    "spriteId": "houndoom",
     "learnset": []
   },
   {
@@ -7325,6 +7662,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "houndoommega",
+    "spriteId": "houndoom-mega",
     "learnset": []
   },
   {
@@ -7348,6 +7686,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "kingdra",
+    "spriteId": "kingdra",
     "learnset": []
   },
   {
@@ -7369,6 +7708,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "phanpy",
+    "spriteId": "phanpy",
     "learnset": []
   },
   {
@@ -7390,6 +7730,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "donphan",
+    "spriteId": "donphan",
     "learnset": []
   },
   {
@@ -7412,6 +7753,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "porygon2",
+    "spriteId": "porygon2",
     "learnset": []
   },
   {
@@ -7434,6 +7776,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "stantler",
+    "spriteId": "stantler",
     "learnset": []
   },
   {
@@ -7456,6 +7799,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "smeargle",
+    "spriteId": "smeargle",
     "learnset": []
   },
   {
@@ -7478,6 +7822,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Vital Spirit",
     "sprite": "tyrogue",
+    "spriteId": "tyrogue",
     "learnset": []
   },
   {
@@ -7500,6 +7845,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "hitmontop",
+    "spriteId": "hitmontop",
     "learnset": []
   },
   {
@@ -7523,6 +7869,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "smoochum",
+    "spriteId": "smoochum",
     "learnset": []
   },
   {
@@ -7544,6 +7891,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Vital Spirit",
     "sprite": "elekid",
+    "spriteId": "elekid",
     "learnset": []
   },
   {
@@ -7565,6 +7913,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Vital Spirit",
     "sprite": "magby",
+    "spriteId": "magby",
     "learnset": []
   },
   {
@@ -7587,6 +7936,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "miltank",
+    "spriteId": "miltank",
     "learnset": []
   },
   {
@@ -7609,6 +7959,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Healer",
     "sprite": "blissey",
+    "spriteId": "blissey",
     "learnset": []
   },
   {
@@ -7630,6 +7981,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "raikou",
+    "spriteId": "raikou",
     "learnset": []
   },
   {
@@ -7651,6 +8003,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "entei",
+    "spriteId": "entei",
     "learnset": []
   },
   {
@@ -7672,6 +8025,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "suicune",
+    "spriteId": "suicune",
     "learnset": []
   },
   {
@@ -7694,6 +8048,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "larvitar",
+    "spriteId": "larvitar",
     "learnset": []
   },
   {
@@ -7716,6 +8071,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pupitar",
+    "spriteId": "pupitar",
     "learnset": []
   },
   {
@@ -7738,6 +8094,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "tyranitar",
+    "spriteId": "tyranitar",
     "learnset": []
   },
   {
@@ -7760,6 +8117,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "tyranitarmega",
+    "spriteId": "tyranitar-mega",
     "learnset": []
   },
   {
@@ -7782,6 +8140,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Multiscale",
     "sprite": "lugia",
+    "spriteId": "lugia",
     "learnset": []
   },
   {
@@ -7804,6 +8163,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "hooh",
+    "spriteId": "hooh",
     "learnset": []
   },
   {
@@ -7826,6 +8186,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "celebi",
+    "spriteId": "celebi",
     "learnset": []
   },
   {
@@ -7847,6 +8208,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unburden",
     "sprite": "treecko",
+    "spriteId": "treecko",
     "learnset": []
   },
   {
@@ -7868,6 +8230,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unburden",
     "sprite": "grovyle",
+    "spriteId": "grovyle",
     "learnset": []
   },
   {
@@ -7889,6 +8252,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unburden",
     "sprite": "sceptile",
+    "spriteId": "sceptile",
     "learnset": []
   },
   {
@@ -7911,6 +8275,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "sceptilemega",
+    "spriteId": "sceptile-mega",
     "learnset": []
   },
   {
@@ -7932,6 +8297,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "torchic",
+    "spriteId": "torchic",
     "learnset": []
   },
   {
@@ -7954,6 +8320,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "combusken",
+    "spriteId": "combusken",
     "learnset": []
   },
   {
@@ -7976,6 +8343,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "blaziken",
+    "spriteId": "blaziken",
     "learnset": []
   },
   {
@@ -7998,6 +8366,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "blazikenmega",
+    "spriteId": "blaziken-mega",
     "learnset": []
   },
   {
@@ -8019,6 +8388,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "mudkip",
+    "spriteId": "mudkip",
     "learnset": []
   },
   {
@@ -8041,6 +8411,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "marshtomp",
+    "spriteId": "marshtomp",
     "learnset": []
   },
   {
@@ -8063,6 +8434,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "swampert",
+    "spriteId": "swampert",
     "learnset": []
   },
   {
@@ -8085,6 +8457,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "swampertmega",
+    "spriteId": "swampert-mega",
     "learnset": []
   },
   {
@@ -8107,6 +8480,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "poochyena",
+    "spriteId": "poochyena",
     "learnset": []
   },
   {
@@ -8129,6 +8503,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "mightyena",
+    "spriteId": "mightyena",
     "learnset": []
   },
   {
@@ -8151,6 +8526,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Quick Feet",
     "sprite": "zigzagoon",
+    "spriteId": "zigzagoon",
     "learnset": []
   },
   {
@@ -8174,6 +8550,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Quick Feet",
     "sprite": "zigzagoongalar",
+    "spriteId": "zigzagoon-galar",
     "learnset": []
   },
   {
@@ -8196,6 +8573,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Quick Feet",
     "sprite": "linoone",
+    "spriteId": "linoone",
     "learnset": []
   },
   {
@@ -8219,6 +8597,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Quick Feet",
     "sprite": "linoonegalar",
+    "spriteId": "linoone-galar",
     "learnset": []
   },
   {
@@ -8240,6 +8619,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "wurmple",
+    "spriteId": "wurmple",
     "learnset": []
   },
   {
@@ -8261,6 +8641,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silcoon",
+    "spriteId": "silcoon",
     "learnset": []
   },
   {
@@ -8283,6 +8664,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rivalry",
     "sprite": "beautifly",
+    "spriteId": "beautifly",
     "learnset": []
   },
   {
@@ -8304,6 +8686,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cascoon",
+    "spriteId": "cascoon",
     "learnset": []
   },
   {
@@ -8326,6 +8709,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Compound Eyes",
     "sprite": "dustox",
+    "spriteId": "dustox",
     "learnset": []
   },
   {
@@ -8349,6 +8733,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Own Tempo",
     "sprite": "lotad",
+    "spriteId": "lotad",
     "learnset": []
   },
   {
@@ -8372,6 +8757,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Own Tempo",
     "sprite": "lombre",
+    "spriteId": "lombre",
     "learnset": []
   },
   {
@@ -8395,6 +8781,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Own Tempo",
     "sprite": "ludicolo",
+    "spriteId": "ludicolo",
     "learnset": []
   },
   {
@@ -8417,6 +8804,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "seedot",
+    "spriteId": "seedot",
     "learnset": []
   },
   {
@@ -8440,6 +8828,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "nuzleaf",
+    "spriteId": "nuzleaf",
     "learnset": []
   },
   {
@@ -8463,6 +8852,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "shiftry",
+    "spriteId": "shiftry",
     "learnset": []
   },
   {
@@ -8485,6 +8875,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "taillow",
+    "spriteId": "taillow",
     "learnset": []
   },
   {
@@ -8507,6 +8898,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "swellow",
+    "spriteId": "swellow",
     "learnset": []
   },
   {
@@ -8530,6 +8922,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "wingull",
+    "spriteId": "wingull",
     "learnset": []
   },
   {
@@ -8553,6 +8946,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "pelipper",
+    "spriteId": "pelipper",
     "learnset": []
   },
   {
@@ -8576,6 +8970,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "ralts",
+    "spriteId": "ralts",
     "learnset": []
   },
   {
@@ -8599,6 +8994,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "kirlia",
+    "spriteId": "kirlia",
     "learnset": []
   },
   {
@@ -8622,6 +9018,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "gardevoir",
+    "spriteId": "gardevoir",
     "learnset": []
   },
   {
@@ -8644,6 +9041,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gardevoirmega",
+    "spriteId": "gardevoir-mega",
     "learnset": []
   },
   {
@@ -8666,6 +9064,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "surskit",
+    "spriteId": "surskit",
     "learnset": []
   },
   {
@@ -8688,6 +9087,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "masquerain",
+    "spriteId": "masquerain",
     "learnset": []
   },
   {
@@ -8710,6 +9110,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Quick Feet",
     "sprite": "shroomish",
+    "spriteId": "shroomish",
     "learnset": []
   },
   {
@@ -8733,6 +9134,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "breloom",
+    "spriteId": "breloom",
     "learnset": []
   },
   {
@@ -8754,6 +9156,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "slakoth",
+    "spriteId": "slakoth",
     "learnset": []
   },
   {
@@ -8775,6 +9178,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "vigoroth",
+    "spriteId": "vigoroth",
     "learnset": []
   },
   {
@@ -8796,6 +9200,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "slaking",
+    "spriteId": "slaking",
     "learnset": []
   },
   {
@@ -8818,6 +9223,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "nincada",
+    "spriteId": "nincada",
     "learnset": []
   },
   {
@@ -8840,6 +9246,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "ninjask",
+    "spriteId": "ninjask",
     "learnset": []
   },
   {
@@ -8862,6 +9269,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "shedinja",
+    "spriteId": "shedinja",
     "learnset": []
   },
   {
@@ -8883,6 +9291,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "whismur",
+    "spriteId": "whismur",
     "learnset": []
   },
   {
@@ -8904,6 +9313,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "loudred",
+    "spriteId": "loudred",
     "learnset": []
   },
   {
@@ -8925,6 +9335,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "exploud",
+    "spriteId": "exploud",
     "learnset": []
   },
   {
@@ -8947,6 +9358,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "makuhita",
+    "spriteId": "makuhita",
     "learnset": []
   },
   {
@@ -8969,6 +9381,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "hariyama",
+    "spriteId": "hariyama",
     "learnset": []
   },
   {
@@ -8992,6 +9405,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "azurill",
+    "spriteId": "azurill",
     "learnset": []
   },
   {
@@ -9014,6 +9428,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "nosepass",
+    "spriteId": "nosepass",
     "learnset": []
   },
   {
@@ -9036,6 +9451,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Wonder Skin",
     "sprite": "skitty",
+    "spriteId": "skitty",
     "learnset": []
   },
   {
@@ -9058,6 +9474,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Wonder Skin",
     "sprite": "delcatty",
+    "spriteId": "delcatty",
     "learnset": []
   },
   {
@@ -9081,6 +9498,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "sableye",
+    "spriteId": "sableye",
     "learnset": []
   },
   {
@@ -9103,6 +9521,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "sableyemega",
+    "spriteId": "sableye-mega",
     "learnset": []
   },
   {
@@ -9126,6 +9545,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "mawile",
+    "spriteId": "mawile",
     "learnset": []
   },
   {
@@ -9148,6 +9568,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mawilemega",
+    "spriteId": "mawile-mega",
     "learnset": []
   },
   {
@@ -9171,6 +9592,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "aron",
+    "spriteId": "aron",
     "learnset": []
   },
   {
@@ -9194,6 +9616,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "lairon",
+    "spriteId": "lairon",
     "learnset": []
   },
   {
@@ -9217,6 +9640,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "aggron",
+    "spriteId": "aggron",
     "learnset": []
   },
   {
@@ -9238,6 +9662,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "aggronmega",
+    "spriteId": "aggron-mega",
     "learnset": []
   },
   {
@@ -9260,6 +9685,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "meditite",
+    "spriteId": "meditite",
     "learnset": []
   },
   {
@@ -9282,6 +9708,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "medicham",
+    "spriteId": "medicham",
     "learnset": []
   },
   {
@@ -9304,6 +9731,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "medichammega",
+    "spriteId": "medicham-mega",
     "learnset": []
   },
   {
@@ -9326,6 +9754,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Minus",
     "sprite": "electrike",
+    "spriteId": "electrike",
     "learnset": []
   },
   {
@@ -9348,6 +9777,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Minus",
     "sprite": "manectric",
+    "spriteId": "manectric",
     "learnset": []
   },
   {
@@ -9369,6 +9799,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "manectricmega",
+    "spriteId": "manectric-mega",
     "learnset": []
   },
   {
@@ -9390,6 +9821,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Lightning Rod",
     "sprite": "plusle",
+    "spriteId": "plusle",
     "learnset": []
   },
   {
@@ -9411,6 +9843,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Volt Absorb",
     "sprite": "minun",
+    "spriteId": "minun",
     "learnset": []
   },
   {
@@ -9433,6 +9866,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "volbeat",
+    "spriteId": "volbeat",
     "learnset": []
   },
   {
@@ -9455,6 +9889,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "illumise",
+    "spriteId": "illumise",
     "learnset": []
   },
   {
@@ -9478,6 +9913,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "roselia",
+    "spriteId": "roselia",
     "learnset": []
   },
   {
@@ -9500,6 +9936,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "gulpin",
+    "spriteId": "gulpin",
     "learnset": []
   },
   {
@@ -9522,6 +9959,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "swalot",
+    "spriteId": "swalot",
     "learnset": []
   },
   {
@@ -9544,6 +9982,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "carvanha",
+    "spriteId": "carvanha",
     "learnset": []
   },
   {
@@ -9566,6 +10005,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "sharpedo",
+    "spriteId": "sharpedo",
     "learnset": []
   },
   {
@@ -9588,6 +10028,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "sharpedomega",
+    "spriteId": "sharpedo-mega",
     "learnset": []
   },
   {
@@ -9610,6 +10051,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pressure",
     "sprite": "wailmer",
+    "spriteId": "wailmer",
     "learnset": []
   },
   {
@@ -9632,6 +10074,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pressure",
     "sprite": "wailord",
+    "spriteId": "wailord",
     "learnset": []
   },
   {
@@ -9655,6 +10098,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Own Tempo",
     "sprite": "numel",
+    "spriteId": "numel",
     "learnset": []
   },
   {
@@ -9678,6 +10122,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anger Point",
     "sprite": "camerupt",
+    "spriteId": "camerupt",
     "learnset": []
   },
   {
@@ -9700,6 +10145,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cameruptmega",
+    "spriteId": "camerupt-mega",
     "learnset": []
   },
   {
@@ -9722,6 +10168,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shell Armor",
     "sprite": "torkoal",
+    "spriteId": "torkoal",
     "learnset": []
   },
   {
@@ -9744,6 +10191,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "spoink",
+    "spriteId": "spoink",
     "learnset": []
   },
   {
@@ -9766,6 +10214,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "grumpig",
+    "spriteId": "grumpig",
     "learnset": []
   },
   {
@@ -9788,6 +10237,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "spinda",
+    "spriteId": "spinda",
     "learnset": []
   },
   {
@@ -9810,6 +10260,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "trapinch",
+    "spriteId": "trapinch",
     "learnset": []
   },
   {
@@ -9832,6 +10283,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "vibrava",
+    "spriteId": "vibrava",
     "learnset": []
   },
   {
@@ -9854,6 +10306,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "flygon",
+    "spriteId": "flygon",
     "learnset": []
   },
   {
@@ -9875,6 +10328,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "cacnea",
+    "spriteId": "cacnea",
     "learnset": []
   },
   {
@@ -9897,6 +10351,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "cacturne",
+    "spriteId": "cacturne",
     "learnset": []
   },
   {
@@ -9919,6 +10374,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cloud Nine",
     "sprite": "swablu",
+    "spriteId": "swablu",
     "learnset": []
   },
   {
@@ -9941,6 +10397,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cloud Nine",
     "sprite": "altaria",
+    "spriteId": "altaria",
     "learnset": []
   },
   {
@@ -9963,6 +10420,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "altariamega",
+    "spriteId": "altaria-mega",
     "learnset": []
   },
   {
@@ -9984,6 +10442,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Toxic Boost",
     "sprite": "zangoose",
+    "spriteId": "zangoose",
     "learnset": []
   },
   {
@@ -10005,6 +10464,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "seviper",
+    "spriteId": "seviper",
     "learnset": []
   },
   {
@@ -10027,6 +10487,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "lunatone",
+    "spriteId": "lunatone",
     "learnset": []
   },
   {
@@ -10049,6 +10510,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "solrock",
+    "spriteId": "solrock",
     "learnset": []
   },
   {
@@ -10072,6 +10534,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "barboach",
+    "spriteId": "barboach",
     "learnset": []
   },
   {
@@ -10095,6 +10558,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "whiscash",
+    "spriteId": "whiscash",
     "learnset": []
   },
   {
@@ -10117,6 +10581,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Adaptability",
     "sprite": "corphish",
+    "spriteId": "corphish",
     "learnset": []
   },
   {
@@ -10140,6 +10605,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Adaptability",
     "sprite": "crawdaunt",
+    "spriteId": "crawdaunt",
     "learnset": []
   },
   {
@@ -10162,6 +10628,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "baltoy",
+    "spriteId": "baltoy",
     "learnset": []
   },
   {
@@ -10184,6 +10651,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "claydol",
+    "spriteId": "claydol",
     "learnset": []
   },
   {
@@ -10206,6 +10674,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "lileep",
+    "spriteId": "lileep",
     "learnset": []
   },
   {
@@ -10228,6 +10697,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "cradily",
+    "spriteId": "cradily",
     "learnset": []
   },
   {
@@ -10250,6 +10720,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "anorith",
+    "spriteId": "anorith",
     "learnset": []
   },
   {
@@ -10272,6 +10743,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "armaldo",
+    "spriteId": "armaldo",
     "learnset": []
   },
   {
@@ -10294,6 +10766,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Adaptability",
     "sprite": "feebas",
+    "spriteId": "feebas",
     "learnset": []
   },
   {
@@ -10316,6 +10789,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cute Charm",
     "sprite": "milotic",
+    "spriteId": "milotic",
     "learnset": []
   },
   {
@@ -10337,6 +10811,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "castform",
+    "spriteId": "castform",
     "learnset": []
   },
   {
@@ -10358,6 +10833,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "castformsunny",
+    "spriteId": "castform-sunny",
     "learnset": []
   },
   {
@@ -10379,6 +10855,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "castformrainy",
+    "spriteId": "castform-rainy",
     "learnset": []
   },
   {
@@ -10400,6 +10877,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "castformsnowy",
+    "spriteId": "castform-snowy",
     "learnset": []
   },
   {
@@ -10421,6 +10899,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Protean",
     "sprite": "kecleon",
+    "spriteId": "kecleon",
     "learnset": []
   },
   {
@@ -10443,6 +10922,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "shuppet",
+    "spriteId": "shuppet",
     "learnset": []
   },
   {
@@ -10465,6 +10945,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "banette",
+    "spriteId": "banette",
     "learnset": []
   },
   {
@@ -10486,6 +10967,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "banettemega",
+    "spriteId": "banette-mega",
     "learnset": []
   },
   {
@@ -10507,6 +10989,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "duskull",
+    "spriteId": "duskull",
     "learnset": []
   },
   {
@@ -10528,6 +11011,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "dusclops",
+    "spriteId": "dusclops",
     "learnset": []
   },
   {
@@ -10551,6 +11035,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "tropius",
+    "spriteId": "tropius",
     "learnset": []
   },
   {
@@ -10572,6 +11057,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "chimecho",
+    "spriteId": "chimecho",
     "learnset": []
   },
   {
@@ -10594,6 +11080,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "chimechomega",
+    "spriteId": "chimecho-mega",
     "learnset": []
   },
   {
@@ -10616,6 +11103,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Justified",
     "sprite": "absol",
+    "spriteId": "absol",
     "learnset": []
   },
   {
@@ -10637,6 +11125,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "absolmega",
+    "spriteId": "absol-mega",
     "learnset": []
   },
   {
@@ -10659,6 +11148,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "absolmegaz",
+    "spriteId": "absol-megaz",
     "learnset": []
   },
   {
@@ -10680,6 +11170,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "wynaut",
+    "spriteId": "wynaut",
     "learnset": []
   },
   {
@@ -10702,6 +11193,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "snorunt",
+    "spriteId": "snorunt",
     "learnset": []
   },
   {
@@ -10724,6 +11216,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "glalie",
+    "spriteId": "glalie",
     "learnset": []
   },
   {
@@ -10745,6 +11238,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "glaliemega",
+    "spriteId": "glalie-mega",
     "learnset": []
   },
   {
@@ -10768,6 +11262,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Oblivious",
     "sprite": "spheal",
+    "spriteId": "spheal",
     "learnset": []
   },
   {
@@ -10791,6 +11286,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Oblivious",
     "sprite": "sealeo",
+    "spriteId": "sealeo",
     "learnset": []
   },
   {
@@ -10814,6 +11310,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Oblivious",
     "sprite": "walrein",
+    "spriteId": "walrein",
     "learnset": []
   },
   {
@@ -10835,6 +11332,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "clamperl",
+    "spriteId": "clamperl",
     "learnset": []
   },
   {
@@ -10856,6 +11354,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "huntail",
+    "spriteId": "huntail",
     "learnset": []
   },
   {
@@ -10877,6 +11376,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "gorebyss",
+    "spriteId": "gorebyss",
     "learnset": []
   },
   {
@@ -10900,6 +11400,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "relicanth",
+    "spriteId": "relicanth",
     "learnset": []
   },
   {
@@ -10921,6 +11422,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "luvdisc",
+    "spriteId": "luvdisc",
     "learnset": []
   },
   {
@@ -10942,6 +11444,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "bagon",
+    "spriteId": "bagon",
     "learnset": []
   },
   {
@@ -10963,6 +11466,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "shelgon",
+    "spriteId": "shelgon",
     "learnset": []
   },
   {
@@ -10985,6 +11489,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "salamence",
+    "spriteId": "salamence",
     "learnset": []
   },
   {
@@ -11007,6 +11512,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "salamencemega",
+    "spriteId": "salamence-mega",
     "learnset": []
   },
   {
@@ -11029,6 +11535,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Light Metal",
     "sprite": "beldum",
+    "spriteId": "beldum",
     "learnset": []
   },
   {
@@ -11051,6 +11558,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Light Metal",
     "sprite": "metang",
+    "spriteId": "metang",
     "learnset": []
   },
   {
@@ -11073,6 +11581,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Light Metal",
     "sprite": "metagross",
+    "spriteId": "metagross",
     "learnset": []
   },
   {
@@ -11095,6 +11604,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "metagrossmega",
+    "spriteId": "metagross-mega",
     "learnset": []
   },
   {
@@ -11116,6 +11626,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "regirock",
+    "spriteId": "regirock",
     "learnset": []
   },
   {
@@ -11137,6 +11648,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "regice",
+    "spriteId": "regice",
     "learnset": []
   },
   {
@@ -11158,6 +11670,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Light Metal",
     "sprite": "registeel",
+    "spriteId": "registeel",
     "learnset": []
   },
   {
@@ -11180,6 +11693,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "latias",
+    "spriteId": "latias",
     "learnset": []
   },
   {
@@ -11202,6 +11716,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "latiasmega",
+    "spriteId": "latias-mega",
     "learnset": []
   },
   {
@@ -11224,6 +11739,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "latios",
+    "spriteId": "latios",
     "learnset": []
   },
   {
@@ -11246,6 +11762,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "latiosmega",
+    "spriteId": "latios-mega",
     "learnset": []
   },
   {
@@ -11267,6 +11784,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kyogre",
+    "spriteId": "kyogre",
     "learnset": []
   },
   {
@@ -11288,6 +11806,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kyogreprimal",
+    "spriteId": "kyogre-primal",
     "learnset": []
   },
   {
@@ -11309,6 +11828,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "groudon",
+    "spriteId": "groudon",
     "learnset": []
   },
   {
@@ -11331,6 +11851,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "groudonprimal",
+    "spriteId": "groudon-primal",
     "learnset": []
   },
   {
@@ -11353,6 +11874,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rayquaza",
+    "spriteId": "rayquaza",
     "learnset": []
   },
   {
@@ -11375,6 +11897,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rayquazamega",
+    "spriteId": "rayquaza-mega",
     "learnset": []
   },
   {
@@ -11397,6 +11920,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "jirachi",
+    "spriteId": "jirachi",
     "learnset": []
   },
   {
@@ -11418,6 +11942,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "deoxys",
+    "spriteId": "deoxys",
     "learnset": []
   },
   {
@@ -11439,6 +11964,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "deoxysattack",
+    "spriteId": "deoxys-attack",
     "learnset": []
   },
   {
@@ -11460,6 +11986,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "deoxysdefense",
+    "spriteId": "deoxys-defense",
     "learnset": []
   },
   {
@@ -11481,6 +12008,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "deoxysspeed",
+    "spriteId": "deoxys-speed",
     "learnset": []
   },
   {
@@ -11502,6 +12030,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shell Armor",
     "sprite": "turtwig",
+    "spriteId": "turtwig",
     "learnset": []
   },
   {
@@ -11523,6 +12052,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shell Armor",
     "sprite": "grotle",
+    "spriteId": "grotle",
     "learnset": []
   },
   {
@@ -11545,6 +12075,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shell Armor",
     "sprite": "torterra",
+    "spriteId": "torterra",
     "learnset": []
   },
   {
@@ -11566,6 +12097,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "chimchar",
+    "spriteId": "chimchar",
     "learnset": []
   },
   {
@@ -11588,6 +12120,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "monferno",
+    "spriteId": "monferno",
     "learnset": []
   },
   {
@@ -11610,6 +12143,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "infernape",
+    "spriteId": "infernape",
     "learnset": []
   },
   {
@@ -11631,6 +12165,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Competitive",
     "sprite": "piplup",
+    "spriteId": "piplup",
     "learnset": []
   },
   {
@@ -11652,6 +12187,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Competitive",
     "sprite": "prinplup",
+    "spriteId": "prinplup",
     "learnset": []
   },
   {
@@ -11674,6 +12210,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Competitive",
     "sprite": "empoleon",
+    "spriteId": "empoleon",
     "learnset": []
   },
   {
@@ -11696,6 +12233,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "starly",
+    "spriteId": "starly",
     "learnset": []
   },
   {
@@ -11718,6 +12256,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "staravia",
+    "spriteId": "staravia",
     "learnset": []
   },
   {
@@ -11740,6 +12279,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "staraptor",
+    "spriteId": "staraptor",
     "learnset": []
   },
   {
@@ -11762,6 +12302,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "staraptormega",
+    "spriteId": "staraptor-mega",
     "learnset": []
   },
   {
@@ -11784,6 +12325,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "bidoof",
+    "spriteId": "bidoof",
     "learnset": []
   },
   {
@@ -11807,6 +12349,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "bibarel",
+    "spriteId": "bibarel",
     "learnset": []
   },
   {
@@ -11828,6 +12371,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "kricketot",
+    "spriteId": "kricketot",
     "learnset": []
   },
   {
@@ -11849,6 +12393,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "kricketune",
+    "spriteId": "kricketune",
     "learnset": []
   },
   {
@@ -11871,6 +12416,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Guts",
     "sprite": "shinx",
+    "spriteId": "shinx",
     "learnset": []
   },
   {
@@ -11893,6 +12439,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Guts",
     "sprite": "luxio",
+    "spriteId": "luxio",
     "learnset": []
   },
   {
@@ -11915,6 +12462,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Guts",
     "sprite": "luxray",
+    "spriteId": "luxray",
     "learnset": []
   },
   {
@@ -11938,6 +12486,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "budew",
+    "spriteId": "budew",
     "learnset": []
   },
   {
@@ -11961,6 +12510,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "roserade",
+    "spriteId": "roserade",
     "learnset": []
   },
   {
@@ -11982,6 +12532,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "cranidos",
+    "spriteId": "cranidos",
     "learnset": []
   },
   {
@@ -12003,6 +12554,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "rampardos",
+    "spriteId": "rampardos",
     "learnset": []
   },
   {
@@ -12025,6 +12577,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Soundproof",
     "sprite": "shieldon",
+    "spriteId": "shieldon",
     "learnset": []
   },
   {
@@ -12047,6 +12600,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Soundproof",
     "sprite": "bastiodon",
+    "spriteId": "bastiodon",
     "learnset": []
   },
   {
@@ -12068,6 +12622,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "burmy",
+    "spriteId": "burmy",
     "learnset": []
   },
   {
@@ -12090,6 +12645,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "wormadam",
+    "spriteId": "wormadam",
     "learnset": []
   },
   {
@@ -12112,6 +12668,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "wormadamsandy",
+    "spriteId": "wormadam-sandy",
     "learnset": []
   },
   {
@@ -12134,6 +12691,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "wormadamtrash",
+    "spriteId": "wormadam-trash",
     "learnset": []
   },
   {
@@ -12156,6 +12714,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "mothim",
+    "spriteId": "mothim",
     "learnset": []
   },
   {
@@ -12178,6 +12737,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "combee",
+    "spriteId": "combee",
     "learnset": []
   },
   {
@@ -12200,6 +12760,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "vespiquen",
+    "spriteId": "vespiquen",
     "learnset": []
   },
   {
@@ -12222,6 +12783,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Volt Absorb",
     "sprite": "pachirisu",
+    "spriteId": "pachirisu",
     "learnset": []
   },
   {
@@ -12243,6 +12805,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "buizel",
+    "spriteId": "buizel",
     "learnset": []
   },
   {
@@ -12264,6 +12827,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "floatzel",
+    "spriteId": "floatzel",
     "learnset": []
   },
   {
@@ -12285,6 +12849,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cherubi",
+    "spriteId": "cherubi",
     "learnset": []
   },
   {
@@ -12306,6 +12871,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cherrim",
+    "spriteId": "cherrim",
     "learnset": []
   },
   {
@@ -12327,6 +12893,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cherrimsunshine",
+    "spriteId": "cherrim-sunshine",
     "learnset": []
   },
   {
@@ -12349,6 +12916,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "shellos",
+    "spriteId": "shellos",
     "learnset": []
   },
   {
@@ -12372,6 +12940,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "gastrodon",
+    "spriteId": "gastrodon",
     "learnset": []
   },
   {
@@ -12394,6 +12963,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Skill Link",
     "sprite": "ambipom",
+    "spriteId": "ambipom",
     "learnset": []
   },
   {
@@ -12417,6 +12987,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flare Boost",
     "sprite": "drifloon",
+    "spriteId": "drifloon",
     "learnset": []
   },
   {
@@ -12440,6 +13011,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flare Boost",
     "sprite": "drifblim",
+    "spriteId": "drifblim",
     "learnset": []
   },
   {
@@ -12462,6 +13034,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Limber",
     "sprite": "buneary",
+    "spriteId": "buneary",
     "learnset": []
   },
   {
@@ -12484,6 +13057,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Limber",
     "sprite": "lopunny",
+    "spriteId": "lopunny",
     "learnset": []
   },
   {
@@ -12506,6 +13080,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "lopunnymega",
+    "spriteId": "lopunny-mega",
     "learnset": []
   },
   {
@@ -12527,6 +13102,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mismagius",
+    "spriteId": "mismagius",
     "learnset": []
   },
   {
@@ -12550,6 +13126,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "honchkrow",
+    "spriteId": "honchkrow",
     "learnset": []
   },
   {
@@ -12572,6 +13149,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Keen Eye",
     "sprite": "glameow",
+    "spriteId": "glameow",
     "learnset": []
   },
   {
@@ -12594,6 +13172,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "purugly",
+    "spriteId": "purugly",
     "learnset": []
   },
   {
@@ -12615,6 +13194,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "chingling",
+    "spriteId": "chingling",
     "learnset": []
   },
   {
@@ -12638,6 +13218,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Keen Eye",
     "sprite": "stunky",
+    "spriteId": "stunky",
     "learnset": []
   },
   {
@@ -12661,6 +13242,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Keen Eye",
     "sprite": "skuntank",
+    "spriteId": "skuntank",
     "learnset": []
   },
   {
@@ -12684,6 +13266,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "bronzor",
+    "spriteId": "bronzor",
     "learnset": []
   },
   {
@@ -12707,6 +13290,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "bronzong",
+    "spriteId": "bronzong",
     "learnset": []
   },
   {
@@ -12729,6 +13313,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "bonsly",
+    "spriteId": "bonsly",
     "learnset": []
   },
   {
@@ -12752,6 +13337,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "mimejr",
+    "spriteId": "mimejr",
     "learnset": []
   },
   {
@@ -12774,6 +13360,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "happiny",
+    "spriteId": "happiny",
     "learnset": []
   },
   {
@@ -12797,6 +13384,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Big Pecks",
     "sprite": "chatot",
+    "spriteId": "chatot",
     "learnset": []
   },
   {
@@ -12819,6 +13407,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "spiritomb",
+    "spriteId": "spiritomb",
     "learnset": []
   },
   {
@@ -12841,6 +13430,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rough Skin",
     "sprite": "gible",
+    "spriteId": "gible",
     "learnset": []
   },
   {
@@ -12863,6 +13453,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rough Skin",
     "sprite": "gabite",
+    "spriteId": "gabite",
     "learnset": []
   },
   {
@@ -12885,6 +13476,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rough Skin",
     "sprite": "garchomp",
+    "spriteId": "garchomp",
     "learnset": []
   },
   {
@@ -12907,6 +13499,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "garchompmega",
+    "spriteId": "garchomp-mega",
     "learnset": []
   },
   {
@@ -12928,6 +13521,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "garchompmegaz",
+    "spriteId": "garchomp-megaz",
     "learnset": []
   },
   {
@@ -12950,6 +13544,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "munchlax",
+    "spriteId": "munchlax",
     "learnset": []
   },
   {
@@ -12972,6 +13567,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "riolu",
+    "spriteId": "riolu",
     "learnset": []
   },
   {
@@ -12995,6 +13591,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Justified",
     "sprite": "lucario",
+    "spriteId": "lucario",
     "learnset": []
   },
   {
@@ -13017,6 +13614,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "lucariomega",
+    "spriteId": "lucario-mega",
     "learnset": []
   },
   {
@@ -13039,6 +13637,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "lucariomegaz",
+    "spriteId": "lucario-megaz",
     "learnset": []
   },
   {
@@ -13060,6 +13659,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "hippopotas",
+    "spriteId": "hippopotas",
     "learnset": []
   },
   {
@@ -13081,6 +13681,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "hippowdon",
+    "spriteId": "hippowdon",
     "learnset": []
   },
   {
@@ -13104,6 +13705,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Keen Eye",
     "sprite": "skorupi",
+    "spriteId": "skorupi",
     "learnset": []
   },
   {
@@ -13127,6 +13729,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Keen Eye",
     "sprite": "drapion",
+    "spriteId": "drapion",
     "learnset": []
   },
   {
@@ -13150,6 +13753,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Poison Touch",
     "sprite": "croagunk",
+    "spriteId": "croagunk",
     "learnset": []
   },
   {
@@ -13173,6 +13777,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Poison Touch",
     "sprite": "toxicroak",
+    "spriteId": "toxicroak",
     "learnset": []
   },
   {
@@ -13194,6 +13799,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "carnivine",
+    "spriteId": "carnivine",
     "learnset": []
   },
   {
@@ -13216,6 +13822,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "finneon",
+    "spriteId": "finneon",
     "learnset": []
   },
   {
@@ -13238,6 +13845,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "lumineon",
+    "spriteId": "lumineon",
     "learnset": []
   },
   {
@@ -13261,6 +13869,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "mantyke",
+    "spriteId": "mantyke",
     "learnset": []
   },
   {
@@ -13283,6 +13892,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Soundproof",
     "sprite": "snover",
+    "spriteId": "snover",
     "learnset": []
   },
   {
@@ -13305,6 +13915,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Soundproof",
     "sprite": "abomasnow",
+    "spriteId": "abomasnow",
     "learnset": []
   },
   {
@@ -13327,6 +13938,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "abomasnowmega",
+    "spriteId": "abomasnow-mega",
     "learnset": []
   },
   {
@@ -13349,6 +13961,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "weavile",
+    "spriteId": "weavile",
     "learnset": []
   },
   {
@@ -13372,6 +13985,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "magnezone",
+    "spriteId": "magnezone",
     "learnset": []
   },
   {
@@ -13394,6 +14008,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cloud Nine",
     "sprite": "lickilicky",
+    "spriteId": "lickilicky",
     "learnset": []
   },
   {
@@ -13417,6 +14032,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "rhyperior",
+    "spriteId": "rhyperior",
     "learnset": []
   },
   {
@@ -13439,6 +14055,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "tangrowth",
+    "spriteId": "tangrowth",
     "learnset": []
   },
   {
@@ -13460,6 +14077,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Vital Spirit",
     "sprite": "electivire",
+    "spriteId": "electivire",
     "learnset": []
   },
   {
@@ -13481,6 +14099,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Vital Spirit",
     "sprite": "magmortar",
+    "spriteId": "magmortar",
     "learnset": []
   },
   {
@@ -13504,6 +14123,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Super Luck",
     "sprite": "togekiss",
+    "spriteId": "togekiss",
     "learnset": []
   },
   {
@@ -13527,6 +14147,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "yanmega",
+    "spriteId": "yanmega",
     "learnset": []
   },
   {
@@ -13548,6 +14169,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Chlorophyll",
     "sprite": "leafeon",
+    "spriteId": "leafeon",
     "learnset": []
   },
   {
@@ -13569,6 +14191,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "glaceon",
+    "spriteId": "glaceon",
     "learnset": []
   },
   {
@@ -13592,6 +14215,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Poison Heal",
     "sprite": "gliscor",
+    "spriteId": "gliscor",
     "learnset": []
   },
   {
@@ -13615,6 +14239,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "mamoswine",
+    "spriteId": "mamoswine",
     "learnset": []
   },
   {
@@ -13637,6 +14262,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "porygonz",
+    "spriteId": "porygonz",
     "learnset": []
   },
   {
@@ -13660,6 +14286,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Justified",
     "sprite": "gallade",
+    "spriteId": "gallade",
     "learnset": []
   },
   {
@@ -13682,6 +14309,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gallademega",
+    "spriteId": "gallade-mega",
     "learnset": []
   },
   {
@@ -13705,6 +14333,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "probopass",
+    "spriteId": "probopass",
     "learnset": []
   },
   {
@@ -13726,6 +14355,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "dusknoir",
+    "spriteId": "dusknoir",
     "learnset": []
   },
   {
@@ -13748,6 +14378,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "froslass",
+    "spriteId": "froslass",
     "learnset": []
   },
   {
@@ -13770,6 +14401,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "froslassmega",
+    "spriteId": "froslass-mega",
     "learnset": []
   },
   {
@@ -13792,6 +14424,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rotom",
+    "spriteId": "rotom",
     "learnset": []
   },
   {
@@ -13814,6 +14447,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rotomheat",
+    "spriteId": "rotom-heat",
     "learnset": []
   },
   {
@@ -13836,6 +14470,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rotomwash",
+    "spriteId": "rotom-wash",
     "learnset": []
   },
   {
@@ -13858,6 +14493,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rotomfrost",
+    "spriteId": "rotom-frost",
     "learnset": []
   },
   {
@@ -13880,6 +14516,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rotomfan",
+    "spriteId": "rotom-fan",
     "learnset": []
   },
   {
@@ -13902,6 +14539,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rotommow",
+    "spriteId": "rotom-mow",
     "learnset": []
   },
   {
@@ -13923,6 +14561,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "uxie",
+    "spriteId": "uxie",
     "learnset": []
   },
   {
@@ -13944,6 +14583,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mesprit",
+    "spriteId": "mesprit",
     "learnset": []
   },
   {
@@ -13965,6 +14605,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "azelf",
+    "spriteId": "azelf",
     "learnset": []
   },
   {
@@ -13987,6 +14628,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "dialga",
+    "spriteId": "dialga",
     "learnset": []
   },
   {
@@ -14009,6 +14651,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "dialgaorigin",
+    "spriteId": "dialga-origin",
     "learnset": []
   },
   {
@@ -14031,6 +14674,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "palkia",
+    "spriteId": "palkia",
     "learnset": []
   },
   {
@@ -14053,6 +14697,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "palkiaorigin",
+    "spriteId": "palkia-origin",
     "learnset": []
   },
   {
@@ -14075,6 +14720,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "heatran",
+    "spriteId": "heatran",
     "learnset": []
   },
   {
@@ -14097,6 +14743,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "heatranmega",
+    "spriteId": "heatran-mega",
     "learnset": []
   },
   {
@@ -14118,6 +14765,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "regigigas",
+    "spriteId": "regigigas",
     "learnset": []
   },
   {
@@ -14140,6 +14788,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "giratina",
+    "spriteId": "giratina",
     "learnset": []
   },
   {
@@ -14162,6 +14811,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "giratinaorigin",
+    "spriteId": "giratina-origin",
     "learnset": []
   },
   {
@@ -14183,6 +14833,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cresselia",
+    "spriteId": "cresselia",
     "learnset": []
   },
   {
@@ -14204,6 +14855,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "phione",
+    "spriteId": "phione",
     "learnset": []
   },
   {
@@ -14225,6 +14877,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "manaphy",
+    "spriteId": "manaphy",
     "learnset": []
   },
   {
@@ -14246,6 +14899,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "darkrai",
+    "spriteId": "darkrai",
     "learnset": []
   },
   {
@@ -14267,6 +14921,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "darkraimega",
+    "spriteId": "darkrai-mega",
     "learnset": []
   },
   {
@@ -14288,6 +14943,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "shaymin",
+    "spriteId": "shaymin",
     "learnset": []
   },
   {
@@ -14310,6 +14966,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "shayminsky",
+    "spriteId": "shaymin-sky",
     "learnset": []
   },
   {
@@ -14331,6 +14988,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceus",
+    "spriteId": "arceus",
     "learnset": []
   },
   {
@@ -14352,6 +15010,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusbug",
+    "spriteId": "arceus-bug",
     "learnset": []
   },
   {
@@ -14373,6 +15032,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusdark",
+    "spriteId": "arceus-dark",
     "learnset": []
   },
   {
@@ -14394,6 +15054,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusdragon",
+    "spriteId": "arceus-dragon",
     "learnset": []
   },
   {
@@ -14415,6 +15076,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceuselectric",
+    "spriteId": "arceus-electric",
     "learnset": []
   },
   {
@@ -14436,6 +15098,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusfairy",
+    "spriteId": "arceus-fairy",
     "learnset": []
   },
   {
@@ -14457,6 +15120,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusfighting",
+    "spriteId": "arceus-fighting",
     "learnset": []
   },
   {
@@ -14478,6 +15142,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusfire",
+    "spriteId": "arceus-fire",
     "learnset": []
   },
   {
@@ -14499,6 +15164,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusflying",
+    "spriteId": "arceus-flying",
     "learnset": []
   },
   {
@@ -14520,6 +15186,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusghost",
+    "spriteId": "arceus-ghost",
     "learnset": []
   },
   {
@@ -14541,6 +15208,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusgrass",
+    "spriteId": "arceus-grass",
     "learnset": []
   },
   {
@@ -14562,6 +15230,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusground",
+    "spriteId": "arceus-ground",
     "learnset": []
   },
   {
@@ -14583,6 +15252,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusice",
+    "spriteId": "arceus-ice",
     "learnset": []
   },
   {
@@ -14604,6 +15274,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceuspoison",
+    "spriteId": "arceus-poison",
     "learnset": []
   },
   {
@@ -14625,6 +15296,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceuspsychic",
+    "spriteId": "arceus-psychic",
     "learnset": []
   },
   {
@@ -14646,6 +15318,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceusrock",
+    "spriteId": "arceus-rock",
     "learnset": []
   },
   {
@@ -14667,6 +15340,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceussteel",
+    "spriteId": "arceus-steel",
     "learnset": []
   },
   {
@@ -14688,6 +15362,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "arceuswater",
+    "spriteId": "arceus-water",
     "learnset": []
   },
   {
@@ -14710,6 +15385,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "victini",
+    "spriteId": "victini",
     "learnset": []
   },
   {
@@ -14731,6 +15407,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "snivy",
+    "spriteId": "snivy",
     "learnset": []
   },
   {
@@ -14752,6 +15429,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "servine",
+    "spriteId": "servine",
     "learnset": []
   },
   {
@@ -14773,6 +15451,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "serperior",
+    "spriteId": "serperior",
     "learnset": []
   },
   {
@@ -14794,6 +15473,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "tepig",
+    "spriteId": "tepig",
     "learnset": []
   },
   {
@@ -14816,6 +15496,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "pignite",
+    "spriteId": "pignite",
     "learnset": []
   },
   {
@@ -14838,6 +15519,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "emboar",
+    "spriteId": "emboar",
     "learnset": []
   },
   {
@@ -14860,6 +15542,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "emboarmega",
+    "spriteId": "emboar-mega",
     "learnset": []
   },
   {
@@ -14881,6 +15564,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shell Armor",
     "sprite": "oshawott",
+    "spriteId": "oshawott",
     "learnset": []
   },
   {
@@ -14902,6 +15586,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shell Armor",
     "sprite": "dewott",
+    "spriteId": "dewott",
     "learnset": []
   },
   {
@@ -14923,6 +15608,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shell Armor",
     "sprite": "samurott",
+    "spriteId": "samurott",
     "learnset": []
   },
   {
@@ -14945,6 +15631,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sharpness",
     "sprite": "samurotthisui",
+    "spriteId": "samurott-hisui",
     "learnset": []
   },
   {
@@ -14967,6 +15654,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "patrat",
+    "spriteId": "patrat",
     "learnset": []
   },
   {
@@ -14989,6 +15677,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "watchog",
+    "spriteId": "watchog",
     "learnset": []
   },
   {
@@ -15011,6 +15700,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Run Away",
     "sprite": "lillipup",
+    "spriteId": "lillipup",
     "learnset": []
   },
   {
@@ -15033,6 +15723,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "herdier",
+    "spriteId": "herdier",
     "learnset": []
   },
   {
@@ -15055,6 +15746,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "stoutland",
+    "spriteId": "stoutland",
     "learnset": []
   },
   {
@@ -15077,6 +15769,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "purrloin",
+    "spriteId": "purrloin",
     "learnset": []
   },
   {
@@ -15099,6 +15792,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "liepard",
+    "spriteId": "liepard",
     "learnset": []
   },
   {
@@ -15120,6 +15814,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overgrow",
     "sprite": "pansage",
+    "spriteId": "pansage",
     "learnset": []
   },
   {
@@ -15141,6 +15836,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overgrow",
     "sprite": "simisage",
+    "spriteId": "simisage",
     "learnset": []
   },
   {
@@ -15162,6 +15858,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Blaze",
     "sprite": "pansear",
+    "spriteId": "pansear",
     "learnset": []
   },
   {
@@ -15183,6 +15880,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Blaze",
     "sprite": "simisear",
+    "spriteId": "simisear",
     "learnset": []
   },
   {
@@ -15204,6 +15902,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Torrent",
     "sprite": "panpour",
+    "spriteId": "panpour",
     "learnset": []
   },
   {
@@ -15225,6 +15924,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Torrent",
     "sprite": "simipour",
+    "spriteId": "simipour",
     "learnset": []
   },
   {
@@ -15247,6 +15947,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "munna",
+    "spriteId": "munna",
     "learnset": []
   },
   {
@@ -15269,6 +15970,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "musharna",
+    "spriteId": "musharna",
     "learnset": []
   },
   {
@@ -15292,6 +15994,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rivalry",
     "sprite": "pidove",
+    "spriteId": "pidove",
     "learnset": []
   },
   {
@@ -15315,6 +16018,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rivalry",
     "sprite": "tranquill",
+    "spriteId": "tranquill",
     "learnset": []
   },
   {
@@ -15338,6 +16042,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rivalry",
     "sprite": "unfezant",
+    "spriteId": "unfezant",
     "learnset": []
   },
   {
@@ -15360,6 +16065,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "blitzle",
+    "spriteId": "blitzle",
     "learnset": []
   },
   {
@@ -15382,6 +16088,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "zebstrika",
+    "spriteId": "zebstrika",
     "learnset": []
   },
   {
@@ -15404,6 +16111,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "roggenrola",
+    "spriteId": "roggenrola",
     "learnset": []
   },
   {
@@ -15426,6 +16134,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "boldore",
+    "spriteId": "boldore",
     "learnset": []
   },
   {
@@ -15448,6 +16157,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Force",
     "sprite": "gigalith",
+    "spriteId": "gigalith",
     "learnset": []
   },
   {
@@ -15471,6 +16181,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Simple",
     "sprite": "woobat",
+    "spriteId": "woobat",
     "learnset": []
   },
   {
@@ -15494,6 +16205,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Simple",
     "sprite": "swoobat",
+    "spriteId": "swoobat",
     "learnset": []
   },
   {
@@ -15516,6 +16228,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "drilbur",
+    "spriteId": "drilbur",
     "learnset": []
   },
   {
@@ -15539,6 +16252,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "excadrill",
+    "spriteId": "excadrill",
     "learnset": []
   },
   {
@@ -15561,6 +16275,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "excadrillmega",
+    "spriteId": "excadrill-mega",
     "learnset": []
   },
   {
@@ -15583,6 +16298,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Klutz",
     "sprite": "audino",
+    "spriteId": "audino",
     "learnset": []
   },
   {
@@ -15605,6 +16321,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "audinomega",
+    "spriteId": "audino-mega",
     "learnset": []
   },
   {
@@ -15627,6 +16344,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "timburr",
+    "spriteId": "timburr",
     "learnset": []
   },
   {
@@ -15649,6 +16367,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "gurdurr",
+    "spriteId": "gurdurr",
     "learnset": []
   },
   {
@@ -15671,6 +16390,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "conkeldurr",
+    "spriteId": "conkeldurr",
     "learnset": []
   },
   {
@@ -15693,6 +16413,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "tympole",
+    "spriteId": "tympole",
     "learnset": []
   },
   {
@@ -15716,6 +16437,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "palpitoad",
+    "spriteId": "palpitoad",
     "learnset": []
   },
   {
@@ -15739,6 +16461,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "seismitoad",
+    "spriteId": "seismitoad",
     "learnset": []
   },
   {
@@ -15761,6 +16484,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "throh",
+    "spriteId": "throh",
     "learnset": []
   },
   {
@@ -15783,6 +16507,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "sawk",
+    "spriteId": "sawk",
     "learnset": []
   },
   {
@@ -15806,6 +16531,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "sewaddle",
+    "spriteId": "sewaddle",
     "learnset": []
   },
   {
@@ -15829,6 +16555,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "swadloon",
+    "spriteId": "swadloon",
     "learnset": []
   },
   {
@@ -15852,6 +16579,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "leavanny",
+    "spriteId": "leavanny",
     "learnset": []
   },
   {
@@ -15875,6 +16603,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "venipede",
+    "spriteId": "venipede",
     "learnset": []
   },
   {
@@ -15898,6 +16627,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "whirlipede",
+    "spriteId": "whirlipede",
     "learnset": []
   },
   {
@@ -15921,6 +16651,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "scolipede",
+    "spriteId": "scolipede",
     "learnset": []
   },
   {
@@ -15943,6 +16674,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "scolipedemega",
+    "spriteId": "scolipede-mega",
     "learnset": []
   },
   {
@@ -15966,6 +16698,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Chlorophyll",
     "sprite": "cottonee",
+    "spriteId": "cottonee",
     "learnset": []
   },
   {
@@ -15989,6 +16722,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Chlorophyll",
     "sprite": "whimsicott",
+    "spriteId": "whimsicott",
     "learnset": []
   },
   {
@@ -16011,6 +16745,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "petilil",
+    "spriteId": "petilil",
     "learnset": []
   },
   {
@@ -16033,6 +16768,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "lilligant",
+    "spriteId": "lilligant",
     "learnset": []
   },
   {
@@ -16056,6 +16792,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Leaf Guard",
     "sprite": "lilliganthisui",
+    "spriteId": "lilligant-hisui",
     "learnset": []
   },
   {
@@ -16078,6 +16815,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "basculin",
+    "spriteId": "basculin",
     "learnset": []
   },
   {
@@ -16100,6 +16838,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "basculinbluestriped",
+    "spriteId": "basculin-bluestriped",
     "learnset": []
   },
   {
@@ -16122,6 +16861,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "basculinwhitestriped",
+    "spriteId": "basculin-whitestriped",
     "learnset": []
   },
   {
@@ -16145,6 +16885,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anger Point",
     "sprite": "sandile",
+    "spriteId": "sandile",
     "learnset": []
   },
   {
@@ -16168,6 +16909,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anger Point",
     "sprite": "krokorok",
+    "spriteId": "krokorok",
     "learnset": []
   },
   {
@@ -16191,6 +16933,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anger Point",
     "sprite": "krookodile",
+    "spriteId": "krookodile",
     "learnset": []
   },
   {
@@ -16212,6 +16955,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "darumaka",
+    "spriteId": "darumaka",
     "learnset": []
   },
   {
@@ -16233,6 +16977,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "darumakagalar",
+    "spriteId": "darumaka-galar",
     "learnset": []
   },
   {
@@ -16254,6 +16999,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Zen Mode",
     "sprite": "darmanitan",
+    "spriteId": "darmanitan",
     "learnset": []
   },
   {
@@ -16276,6 +17022,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "darmanitanzen",
+    "spriteId": "darmanitan-zen",
     "learnset": []
   },
   {
@@ -16297,6 +17044,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Zen Mode",
     "sprite": "darmanitangalar",
+    "spriteId": "darmanitan-galar",
     "learnset": []
   },
   {
@@ -16319,6 +17067,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "darmanitangalarzen",
+    "spriteId": "darmanitan-galarzen",
     "learnset": []
   },
   {
@@ -16341,6 +17090,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "maractus",
+    "spriteId": "maractus",
     "learnset": []
   },
   {
@@ -16364,6 +17114,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "dwebble",
+    "spriteId": "dwebble",
     "learnset": []
   },
   {
@@ -16387,6 +17138,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "crustle",
+    "spriteId": "crustle",
     "learnset": []
   },
   {
@@ -16410,6 +17162,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "scraggy",
+    "spriteId": "scraggy",
     "learnset": []
   },
   {
@@ -16433,6 +17186,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "scrafty",
+    "spriteId": "scrafty",
     "learnset": []
   },
   {
@@ -16455,6 +17209,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "scraftymega",
+    "spriteId": "scrafty-mega",
     "learnset": []
   },
   {
@@ -16478,6 +17233,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "sigilyph",
+    "spriteId": "sigilyph",
     "learnset": []
   },
   {
@@ -16499,6 +17255,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "yamask",
+    "spriteId": "yamask",
     "learnset": []
   },
   {
@@ -16521,6 +17278,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "yamaskgalar",
+    "spriteId": "yamask-galar",
     "learnset": []
   },
   {
@@ -16542,6 +17300,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cofagrigus",
+    "spriteId": "cofagrigus",
     "learnset": []
   },
   {
@@ -16565,6 +17324,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "tirtouga",
+    "spriteId": "tirtouga",
     "learnset": []
   },
   {
@@ -16588,6 +17348,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "carracosta",
+    "spriteId": "carracosta",
     "learnset": []
   },
   {
@@ -16610,6 +17371,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "archen",
+    "spriteId": "archen",
     "learnset": []
   },
   {
@@ -16632,6 +17394,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "archeops",
+    "spriteId": "archeops",
     "learnset": []
   },
   {
@@ -16654,6 +17417,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aftermath",
     "sprite": "trubbish",
+    "spriteId": "trubbish",
     "learnset": []
   },
   {
@@ -16676,6 +17440,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aftermath",
     "sprite": "garbodor",
+    "spriteId": "garbodor",
     "learnset": []
   },
   {
@@ -16698,6 +17463,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aftermath",
     "sprite": "garbodorgmax",
+    "spriteId": "garbodor-gmax",
     "learnset": []
   },
   {
@@ -16719,6 +17485,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zorua",
+    "spriteId": "zorua",
     "learnset": []
   },
   {
@@ -16741,6 +17508,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zoruahisui",
+    "spriteId": "zorua-hisui",
     "learnset": []
   },
   {
@@ -16762,6 +17530,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zoroark",
+    "spriteId": "zoroark",
     "learnset": []
   },
   {
@@ -16784,6 +17553,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zoroarkhisui",
+    "spriteId": "zoroark-hisui",
     "learnset": []
   },
   {
@@ -16806,6 +17576,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Skill Link",
     "sprite": "minccino",
+    "spriteId": "minccino",
     "learnset": []
   },
   {
@@ -16828,6 +17599,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Skill Link",
     "sprite": "cinccino",
+    "spriteId": "cinccino",
     "learnset": []
   },
   {
@@ -16850,6 +17622,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shadow Tag",
     "sprite": "gothita",
+    "spriteId": "gothita",
     "learnset": []
   },
   {
@@ -16872,6 +17645,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shadow Tag",
     "sprite": "gothorita",
+    "spriteId": "gothorita",
     "learnset": []
   },
   {
@@ -16894,6 +17668,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shadow Tag",
     "sprite": "gothitelle",
+    "spriteId": "gothitelle",
     "learnset": []
   },
   {
@@ -16916,6 +17691,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "solosis",
+    "spriteId": "solosis",
     "learnset": []
   },
   {
@@ -16938,6 +17714,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "duosion",
+    "spriteId": "duosion",
     "learnset": []
   },
   {
@@ -16960,6 +17737,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "reuniclus",
+    "spriteId": "reuniclus",
     "learnset": []
   },
   {
@@ -16983,6 +17761,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "ducklett",
+    "spriteId": "ducklett",
     "learnset": []
   },
   {
@@ -17006,6 +17785,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hydration",
     "sprite": "swanna",
+    "spriteId": "swanna",
     "learnset": []
   },
   {
@@ -17028,6 +17808,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "vanillite",
+    "spriteId": "vanillite",
     "learnset": []
   },
   {
@@ -17050,6 +17831,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "vanillish",
+    "spriteId": "vanillish",
     "learnset": []
   },
   {
@@ -17072,6 +17854,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "vanilluxe",
+    "spriteId": "vanilluxe",
     "learnset": []
   },
   {
@@ -17095,6 +17878,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Serene Grace",
     "sprite": "deerling",
+    "spriteId": "deerling",
     "learnset": []
   },
   {
@@ -17118,6 +17902,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Serene Grace",
     "sprite": "sawsbuck",
+    "spriteId": "sawsbuck",
     "learnset": []
   },
   {
@@ -17140,6 +17925,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Motor Drive",
     "sprite": "emolga",
+    "spriteId": "emolga",
     "learnset": []
   },
   {
@@ -17162,6 +17948,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "No Guard",
     "sprite": "karrablast",
+    "spriteId": "karrablast",
     "learnset": []
   },
   {
@@ -17185,6 +17972,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "escavalier",
+    "spriteId": "escavalier",
     "learnset": []
   },
   {
@@ -17207,6 +17995,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "foongus",
+    "spriteId": "foongus",
     "learnset": []
   },
   {
@@ -17229,6 +18018,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "amoonguss",
+    "spriteId": "amoonguss",
     "learnset": []
   },
   {
@@ -17252,6 +18042,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "frillish",
+    "spriteId": "frillish",
     "learnset": []
   },
   {
@@ -17275,6 +18066,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "jellicent",
+    "spriteId": "jellicent",
     "learnset": []
   },
   {
@@ -17297,6 +18089,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "alomomola",
+    "spriteId": "alomomola",
     "learnset": []
   },
   {
@@ -17320,6 +18113,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swarm",
     "sprite": "joltik",
+    "spriteId": "joltik",
     "learnset": []
   },
   {
@@ -17343,6 +18137,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swarm",
     "sprite": "galvantula",
+    "spriteId": "galvantula",
     "learnset": []
   },
   {
@@ -17365,6 +18160,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ferroseed",
+    "spriteId": "ferroseed",
     "learnset": []
   },
   {
@@ -17387,6 +18183,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anticipation",
     "sprite": "ferrothorn",
+    "spriteId": "ferrothorn",
     "learnset": []
   },
   {
@@ -17409,6 +18206,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Clear Body",
     "sprite": "klink",
+    "spriteId": "klink",
     "learnset": []
   },
   {
@@ -17431,6 +18229,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Clear Body",
     "sprite": "klang",
+    "spriteId": "klang",
     "learnset": []
   },
   {
@@ -17453,6 +18252,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Clear Body",
     "sprite": "klinklang",
+    "spriteId": "klinklang",
     "learnset": []
   },
   {
@@ -17474,6 +18274,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "tynamo",
+    "spriteId": "tynamo",
     "learnset": []
   },
   {
@@ -17495,6 +18296,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "eelektrik",
+    "spriteId": "eelektrik",
     "learnset": []
   },
   {
@@ -17516,6 +18318,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "eelektross",
+    "spriteId": "eelektross",
     "learnset": []
   },
   {
@@ -17537,6 +18340,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "eelektrossmega",
+    "spriteId": "eelektross-mega",
     "learnset": []
   },
   {
@@ -17559,6 +18363,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "elgyem",
+    "spriteId": "elgyem",
     "learnset": []
   },
   {
@@ -17581,6 +18386,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Analytic",
     "sprite": "beheeyem",
+    "spriteId": "beheeyem",
     "learnset": []
   },
   {
@@ -17604,6 +18410,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "litwick",
+    "spriteId": "litwick",
     "learnset": []
   },
   {
@@ -17627,6 +18434,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "lampent",
+    "spriteId": "lampent",
     "learnset": []
   },
   {
@@ -17650,6 +18458,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "chandelure",
+    "spriteId": "chandelure",
     "learnset": []
   },
   {
@@ -17672,6 +18481,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "chandeluremega",
+    "spriteId": "chandelure-mega",
     "learnset": []
   },
   {
@@ -17694,6 +18504,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "axew",
+    "spriteId": "axew",
     "learnset": []
   },
   {
@@ -17716,6 +18527,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "fraxure",
+    "spriteId": "fraxure",
     "learnset": []
   },
   {
@@ -17738,6 +18550,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "haxorus",
+    "spriteId": "haxorus",
     "learnset": []
   },
   {
@@ -17760,6 +18573,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "cubchoo",
+    "spriteId": "cubchoo",
     "learnset": []
   },
   {
@@ -17782,6 +18596,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "beartic",
+    "spriteId": "beartic",
     "learnset": []
   },
   {
@@ -17803,6 +18618,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cryogonal",
+    "spriteId": "cryogonal",
     "learnset": []
   },
   {
@@ -17825,6 +18641,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "shelmet",
+    "spriteId": "shelmet",
     "learnset": []
   },
   {
@@ -17847,6 +18664,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unburden",
     "sprite": "accelgor",
+    "spriteId": "accelgor",
     "learnset": []
   },
   {
@@ -17870,6 +18688,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "stunfisk",
+    "spriteId": "stunfisk",
     "learnset": []
   },
   {
@@ -17892,6 +18711,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "stunfiskgalar",
+    "spriteId": "stunfisk-galar",
     "learnset": []
   },
   {
@@ -17914,6 +18734,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "mienfoo",
+    "spriteId": "mienfoo",
     "learnset": []
   },
   {
@@ -17936,6 +18757,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Reckless",
     "sprite": "mienshao",
+    "spriteId": "mienshao",
     "learnset": []
   },
   {
@@ -17958,6 +18780,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "druddigon",
+    "spriteId": "druddigon",
     "learnset": []
   },
   {
@@ -17981,6 +18804,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "No Guard",
     "sprite": "golett",
+    "spriteId": "golett",
     "learnset": []
   },
   {
@@ -18004,6 +18828,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "No Guard",
     "sprite": "golurk",
+    "spriteId": "golurk",
     "learnset": []
   },
   {
@@ -18026,6 +18851,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "golurkmega",
+    "spriteId": "golurk-mega",
     "learnset": []
   },
   {
@@ -18049,6 +18875,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pressure",
     "sprite": "pawniard",
+    "spriteId": "pawniard",
     "learnset": []
   },
   {
@@ -18072,6 +18899,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pressure",
     "sprite": "bisharp",
+    "spriteId": "bisharp",
     "learnset": []
   },
   {
@@ -18094,6 +18922,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Soundproof",
     "sprite": "bouffalant",
+    "spriteId": "bouffalant",
     "learnset": []
   },
   {
@@ -18117,6 +18946,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "rufflet",
+    "spriteId": "rufflet",
     "learnset": []
   },
   {
@@ -18140,6 +18970,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "braviary",
+    "spriteId": "braviary",
     "learnset": []
   },
   {
@@ -18163,6 +18994,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "braviaryhisui",
+    "spriteId": "braviary-hisui",
     "learnset": []
   },
   {
@@ -18186,6 +19018,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "vullaby",
+    "spriteId": "vullaby",
     "learnset": []
   },
   {
@@ -18209,6 +19042,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "mandibuzz",
+    "spriteId": "mandibuzz",
     "learnset": []
   },
   {
@@ -18231,6 +19065,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "White Smoke",
     "sprite": "heatmor",
+    "spriteId": "heatmor",
     "learnset": []
   },
   {
@@ -18254,6 +19089,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Truant",
     "sprite": "durant",
+    "spriteId": "durant",
     "learnset": []
   },
   {
@@ -18276,6 +19112,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "deino",
+    "spriteId": "deino",
     "learnset": []
   },
   {
@@ -18298,6 +19135,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zweilous",
+    "spriteId": "zweilous",
     "learnset": []
   },
   {
@@ -18320,6 +19158,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "hydreigon",
+    "spriteId": "hydreigon",
     "learnset": []
   },
   {
@@ -18342,6 +19181,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swarm",
     "sprite": "larvesta",
+    "spriteId": "larvesta",
     "learnset": []
   },
   {
@@ -18364,6 +19204,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swarm",
     "sprite": "volcarona",
+    "spriteId": "volcarona",
     "learnset": []
   },
   {
@@ -18386,6 +19227,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cobalion",
+    "spriteId": "cobalion",
     "learnset": []
   },
   {
@@ -18408,6 +19250,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "terrakion",
+    "spriteId": "terrakion",
     "learnset": []
   },
   {
@@ -18430,6 +19273,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "virizion",
+    "spriteId": "virizion",
     "learnset": []
   },
   {
@@ -18451,6 +19295,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "tornadus",
+    "spriteId": "tornadus",
     "learnset": []
   },
   {
@@ -18472,6 +19317,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "tornadustherian",
+    "spriteId": "tornadus-therian",
     "learnset": []
   },
   {
@@ -18494,6 +19340,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "thundurus",
+    "spriteId": "thundurus",
     "learnset": []
   },
   {
@@ -18516,6 +19363,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "thundurustherian",
+    "spriteId": "thundurus-therian",
     "learnset": []
   },
   {
@@ -18538,6 +19386,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "reshiram",
+    "spriteId": "reshiram",
     "learnset": []
   },
   {
@@ -18560,6 +19409,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zekrom",
+    "spriteId": "zekrom",
     "learnset": []
   },
   {
@@ -18582,6 +19432,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "landorus",
+    "spriteId": "landorus",
     "learnset": []
   },
   {
@@ -18604,6 +19455,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "landorustherian",
+    "spriteId": "landorus-therian",
     "learnset": []
   },
   {
@@ -18626,6 +19478,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kyurem",
+    "spriteId": "kyurem",
     "learnset": []
   },
   {
@@ -18648,6 +19501,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kyuremblack",
+    "spriteId": "kyurem-black",
     "learnset": []
   },
   {
@@ -18670,6 +19524,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kyuremwhite",
+    "spriteId": "kyurem-white",
     "learnset": []
   },
   {
@@ -18692,6 +19547,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "keldeo",
+    "spriteId": "keldeo",
     "learnset": []
   },
   {
@@ -18714,6 +19570,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "keldeoresolute",
+    "spriteId": "keldeo-resolute",
     "learnset": []
   },
   {
@@ -18736,6 +19593,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "meloetta",
+    "spriteId": "meloetta",
     "learnset": []
   },
   {
@@ -18758,6 +19616,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "meloettapirouette",
+    "spriteId": "meloetta-pirouette",
     "learnset": []
   },
   {
@@ -18780,6 +19639,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "genesect",
+    "spriteId": "genesect",
     "learnset": []
   },
   {
@@ -18802,6 +19662,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "genesectdouse",
+    "spriteId": "genesect-douse",
     "learnset": []
   },
   {
@@ -18824,6 +19685,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "genesectshock",
+    "spriteId": "genesect-shock",
     "learnset": []
   },
   {
@@ -18846,6 +19708,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "genesectburn",
+    "spriteId": "genesect-burn",
     "learnset": []
   },
   {
@@ -18868,6 +19731,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "genesectchill",
+    "spriteId": "genesect-chill",
     "learnset": []
   },
   {
@@ -18889,6 +19753,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Bulletproof",
     "sprite": "chespin",
+    "spriteId": "chespin",
     "learnset": []
   },
   {
@@ -18910,6 +19775,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Bulletproof",
     "sprite": "quilladin",
+    "spriteId": "quilladin",
     "learnset": []
   },
   {
@@ -18932,6 +19798,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Bulletproof",
     "sprite": "chesnaught",
+    "spriteId": "chesnaught",
     "learnset": []
   },
   {
@@ -18954,6 +19821,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "chesnaughtmega",
+    "spriteId": "chesnaught-mega",
     "learnset": []
   },
   {
@@ -18975,6 +19843,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magician",
     "sprite": "fennekin",
+    "spriteId": "fennekin",
     "learnset": []
   },
   {
@@ -18996,6 +19865,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magician",
     "sprite": "braixen",
+    "spriteId": "braixen",
     "learnset": []
   },
   {
@@ -19018,6 +19888,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magician",
     "sprite": "delphox",
+    "spriteId": "delphox",
     "learnset": []
   },
   {
@@ -19040,6 +19911,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "delphoxmega",
+    "spriteId": "delphox-mega",
     "learnset": []
   },
   {
@@ -19061,6 +19933,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Protean",
     "sprite": "froakie",
+    "spriteId": "froakie",
     "learnset": []
   },
   {
@@ -19082,6 +19955,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Protean",
     "sprite": "frogadier",
+    "spriteId": "frogadier",
     "learnset": []
   },
   {
@@ -19105,6 +19979,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Protean",
     "sprite": "greninja",
+    "spriteId": "greninja",
     "learnset": []
   },
   {
@@ -19127,6 +20002,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "greninjabond",
+    "spriteId": "greninja-bond",
     "learnset": []
   },
   {
@@ -19149,6 +20025,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "greninjaash",
+    "spriteId": "greninja-ash",
     "learnset": []
   },
   {
@@ -19171,6 +20048,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "greninjamega",
+    "spriteId": "greninja-mega",
     "learnset": []
   },
   {
@@ -19193,6 +20071,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Huge Power",
     "sprite": "bunnelby",
+    "spriteId": "bunnelby",
     "learnset": []
   },
   {
@@ -19216,6 +20095,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Huge Power",
     "sprite": "diggersby",
+    "spriteId": "diggersby",
     "learnset": []
   },
   {
@@ -19238,6 +20118,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gale Wings",
     "sprite": "fletchling",
+    "spriteId": "fletchling",
     "learnset": []
   },
   {
@@ -19260,6 +20141,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gale Wings",
     "sprite": "fletchinder",
+    "spriteId": "fletchinder",
     "learnset": []
   },
   {
@@ -19282,6 +20164,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gale Wings",
     "sprite": "talonflame",
+    "spriteId": "talonflame",
     "learnset": []
   },
   {
@@ -19304,6 +20187,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "scatterbug",
+    "spriteId": "scatterbug",
     "learnset": []
   },
   {
@@ -19325,6 +20209,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "spewpa",
+    "spriteId": "spewpa",
     "learnset": []
   },
   {
@@ -19348,6 +20233,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "vivillon",
+    "spriteId": "vivillon",
     "learnset": []
   },
   {
@@ -19371,6 +20257,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "vivillonfancy",
+    "spriteId": "vivillon-fancy",
     "learnset": []
   },
   {
@@ -19394,6 +20281,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Friend Guard",
     "sprite": "vivillonpokeball",
+    "spriteId": "vivillon-pokeball",
     "learnset": []
   },
   {
@@ -19417,6 +20305,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "litleo",
+    "spriteId": "litleo",
     "learnset": []
   },
   {
@@ -19440,6 +20329,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "pyroar",
+    "spriteId": "pyroar",
     "learnset": []
   },
   {
@@ -19462,6 +20352,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pyroarmega",
+    "spriteId": "pyroar-mega",
     "learnset": []
   },
   {
@@ -19483,6 +20374,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Symbiosis",
     "sprite": "flabebe",
+    "spriteId": "flabebe",
     "learnset": []
   },
   {
@@ -19504,6 +20396,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Symbiosis",
     "sprite": "floette",
+    "spriteId": "floette",
     "learnset": []
   },
   {
@@ -19525,6 +20418,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Symbiosis",
     "sprite": "floetteeternal",
+    "spriteId": "floette-eternal",
     "learnset": []
   },
   {
@@ -19546,6 +20440,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "floettemega",
+    "spriteId": "floette-mega",
     "learnset": []
   },
   {
@@ -19567,6 +20462,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Symbiosis",
     "sprite": "florges",
+    "spriteId": "florges",
     "learnset": []
   },
   {
@@ -19588,6 +20484,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Grass Pelt",
     "sprite": "skiddo",
+    "spriteId": "skiddo",
     "learnset": []
   },
   {
@@ -19609,6 +20506,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Grass Pelt",
     "sprite": "gogoat",
+    "spriteId": "gogoat",
     "learnset": []
   },
   {
@@ -19631,6 +20529,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "pancham",
+    "spriteId": "pancham",
     "learnset": []
   },
   {
@@ -19654,6 +20553,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "pangoro",
+    "spriteId": "pangoro",
     "learnset": []
   },
   {
@@ -19675,6 +20575,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "furfrou",
+    "spriteId": "furfrou",
     "learnset": []
   },
   {
@@ -19697,6 +20598,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Own Tempo",
     "sprite": "espurr",
+    "spriteId": "espurr",
     "learnset": []
   },
   {
@@ -19719,6 +20621,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "meowstic",
+    "spriteId": "meowstic",
     "learnset": []
   },
   {
@@ -19741,6 +20644,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Competitive",
     "sprite": "meowsticf",
+    "spriteId": "meowstic-f",
     "learnset": []
   },
   {
@@ -19762,6 +20666,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "meowsticmmega",
+    "spriteId": "meowstic-mmega",
     "learnset": []
   },
   {
@@ -19783,6 +20688,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "meowsticfmega",
+    "spriteId": "meowstic-fmega",
     "learnset": []
   },
   {
@@ -19805,6 +20711,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "honedge",
+    "spriteId": "honedge",
     "learnset": []
   },
   {
@@ -19827,6 +20734,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "doublade",
+    "spriteId": "doublade",
     "learnset": []
   },
   {
@@ -19849,6 +20757,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "aegislash",
+    "spriteId": "aegislash",
     "learnset": []
   },
   {
@@ -19871,6 +20780,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "aegislashblade",
+    "spriteId": "aegislash-blade",
     "learnset": []
   },
   {
@@ -19892,6 +20802,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aroma Veil",
     "sprite": "spritzee",
+    "spriteId": "spritzee",
     "learnset": []
   },
   {
@@ -19913,6 +20824,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aroma Veil",
     "sprite": "aromatisse",
+    "spriteId": "aromatisse",
     "learnset": []
   },
   {
@@ -19934,6 +20846,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unburden",
     "sprite": "swirlix",
+    "spriteId": "swirlix",
     "learnset": []
   },
   {
@@ -19955,6 +20868,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unburden",
     "sprite": "slurpuff",
+    "spriteId": "slurpuff",
     "learnset": []
   },
   {
@@ -19978,6 +20892,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "inkay",
+    "spriteId": "inkay",
     "learnset": []
   },
   {
@@ -20001,6 +20916,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "malamar",
+    "spriteId": "malamar",
     "learnset": []
   },
   {
@@ -20023,6 +20939,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "malamarmega",
+    "spriteId": "malamar-mega",
     "learnset": []
   },
   {
@@ -20046,6 +20963,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "binacle",
+    "spriteId": "binacle",
     "learnset": []
   },
   {
@@ -20069,6 +20987,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "barbaracle",
+    "spriteId": "barbaracle",
     "learnset": []
   },
   {
@@ -20091,6 +21010,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "barbaraclemega",
+    "spriteId": "barbaracle-mega",
     "learnset": []
   },
   {
@@ -20114,6 +21034,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Adaptability",
     "sprite": "skrelp",
+    "spriteId": "skrelp",
     "learnset": []
   },
   {
@@ -20137,6 +21058,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Adaptability",
     "sprite": "dragalge",
+    "spriteId": "dragalge",
     "learnset": []
   },
   {
@@ -20159,6 +21081,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "dragalgemega",
+    "spriteId": "dragalge-mega",
     "learnset": []
   },
   {
@@ -20180,6 +21103,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "clauncher",
+    "spriteId": "clauncher",
     "learnset": []
   },
   {
@@ -20201,6 +21125,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "clawitzer",
+    "spriteId": "clawitzer",
     "learnset": []
   },
   {
@@ -20224,6 +21149,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Solar Power",
     "sprite": "helioptile",
+    "spriteId": "helioptile",
     "learnset": []
   },
   {
@@ -20247,6 +21173,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Solar Power",
     "sprite": "heliolisk",
+    "spriteId": "heliolisk",
     "learnset": []
   },
   {
@@ -20269,6 +21196,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "tyrunt",
+    "spriteId": "tyrunt",
     "learnset": []
   },
   {
@@ -20291,6 +21219,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rock Head",
     "sprite": "tyrantrum",
+    "spriteId": "tyrantrum",
     "learnset": []
   },
   {
@@ -20313,6 +21242,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Snow Warning",
     "sprite": "amaura",
+    "spriteId": "amaura",
     "learnset": []
   },
   {
@@ -20335,6 +21265,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Snow Warning",
     "sprite": "aurorus",
+    "spriteId": "aurorus",
     "learnset": []
   },
   {
@@ -20356,6 +21287,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pixilate",
     "sprite": "sylveon",
+    "spriteId": "sylveon",
     "learnset": []
   },
   {
@@ -20379,6 +21311,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "hawlucha",
+    "spriteId": "hawlucha",
     "learnset": []
   },
   {
@@ -20401,6 +21334,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "hawluchamega",
+    "spriteId": "hawlucha-mega",
     "learnset": []
   },
   {
@@ -20424,6 +21358,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Plus",
     "sprite": "dedenne",
+    "spriteId": "dedenne",
     "learnset": []
   },
   {
@@ -20446,6 +21381,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "carbink",
+    "spriteId": "carbink",
     "learnset": []
   },
   {
@@ -20468,6 +21404,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gooey",
     "sprite": "goomy",
+    "spriteId": "goomy",
     "learnset": []
   },
   {
@@ -20490,6 +21427,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gooey",
     "sprite": "sliggoo",
+    "spriteId": "sliggoo",
     "learnset": []
   },
   {
@@ -20513,6 +21451,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gooey",
     "sprite": "sliggoohisui",
+    "spriteId": "sliggoo-hisui",
     "learnset": []
   },
   {
@@ -20535,6 +21474,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gooey",
     "sprite": "goodra",
+    "spriteId": "goodra",
     "learnset": []
   },
   {
@@ -20558,6 +21498,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gooey",
     "sprite": "goodrahisui",
+    "spriteId": "goodra-hisui",
     "learnset": []
   },
   {
@@ -20580,6 +21521,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magician",
     "sprite": "klefki",
+    "spriteId": "klefki",
     "learnset": []
   },
   {
@@ -20603,6 +21545,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "phantump",
+    "spriteId": "phantump",
     "learnset": []
   },
   {
@@ -20626,6 +21569,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "trevenant",
+    "spriteId": "trevenant",
     "learnset": []
   },
   {
@@ -20649,6 +21593,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "pumpkaboo",
+    "spriteId": "pumpkaboo",
     "learnset": []
   },
   {
@@ -20672,6 +21617,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "pumpkaboosmall",
+    "spriteId": "pumpkaboo-small",
     "learnset": []
   },
   {
@@ -20695,6 +21641,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "pumpkaboolarge",
+    "spriteId": "pumpkaboo-large",
     "learnset": []
   },
   {
@@ -20718,6 +21665,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "pumpkaboosuper",
+    "spriteId": "pumpkaboo-super",
     "learnset": []
   },
   {
@@ -20741,6 +21689,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "gourgeist",
+    "spriteId": "gourgeist",
     "learnset": []
   },
   {
@@ -20764,6 +21713,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "gourgeistsmall",
+    "spriteId": "gourgeist-small",
     "learnset": []
   },
   {
@@ -20787,6 +21737,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "gourgeistlarge",
+    "spriteId": "gourgeist-large",
     "learnset": []
   },
   {
@@ -20810,6 +21761,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Insomnia",
     "sprite": "gourgeistsuper",
+    "spriteId": "gourgeist-super",
     "learnset": []
   },
   {
@@ -20832,6 +21784,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "bergmite",
+    "spriteId": "bergmite",
     "learnset": []
   },
   {
@@ -20854,6 +21807,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "avalugg",
+    "spriteId": "avalugg",
     "learnset": []
   },
   {
@@ -20877,6 +21831,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "avalugghisui",
+    "spriteId": "avalugg-hisui",
     "learnset": []
   },
   {
@@ -20900,6 +21855,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "noibat",
+    "spriteId": "noibat",
     "learnset": []
   },
   {
@@ -20923,6 +21879,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "noivern",
+    "spriteId": "noivern",
     "learnset": []
   },
   {
@@ -20944,6 +21901,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "xerneas",
+    "spriteId": "xerneas",
     "learnset": []
   },
   {
@@ -20965,6 +21923,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "xerneasneutral",
+    "spriteId": "xerneas-neutral",
     "learnset": []
   },
   {
@@ -20987,6 +21946,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "yveltal",
+    "spriteId": "yveltal",
     "learnset": []
   },
   {
@@ -21010,6 +21970,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zygarde",
+    "spriteId": "zygarde",
     "learnset": []
   },
   {
@@ -21033,6 +21994,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zygarde10",
+    "spriteId": "zygarde-10",
     "learnset": []
   },
   {
@@ -21055,6 +22017,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zygardecomplete",
+    "spriteId": "zygarde-complete",
     "learnset": []
   },
   {
@@ -21077,6 +22040,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zygardemega",
+    "spriteId": "zygarde-mega",
     "learnset": []
   },
   {
@@ -21099,6 +22063,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "diancie",
+    "spriteId": "diancie",
     "learnset": []
   },
   {
@@ -21121,6 +22086,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "dianciemega",
+    "spriteId": "diancie-mega",
     "learnset": []
   },
   {
@@ -21143,6 +22109,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "hoopa",
+    "spriteId": "hoopa",
     "learnset": []
   },
   {
@@ -21165,6 +22132,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "hoopaunbound",
+    "spriteId": "hoopa-unbound",
     "learnset": []
   },
   {
@@ -21187,6 +22155,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "volcanion",
+    "spriteId": "volcanion",
     "learnset": []
   },
   {
@@ -21209,6 +22178,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Long Reach",
     "sprite": "rowlet",
+    "spriteId": "rowlet",
     "learnset": []
   },
   {
@@ -21231,6 +22201,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Long Reach",
     "sprite": "dartrix",
+    "spriteId": "dartrix",
     "learnset": []
   },
   {
@@ -21253,6 +22224,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Long Reach",
     "sprite": "decidueye",
+    "spriteId": "decidueye",
     "learnset": []
   },
   {
@@ -21275,6 +22247,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "decidueyehisui",
+    "spriteId": "decidueye-hisui",
     "learnset": []
   },
   {
@@ -21296,6 +22269,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "litten",
+    "spriteId": "litten",
     "learnset": []
   },
   {
@@ -21317,6 +22291,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "torracat",
+    "spriteId": "torracat",
     "learnset": []
   },
   {
@@ -21339,6 +22314,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "incineroar",
+    "spriteId": "incineroar",
     "learnset": []
   },
   {
@@ -21360,6 +22336,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Liquid Voice",
     "sprite": "popplio",
+    "spriteId": "popplio",
     "learnset": []
   },
   {
@@ -21381,6 +22358,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Liquid Voice",
     "sprite": "brionne",
+    "spriteId": "brionne",
     "learnset": []
   },
   {
@@ -21403,6 +22381,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Liquid Voice",
     "sprite": "primarina",
+    "spriteId": "primarina",
     "learnset": []
   },
   {
@@ -21426,6 +22405,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickup",
     "sprite": "pikipek",
+    "spriteId": "pikipek",
     "learnset": []
   },
   {
@@ -21449,6 +22429,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickup",
     "sprite": "trumbeak",
+    "spriteId": "trumbeak",
     "learnset": []
   },
   {
@@ -21472,6 +22453,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "toucannon",
+    "spriteId": "toucannon",
     "learnset": []
   },
   {
@@ -21494,6 +22476,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Adaptability",
     "sprite": "yungoos",
+    "spriteId": "yungoos",
     "learnset": []
   },
   {
@@ -21516,6 +22499,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Adaptability",
     "sprite": "gumshoos",
+    "spriteId": "gumshoos",
     "learnset": []
   },
   {
@@ -21537,6 +22521,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gumshoostotem",
+    "spriteId": "gumshoos-totem",
     "learnset": []
   },
   {
@@ -21558,6 +22543,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "grubbin",
+    "spriteId": "grubbin",
     "learnset": []
   },
   {
@@ -21580,6 +22566,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "charjabug",
+    "spriteId": "charjabug",
     "learnset": []
   },
   {
@@ -21602,6 +22589,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "vikavolt",
+    "spriteId": "vikavolt",
     "learnset": []
   },
   {
@@ -21624,6 +22612,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "vikavolttotem",
+    "spriteId": "vikavolt-totem",
     "learnset": []
   },
   {
@@ -21646,6 +22635,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anger Point",
     "sprite": "crabrawler",
+    "spriteId": "crabrawler",
     "learnset": []
   },
   {
@@ -21669,6 +22659,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Anger Point",
     "sprite": "crabominable",
+    "spriteId": "crabominable",
     "learnset": []
   },
   {
@@ -21691,6 +22682,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "crabominablemega",
+    "spriteId": "crabominable-mega",
     "learnset": []
   },
   {
@@ -21713,6 +22705,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "oricorio",
+    "spriteId": "oricorio",
     "learnset": []
   },
   {
@@ -21735,6 +22728,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "oricoriopompom",
+    "spriteId": "oricorio-pompom",
     "learnset": []
   },
   {
@@ -21757,6 +22751,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "oricoriopau",
+    "spriteId": "oricorio-pau",
     "learnset": []
   },
   {
@@ -21779,6 +22774,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "oricoriosensu",
+    "spriteId": "oricorio-sensu",
     "learnset": []
   },
   {
@@ -21802,6 +22798,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sweet Veil",
     "sprite": "cutiefly",
+    "spriteId": "cutiefly",
     "learnset": []
   },
   {
@@ -21825,6 +22822,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sweet Veil",
     "sprite": "ribombee",
+    "spriteId": "ribombee",
     "learnset": []
   },
   {
@@ -21847,6 +22845,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ribombeetotem",
+    "spriteId": "ribombee-totem",
     "learnset": []
   },
   {
@@ -21870,6 +22869,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "rockruff",
+    "spriteId": "rockruff",
     "learnset": []
   },
   {
@@ -21891,6 +22891,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "rockruffdusk",
+    "spriteId": "rockruff-dusk",
     "learnset": []
   },
   {
@@ -21913,6 +22914,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steadfast",
     "sprite": "lycanroc",
+    "spriteId": "lycanroc",
     "learnset": []
   },
   {
@@ -21935,6 +22937,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "No Guard",
     "sprite": "lycanrocmidnight",
+    "spriteId": "lycanroc-midnight",
     "learnset": []
   },
   {
@@ -21956,6 +22959,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "lycanrocdusk",
+    "spriteId": "lycanroc-dusk",
     "learnset": []
   },
   {
@@ -21977,6 +22981,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "wishiwashi",
+    "spriteId": "wishiwashi",
     "learnset": []
   },
   {
@@ -21998,6 +23003,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "wishiwashischool",
+    "spriteId": "wishiwashi-school",
     "learnset": []
   },
   {
@@ -22021,6 +23027,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "mareanie",
+    "spriteId": "mareanie",
     "learnset": []
   },
   {
@@ -22044,6 +23051,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "toxapex",
+    "spriteId": "toxapex",
     "learnset": []
   },
   {
@@ -22066,6 +23074,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "mudbray",
+    "spriteId": "mudbray",
     "learnset": []
   },
   {
@@ -22088,6 +23097,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Inner Focus",
     "sprite": "mudsdale",
+    "spriteId": "mudsdale",
     "learnset": []
   },
   {
@@ -22110,6 +23120,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "dewpider",
+    "spriteId": "dewpider",
     "learnset": []
   },
   {
@@ -22132,6 +23143,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Absorb",
     "sprite": "araquanid",
+    "spriteId": "araquanid",
     "learnset": []
   },
   {
@@ -22154,6 +23166,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "araquanidtotem",
+    "spriteId": "araquanid-totem",
     "learnset": []
   },
   {
@@ -22175,6 +23188,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "fomantis",
+    "spriteId": "fomantis",
     "learnset": []
   },
   {
@@ -22196,6 +23210,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "lurantis",
+    "spriteId": "lurantis",
     "learnset": []
   },
   {
@@ -22217,6 +23232,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "lurantistotem",
+    "spriteId": "lurantis-totem",
     "learnset": []
   },
   {
@@ -22240,6 +23256,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "morelull",
+    "spriteId": "morelull",
     "learnset": []
   },
   {
@@ -22263,6 +23280,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rain Dish",
     "sprite": "shiinotic",
+    "spriteId": "shiinotic",
     "learnset": []
   },
   {
@@ -22285,6 +23303,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Oblivious",
     "sprite": "salandit",
+    "spriteId": "salandit",
     "learnset": []
   },
   {
@@ -22307,6 +23326,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Oblivious",
     "sprite": "salazzle",
+    "spriteId": "salazzle",
     "learnset": []
   },
   {
@@ -22329,6 +23349,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "salazzletotem",
+    "spriteId": "salazzle-totem",
     "learnset": []
   },
   {
@@ -22352,6 +23373,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cute Charm",
     "sprite": "stufful",
+    "spriteId": "stufful",
     "learnset": []
   },
   {
@@ -22375,6 +23397,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "bewear",
+    "spriteId": "bewear",
     "learnset": []
   },
   {
@@ -22397,6 +23420,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sweet Veil",
     "sprite": "bounsweet",
+    "spriteId": "bounsweet",
     "learnset": []
   },
   {
@@ -22419,6 +23443,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sweet Veil",
     "sprite": "steenee",
+    "spriteId": "steenee",
     "learnset": []
   },
   {
@@ -22441,6 +23466,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sweet Veil",
     "sprite": "tsareena",
+    "spriteId": "tsareena",
     "learnset": []
   },
   {
@@ -22463,6 +23489,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Natural Cure",
     "sprite": "comfey",
+    "spriteId": "comfey",
     "learnset": []
   },
   {
@@ -22486,6 +23513,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Symbiosis",
     "sprite": "oranguru",
+    "spriteId": "oranguru",
     "learnset": []
   },
   {
@@ -22507,6 +23535,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "passimian",
+    "spriteId": "passimian",
     "learnset": []
   },
   {
@@ -22529,6 +23558,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "wimpod",
+    "spriteId": "wimpod",
     "learnset": []
   },
   {
@@ -22551,6 +23581,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "golisopod",
+    "spriteId": "golisopod",
     "learnset": []
   },
   {
@@ -22573,6 +23604,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "golisopodmega",
+    "spriteId": "golisopod-mega",
     "learnset": []
   },
   {
@@ -22595,6 +23627,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "sandygast",
+    "spriteId": "sandygast",
     "learnset": []
   },
   {
@@ -22617,6 +23650,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "palossand",
+    "spriteId": "palossand",
     "learnset": []
   },
   {
@@ -22638,6 +23672,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "pyukumuku",
+    "spriteId": "pyukumuku",
     "learnset": []
   },
   {
@@ -22659,6 +23694,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "typenull",
+    "spriteId": "typenull",
     "learnset": []
   },
   {
@@ -22680,6 +23716,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvally",
+    "spriteId": "silvally",
     "learnset": []
   },
   {
@@ -22701,6 +23738,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallybug",
+    "spriteId": "silvally-bug",
     "learnset": []
   },
   {
@@ -22722,6 +23760,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallydark",
+    "spriteId": "silvally-dark",
     "learnset": []
   },
   {
@@ -22743,6 +23782,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallydragon",
+    "spriteId": "silvally-dragon",
     "learnset": []
   },
   {
@@ -22764,6 +23804,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyelectric",
+    "spriteId": "silvally-electric",
     "learnset": []
   },
   {
@@ -22785,6 +23826,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyfairy",
+    "spriteId": "silvally-fairy",
     "learnset": []
   },
   {
@@ -22806,6 +23848,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyfighting",
+    "spriteId": "silvally-fighting",
     "learnset": []
   },
   {
@@ -22827,6 +23870,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyfire",
+    "spriteId": "silvally-fire",
     "learnset": []
   },
   {
@@ -22848,6 +23892,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyflying",
+    "spriteId": "silvally-flying",
     "learnset": []
   },
   {
@@ -22869,6 +23914,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyghost",
+    "spriteId": "silvally-ghost",
     "learnset": []
   },
   {
@@ -22890,6 +23936,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallygrass",
+    "spriteId": "silvally-grass",
     "learnset": []
   },
   {
@@ -22911,6 +23958,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyground",
+    "spriteId": "silvally-ground",
     "learnset": []
   },
   {
@@ -22932,6 +23980,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyice",
+    "spriteId": "silvally-ice",
     "learnset": []
   },
   {
@@ -22953,6 +24002,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallypoison",
+    "spriteId": "silvally-poison",
     "learnset": []
   },
   {
@@ -22974,6 +24024,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallypsychic",
+    "spriteId": "silvally-psychic",
     "learnset": []
   },
   {
@@ -22995,6 +24046,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallyrock",
+    "spriteId": "silvally-rock",
     "learnset": []
   },
   {
@@ -23016,6 +24068,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallysteel",
+    "spriteId": "silvally-steel",
     "learnset": []
   },
   {
@@ -23037,6 +24090,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "silvallywater",
+    "spriteId": "silvally-water",
     "learnset": []
   },
   {
@@ -23059,6 +24113,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "minior",
+    "spriteId": "minior",
     "learnset": []
   },
   {
@@ -23081,6 +24136,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "miniormeteor",
+    "spriteId": "minior-meteor",
     "learnset": []
   },
   {
@@ -23102,6 +24158,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "komala",
+    "spriteId": "komala",
     "learnset": []
   },
   {
@@ -23124,6 +24181,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "turtonator",
+    "spriteId": "turtonator",
     "learnset": []
   },
   {
@@ -23147,6 +24205,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sturdy",
     "sprite": "togedemaru",
+    "spriteId": "togedemaru",
     "learnset": []
   },
   {
@@ -23169,6 +24228,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "togedemarutotem",
+    "spriteId": "togedemaru-totem",
     "learnset": []
   },
   {
@@ -23191,6 +24251,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mimikyu",
+    "spriteId": "mimikyu",
     "learnset": []
   },
   {
@@ -23213,6 +24274,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mimikyubusted",
+    "spriteId": "mimikyu-busted",
     "learnset": []
   },
   {
@@ -23235,6 +24297,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mimikyutotem",
+    "spriteId": "mimikyu-totem",
     "learnset": []
   },
   {
@@ -23257,6 +24320,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "mimikyubustedtotem",
+    "spriteId": "mimikyu-bustedtotem",
     "learnset": []
   },
   {
@@ -23280,6 +24344,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Wonder Skin",
     "sprite": "bruxish",
+    "spriteId": "bruxish",
     "learnset": []
   },
   {
@@ -23303,6 +24368,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cloud Nine",
     "sprite": "drampa",
+    "spriteId": "drampa",
     "learnset": []
   },
   {
@@ -23325,6 +24391,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "drampamega",
+    "spriteId": "drampa-mega",
     "learnset": []
   },
   {
@@ -23347,6 +24414,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "dhelmise",
+    "spriteId": "dhelmise",
     "learnset": []
   },
   {
@@ -23369,6 +24437,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "jangmoo",
+    "spriteId": "jangmoo",
     "learnset": []
   },
   {
@@ -23392,6 +24461,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "hakamoo",
+    "spriteId": "hakamoo",
     "learnset": []
   },
   {
@@ -23415,6 +24485,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Overcoat",
     "sprite": "kommoo",
+    "spriteId": "kommoo",
     "learnset": []
   },
   {
@@ -23437,6 +24508,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kommoototem",
+    "spriteId": "kommoo-totem",
     "learnset": []
   },
   {
@@ -23459,6 +24531,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "tapukoko",
+    "spriteId": "tapukoko",
     "learnset": []
   },
   {
@@ -23481,6 +24554,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "tapulele",
+    "spriteId": "tapulele",
     "learnset": []
   },
   {
@@ -23503,6 +24577,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "tapubulu",
+    "spriteId": "tapubulu",
     "learnset": []
   },
   {
@@ -23525,6 +24600,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "tapufini",
+    "spriteId": "tapufini",
     "learnset": []
   },
   {
@@ -23546,6 +24622,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cosmog",
+    "spriteId": "cosmog",
     "learnset": []
   },
   {
@@ -23567,6 +24644,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cosmoem",
+    "spriteId": "cosmoem",
     "learnset": []
   },
   {
@@ -23589,6 +24667,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "solgaleo",
+    "spriteId": "solgaleo",
     "learnset": []
   },
   {
@@ -23611,6 +24690,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "lunala",
+    "spriteId": "lunala",
     "learnset": []
   },
   {
@@ -23633,6 +24713,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "nihilego",
+    "spriteId": "nihilego",
     "learnset": []
   },
   {
@@ -23655,6 +24736,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "buzzwole",
+    "spriteId": "buzzwole",
     "learnset": []
   },
   {
@@ -23677,6 +24759,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pheromosa",
+    "spriteId": "pheromosa",
     "learnset": []
   },
   {
@@ -23698,6 +24781,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "xurkitree",
+    "spriteId": "xurkitree",
     "learnset": []
   },
   {
@@ -23720,6 +24804,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "celesteela",
+    "spriteId": "celesteela",
     "learnset": []
   },
   {
@@ -23742,6 +24827,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kartana",
+    "spriteId": "kartana",
     "learnset": []
   },
   {
@@ -23764,6 +24850,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "guzzlord",
+    "spriteId": "guzzlord",
     "learnset": []
   },
   {
@@ -23785,6 +24872,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "necrozma",
+    "spriteId": "necrozma",
     "learnset": []
   },
   {
@@ -23807,6 +24895,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "necrozmaduskmane",
+    "spriteId": "necrozma-duskmane",
     "learnset": []
   },
   {
@@ -23829,6 +24918,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "necrozmadawnwings",
+    "spriteId": "necrozma-dawnwings",
     "learnset": []
   },
   {
@@ -23851,6 +24941,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "necrozmaultra",
+    "spriteId": "necrozma-ultra",
     "learnset": []
   },
   {
@@ -23873,6 +24964,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "magearna",
+    "spriteId": "magearna",
     "learnset": []
   },
   {
@@ -23895,6 +24987,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "magearnaoriginal",
+    "spriteId": "magearna-original",
     "learnset": []
   },
   {
@@ -23917,6 +25010,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "magearnamega",
+    "spriteId": "magearna-mega",
     "learnset": []
   },
   {
@@ -23939,6 +25033,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "magearnaoriginalmega",
+    "spriteId": "magearna-originalmega",
     "learnset": []
   },
   {
@@ -23961,6 +25056,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "marshadow",
+    "spriteId": "marshadow",
     "learnset": []
   },
   {
@@ -23982,6 +25078,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "poipole",
+    "spriteId": "poipole",
     "learnset": []
   },
   {
@@ -24004,6 +25101,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "naganadel",
+    "spriteId": "naganadel",
     "learnset": []
   },
   {
@@ -24026,6 +25124,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "stakataka",
+    "spriteId": "stakataka",
     "learnset": []
   },
   {
@@ -24048,6 +25147,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "blacephalon",
+    "spriteId": "blacephalon",
     "learnset": []
   },
   {
@@ -24069,6 +25169,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zeraora",
+    "spriteId": "zeraora",
     "learnset": []
   },
   {
@@ -24090,6 +25191,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zeraoramega",
+    "spriteId": "zeraora-mega",
     "learnset": []
   },
   {
@@ -24111,6 +25213,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "meltan",
+    "spriteId": "meltan",
     "learnset": []
   },
   {
@@ -24132,6 +25235,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "melmetal",
+    "spriteId": "melmetal",
     "learnset": []
   },
   {
@@ -24153,6 +25257,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "melmetalgmax",
+    "spriteId": "melmetal-gmax",
     "learnset": []
   },
   {
@@ -24174,6 +25279,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Grassy Surge",
     "sprite": "grookey",
+    "spriteId": "grookey",
     "learnset": []
   },
   {
@@ -24195,6 +25301,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Grassy Surge",
     "sprite": "thwackey",
+    "spriteId": "thwackey",
     "learnset": []
   },
   {
@@ -24216,6 +25323,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Grassy Surge",
     "sprite": "rillaboom",
+    "spriteId": "rillaboom",
     "learnset": []
   },
   {
@@ -24237,6 +25345,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Grassy Surge",
     "sprite": "rillaboomgmax",
+    "spriteId": "rillaboom-gmax",
     "learnset": []
   },
   {
@@ -24258,6 +25367,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Libero",
     "sprite": "scorbunny",
+    "spriteId": "scorbunny",
     "learnset": []
   },
   {
@@ -24279,6 +25389,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Libero",
     "sprite": "raboot",
+    "spriteId": "raboot",
     "learnset": []
   },
   {
@@ -24300,6 +25411,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Libero",
     "sprite": "cinderace",
+    "spriteId": "cinderace",
     "learnset": []
   },
   {
@@ -24321,6 +25433,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Libero",
     "sprite": "cinderacegmax",
+    "spriteId": "cinderace-gmax",
     "learnset": []
   },
   {
@@ -24342,6 +25455,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "sobble",
+    "spriteId": "sobble",
     "learnset": []
   },
   {
@@ -24363,6 +25477,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "drizzile",
+    "spriteId": "drizzile",
     "learnset": []
   },
   {
@@ -24384,6 +25499,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "inteleon",
+    "spriteId": "inteleon",
     "learnset": []
   },
   {
@@ -24405,6 +25521,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sniper",
     "sprite": "inteleongmax",
+    "spriteId": "inteleon-gmax",
     "learnset": []
   },
   {
@@ -24426,6 +25543,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "skwovet",
+    "spriteId": "skwovet",
     "learnset": []
   },
   {
@@ -24447,6 +25565,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Gluttony",
     "sprite": "greedent",
+    "spriteId": "greedent",
     "learnset": []
   },
   {
@@ -24469,6 +25588,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Big Pecks",
     "sprite": "rookidee",
+    "spriteId": "rookidee",
     "learnset": []
   },
   {
@@ -24491,6 +25611,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Big Pecks",
     "sprite": "corvisquire",
+    "spriteId": "corvisquire",
     "learnset": []
   },
   {
@@ -24514,6 +25635,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mirror Armor",
     "sprite": "corviknight",
+    "spriteId": "corviknight",
     "learnset": []
   },
   {
@@ -24537,6 +25659,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mirror Armor",
     "sprite": "corviknightgmax",
+    "spriteId": "corviknight-gmax",
     "learnset": []
   },
   {
@@ -24559,6 +25682,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "blipbug",
+    "spriteId": "blipbug",
     "learnset": []
   },
   {
@@ -24582,6 +25706,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "dottler",
+    "spriteId": "dottler",
     "learnset": []
   },
   {
@@ -24605,6 +25730,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "orbeetle",
+    "spriteId": "orbeetle",
     "learnset": []
   },
   {
@@ -24628,6 +25754,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "orbeetlegmax",
+    "spriteId": "orbeetle-gmax",
     "learnset": []
   },
   {
@@ -24650,6 +25777,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stakeout",
     "sprite": "nickit",
+    "spriteId": "nickit",
     "learnset": []
   },
   {
@@ -24672,6 +25800,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stakeout",
     "sprite": "thievul",
+    "spriteId": "thievul",
     "learnset": []
   },
   {
@@ -24694,6 +25823,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Effect Spore",
     "sprite": "gossifleur",
+    "spriteId": "gossifleur",
     "learnset": []
   },
   {
@@ -24716,6 +25846,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Effect Spore",
     "sprite": "eldegoss",
+    "spriteId": "eldegoss",
     "learnset": []
   },
   {
@@ -24738,6 +25869,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Bulletproof",
     "sprite": "wooloo",
+    "spriteId": "wooloo",
     "learnset": []
   },
   {
@@ -24760,6 +25892,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Bulletproof",
     "sprite": "dubwool",
+    "spriteId": "dubwool",
     "learnset": []
   },
   {
@@ -24782,6 +25915,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "chewtle",
+    "spriteId": "chewtle",
     "learnset": []
   },
   {
@@ -24805,6 +25939,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "drednaw",
+    "spriteId": "drednaw",
     "learnset": []
   },
   {
@@ -24828,6 +25963,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Swift Swim",
     "sprite": "drednawgmax",
+    "spriteId": "drednaw-gmax",
     "learnset": []
   },
   {
@@ -24849,6 +25985,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "yamper",
+    "spriteId": "yamper",
     "learnset": []
   },
   {
@@ -24870,6 +26007,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Competitive",
     "sprite": "boltund",
+    "spriteId": "boltund",
     "learnset": []
   },
   {
@@ -24892,6 +26030,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flash Fire",
     "sprite": "rolycoly",
+    "spriteId": "rolycoly",
     "learnset": []
   },
   {
@@ -24915,6 +26054,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flash Fire",
     "sprite": "carkol",
+    "spriteId": "carkol",
     "learnset": []
   },
   {
@@ -24938,6 +26078,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flash Fire",
     "sprite": "coalossal",
+    "spriteId": "coalossal",
     "learnset": []
   },
   {
@@ -24961,6 +26102,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flash Fire",
     "sprite": "coalossalgmax",
+    "spriteId": "coalossal-gmax",
     "learnset": []
   },
   {
@@ -24984,6 +26126,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Bulletproof",
     "sprite": "applin",
+    "spriteId": "applin",
     "learnset": []
   },
   {
@@ -25007,6 +26150,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "flapple",
+    "spriteId": "flapple",
     "learnset": []
   },
   {
@@ -25030,6 +26174,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Hustle",
     "sprite": "flapplegmax",
+    "spriteId": "flapple-gmax",
     "learnset": []
   },
   {
@@ -25053,6 +26198,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "appletun",
+    "spriteId": "appletun",
     "learnset": []
   },
   {
@@ -25076,6 +26222,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "appletungmax",
+    "spriteId": "appletun-gmax",
     "learnset": []
   },
   {
@@ -25098,6 +26245,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "silicobra",
+    "spriteId": "silicobra",
     "learnset": []
   },
   {
@@ -25120,6 +26268,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "sandaconda",
+    "spriteId": "sandaconda",
     "learnset": []
   },
   {
@@ -25142,6 +26291,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "sandacondagmax",
+    "spriteId": "sandaconda-gmax",
     "learnset": []
   },
   {
@@ -25164,6 +26314,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cramorant",
+    "spriteId": "cramorant",
     "learnset": []
   },
   {
@@ -25186,6 +26337,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cramorantgulping",
+    "spriteId": "cramorant-gulping",
     "learnset": []
   },
   {
@@ -25208,6 +26360,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "cramorantgorging",
+    "spriteId": "cramorant-gorging",
     "learnset": []
   },
   {
@@ -25229,6 +26382,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Propeller Tail",
     "sprite": "arrokuda",
+    "spriteId": "arrokuda",
     "learnset": []
   },
   {
@@ -25250,6 +26404,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Propeller Tail",
     "sprite": "barraskewda",
+    "spriteId": "barraskewda",
     "learnset": []
   },
   {
@@ -25273,6 +26428,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Klutz",
     "sprite": "toxel",
+    "spriteId": "toxel",
     "learnset": []
   },
   {
@@ -25296,6 +26452,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "toxtricity",
+    "spriteId": "toxtricity",
     "learnset": []
   },
   {
@@ -25319,6 +26476,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "toxtricitylowkey",
+    "spriteId": "toxtricity-lowkey",
     "learnset": []
   },
   {
@@ -25342,6 +26500,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "toxtricitygmax",
+    "spriteId": "toxtricity-gmax",
     "learnset": []
   },
   {
@@ -25365,6 +26524,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "toxtricitylowkeygmax",
+    "spriteId": "toxtricity-lowkeygmax",
     "learnset": []
   },
   {
@@ -25388,6 +26548,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "sizzlipede",
+    "spriteId": "sizzlipede",
     "learnset": []
   },
   {
@@ -25411,6 +26572,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "centiskorch",
+    "spriteId": "centiskorch",
     "learnset": []
   },
   {
@@ -25434,6 +26596,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "centiskorchgmax",
+    "spriteId": "centiskorch-gmax",
     "learnset": []
   },
   {
@@ -25455,6 +26618,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "clobbopus",
+    "spriteId": "clobbopus",
     "learnset": []
   },
   {
@@ -25476,6 +26640,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "grapploct",
+    "spriteId": "grapploct",
     "learnset": []
   },
   {
@@ -25497,6 +26662,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "sinistea",
+    "spriteId": "sinistea",
     "learnset": []
   },
   {
@@ -25518,6 +26684,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "sinisteaantique",
+    "spriteId": "sinistea-antique",
     "learnset": []
   },
   {
@@ -25539,6 +26706,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "polteageist",
+    "spriteId": "polteageist",
     "learnset": []
   },
   {
@@ -25560,6 +26728,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "polteageistantique",
+    "spriteId": "polteageist-antique",
     "learnset": []
   },
   {
@@ -25582,6 +26751,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Bounce",
     "sprite": "hatenna",
+    "spriteId": "hatenna",
     "learnset": []
   },
   {
@@ -25604,6 +26774,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Bounce",
     "sprite": "hattrem",
+    "spriteId": "hattrem",
     "learnset": []
   },
   {
@@ -25627,6 +26798,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Bounce",
     "sprite": "hatterene",
+    "spriteId": "hatterene",
     "learnset": []
   },
   {
@@ -25650,6 +26822,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Magic Bounce",
     "sprite": "hatterenegmax",
+    "spriteId": "hatterene-gmax",
     "learnset": []
   },
   {
@@ -25673,6 +26846,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "impidimp",
+    "spriteId": "impidimp",
     "learnset": []
   },
   {
@@ -25696,6 +26870,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "morgrem",
+    "spriteId": "morgrem",
     "learnset": []
   },
   {
@@ -25719,6 +26894,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "grimmsnarl",
+    "spriteId": "grimmsnarl",
     "learnset": []
   },
   {
@@ -25742,6 +26918,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "grimmsnarlgmax",
+    "spriteId": "grimmsnarl-gmax",
     "learnset": []
   },
   {
@@ -25765,6 +26942,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "obstagoon",
+    "spriteId": "obstagoon",
     "learnset": []
   },
   {
@@ -25787,6 +26965,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Steely Spirit",
     "sprite": "perrserker",
+    "spriteId": "perrserker",
     "learnset": []
   },
   {
@@ -25808,6 +26987,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Perish Body",
     "sprite": "cursola",
+    "spriteId": "cursola",
     "learnset": []
   },
   {
@@ -25829,6 +27009,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Scrappy",
     "sprite": "sirfetchd",
+    "spriteId": "sirfetchd",
     "learnset": []
   },
   {
@@ -25852,6 +27033,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "mrrime",
+    "spriteId": "mrrime",
     "learnset": []
   },
   {
@@ -25874,6 +27056,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "runerigus",
+    "spriteId": "runerigus",
     "learnset": []
   },
   {
@@ -25895,6 +27078,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aroma Veil",
     "sprite": "milcery",
+    "spriteId": "milcery",
     "learnset": []
   },
   {
@@ -25916,6 +27100,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aroma Veil",
     "sprite": "alcremie",
+    "spriteId": "alcremie",
     "learnset": []
   },
   {
@@ -25937,6 +27122,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aroma Veil",
     "sprite": "alcremiegmax",
+    "spriteId": "alcremie-gmax",
     "learnset": []
   },
   {
@@ -25958,6 +27144,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "falinks",
+    "spriteId": "falinks",
     "learnset": []
   },
   {
@@ -25979,6 +27166,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "falinksmega",
+    "spriteId": "falinks-mega",
     "learnset": []
   },
   {
@@ -26000,6 +27188,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Electric Surge",
     "sprite": "pincurchin",
+    "spriteId": "pincurchin",
     "learnset": []
   },
   {
@@ -26022,6 +27211,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Scales",
     "sprite": "snom",
+    "spriteId": "snom",
     "learnset": []
   },
   {
@@ -26044,6 +27234,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Scales",
     "sprite": "frosmoth",
+    "spriteId": "frosmoth",
     "learnset": []
   },
   {
@@ -26065,6 +27256,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "stonjourner",
+    "spriteId": "stonjourner",
     "learnset": []
   },
   {
@@ -26086,6 +27278,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "eiscue",
+    "spriteId": "eiscue",
     "learnset": []
   },
   {
@@ -26107,6 +27300,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "eiscuenoice",
+    "spriteId": "eiscue-noice",
     "learnset": []
   },
   {
@@ -26130,6 +27324,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Psychic Surge",
     "sprite": "indeedee",
+    "spriteId": "indeedee",
     "learnset": []
   },
   {
@@ -26153,6 +27348,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Psychic Surge",
     "sprite": "indeedeef",
+    "spriteId": "indeedee-f",
     "learnset": []
   },
   {
@@ -26175,6 +27371,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "morpeko",
+    "spriteId": "morpeko",
     "learnset": []
   },
   {
@@ -26197,6 +27394,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "morpekohangry",
+    "spriteId": "morpeko-hangry",
     "learnset": []
   },
   {
@@ -26218,6 +27416,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "cufant",
+    "spriteId": "cufant",
     "learnset": []
   },
   {
@@ -26239,6 +27438,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "copperajah",
+    "spriteId": "copperajah",
     "learnset": []
   },
   {
@@ -26260,6 +27460,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heavy Metal",
     "sprite": "copperajahgmax",
+    "spriteId": "copperajah-gmax",
     "learnset": []
   },
   {
@@ -26283,6 +27484,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Rush",
     "sprite": "dracozolt",
+    "spriteId": "dracozolt",
     "learnset": []
   },
   {
@@ -26306,6 +27508,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Slush Rush",
     "sprite": "arctozolt",
+    "spriteId": "arctozolt",
     "learnset": []
   },
   {
@@ -26329,6 +27532,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Rush",
     "sprite": "dracovish",
+    "spriteId": "dracovish",
     "learnset": []
   },
   {
@@ -26352,6 +27556,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Slush Rush",
     "sprite": "arctovish",
+    "spriteId": "arctovish",
     "learnset": []
   },
   {
@@ -26375,6 +27580,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stalwart",
     "sprite": "duraludon",
+    "spriteId": "duraludon",
     "learnset": []
   },
   {
@@ -26398,6 +27604,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stalwart",
     "sprite": "duraludongmax",
+    "spriteId": "duraludon-gmax",
     "learnset": []
   },
   {
@@ -26421,6 +27628,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "dreepy",
+    "spriteId": "dreepy",
     "learnset": []
   },
   {
@@ -26444,6 +27652,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "drakloak",
+    "spriteId": "drakloak",
     "learnset": []
   },
   {
@@ -26467,6 +27676,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Cursed Body",
     "sprite": "dragapult",
+    "spriteId": "dragapult",
     "learnset": []
   },
   {
@@ -26488,6 +27698,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zacian",
+    "spriteId": "zacian",
     "learnset": []
   },
   {
@@ -26510,6 +27721,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zaciancrowned",
+    "spriteId": "zacian-crowned",
     "learnset": []
   },
   {
@@ -26531,6 +27743,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zamazenta",
+    "spriteId": "zamazenta",
     "learnset": []
   },
   {
@@ -26553,6 +27766,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zamazentacrowned",
+    "spriteId": "zamazenta-crowned",
     "learnset": []
   },
   {
@@ -26575,6 +27789,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "eternatus",
+    "spriteId": "eternatus",
     "learnset": []
   },
   {
@@ -26597,6 +27812,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "eternatuseternamax",
+    "spriteId": "eternatus-eternamax",
     "learnset": []
   },
   {
@@ -26618,6 +27834,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "kubfu",
+    "spriteId": "kubfu",
     "learnset": []
   },
   {
@@ -26640,6 +27857,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "urshifu",
+    "spriteId": "urshifu",
     "learnset": []
   },
   {
@@ -26662,6 +27880,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "urshifurapidstrike",
+    "spriteId": "urshifu-rapidstrike",
     "learnset": []
   },
   {
@@ -26684,6 +27903,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "urshifugmax",
+    "spriteId": "urshifu-gmax",
     "learnset": []
   },
   {
@@ -26706,6 +27926,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "urshifurapidstrikegmax",
+    "spriteId": "urshifu-rapidstrikegmax",
     "learnset": []
   },
   {
@@ -26728,6 +27949,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zarude",
+    "spriteId": "zarude",
     "learnset": []
   },
   {
@@ -26750,6 +27972,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "zarudedada",
+    "spriteId": "zarude-dada",
     "learnset": []
   },
   {
@@ -26771,6 +27994,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "regieleki",
+    "spriteId": "regieleki",
     "learnset": []
   },
   {
@@ -26792,6 +28016,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "regidrago",
+    "spriteId": "regidrago",
     "learnset": []
   },
   {
@@ -26813,6 +28038,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "glastrier",
+    "spriteId": "glastrier",
     "learnset": []
   },
   {
@@ -26834,6 +28060,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "spectrier",
+    "spriteId": "spectrier",
     "learnset": []
   },
   {
@@ -26856,6 +28083,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "calyrex",
+    "spriteId": "calyrex",
     "learnset": []
   },
   {
@@ -26878,6 +28106,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "calyrexice",
+    "spriteId": "calyrex-ice",
     "learnset": []
   },
   {
@@ -26900,6 +28129,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "calyrexshadow",
+    "spriteId": "calyrex-shadow",
     "learnset": []
   },
   {
@@ -26923,6 +28153,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "wyrdeer",
+    "spriteId": "wyrdeer",
     "learnset": []
   },
   {
@@ -26946,6 +28177,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sharpness",
     "sprite": "kleavor",
+    "spriteId": "kleavor",
     "learnset": []
   },
   {
@@ -26969,6 +28201,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unnerve",
     "sprite": "ursaluna",
+    "spriteId": "ursaluna",
     "learnset": []
   },
   {
@@ -26991,6 +28224,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ursalunabloodmoon",
+    "spriteId": "ursaluna-bloodmoon",
     "learnset": []
   },
   {
@@ -27014,6 +28248,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "basculegion",
+    "spriteId": "basculegion",
     "learnset": []
   },
   {
@@ -27037,6 +28272,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Mold Breaker",
     "sprite": "basculegionf",
+    "spriteId": "basculegion-f",
     "learnset": []
   },
   {
@@ -27060,6 +28296,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Poison Touch",
     "sprite": "sneasler",
+    "spriteId": "sneasler",
     "learnset": []
   },
   {
@@ -27083,6 +28320,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Intimidate",
     "sprite": "overqwil",
+    "spriteId": "overqwil",
     "learnset": []
   },
   {
@@ -27105,6 +28343,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Contrary",
     "sprite": "enamorus",
+    "spriteId": "enamorus",
     "learnset": []
   },
   {
@@ -27127,6 +28366,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "enamorustherian",
+    "spriteId": "enamorus-therian",
     "learnset": []
   },
   {
@@ -27148,6 +28388,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Protean",
     "sprite": "sprigatito",
+    "spriteId": "sprigatito",
     "learnset": []
   },
   {
@@ -27169,6 +28410,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Protean",
     "sprite": "floragato",
+    "spriteId": "floragato",
     "learnset": []
   },
   {
@@ -27191,6 +28433,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Protean",
     "sprite": "meowscarada",
+    "spriteId": "meowscarada",
     "learnset": []
   },
   {
@@ -27212,6 +28455,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "fuecoco",
+    "spriteId": "fuecoco",
     "learnset": []
   },
   {
@@ -27233,6 +28477,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "crocalor",
+    "spriteId": "crocalor",
     "learnset": []
   },
   {
@@ -27255,6 +28500,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "skeledirge",
+    "spriteId": "skeledirge",
     "learnset": []
   },
   {
@@ -27276,6 +28522,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "quaxly",
+    "spriteId": "quaxly",
     "learnset": []
   },
   {
@@ -27297,6 +28544,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "quaxwell",
+    "spriteId": "quaxwell",
     "learnset": []
   },
   {
@@ -27319,6 +28567,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moxie",
     "sprite": "quaquaval",
+    "spriteId": "quaquaval",
     "learnset": []
   },
   {
@@ -27341,6 +28590,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "lechonk",
+    "spriteId": "lechonk",
     "learnset": []
   },
   {
@@ -27363,6 +28613,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "oinkologne",
+    "spriteId": "oinkologne",
     "learnset": []
   },
   {
@@ -27385,6 +28636,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Thick Fat",
     "sprite": "oinkolognef",
+    "spriteId": "oinkologne-f",
     "learnset": []
   },
   {
@@ -27406,6 +28658,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stakeout",
     "sprite": "tarountula",
+    "spriteId": "tarountula",
     "learnset": []
   },
   {
@@ -27427,6 +28680,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stakeout",
     "sprite": "spidops",
+    "spriteId": "spidops",
     "learnset": []
   },
   {
@@ -27448,6 +28702,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "nymble",
+    "spriteId": "nymble",
     "learnset": []
   },
   {
@@ -27470,6 +28725,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Tinted Lens",
     "sprite": "lokix",
+    "spriteId": "lokix",
     "learnset": []
   },
   {
@@ -27492,6 +28748,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "pawmi",
+    "spriteId": "pawmi",
     "learnset": []
   },
   {
@@ -27515,6 +28772,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "pawmo",
+    "spriteId": "pawmo",
     "learnset": []
   },
   {
@@ -27538,6 +28796,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Iron Fist",
     "sprite": "pawmot",
+    "spriteId": "pawmot",
     "learnset": []
   },
   {
@@ -27560,6 +28819,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Own Tempo",
     "sprite": "tandemaus",
+    "spriteId": "tandemaus",
     "learnset": []
   },
   {
@@ -27582,6 +28842,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "maushold",
+    "spriteId": "maushold",
     "learnset": []
   },
   {
@@ -27604,6 +28865,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "mausholdfour",
+    "spriteId": "maushold-four",
     "learnset": []
   },
   {
@@ -27625,6 +28887,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Klutz",
     "sprite": "fidough",
+    "spriteId": "fidough",
     "learnset": []
   },
   {
@@ -27646,6 +28909,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Aroma Veil",
     "sprite": "dachsbun",
+    "spriteId": "dachsbun",
     "learnset": []
   },
   {
@@ -27668,6 +28932,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "smoliv",
+    "spriteId": "smoliv",
     "learnset": []
   },
   {
@@ -27690,6 +28955,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "dolliv",
+    "spriteId": "dolliv",
     "learnset": []
   },
   {
@@ -27712,6 +28978,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Harvest",
     "sprite": "arboliva",
+    "spriteId": "arboliva",
     "learnset": []
   },
   {
@@ -27735,6 +29002,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Guts",
     "sprite": "squawkabilly",
+    "spriteId": "squawkabilly",
     "learnset": []
   },
   {
@@ -27758,6 +29026,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Guts",
     "sprite": "squawkabillyblue",
+    "spriteId": "squawkabilly-blue",
     "learnset": []
   },
   {
@@ -27781,6 +29050,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "squawkabillyyellow",
+    "spriteId": "squawkabilly-yellow",
     "learnset": []
   },
   {
@@ -27804,6 +29074,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "squawkabillywhite",
+    "spriteId": "squawkabilly-white",
     "learnset": []
   },
   {
@@ -27826,6 +29097,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Clear Body",
     "sprite": "nacli",
+    "spriteId": "nacli",
     "learnset": []
   },
   {
@@ -27848,6 +29120,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Clear Body",
     "sprite": "naclstack",
+    "spriteId": "naclstack",
     "learnset": []
   },
   {
@@ -27870,6 +29143,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Clear Body",
     "sprite": "garganacl",
+    "spriteId": "garganacl",
     "learnset": []
   },
   {
@@ -27891,6 +29165,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Flame Body",
     "sprite": "charcadet",
+    "spriteId": "charcadet",
     "learnset": []
   },
   {
@@ -27913,6 +29188,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "armarouge",
+    "spriteId": "armarouge",
     "learnset": []
   },
   {
@@ -27935,6 +29211,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Weak Armor",
     "sprite": "ceruledge",
+    "spriteId": "ceruledge",
     "learnset": []
   },
   {
@@ -27957,6 +29234,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "tadbulb",
+    "spriteId": "tadbulb",
     "learnset": []
   },
   {
@@ -27979,6 +29257,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Damp",
     "sprite": "bellibolt",
+    "spriteId": "bellibolt",
     "learnset": []
   },
   {
@@ -28002,6 +29281,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Competitive",
     "sprite": "wattrel",
+    "spriteId": "wattrel",
     "learnset": []
   },
   {
@@ -28025,6 +29305,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Competitive",
     "sprite": "kilowattrel",
+    "spriteId": "kilowattrel",
     "learnset": []
   },
   {
@@ -28047,6 +29328,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stakeout",
     "sprite": "maschiff",
+    "spriteId": "maschiff",
     "learnset": []
   },
   {
@@ -28069,6 +29351,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stakeout",
     "sprite": "mabosstiff",
+    "spriteId": "mabosstiff",
     "learnset": []
   },
   {
@@ -28092,6 +29375,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "shroodle",
+    "spriteId": "shroodle",
     "learnset": []
   },
   {
@@ -28115,6 +29399,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Prankster",
     "sprite": "grafaiai",
+    "spriteId": "grafaiai",
     "learnset": []
   },
   {
@@ -28137,6 +29422,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "bramblin",
+    "spriteId": "bramblin",
     "learnset": []
   },
   {
@@ -28159,6 +29445,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Infiltrator",
     "sprite": "brambleghast",
+    "spriteId": "brambleghast",
     "learnset": []
   },
   {
@@ -28181,6 +29468,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "toedscool",
+    "spriteId": "toedscool",
     "learnset": []
   },
   {
@@ -28203,6 +29491,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "toedscruel",
+    "spriteId": "toedscruel",
     "learnset": []
   },
   {
@@ -28225,6 +29514,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "klawf",
+    "spriteId": "klawf",
     "learnset": []
   },
   {
@@ -28247,6 +29537,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Klutz",
     "sprite": "capsakid",
+    "spriteId": "capsakid",
     "learnset": []
   },
   {
@@ -28270,6 +29561,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Moody",
     "sprite": "scovillain",
+    "spriteId": "scovillain",
     "learnset": []
   },
   {
@@ -28292,6 +29584,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "scovillainmega",
+    "spriteId": "scovillain-mega",
     "learnset": []
   },
   {
@@ -28313,6 +29606,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Shed Skin",
     "sprite": "rellor",
+    "spriteId": "rellor",
     "learnset": []
   },
   {
@@ -28335,6 +29629,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Telepathy",
     "sprite": "rabsca",
+    "spriteId": "rabsca",
     "learnset": []
   },
   {
@@ -28357,6 +29652,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "flittle",
+    "spriteId": "flittle",
     "learnset": []
   },
   {
@@ -28379,6 +29675,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Speed Boost",
     "sprite": "espathra",
+    "spriteId": "espathra",
     "learnset": []
   },
   {
@@ -28402,6 +29699,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "tinkatink",
+    "spriteId": "tinkatink",
     "learnset": []
   },
   {
@@ -28425,6 +29723,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "tinkatuff",
+    "spriteId": "tinkatuff",
     "learnset": []
   },
   {
@@ -28448,6 +29747,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pickpocket",
     "sprite": "tinkaton",
+    "spriteId": "tinkaton",
     "learnset": []
   },
   {
@@ -28470,6 +29770,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "wiglett",
+    "spriteId": "wiglett",
     "learnset": []
   },
   {
@@ -28492,6 +29793,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "wugtrio",
+    "spriteId": "wugtrio",
     "learnset": []
   },
   {
@@ -28515,6 +29817,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rocky Payload",
     "sprite": "bombirdier",
+    "spriteId": "bombirdier",
     "learnset": []
   },
   {
@@ -28536,6 +29839,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "finizen",
+    "spriteId": "finizen",
     "learnset": []
   },
   {
@@ -28557,6 +29861,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "palafin",
+    "spriteId": "palafin",
     "learnset": []
   },
   {
@@ -28578,6 +29883,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "palafinhero",
+    "spriteId": "palafin-hero",
     "learnset": []
   },
   {
@@ -28600,6 +29906,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Slow Start",
     "sprite": "varoom",
+    "spriteId": "varoom",
     "learnset": []
   },
   {
@@ -28622,6 +29929,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Filter",
     "sprite": "revavroom",
+    "spriteId": "revavroom",
     "learnset": []
   },
   {
@@ -28644,6 +29952,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Regenerator",
     "sprite": "cyclizar",
+    "spriteId": "cyclizar",
     "learnset": []
   },
   {
@@ -28665,6 +29974,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sand Veil",
     "sprite": "orthworm",
+    "spriteId": "orthworm",
     "learnset": []
   },
   {
@@ -28687,6 +29997,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Corrosion",
     "sprite": "glimmet",
+    "spriteId": "glimmet",
     "learnset": []
   },
   {
@@ -28709,6 +30020,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Corrosion",
     "sprite": "glimmora",
+    "spriteId": "glimmora",
     "learnset": []
   },
   {
@@ -28731,6 +30043,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "glimmoramega",
+    "spriteId": "glimmora-mega",
     "learnset": []
   },
   {
@@ -28752,6 +30065,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Fluffy",
     "sprite": "greavard",
+    "spriteId": "greavard",
     "learnset": []
   },
   {
@@ -28773,6 +30087,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Fluffy",
     "sprite": "houndstone",
+    "spriteId": "houndstone",
     "learnset": []
   },
   {
@@ -28796,6 +30111,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Costar",
     "sprite": "flamigo",
+    "spriteId": "flamigo",
     "learnset": []
   },
   {
@@ -28818,6 +30134,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "cetoddle",
+    "spriteId": "cetoddle",
     "learnset": []
   },
   {
@@ -28840,6 +30157,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sheer Force",
     "sprite": "cetitan",
+    "spriteId": "cetitan",
     "learnset": []
   },
   {
@@ -28862,6 +30180,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sharpness",
     "sprite": "veluza",
+    "spriteId": "veluza",
     "learnset": []
   },
   {
@@ -28884,6 +30203,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Water Veil",
     "sprite": "dondozo",
+    "spriteId": "dondozo",
     "learnset": []
   },
   {
@@ -28906,6 +30226,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "tatsugiri",
+    "spriteId": "tatsugiri",
     "learnset": []
   },
   {
@@ -28928,6 +30249,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "tatsugiridroopy",
+    "spriteId": "tatsugiri-droopy",
     "learnset": []
   },
   {
@@ -28950,6 +30272,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "tatsugiristretchy",
+    "spriteId": "tatsugiri-stretchy",
     "learnset": []
   },
   {
@@ -28972,6 +30295,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "tatsugiricurlymega",
+    "spriteId": "tatsugiri-curlymega",
     "learnset": []
   },
   {
@@ -28994,6 +30318,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "tatsugiridroopymega",
+    "spriteId": "tatsugiri-droopymega",
     "learnset": []
   },
   {
@@ -29016,6 +30341,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Storm Drain",
     "sprite": "tatsugiristretchymega",
+    "spriteId": "tatsugiri-stretchymega",
     "learnset": []
   },
   {
@@ -29039,6 +30365,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Defiant",
     "sprite": "annihilape",
+    "spriteId": "annihilape",
     "learnset": []
   },
   {
@@ -29062,6 +30389,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Unaware",
     "sprite": "clodsire",
+    "spriteId": "clodsire",
     "learnset": []
   },
   {
@@ -29085,6 +30413,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sap Sipper",
     "sprite": "farigiraf",
+    "spriteId": "farigiraf",
     "learnset": []
   },
   {
@@ -29107,6 +30436,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "dudunsparce",
+    "spriteId": "dudunsparce",
     "learnset": []
   },
   {
@@ -29129,6 +30459,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Rattled",
     "sprite": "dudunsparcethreesegment",
+    "spriteId": "dudunsparce-threesegment",
     "learnset": []
   },
   {
@@ -29152,6 +30483,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Pressure",
     "sprite": "kingambit",
+    "spriteId": "kingambit",
     "learnset": []
   },
   {
@@ -29174,6 +30506,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "greattusk",
+    "spriteId": "greattusk",
     "learnset": []
   },
   {
@@ -29196,6 +30529,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "screamtail",
+    "spriteId": "screamtail",
     "learnset": []
   },
   {
@@ -29218,6 +30552,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "brutebonnet",
+    "spriteId": "brutebonnet",
     "learnset": []
   },
   {
@@ -29240,6 +30575,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "fluttermane",
+    "spriteId": "fluttermane",
     "learnset": []
   },
   {
@@ -29262,6 +30598,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "slitherwing",
+    "spriteId": "slitherwing",
     "learnset": []
   },
   {
@@ -29284,6 +30621,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "sandyshocks",
+    "spriteId": "sandyshocks",
     "learnset": []
   },
   {
@@ -29306,6 +30644,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "irontreads",
+    "spriteId": "irontreads",
     "learnset": []
   },
   {
@@ -29328,6 +30667,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironbundle",
+    "spriteId": "ironbundle",
     "learnset": []
   },
   {
@@ -29350,6 +30690,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironhands",
+    "spriteId": "ironhands",
     "learnset": []
   },
   {
@@ -29372,6 +30713,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironjugulis",
+    "spriteId": "ironjugulis",
     "learnset": []
   },
   {
@@ -29394,6 +30736,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironmoth",
+    "spriteId": "ironmoth",
     "learnset": []
   },
   {
@@ -29416,6 +30759,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironthorns",
+    "spriteId": "ironthorns",
     "learnset": []
   },
   {
@@ -29438,6 +30782,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "frigibax",
+    "spriteId": "frigibax",
     "learnset": []
   },
   {
@@ -29460,6 +30805,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "arctibax",
+    "spriteId": "arctibax",
     "learnset": []
   },
   {
@@ -29482,6 +30828,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "baxcalibur",
+    "spriteId": "baxcalibur",
     "learnset": []
   },
   {
@@ -29504,6 +30851,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Ice Body",
     "sprite": "baxcaliburmega",
+    "spriteId": "baxcalibur-mega",
     "learnset": []
   },
   {
@@ -29525,6 +30873,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gimmighoul",
+    "spriteId": "gimmighoul",
     "learnset": []
   },
   {
@@ -29546,6 +30895,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gimmighoulroaming",
+    "spriteId": "gimmighoul-roaming",
     "learnset": []
   },
   {
@@ -29568,6 +30918,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gholdengo",
+    "spriteId": "gholdengo",
     "learnset": []
   },
   {
@@ -29590,6 +30941,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "wochien",
+    "spriteId": "wochien",
     "learnset": []
   },
   {
@@ -29612,6 +30964,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "chienpao",
+    "spriteId": "chienpao",
     "learnset": []
   },
   {
@@ -29634,6 +30987,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "tinglu",
+    "spriteId": "tinglu",
     "learnset": []
   },
   {
@@ -29656,6 +31010,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "chiyu",
+    "spriteId": "chiyu",
     "learnset": []
   },
   {
@@ -29678,6 +31033,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "roaringmoon",
+    "spriteId": "roaringmoon",
     "learnset": []
   },
   {
@@ -29700,6 +31056,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironvaliant",
+    "spriteId": "ironvaliant",
     "learnset": []
   },
   {
@@ -29722,6 +31079,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "koraidon",
+    "spriteId": "koraidon",
     "learnset": []
   },
   {
@@ -29744,6 +31102,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "miraidon",
+    "spriteId": "miraidon",
     "learnset": []
   },
   {
@@ -29766,6 +31125,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "walkingwake",
+    "spriteId": "walkingwake",
     "learnset": []
   },
   {
@@ -29788,6 +31148,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironleaves",
+    "spriteId": "ironleaves",
     "learnset": []
   },
   {
@@ -29811,6 +31172,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sticky Hold",
     "sprite": "dipplin",
+    "spriteId": "dipplin",
     "learnset": []
   },
   {
@@ -29833,6 +31195,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heatproof",
     "sprite": "poltchageist",
+    "spriteId": "poltchageist",
     "learnset": []
   },
   {
@@ -29855,6 +31218,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heatproof",
     "sprite": "poltchageistartisan",
+    "spriteId": "poltchageist-artisan",
     "learnset": []
   },
   {
@@ -29877,6 +31241,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heatproof",
     "sprite": "sinistcha",
+    "spriteId": "sinistcha",
     "learnset": []
   },
   {
@@ -29899,6 +31264,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Heatproof",
     "sprite": "sinistchamasterpiece",
+    "spriteId": "sinistcha-masterpiece",
     "learnset": []
   },
   {
@@ -29921,6 +31287,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Guard Dog",
     "sprite": "okidogi",
+    "spriteId": "okidogi",
     "learnset": []
   },
   {
@@ -29943,6 +31310,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Frisk",
     "sprite": "munkidori",
+    "spriteId": "munkidori",
     "learnset": []
   },
   {
@@ -29965,6 +31333,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Technician",
     "sprite": "fezandipiti",
+    "spriteId": "fezandipiti",
     "learnset": []
   },
   {
@@ -29986,6 +31355,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerpon",
+    "spriteId": "ogerpon",
     "learnset": []
   },
   {
@@ -30008,6 +31378,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerponwellspring",
+    "spriteId": "ogerpon-wellspring",
     "learnset": []
   },
   {
@@ -30030,6 +31401,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerponhearthflame",
+    "spriteId": "ogerpon-hearthflame",
     "learnset": []
   },
   {
@@ -30052,6 +31424,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerponcornerstone",
+    "spriteId": "ogerpon-cornerstone",
     "learnset": []
   },
   {
@@ -30073,6 +31446,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerpontealtera",
+    "spriteId": "ogerpon-tealtera",
     "learnset": []
   },
   {
@@ -30095,6 +31469,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerponwellspringtera",
+    "spriteId": "ogerpon-wellspringtera",
     "learnset": []
   },
   {
@@ -30117,6 +31492,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerponhearthflametera",
+    "spriteId": "ogerpon-hearthflametera",
     "learnset": []
   },
   {
@@ -30139,6 +31515,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ogerponcornerstonetera",
+    "spriteId": "ogerpon-cornerstonetera",
     "learnset": []
   },
   {
@@ -30162,6 +31539,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Stalwart",
     "sprite": "archaludon",
+    "spriteId": "archaludon",
     "learnset": []
   },
   {
@@ -30185,6 +31563,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "Sticky Hold",
     "sprite": "hydrapple",
+    "spriteId": "hydrapple",
     "learnset": []
   },
   {
@@ -30207,6 +31586,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "gougingfire",
+    "spriteId": "gougingfire",
     "learnset": []
   },
   {
@@ -30229,6 +31609,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ragingbolt",
+    "spriteId": "ragingbolt",
     "learnset": []
   },
   {
@@ -30251,6 +31632,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironboulder",
+    "spriteId": "ironboulder",
     "learnset": []
   },
   {
@@ -30273,6 +31655,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "ironcrown",
+    "spriteId": "ironcrown",
     "learnset": []
   },
   {
@@ -30294,6 +31677,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "terapagos",
+    "spriteId": "terapagos",
     "learnset": []
   },
   {
@@ -30315,6 +31699,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "terapagosterastal",
+    "spriteId": "terapagos-terastal",
     "learnset": []
   },
   {
@@ -30336,6 +31721,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "terapagosstellar",
+    "spriteId": "terapagos-stellar",
     "learnset": []
   },
   {
@@ -30358,6 +31744,7 @@ export const POKEDEX: PokedexEntry[] = [
     ],
     "hiddenAbility": "",
     "sprite": "pecharunt",
+    "spriteId": "pecharunt",
     "learnset": []
   }
 ];

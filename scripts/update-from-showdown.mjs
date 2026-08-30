@@ -120,6 +120,26 @@ function parseShowdownData(content) {
   }
 }
 
+/** Showdown's own id normalisation — lowercase, alphanumerics only. */
+function toShowdownId(value) {
+  return (value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Filename Showdown serves a species' sprite under, which is NOT the species id:
+ * a forme keeps its base species and forme as separate hyphen-joined ids
+ * ("Charizard-Mega-X" -> charizard-megax), while a base species with a hyphen or
+ * space in its own name collapses to one id ("Ho-Oh" -> hooh, "Tapu Koko" ->
+ * tapukoko). Neither the display name nor the species id gets both cases right,
+ * so it has to come from Showdown's baseSpecies/forme fields.
+ */
+function spriteIdFor(entry, key) {
+  if (entry.baseSpecies && entry.forme) {
+    return `${toShowdownId(entry.baseSpecies)}-${toShowdownId(entry.forme)}`;
+  }
+  return toShowdownId(entry.name || key);
+}
+
 function transformPokemonData(pokedex) {
   return Object.entries(pokedex)
     .filter(([key, val]) => val && typeof val === 'object' && val.num > 0)
@@ -150,6 +170,7 @@ function transformPokemonData(pokedex) {
         abilities: regularAbilities,
         hiddenAbility,
         sprite: key.toLowerCase(),
+        spriteId: spriteIdFor(val, key),
         learnset: [], // Will be populated separately from learnsets
       };
     });
@@ -217,7 +238,14 @@ export interface PokedexEntry {
   baseStats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
   abilities: string[];
   hiddenAbility: string;
+  /** Species id (lowercase alphanumerics). Used as a slug for lookups — this is
+   *  NOT the sprite filename; see spriteId. */
   sprite: string;
+  /** Filename Showdown serves this species' sprite under, hyphenating a forme
+   *  onto its base species ("Charizard-Mega-X" -> charizard-megax) while leaving
+   *  a hyphenated base species alone ("Ho-Oh" -> hooh). getSpriteUrl reads this;
+   *  deriving it from the display name or from sprite 404s on 355 formes. */
+  spriteId: string;
   learnset: string[];
 }
 
