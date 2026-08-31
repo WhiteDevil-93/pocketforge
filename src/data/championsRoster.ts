@@ -1,6 +1,6 @@
 // Auto-generated from Pokémon Showdown champions mod — do not edit manually
 // Source: data/mods/champions/formats-data.ts
-// Last updated: 2026-08-30T00:57:21.634Z
+// Last updated: 2026-08-31T00:58:19.102Z
 // Regulation: Regulation M-B
 // M-A species: 310 | M-B species: 310
 
