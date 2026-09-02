@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-09-01T01:03:31.014Z
+// Last updated: 2026-09-02T00:53:23.380Z
 
 export interface ItemEntry {
   id: string;

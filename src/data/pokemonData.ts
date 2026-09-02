@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-09-01T01:03:31.010Z
+// Last updated: 2026-09-02T00:53:23.377Z
 
 export interface PokedexEntry {
   id: number;
@@ -10655,7 +10655,7 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 151
     },
     "abilities": [
-      "Magic Bounce"
+      "Sharpness"
     ],
     "hiddenAbility": "",
     "sprite": "absolmegaz",
@@ -12924,7 +12924,7 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 151
     },
     "abilities": [
-      "Sand Force"
+      "Levitate"
     ],
     "hiddenAbility": "",
     "sprite": "garchompmegaz",
@@ -13035,7 +13035,7 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 151
     },
     "abilities": [
-      "Adaptability"
+      "Aura Guard"
     ],
     "hiddenAbility": "",
     "sprite": "lucariomegaz",
