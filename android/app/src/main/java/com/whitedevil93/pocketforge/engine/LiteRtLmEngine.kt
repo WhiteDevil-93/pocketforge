@@ -562,7 +562,7 @@ class LiteRtLmEngine private constructor(
                         // engineConstructionLock spans the flag write AND the construction
                         // that reads it — see the lock's own KDoc for why they cannot be
                         // separated.
-                        candidate = engineConstructionLock.withLock {
+                        val loaded = engineConstructionLock.withLock {
                             configureExperimentalFlags(modelPath, name)
                             val backendInstance = makeBackend()
                             val built = Engine(
@@ -595,6 +595,15 @@ class LiteRtLmEngine private constructor(
                                     maxNumTokens = MAX_CONTEXT_TOKENS,
                                 )
                             )
+                            // Published to [candidate] BEFORE the throwing call, never
+                            // after: initialize() failing is the normal path here — the
+                            // NPU→GPU→CPU fallback is built on those throws — and if the
+                            // only reference lived in this lambda's return value, a throw
+                            // would unwind past the assignment and leave the catch below
+                            // with nothing to close. Every failed attempt would then leak
+                            // a multi-GB native allocation, and the fallback would walk
+                            // itself out of memory before reaching the backend that works.
+                            candidate = built
                             // initialize() is inside the lock too: the flags are read
                             // while the engine is being brought up, not only at the
                             // constructor call, and serialising the expensive load is
@@ -604,7 +613,7 @@ class LiteRtLmEngine private constructor(
                             built
                         }
                         Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
-                        return LiteRtLmEngine(candidate, name, visionAvailable = withVision)
+                        return LiteRtLmEngine(loaded, name, visionAvailable = withVision)
                     } catch (e: Exception) {
                         // Catching Exception, not Throwable: an Error (OOM,
                         // UnsatisfiedLinkError) is not this attempt's problem to retry
