@@ -4,10 +4,13 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Capabilities
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
+import com.google.ai.edge.litertlm.ExperimentalApi
+import com.google.ai.edge.litertlm.ExperimentalFlags
 import com.google.ai.edge.litertlm.LogSeverity
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
@@ -96,6 +99,14 @@ class LiteRtLmEngine private constructor(
                     // Kotlin — the model's calls must come back to us to execute, not
                     // be run in-process by the library.
                     automaticToolCalling = false,
+                    // Constrains sampling to the declared tool schemas, so a malformed
+                    // or invented tool call cannot be emitted rather than having to be
+                    // recovered afterwards (see configureExperimentalFlags). Set only
+                    // when tools were actually declared: under the text protocol
+                    // parsed.tools is empty, and asking the engine to honour a response
+                    // format it has no schema for is a request for it to constrain
+                    // ordinary prose.
+                    enableResponseFormat = parsed.tools.isNotEmpty(),
                 )
             )
         } catch (e: ToolException) {
@@ -242,6 +253,9 @@ class LiteRtLmEngine private constructor(
         // in this codebase, generous enough for a long on-device reply.
         private const val GENERATION_TIMEOUT_MS = 300_000L
 
+        /** Context budget the KV cache is sized from — see EngineConfig.maxNumTokens below. */
+        private const val MAX_CONTEXT_TOKENS = 4096
+
         // Crash-loop guard: a bad GPU/NPU delegate can abort the whole process during
         // Engine.initialize() (LiteRT-LM issue #2114) rather than throwing a catchable
         // Exception — `catch (e: Exception)` below never sees it, because there's no
@@ -290,6 +304,72 @@ class LiteRtLmEngine private constructor(
         private fun configureNativeLoggingOnce() {
             if (!nativeLoggingConfigured.compareAndSet(false, true)) return
             Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
+        }
+
+        /**
+         * Sets the process-global [ExperimentalFlags] for the backend attempt about to
+         * be made. Re-run per attempt rather than once: these are read at Engine
+         * construction, and a fallback from GPU down to CPU must be able to turn the
+         * GPU-only choices back off rather than inherit them.
+         *
+         * **Speculative decoding / multi-token prediction.** Autoregressive decode is
+         * bound by memory bandwidth, not FLOPs — every active parameter is streamed
+         * from DRAM per generated token — so a bundled drafter model that proposes k
+         * tokens for the target model to verify in one parallel pass is close to free
+         * throughput (Google reports up to 2.2x on mobile GPU, 1.5x on mobile CPU).
+         *
+         * Two conditions gate it. First, the drafter has to actually be in the bundle:
+         * [Capabilities] probes the file for one, so a bundle exported without it is
+         * left alone instead of being asked for a speedup it cannot give. Second, it is
+         * enabled only on the accelerator backends. Google's own guidance is
+         * "universal on GPU, selective on CPU" — on CPU the drafting pass competes for
+         * the same cores as verification, so on an open-ended generative turn (which is
+         * most of what this app asks for) a low acceptance rate can cost more than it
+         * saves. CPU here is the fallback floor for devices that failed NPU and GPU;
+         * spending their scarcer cycles on speculation is the wrong bet.
+         *
+         * **Constrained decoding.** The one failure mode that has actually hurt this
+         * app on-device is a fine-tune emitting a tool call that does not parse — an
+         * invented tool name, a truncated argument object. Constrained decoding moves
+         * that from a parsing problem to a sampling one: the engine masks every token
+         * that would violate the declared tool schema, so a malformed call cannot be
+         * generated in the first place. This does NOT retire
+         * `src/lib/llm/textToolProtocol.ts`: under the text protocol TypeScript declares
+         * no tools at all (ChatRequest.parseTools returns empty), so there is no schema
+         * here to constrain and the parser remains the only recovery. It is the native
+         * tool-calling path that this hardens.
+         */
+        @OptIn(ExperimentalApi::class)
+        private fun configureExperimentalFlags(modelPath: String, backendLabel: String) {
+            val acceleratorBacked = backendLabel == "NPU" || backendLabel == "GPU"
+            val speculative = acceleratorBacked && hasDrafter(modelPath)
+            ExperimentalFlags.enableSpeculativeDecoding = speculative
+
+            // Enabled unconditionally: it is inert when a Conversation declares no
+            // tools and no response format, which is exactly the text-protocol case.
+            ExperimentalFlags.enableConversationConstrainedDecoding = true
+
+            // Gemma 4's thinking scratchpad is a means, not an answer. Dropping it from
+            // the KV cache once a turn closes stops several hundred tokens of reasoning
+            // per turn from crowding out the actual conversation in later turns.
+            ExperimentalFlags.filterChannelContentFromKvCache = true
+
+            Log.i(TAG, "flags: speculativeDecoding=$speculative on $backendLabel")
+        }
+
+        /**
+         * Whether [modelPath]'s bundle carries a drafter model for speculative decoding.
+         * Probes native code against the file, so it is only ever called from inside the
+         * crash-guarded span in [load] — a malformed bundle that would abort the process
+         * here must leave the same marker any other native-adjacent call would.
+         * Failure is reported as "no drafter" rather than propagating: an unusable probe
+         * is a reason to skip an optimisation, never a reason to fail the load.
+         */
+        private fun hasDrafter(modelPath: String): Boolean = try {
+            Capabilities(modelPath).use { it.hasSpeculativeDecodingSupport() }
+        } catch (e: Exception) {
+            Log.w(TAG, "speculative-decoding probe failed, assuming unsupported: ${e.message}")
+            false
         }
 
         /**
@@ -439,6 +519,7 @@ class LiteRtLmEngine private constructor(
                         // that pulls in LiteRT-LM's native library on this process's very
                         // first load attempt. See configureNativeLoggingOnce's KDoc.
                         configureNativeLoggingOnce()
+                        configureExperimentalFlags(modelPath, name)
                         val backendInstance = makeBackend()
                         candidate = Engine(
                             EngineConfig(
@@ -457,6 +538,18 @@ class LiteRtLmEngine private constructor(
                                 // compiled kernels parked next to a multi-GB file.
                                 // cacheDir is OS-reclaimable.
                                 cacheDir = context.cacheDir.absolutePath,
+                                // The KV cache is sized from this, so leaving it at a
+                                // Gemma 4 bundle's own 128K default reserves a cache
+                                // orders of magnitude larger than this app ever fills:
+                                // useChatStore caps history at ~40 messages and the tool
+                                // schemas are fixed, so a turn is thousands of tokens,
+                                // not hundreds of thousands. Google's own edge benchmarks
+                                // are published at 2048; 4096 keeps that memory profile
+                                // while leaving headroom for a long team-building thread
+                                // plus a thinking block. Raise it if a turn ever reports
+                                // running out of context — it is the tuning knob for the
+                                // resident-memory / history-depth trade.
+                                maxNumTokens = MAX_CONTEXT_TOKENS,
                             )
                         )
                         candidate.initialize()
