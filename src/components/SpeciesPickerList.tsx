@@ -81,7 +81,13 @@ export default function SpeciesPickerList({ results, onSelect }: SpeciesPickerLi
               <span className="font-caption text-text-primary text-center leading-tight line-clamp-2 w-full">
                 {p.name}
               </span>
-              <div className="flex gap-1">
+              {/* Wraps rather than sitting on one line: at three columns a phone gives
+                  each cell ~100px, and two badges for a dual type with long names
+                  (Fighting/Psychic) are wider than that together, so an unwrapped row
+                  spills over the neighbouring card. Stacking the second badge costs a
+                  little height and keeps the type readable, which a colour-only dot
+                  would not. */}
+              <div className="flex flex-wrap justify-center gap-1 w-full">
                 {p.types.map((t) => (
                   <TypeBadge key={t} type={t} size="sm" className="px-1.5" />
                 ))}
