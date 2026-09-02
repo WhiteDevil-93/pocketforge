@@ -1,8 +1,19 @@
 import { POKEDEX } from './pokemonData';
 
-/** Showdown's own id normalisation — lowercase, alphanumerics only. */
+/**
+ * Showdown's own id normalisation — lowercase, alphanumerics only.
+ *
+ * The NFD pass is load-bearing, not decoration. Stripping non-alphanumerics
+ * removes a combining accent (U+0301) but not a precomposed letter (é, U+00E9),
+ * so the two Unicode spellings of the same name reduce differently:
+ * "Flabébé" gives flabebe decomposed and flabb precomposed. Our generated pokedex
+ * happens to store the decomposed form, so names read out of it resolve either
+ * way — but this function also takes names from outside it (a pasted import, a
+ * custom format's entry, whatever the model wrote), and a keyboard or another app
+ * produces the precomposed form. Decomposing first makes both converge.
+ */
 function toShowdownId(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return name.normalize('NFD').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 /**

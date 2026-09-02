@@ -256,9 +256,13 @@ export const POKEMON_BY_NAME = new Map(POKEDEX.map(p => [p.name.toLowerCase(), p
 export const POKEMON_BY_SLUG = new Map(POKEDEX.map(p => [p.sprite.toLowerCase(), p]));
 
 export function getPokemonByName(name: string): PokedexEntry | undefined {
-  const normalized = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  // normalize('NFD') on both sides: stripping non-alphanumerics drops a combining
+  // accent but not a precomposed letter, so "Flabébé" reduces to flabebe decomposed
+  // and flabb precomposed. Names arriving from outside this file (a pasted import,
+  // a custom format) use the precomposed form and would otherwise never match.
+  const normalized = name.normalize('NFD').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   return POKEDEX.find(p =>
-    p.name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalized ||
+    p.name.normalize('NFD').toLowerCase().replace(/[^a-z0-9]/g, '') === normalized ||
     p.sprite === normalized
   );
 }
