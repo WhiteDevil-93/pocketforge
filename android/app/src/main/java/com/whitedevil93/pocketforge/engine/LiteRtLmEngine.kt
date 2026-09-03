@@ -819,6 +819,21 @@ class LiteRtLmEngine private constructor(
                             // wanted anyway — two multi-GB engines coming up at once is
                             // an OOM risk in its own right.
                             built.initialize()
+                            // initialize() is not interruptible, so a stop arriving during
+                            // it is only observable once it returns. Observed here, still
+                            // holding the lock, an engine nobody is waiting for is closed
+                            // before the retry queued behind it starts allocating the next
+                            // one. Left to LocalLlmService's post-load check (LocalLlmService.kt
+                            // ~300) it would be closed only after load() had already released
+                            // the lock, putting two multi-GB engines in memory at once —
+                            // the pressure this lock exists to prevent, on the path where
+                            // the first engine is fully built rather than half-built.
+                            //
+                            // Thrown, not returned: the catch below owns closing it, and the
+                            // handler outside restores the interrupt flag.
+                            if (Thread.interrupted()) {
+                                throw InterruptedException("load was stopped while its engine was initializing")
+                            }
                             built
                         } catch (t: Throwable) {
                             // Freed inside the lock, not in the handlers below. The lock
