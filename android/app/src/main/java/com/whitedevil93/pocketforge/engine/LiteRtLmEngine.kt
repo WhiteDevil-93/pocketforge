@@ -306,6 +306,8 @@ class LiteRtLmEngine private constructor(
         // res/xml/backup_rules.xml) — this records what crashes *this device's*
         // drivers, and must never follow a restore onto different hardware.
         private const val PREFS_NAME = "litertlm_crash_guard"
+        // Holds the *set* of backend attempts in flight, as a JSON array; see the
+        // pending-marker helpers below for why a set rather than one slot.
         private const val KEY_PENDING_LABEL = "pending_label"
         // Suffixed per model file name (LiteRtLmEngine.load's modelId) rather than
         // one device-wide set: a backend that crashes loading one bundle (e.g. a
@@ -313,7 +315,10 @@ class LiteRtLmEngine private constructor(
         // get blacklisted for a smaller, unrelated bundle that would load on it fine.
         private const val KEY_KNOWN_CRASH_LABELS_PREFIX = "known_crash_labels:"
 
-        /** Marks a speculative-decoding probe as in flight; see probeDrafterOnce. */
+        /**
+         * Holds the set of speculative-decoding probes in flight, as a JSON array.
+         * See probeDrafterOnce and the pending-marker helpers below.
+         */
         private const val KEY_PENDING_PROBE = "pending_probe"
 
         /** Suffixed per model id: the probe aborted the process for this bundle. */
@@ -330,6 +335,94 @@ class LiteRtLmEngine private constructor(
         // interruptible, so a stop-then-immediately-retry can leave an old load()
         // still running when a new one starts and reads the old one's own marker.
         private val liveAttemptTokens = ConcurrentHashMap.newKeySet<String>()
+
+        /**
+         * Serializes read-modify-write on the pending-marker sets below.
+         *
+         * SharedPreferences is thread-safe per operation, which is not the property
+         * these need: read the set, add or drop one entry, write it back. Two loads
+         * doing that concurrently — which interruptLoad() explicitly permits — would
+         * otherwise interleave and lose whichever entry was written second.
+         */
+        private val pendingMarkerLock = Any()
+
+        /**
+         * Read one pending-marker set.
+         *
+         * Tolerates a bare object as well as an array: that was the format before
+         * these became sets, and an app updating in place can find a dangling
+         * old-format marker on disk — which is real crash evidence and must not be
+         * thrown away just because its shape changed.
+         */
+        private fun readPending(prefs: SharedPreferences, key: String): MutableList<JSONObject> {
+            val raw = prefs.getString(key, null) ?: return mutableListOf()
+            val parsed = runCatching { JSONArray(raw) }.getOrNull()
+                ?: return runCatching { mutableListOf(JSONObject(raw)) }.getOrElse {
+                    Log.w(TAG, "pending marker set at $key was malformed, discarding: $raw")
+                    mutableListOf()
+                }
+            return (0 until parsed.length()).mapNotNullTo(mutableListOf<JSONObject>()) { parsed.optJSONObject(it) }
+        }
+
+        private fun writePending(prefs: SharedPreferences, key: String, entries: List<JSONObject>, what: String) {
+            val editor = prefs.edit()
+            if (entries.isEmpty()) {
+                editor.remove(key)
+            } else {
+                val array = JSONArray()
+                entries.forEach { array.put(it) }
+                editor.putString(key, array.toString())
+            }
+            // commit(), not apply(): if the call these entries guard aborts the process,
+            // an async write might never reach disk — the one moment this all exists for.
+            if (!editor.commit()) Log.w(TAG, "SharedPreferences commit failed: $what")
+        }
+
+        /**
+         * Record that an attempt carrying [token] is about to make a call that can
+         * abort the native process.
+         *
+         * Adds to the set rather than replacing it. A single slot loses a marker
+         * whenever two attempts overlap, and a lost marker is a crash the guard never
+         * learns about: the older attempt aborts the process after the newer one has
+         * already cleared the shared slot, nothing durable remains, and the next
+         * launch runs the crashing call again.
+         */
+        private fun addPending(prefs: SharedPreferences, key: String, entry: JSONObject, what: String) =
+            synchronized(pendingMarkerLock) {
+                writePending(prefs, key, readPending(prefs, key) + entry, what)
+            }
+
+        /**
+         * Retire the entry [token] wrote, its call having returned.
+         *
+         * Callers must clear the durable entry BEFORE removing the token from
+         * [liveAttemptTokens]: an entry present whose token is not live is exactly what
+         * [takeCrashedPending] reads as "this attempt died", so doing it the other way
+         * round leaves an instant in which a concurrent load calls a completed attempt
+         * a crash. Cleared first, the pair is only ever present-with-a-live-token or
+         * absent.
+         */
+        private fun clearPending(prefs: SharedPreferences, key: String, token: String, what: String) =
+            synchronized(pendingMarkerLock) {
+                writePending(prefs, key, readPending(prefs, key).filterNot { it.optString("token") == token }, what)
+            }
+
+        /**
+         * Remove and return every entry whose attempt is gone — the crashes.
+         *
+         * An entry whose token is still in [liveAttemptTokens] belongs to an attempt
+         * running in this same process, so it is left in place for that attempt's own
+         * finally block to clear. Any other entry could only have got there one way:
+         * the process that wrote it died before it could clear it.
+         */
+        private fun takeCrashedPending(prefs: SharedPreferences, key: String, what: String): List<JSONObject> =
+            synchronized(pendingMarkerLock) {
+                val (live, crashed) = readPending(prefs, key)
+                    .partition { entry -> entry.optString("token").let { it.isNotEmpty() && it in liveAttemptTokens } }
+                if (crashed.isNotEmpty()) writePending(prefs, key, live, what)
+                crashed
+            }
 
         /** Guards the one-time [Engine.setNativeMinLogSeverity] call below. */
         private val nativeLoggingConfigured = AtomicBoolean(false)
@@ -426,76 +519,45 @@ class LiteRtLmEngine private constructor(
             prefs: SharedPreferences,
             commitLogged: SharedPreferences.Editor.(String) -> Unit,
         ): Boolean {
-            val crashedKey = "$KEY_PROBE_CRASHED_PREFIX$modelId"
-            if (prefs.getBoolean(crashedKey, false)) {
+            // Every probe entry whose attempt is gone is a crash, whichever bundle it
+            // was probing — record them all against their own model before asking
+            // about this one. Entries belonging to a probe still running in this
+            // process are left alone: interruptLoad() interrupts the loading thread
+            // and drops it without joining, and neither Capabilities nor
+            // Engine.initialize() is interruptible, so a stop-then-retry leaves the
+            // old probe genuinely alive alongside the new one.
+            for (dead in takeCrashedPending(prefs, KEY_PENDING_PROBE, "clearing crashed probe markers")) {
+                val crashedModelId = dead.optString("modelId")
+                if (crashedModelId.isEmpty()) {
+                    Log.w(TAG, "discarding probe marker with no model id: $dead")
+                    continue
+                }
+                Log.w(TAG, "speculative-decoding probe crashed the process for model=$crashedModelId — disabling it")
+                prefs.edit().putBoolean("$KEY_PROBE_CRASHED_PREFIX$crashedModelId", true)
+                    .commitLogged("recording probe crash for $crashedModelId")
+            }
+
+            if (prefs.getBoolean("$KEY_PROBE_CRASHED_PREFIX$modelId", false)) {
                 Log.i(TAG, "skipping speculative-decoding probe for model=$modelId — crashed previously")
                 return false
             }
 
-            // A marker left set is only crash evidence if the attempt that wrote it is
-            // NOT still running in this process. interruptLoad() interrupts the loading
-            // thread and drops it without joining, and neither Capabilities nor
-            // Engine.initialize() is interruptible, so a stop-then-retry leaves the old
-            // probe genuinely alive alongside the new one. Without the token check the
-            // retry would read its predecessor's marker as a crash and disable
-            // speculative decoding for this bundle permanently, on a bundle that never
-            // crashed. This mirrors what the backend marker already does via
-            // liveAttemptTokens; the probe marker not having it was the gap.
-            prefs.getString(KEY_PENDING_PROBE, null)?.let { raw ->
-                val marker = runCatching {
-                    JSONObject(raw).let { it.getString("modelId") to it.getString("token") }
-                }.getOrNull()
-                when {
-                    marker == null -> {
-                        Log.w(TAG, "pending probe marker was malformed, discarding: $raw")
-                        prefs.edit().remove(KEY_PENDING_PROBE).commitLogged("clearing malformed probe marker")
-                    }
-                    marker.second in liveAttemptTokens ->
-                        Log.i(TAG, "probe marker for model=${marker.first} belongs to a load still running here — not a crash")
-                    marker.first == modelId -> {
-                        Log.w(TAG, "speculative-decoding probe crashed the process for model=$modelId — disabling it")
-                        prefs.edit().putBoolean(crashedKey, true).remove(KEY_PENDING_PROBE)
-                            .commitLogged("recording probe crash for $modelId")
-                        return false
-                    }
-                    else -> {
-                        // Crashed probing a different bundle. Record it against that one
-                        // rather than this one, and carry on.
-                        Log.w(TAG, "speculative-decoding probe crashed for a different model=${marker.first} — disabling it there")
-                        prefs.edit()
-                            .putBoolean("$KEY_PROBE_CRASHED_PREFIX${marker.first}", true)
-                            .remove(KEY_PENDING_PROBE)
-                            .commitLogged("recording probe crash for ${marker.first}")
-                    }
-                }
-            }
-
             val probeToken = UUID.randomUUID().toString()
             liveAttemptTokens += probeToken
-            prefs.edit()
-                .putString(KEY_PENDING_PROBE, JSONObject().put("modelId", modelId).put("token", probeToken).toString())
-                .commitLogged("marking probe pending for $modelId")
+            addPending(
+                prefs,
+                KEY_PENDING_PROBE,
+                JSONObject().put("modelId", modelId).put("token", probeToken),
+                "marking probe pending for $modelId",
+            )
             return try {
                 Capabilities(modelPath).use { it.hasSpeculativeDecodingSupport() }
             } catch (e: Exception) {
                 Log.w(TAG, "speculative-decoding probe failed, assuming unsupported: ${e.message}")
                 false
             } finally {
-                // Order matters. Between retiring the token and clearing the marker there
-                // is an instant where the marker is set and its token is no longer live —
-                // exactly the state the crash check above reads as "a probe died here".
-                // A retry landing in that window would record a permanent crash for a
-                // bundle whose probe had just finished normally. Clearing first means the
-                // marker is only ever present-with-a-live-token or absent.
-                //
-                // Clear only our own marker: a concurrent probe may have overwritten it,
-                // and erasing theirs would leave their crash undetectable.
-                val stillOurs = runCatching {
-                    JSONObject(prefs.getString(KEY_PENDING_PROBE, "{}")!!).optString("token") == probeToken
-                }.getOrDefault(false)
-                if (stillOurs) {
-                    prefs.edit().remove(KEY_PENDING_PROBE).commitLogged("clearing probe marker for $modelId")
-                }
+                // Durable entry first, live token second — see clearPending's KDoc.
+                clearPending(prefs, KEY_PENDING_PROBE, probeToken, "clearing probe marker for $modelId")
                 liveAttemptTokens -= probeToken
             }
         }
@@ -567,38 +629,26 @@ class LiteRtLmEngine private constructor(
             fun knownCrashKey(id: String) = "$KEY_KNOWN_CRASH_LABELS_PREFIX$id"
             val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
 
-            prefs.getString(KEY_PENDING_LABEL, null)?.let { raw ->
-                val marker = runCatching {
-                    JSONObject(raw).let { Triple(it.getString("modelId"), it.getString("label"), it.getString("token")) }
-                }.getOrNull()
-                when {
-                    marker == null -> {
-                        Log.w(TAG, "pending crash marker was malformed, discarding: $raw")
-                        prefs.edit().remove(KEY_PENDING_LABEL).commitLogged("clearing malformed pending marker")
-                    }
-                    marker.third in liveAttemptTokens -> {
-                        // Belongs to an attempt still running in *this* process — see
-                        // liveAttemptTokens' declaration for why that's proof it hasn't
-                        // crashed anything. Leave it alone entirely: it isn't stale, and
-                        // that attempt's own finally block owns clearing it.
-                        Log.i(TAG, "pending marker for ${marker.second}/${marker.first} belongs to " +
-                            "a still-running attempt in this process — not a crash, leaving it")
-                    }
-                    else -> {
-                        val (crashedModelId, crashedLabel, _) = marker
-                        Log.w(TAG, "backend=$crashedLabel for model=$crashedModelId never returned on " +
-                            "the previous load — it crashed the process; skipping it for that model on " +
-                            "this device from now on")
-                        val crashedModelKnown =
-                            prefs.getStringSet(knownCrashKey(crashedModelId), emptySet())!!.toMutableSet()
-                        crashedModelKnown += crashedLabel
-                        prefs.edit()
-                            .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
-                            .commitLogged("recording crash for $crashedModelId/$crashedLabel")
-                        if (crashedModelId == modelId) knownCrashLabels += crashedLabel
-                        prefs.edit().remove(KEY_PENDING_LABEL).commitLogged("clearing stale pending marker")
-                    }
+            // Entries left by attempts that are gone are crashes; entries whose token
+            // is still live belong to an attempt running in *this* process and are
+            // left for that attempt's own finally block — see liveAttemptTokens.
+            for (dead in takeCrashedPending(prefs, KEY_PENDING_LABEL, "clearing stale pending markers")) {
+                val crashedModelId = dead.optString("modelId")
+                val crashedLabel = dead.optString("label")
+                if (crashedModelId.isEmpty() || crashedLabel.isEmpty()) {
+                    Log.w(TAG, "discarding pending marker with no model id or label: $dead")
+                    continue
                 }
+                Log.w(TAG, "backend=$crashedLabel for model=$crashedModelId never returned on " +
+                    "the previous load — it crashed the process; skipping it for that model on " +
+                    "this device from now on")
+                val crashedModelKnown =
+                    prefs.getStringSet(knownCrashKey(crashedModelId), emptySet())!!.toMutableSet()
+                crashedModelKnown += crashedLabel
+                prefs.edit()
+                    .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
+                    .commitLogged("recording crash for $crashedModelId/$crashedLabel")
+                if (crashedModelId == modelId) knownCrashLabels += crashedLabel
             }
 
             val attempted = mutableListOf<String>()
@@ -620,24 +670,22 @@ class LiteRtLmEngine private constructor(
                     // Written with commit() (synchronous, durable) rather than apply():
                     // if anything below crashes the process, an async write might never
                     // have reached disk, and this whole guard exists for exactly that
-                    // moment. The random token both lets this attempt's own finally
-                    // block tell its marker apart from one written by a second,
-                    // overlapping load() for the same label, and (via liveAttemptTokens
-                    // above) lets any load() distinguish "still running in this process"
-                    // from "the process that wrote this is gone" — LocalLlmService's
-                    // interruptLoad() interrupts and drops the old Thread reference
-                    // without joining it, and Engine.initialize() isn't interruptible,
-                    // so a stop-then-immediately-retry can leave the old load() still
-                    // running when a new one starts and reads the old one's own marker.
+                    // moment. The random token both identifies this attempt's own entry
+                    // among any written by a second, overlapping load(), and (via
+                    // liveAttemptTokens above) lets any load() distinguish "still
+                    // running in this process" from "the process that wrote this is
+                    // gone" — LocalLlmService's interruptLoad() interrupts and drops the
+                    // old Thread reference without joining it, and Engine.initialize()
+                    // isn't interruptible, so a stop-then-immediately-retry can leave the
+                    // old load() still running when a new one starts.
                     val attemptToken = UUID.randomUUID().toString()
-                    val pendingValue = JSONObject()
-                        .put("modelId", modelId)
-                        .put("label", label)
-                        .put("token", attemptToken)
-                        .toString()
                     liveAttemptTokens += attemptToken
-                    prefs.edit().putString(KEY_PENDING_LABEL, pendingValue)
-                        .commitLogged("marking $label pending for $modelId")
+                    addPending(
+                        prefs,
+                        KEY_PENDING_LABEL,
+                        JSONObject().put("modelId", modelId).put("label", label).put("token", attemptToken),
+                        "marking $label pending for $modelId",
+                    )
                     // candidate is constructed *inside* the guarded span, not before it:
                     // a bad NPU/GPU delegate can crash the process while its native
                     // library is being loaded during Backend.NPU()/Backend.GPU() or
@@ -762,13 +810,11 @@ class LiteRtLmEngine private constructor(
                         // during normal unwinding regardless of throwable type) — the
                         // only way to skip it is the process dying outright before
                         // unwinding can happen, which is precisely the one case this
-                        // marker exists to detect. Only clear it if it's still the
-                        // value *this* attempt wrote — see pendingValue's comment above.
+                        // marker exists to detect. Clears only the entry *this* attempt
+                        // added, and clears it before retiring the live token — see
+                        // clearPending's KDoc for why that order matters.
+                        clearPending(prefs, KEY_PENDING_LABEL, attemptToken, "clearing pending marker for $label/$modelId")
                         liveAttemptTokens -= attemptToken
-                        if (prefs.getString(KEY_PENDING_LABEL, null) == pendingValue) {
-                            prefs.edit().remove(KEY_PENDING_LABEL)
-                                .commitLogged("clearing pending marker for $label/$modelId")
-                        }
                     }
                 }
             }
