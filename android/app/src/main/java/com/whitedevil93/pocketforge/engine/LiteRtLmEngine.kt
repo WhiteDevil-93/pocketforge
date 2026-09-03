@@ -337,6 +337,24 @@ class LiteRtLmEngine private constructor(
         private val liveAttemptTokens = ConcurrentHashMap.newKeySet<String>()
 
         /**
+         * The rule both marker sets obey, stated once because it has been rediscovered
+         * one end at a time:
+         *
+         *   **A marker exists exactly while the native calls it guards are running, and
+         *   is created and retired under [engineConstructionLock].**
+         *
+         * Both halves are load-bearing, and each was a real bug before it was stated.
+         * A marker created before the lock covers an attempt that is merely *queued* and
+         * has run nothing, so an abort caused by the attempt ahead of it blacklists a
+         * backend that was never tried. A marker retired after the unlock outlives its
+         * own native calls, so an abort caused by whatever acquired the lock next — the
+         * next attempt, or a drafter probe — is blamed on a stage that had already
+         * finished. Holding the lock across both edges is what makes "one marked native
+         * stage at a time" true, which is the whole basis for attributing an abort to
+         * anything at all.
+         */
+
+        /**
          * Serializes read-modify-write on the pending-marker sets below.
          *
          * SharedPreferences is thread-safe per operation, which is not the property
@@ -820,6 +838,15 @@ class LiteRtLmEngine private constructor(
                             candidate = null
                             throw t
                         } finally {
+                            // Retired inside the lock, before the unlock, for the mirror
+                            // of the reason it is created inside it. Runs for the success
+                            // return above, the caught Throwable, and an uncaught Error
+                            // alike (JVM finally semantics) — the only way to skip it is
+                            // the process dying outright, which is the one case the marker
+                            // exists to detect. Both calls are no-ops for an attempt that
+                            // never got past the lock and so never marked.
+                            clearPending(prefs, KEY_PENDING_LABEL, attemptToken, "clearing pending marker for $label/$modelId")
+                            liveAttemptTokens -= attemptToken
                             engineConstructionLock.unlock()
                         }
                         Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
@@ -828,8 +855,8 @@ class LiteRtLmEngine private constructor(
                         // Distinct from the generic handler below on purpose: an interrupt
                         // means the user stopped this load, not that this backend is
                         // unusable. Falling through to the next backend would spend minutes
-                        // initializing something nobody is waiting for. Restore the flag and
-                        // let it out; the finally below still clears this attempt's marker.
+                        // initializing something nobody is waiting for. Restore the flag
+                        // and let it out; the marker was already cleared inside the lock.
                         Thread.currentThread().interrupt()
                         // Normally already closed and nulled inside the lock; this covers
                         // the narrower case of a throw after the locked span.
@@ -842,10 +869,8 @@ class LiteRtLmEngine private constructor(
                     } catch (e: Exception) {
                         // Catching Exception, not Throwable: an Error (OOM,
                         // UnsatisfiedLinkError) is not this attempt's problem to retry
-                        // around and propagates immediately, failing the whole load —
-                        // but the finally below still clears the marker for it, since
-                        // LocalLlmService's outer catch(Throwable) means an Error here
-                        // reaches Kotlin too and never actually crashes the process.
+                        // around and propagates immediately, failing the whole load.
+                        // The marker is cleared for it either way, inside the lock.
                         Log.w(TAG, "backend $label unavailable: ${e.message}")
                         // A half-initialized engine still holds native memory. One that
                         // threw inside the locked span was already closed and nulled
@@ -857,18 +882,6 @@ class LiteRtLmEngine private constructor(
                             Log.w(TAG, "close() after failed init also failed: ${closeError.message}")
                         }
                         last = e
-                    } finally {
-                        // Runs for the success return above, the caught Exception case,
-                        // and an uncaught Error alike (JVM finally semantics: it runs
-                        // during normal unwinding regardless of throwable type) — the
-                        // only way to skip it is the process dying outright before
-                        // unwinding can happen, which is precisely the one case this
-                        // marker exists to detect. Clears only the entry *this* attempt
-                        // added, and clears it before retiring the live token — see
-                        // clearPending's KDoc for why that order matters. Both are no-ops
-                        // when the attempt never got past the lock and so never marked.
-                        clearPending(prefs, KEY_PENDING_LABEL, attemptToken, "clearing pending marker for $label/$modelId")
-                        liveAttemptTokens -= attemptToken
                     }
                 }
             }
