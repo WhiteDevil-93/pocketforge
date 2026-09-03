@@ -314,6 +314,12 @@ class LiteRtLmEngine private constructor(
         // get blacklisted for a smaller, unrelated bundle that would load on it fine.
         private const val KEY_KNOWN_CRASH_LABELS_PREFIX = "known_crash_labels:"
 
+        /** Marks a speculative-decoding probe as in flight; see probeDrafterOnce. */
+        private const val KEY_PENDING_PROBE = "pending_probe"
+
+        /** Suffixed per model id: the probe aborted the process for this bundle. */
+        private const val KEY_PROBE_CRASHED_PREFIX = "probe_crashed:"
+
         // Tokens (see pendingValue below) for load() attempts currently in flight in
         // *this* process. A token found in SharedPreferences but missing from this
         // set could only get there one way: the process that wrote it is gone — a
@@ -380,9 +386,9 @@ class LiteRtLmEngine private constructor(
          * tool-calling path that this hardens.
          */
         @OptIn(ExperimentalApi::class)
-        private fun configureExperimentalFlags(modelPath: String, backendLabel: String) {
+        private fun configureExperimentalFlags(backendLabel: String, drafterAvailable: Boolean) {
             val acceleratorBacked = backendLabel == "NPU" || backendLabel == "GPU"
-            val speculative = acceleratorBacked && hasDrafter(modelPath)
+            val speculative = acceleratorBacked && drafterAvailable
             ExperimentalFlags.enableSpeculativeDecoding = speculative
 
             // Enabled unconditionally: it is inert when a Conversation declares no
@@ -398,18 +404,53 @@ class LiteRtLmEngine private constructor(
         }
 
         /**
-         * Whether [modelPath]'s bundle carries a drafter model for speculative decoding.
-         * Probes native code against the file, so it is only ever called from inside the
-         * crash-guarded span in [load] — a malformed bundle that would abort the process
-         * here must leave the same marker any other native-adjacent call would.
-         * Failure is reported as "no drafter" rather than propagating: an unusable probe
-         * is a reason to skip an optimisation, never a reason to fail the load.
+         * Whether this bundle carries a drafter model for speculative decoding, run once
+         * per [load] under its own crash marker.
+         *
+         * The probe reads the model file through native code, so like everything else in
+         * this class it can abort the process rather than throw. It must NOT be guarded by
+         * the backend marker, though, and this is the whole reason it has its own: the
+         * probe depends only on the bundle, not on the backend. Sharing the backend marker
+         * meant a probe crash was recorded against whichever label happened to be current;
+         * the next launch skipped that label, reached the next one, ran the same
+         * bundle-dependent probe, and crashed again — walking the fallback chain one
+         * launch at a time until every backend was blacklisted, with Engine.initialize()
+         * never once attempted. A model-wide marker instead disables just this
+         * optimisation on the next launch and leaves the backend chain untouched.
+         *
+         * Failure of any kind is reported as "no drafter": an unusable probe is a reason
+         * to skip an optimisation, never a reason to fail the load.
          */
-        private fun hasDrafter(modelPath: String): Boolean = try {
-            Capabilities(modelPath).use { it.hasSpeculativeDecodingSupport() }
-        } catch (e: Exception) {
-            Log.w(TAG, "speculative-decoding probe failed, assuming unsupported: ${e.message}")
-            false
+        private fun probeDrafterOnce(
+            modelPath: String,
+            modelId: String,
+            prefs: SharedPreferences,
+            commitLogged: SharedPreferences.Editor.(String) -> Unit,
+        ): Boolean {
+            val crashedKey = "$KEY_PROBE_CRASHED_PREFIX$modelId"
+            if (prefs.getBoolean(crashedKey, false)) {
+                Log.i(TAG, "skipping speculative-decoding probe for model=$modelId — crashed previously")
+                return false
+            }
+            // A marker still set from last time means the probe never returned control to
+            // Kotlin — i.e. it took the process down. Record that permanently for this
+            // bundle before going anywhere near the native call again.
+            if (prefs.getString(KEY_PENDING_PROBE, null) == modelId) {
+                Log.w(TAG, "speculative-decoding probe crashed the process for model=$modelId — disabling it")
+                prefs.edit().putBoolean(crashedKey, true).remove(KEY_PENDING_PROBE)
+                    .commitLogged("recording probe crash for $modelId")
+                return false
+            }
+            prefs.edit().putString(KEY_PENDING_PROBE, modelId)
+                .commitLogged("marking probe pending for $modelId")
+            return try {
+                Capabilities(modelPath).use { it.hasSpeculativeDecodingSupport() }
+            } catch (e: Exception) {
+                Log.w(TAG, "speculative-decoding probe failed, assuming unsupported: ${e.message}")
+                false
+            } finally {
+                prefs.edit().remove(KEY_PENDING_PROBE).commitLogged("clearing probe marker for $modelId")
+            }
         }
 
         /**
@@ -515,6 +556,11 @@ class LiteRtLmEngine private constructor(
 
             val attempted = mutableListOf<String>()
             var last: Throwable? = null
+            // Once per load, not once per attempt: the probe depends only on the bundle,
+            // and running it inside the loop is what let a single probe crash consume the
+            // whole backend chain. See probeDrafterOnce.
+            val drafterAvailable = probeDrafterOnce(modelPath, modelId, prefs) { commitLogged(it) }
+
             for ((name, makeBackend) in backends(context.applicationInfo.nativeLibraryDir)) {
                 for (withVision in booleanArrayOf(true, false)) {
                     val label = if (withVision) "$name+vision" else name
@@ -563,7 +609,7 @@ class LiteRtLmEngine private constructor(
                         // that reads it — see the lock's own KDoc for why they cannot be
                         // separated.
                         val loaded = engineConstructionLock.withLock {
-                            configureExperimentalFlags(modelPath, name)
+                            configureExperimentalFlags(name, drafterAvailable)
                             val backendInstance = makeBackend()
                             val built = Engine(
                                 EngineConfig(
