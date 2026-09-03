@@ -519,6 +519,36 @@ class LiteRtLmEngine private constructor(
             prefs: SharedPreferences,
             commitLogged: SharedPreferences.Editor.(String) -> Unit,
         ): Boolean {
+            // Serialized against engine construction, not just against other probes.
+            // Capabilities() and Engine.initialize() can each abort the process, and each
+            // leaves a durable marker behind under its own key. Run them at once and a
+            // single abort strands both: the next launch reads a probe crash as a backend
+            // crash too, blacklisting a viable backend, or reads a backend crash as a
+            // probe crash, disabling speculation for a bundle that never broke it. Only
+            // one marked native stage at a time keeps the attribution unambiguous.
+            //
+            // lockInterruptibly for the reason load() uses it: a retry whose load was
+            // stopped must not sit out the multi-minute initialize() ahead of it. The
+            // re-check covers an interrupt arriving while queued, which lockInterruptibly
+            // stops observing once it has been granted the lock.
+            engineConstructionLock.lockInterruptibly()
+            try {
+                if (Thread.interrupted()) {
+                    throw InterruptedException("load was stopped while the drafter probe was queued")
+                }
+                return probeDrafterLocked(modelPath, modelId, prefs, commitLogged)
+            } finally {
+                engineConstructionLock.unlock()
+            }
+        }
+
+        /** [probeDrafterOnce]'s body, run holding [engineConstructionLock]. */
+        private fun probeDrafterLocked(
+            modelPath: String,
+            modelId: String,
+            prefs: SharedPreferences,
+            commitLogged: SharedPreferences.Editor.(String) -> Unit,
+        ): Boolean {
             // Every probe entry whose attempt is gone is a crash, whichever bundle it
             // was probing — record them all against their own model before asking
             // about this one. Entries belonging to a probe still running in this
@@ -679,13 +709,6 @@ class LiteRtLmEngine private constructor(
                     // isn't interruptible, so a stop-then-immediately-retry can leave the
                     // old load() still running when a new one starts.
                     val attemptToken = UUID.randomUUID().toString()
-                    liveAttemptTokens += attemptToken
-                    addPending(
-                        prefs,
-                        KEY_PENDING_LABEL,
-                        JSONObject().put("modelId", modelId).put("label", label).put("token", attemptToken),
-                        "marking $label pending for $modelId",
-                    )
                     // candidate is constructed *inside* the guarded span, not before it:
                     // a bad NPU/GPU delegate can crash the process while its native
                     // library is being loaded during Backend.NPU()/Backend.GPU() or
@@ -696,10 +719,6 @@ class LiteRtLmEngine private constructor(
                     // the last one, or a crash there leaves no marker to detect it by.
                     var candidate: Engine? = null
                     try {
-                        // First statement inside the guard on purpose: this is the call
-                        // that pulls in LiteRT-LM's native library on this process's very
-                        // first load attempt. See configureNativeLoggingOnce's KDoc.
-                        configureNativeLoggingOnce()
                         // engineConstructionLock spans the flag write AND the construction
                         // that reads it — see the lock's own KDoc for why they cannot be
                         // separated.
@@ -718,6 +737,23 @@ class LiteRtLmEngine private constructor(
                             if (Thread.interrupted()) {
                                 throw InterruptedException("load was stopped while queued behind another engine construction")
                             }
+                            // Marked here rather than before the lock. An attempt parked
+                            // on the lock has run no native code at all, so a marker
+                            // written before queueing survives if the load *ahead* of it
+                            // aborts the process — and the next launch then blacklists a
+                            // backend this attempt never actually tried. The marker must
+                            // start where the native calls start, not where the wait does.
+                            liveAttemptTokens += attemptToken
+                            addPending(
+                                prefs,
+                                KEY_PENDING_LABEL,
+                                JSONObject().put("modelId", modelId).put("label", label).put("token", attemptToken),
+                                "marking $label pending for $modelId",
+                            )
+                            // First marked statement on purpose: this is the call that
+                            // pulls in LiteRT-LM's native library on this process's very
+                            // first load attempt. See configureNativeLoggingOnce's KDoc.
+                            configureNativeLoggingOnce()
                             configureExperimentalFlags(name, drafterAvailable)
                             val backendInstance = makeBackend()
                             val built = Engine(
@@ -829,7 +865,8 @@ class LiteRtLmEngine private constructor(
                         // unwinding can happen, which is precisely the one case this
                         // marker exists to detect. Clears only the entry *this* attempt
                         // added, and clears it before retiring the live token — see
-                        // clearPending's KDoc for why that order matters.
+                        // clearPending's KDoc for why that order matters. Both are no-ops
+                        // when the attempt never got past the lock and so never marked.
                         clearPending(prefs, KEY_PENDING_LABEL, attemptToken, "clearing pending marker for $label/$modelId")
                         liveAttemptTokens -= attemptToken
                     }
