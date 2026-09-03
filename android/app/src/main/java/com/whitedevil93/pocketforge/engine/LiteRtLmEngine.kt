@@ -766,6 +766,23 @@ class LiteRtLmEngine private constructor(
                             // an OOM risk in its own right.
                             built.initialize()
                             built
+                        } catch (t: Throwable) {
+                            // Freed inside the lock, not in the handlers below. The lock
+                            // exists partly because two multi-GB engines coming up at once
+                            // is an OOM risk; releasing it while this attempt's failed
+                            // engine still holds its native allocation lets a queued retry
+                            // start building the next one against exactly that pressure —
+                            // on the fallback path, where a failure is the normal outcome
+                            // and a retry is what happens next. Rethrown unchanged so the
+                            // handlers below still see InterruptedException as distinct
+                            // from a backend being unusable.
+                            try {
+                                candidate?.close()
+                            } catch (closeError: Exception) {
+                                Log.w(TAG, "close() after failed init also failed: ${closeError.message}")
+                            }
+                            candidate = null
+                            throw t
                         } finally {
                             engineConstructionLock.unlock()
                         }
@@ -776,9 +793,10 @@ class LiteRtLmEngine private constructor(
                         // means the user stopped this load, not that this backend is
                         // unusable. Falling through to the next backend would spend minutes
                         // initializing something nobody is waiting for. Restore the flag and
-                        // let it out; the finally below still frees the half-built engine
-                        // and clears this attempt's marker.
+                        // let it out; the finally below still clears this attempt's marker.
                         Thread.currentThread().interrupt()
+                        // Normally already closed and nulled inside the lock; this covers
+                        // the narrower case of a throw after the locked span.
                         try {
                             candidate?.close()
                         } catch (closeError: Exception) {
@@ -793,11 +811,10 @@ class LiteRtLmEngine private constructor(
                         // LocalLlmService's outer catch(Throwable) means an Error here
                         // reaches Kotlin too and never actually crashes the process.
                         Log.w(TAG, "backend $label unavailable: ${e.message}")
-                        // A half-initialized engine still holds native memory; free it
-                        // before the next attempt so this fallback doesn't leak an
-                        // engine's worth of allocation on the way to the next one.
-                        // candidate can be null here if makeBackend()/Engine(...) itself
-                        // is what threw, before ever reaching initialize().
+                        // A half-initialized engine still holds native memory. One that
+                        // threw inside the locked span was already closed and nulled
+                        // there, before the lock was released; this covers a throw after
+                        // it, and is a no-op otherwise.
                         try {
                             candidate?.close()
                         } catch (closeError: Exception) {
