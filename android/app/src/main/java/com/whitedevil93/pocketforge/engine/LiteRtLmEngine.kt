@@ -24,7 +24,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -432,16 +431,49 @@ class LiteRtLmEngine private constructor(
                 Log.i(TAG, "skipping speculative-decoding probe for model=$modelId — crashed previously")
                 return false
             }
-            // A marker still set from last time means the probe never returned control to
-            // Kotlin — i.e. it took the process down. Record that permanently for this
-            // bundle before going anywhere near the native call again.
-            if (prefs.getString(KEY_PENDING_PROBE, null) == modelId) {
-                Log.w(TAG, "speculative-decoding probe crashed the process for model=$modelId — disabling it")
-                prefs.edit().putBoolean(crashedKey, true).remove(KEY_PENDING_PROBE)
-                    .commitLogged("recording probe crash for $modelId")
-                return false
+
+            // A marker left set is only crash evidence if the attempt that wrote it is
+            // NOT still running in this process. interruptLoad() interrupts the loading
+            // thread and drops it without joining, and neither Capabilities nor
+            // Engine.initialize() is interruptible, so a stop-then-retry leaves the old
+            // probe genuinely alive alongside the new one. Without the token check the
+            // retry would read its predecessor's marker as a crash and disable
+            // speculative decoding for this bundle permanently, on a bundle that never
+            // crashed. This mirrors what the backend marker already does via
+            // liveAttemptTokens; the probe marker not having it was the gap.
+            prefs.getString(KEY_PENDING_PROBE, null)?.let { raw ->
+                val marker = runCatching {
+                    JSONObject(raw).let { it.getString("modelId") to it.getString("token") }
+                }.getOrNull()
+                when {
+                    marker == null -> {
+                        Log.w(TAG, "pending probe marker was malformed, discarding: $raw")
+                        prefs.edit().remove(KEY_PENDING_PROBE).commitLogged("clearing malformed probe marker")
+                    }
+                    marker.second in liveAttemptTokens ->
+                        Log.i(TAG, "probe marker for model=${marker.first} belongs to a load still running here — not a crash")
+                    marker.first == modelId -> {
+                        Log.w(TAG, "speculative-decoding probe crashed the process for model=$modelId — disabling it")
+                        prefs.edit().putBoolean(crashedKey, true).remove(KEY_PENDING_PROBE)
+                            .commitLogged("recording probe crash for $modelId")
+                        return false
+                    }
+                    else -> {
+                        // Crashed probing a different bundle. Record it against that one
+                        // rather than this one, and carry on.
+                        Log.w(TAG, "speculative-decoding probe crashed for a different model=${marker.first} — disabling it there")
+                        prefs.edit()
+                            .putBoolean("$KEY_PROBE_CRASHED_PREFIX${marker.first}", true)
+                            .remove(KEY_PENDING_PROBE)
+                            .commitLogged("recording probe crash for ${marker.first}")
+                    }
+                }
             }
-            prefs.edit().putString(KEY_PENDING_PROBE, modelId)
+
+            val probeToken = UUID.randomUUID().toString()
+            liveAttemptTokens += probeToken
+            prefs.edit()
+                .putString(KEY_PENDING_PROBE, JSONObject().put("modelId", modelId).put("token", probeToken).toString())
                 .commitLogged("marking probe pending for $modelId")
             return try {
                 Capabilities(modelPath).use { it.hasSpeculativeDecodingSupport() }
@@ -449,7 +481,15 @@ class LiteRtLmEngine private constructor(
                 Log.w(TAG, "speculative-decoding probe failed, assuming unsupported: ${e.message}")
                 false
             } finally {
-                prefs.edit().remove(KEY_PENDING_PROBE).commitLogged("clearing probe marker for $modelId")
+                liveAttemptTokens -= probeToken
+                // Clear only our own marker: a concurrent probe may have overwritten it,
+                // and erasing theirs would leave their crash undetectable.
+                val stillOurs = runCatching {
+                    JSONObject(prefs.getString(KEY_PENDING_PROBE, "{}")!!).optString("token") == probeToken
+                }.getOrDefault(false)
+                if (stillOurs) {
+                    prefs.edit().remove(KEY_PENDING_PROBE).commitLogged("clearing probe marker for $modelId")
+                }
             }
         }
 
@@ -608,7 +648,21 @@ class LiteRtLmEngine private constructor(
                         // engineConstructionLock spans the flag write AND the construction
                         // that reads it — see the lock's own KDoc for why they cannot be
                         // separated.
-                        val loaded = engineConstructionLock.withLock {
+                        //
+                        // lockInterruptibly, not withLock's lock(): interruptLoad() stops a
+                        // load by interrupting its thread, and a thread parked in lock()
+                        // ignores that entirely. A user who stopped a load and retried would
+                        // otherwise have the stopped attempt sit out the older load's
+                        // multi-minute initialize(), then run its own in full — and the two
+                        // together can blow LOAD_WATCHDOG_MS (15 min) even when either alone
+                        // would have finished inside it. The re-check after acquisition
+                        // covers the interrupt that arrives while queued, which
+                        // lockInterruptibly cannot observe once it has been granted the lock.
+                        engineConstructionLock.lockInterruptibly()
+                        val loaded = try {
+                            if (Thread.interrupted()) {
+                                throw InterruptedException("load was stopped while queued behind another engine construction")
+                            }
                             configureExperimentalFlags(name, drafterAvailable)
                             val backendInstance = makeBackend()
                             val built = Engine(
@@ -657,9 +711,25 @@ class LiteRtLmEngine private constructor(
                             // an OOM risk in its own right.
                             built.initialize()
                             built
+                        } finally {
+                            engineConstructionLock.unlock()
                         }
                         Log.i(TAG, "loaded on backend=$name visionAvailable=$withVision")
                         return LiteRtLmEngine(loaded, name, visionAvailable = withVision)
+                    } catch (e: InterruptedException) {
+                        // Distinct from the generic handler below on purpose: an interrupt
+                        // means the user stopped this load, not that this backend is
+                        // unusable. Falling through to the next backend would spend minutes
+                        // initializing something nobody is waiting for. Restore the flag and
+                        // let it out; the finally below still frees the half-built engine
+                        // and clears this attempt's marker.
+                        Thread.currentThread().interrupt()
+                        try {
+                            candidate?.close()
+                        } catch (closeError: Exception) {
+                            Log.w(TAG, "failed to close interrupted engine: ${closeError.message}")
+                        }
+                        throw e
                     } catch (e: Exception) {
                         // Catching Exception, not Throwable: an Error (OOM,
                         // UnsatisfiedLinkError) is not this attempt's problem to retry
