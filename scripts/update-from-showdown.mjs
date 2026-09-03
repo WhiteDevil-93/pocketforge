@@ -20,6 +20,7 @@ const OUTPUTS = {
   moves: join(__dirname, '..', 'src', 'data', 'movesData.ts'),
   items: join(__dirname, '..', 'src', 'data', 'itemsData.ts'),
   types: join(__dirname, '..', 'src', 'data', 'typesData.ts'),
+  spriteIds: join(__dirname, '..', 'src', 'data', 'spriteIds.ts'),
 };
 
 async function fetchShowdownData(url) {
@@ -225,6 +226,63 @@ function transformTypeChart(typechart) {
     }
   }
   return chart;
+}
+
+/**
+ * Normalisation used to LOOK UP a name in the override table: alphanumerics only,
+ * so a caller passing either the display name or the species id lands on one key.
+ */
+function toSpriteLookupId(name) {
+  return (name || '').normalize('NFD').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Normalisation used when a name is NOT in the override table. Keeps hyphens,
+ * because Showdown's forme filenames have them (charizard-megax) — this is the
+ * guess that serves a species released after the bundled pokedex was generated.
+ */
+function toSpriteFallbackId(name) {
+  return (name || '')
+    .normalize('NFD')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
+/**
+ * The sprite filenames the fallback alone cannot produce.
+ *
+ * Deliberately NOT "every entry whose spriteId differs from its species id" — that
+ * criterion is both bigger and wrong. It omits Ho-Oh, Porygon-Z, Kommo-o, the four
+ * Ruinous legendaries and Nidoran-F/M, whose spriteId happens to equal their species
+ * id, and the hyphen-preserving fallback then emits ho-oh.png for them. Keying off
+ * what the fallback actually gets wrong yields 51 entries instead of 355, and breaks
+ * nothing.
+ */
+function buildSpriteIdOverrides(pokemon) {
+  const overrides = {};
+  for (const entry of pokemon) {
+    if (toSpriteFallbackId(entry.name) !== entry.spriteId) {
+      overrides[toSpriteLookupId(entry.name)] = entry.spriteId;
+    }
+  }
+  return overrides;
+}
+
+function generateSpriteIdsFile(pokemon) {
+  const overrides = buildSpriteIdOverrides(pokemon);
+  return `// Auto-generated from Pokemon Showdown — do not edit manually
+// Last updated: ${new Date().toISOString()}
+//
+// Sprite filenames that cannot be derived from a species name by normalisation
+// alone. Kept in its own module, separate from pokemonData.ts, because
+// PokemonSprite renders on routes that need nothing else from the pokedex —
+// importing the full 1,380-entry array to resolve an image URL pulls a ~286 KB
+// chunk into a 1.3 KB component. See src/data/sprites.ts.
+
+export const SPRITE_ID_OVERRIDES: Record<string, string> = ${JSON.stringify(overrides, null, 2)};
+`;
 }
 
 function generatePokemonFile(pokemon) {
@@ -479,12 +537,14 @@ async function main() {
   console.log(`  Types: ${Object.keys(typesData).length} entries`);
 
   const pokemonFile = generatePokemonFile(pokemon);
+  const spriteIdsFile = generateSpriteIdsFile(pokemon);
   const movesFile = generateMovesFile(movesList);
   const itemsFile = generateItemsFile(itemsList);
   const typesFile = generateTypesFile(typesData);
 
   const files = [
     { path: OUTPUTS.pokemon, content: pokemonFile },
+    { path: OUTPUTS.spriteIds, content: spriteIdsFile },
     { path: OUTPUTS.moves, content: movesFile },
     { path: OUTPUTS.items, content: itemsFile },
     { path: OUTPUTS.types, content: typesFile },
