@@ -481,7 +481,13 @@ class LiteRtLmEngine private constructor(
                 Log.w(TAG, "speculative-decoding probe failed, assuming unsupported: ${e.message}")
                 false
             } finally {
-                liveAttemptTokens -= probeToken
+                // Order matters. Between retiring the token and clearing the marker there
+                // is an instant where the marker is set and its token is no longer live —
+                // exactly the state the crash check above reads as "a probe died here".
+                // A retry landing in that window would record a permanent crash for a
+                // bundle whose probe had just finished normally. Clearing first means the
+                // marker is only ever present-with-a-live-token or absent.
+                //
                 // Clear only our own marker: a concurrent probe may have overwritten it,
                 // and erasing theirs would leave their crash undetectable.
                 val stillOurs = runCatching {
@@ -490,6 +496,7 @@ class LiteRtLmEngine private constructor(
                 if (stillOurs) {
                     prefs.edit().remove(KEY_PENDING_PROBE).commitLogged("clearing probe marker for $modelId")
                 }
+                liveAttemptTokens -= probeToken
             }
         }
 
