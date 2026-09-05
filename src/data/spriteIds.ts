@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-09-04T01:26:47.738Z
+// Last updated: 2026-09-05T01:26:56.132Z
 //
 // Sprite filenames that cannot be derived from a species name by normalisation
 // alone. Kept in its own module, separate from pokemonData.ts, because
