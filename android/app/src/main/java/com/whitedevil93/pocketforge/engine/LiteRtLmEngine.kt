@@ -681,34 +681,47 @@ class LiteRtLmEngine private constructor(
             }.onFailure { Log.w(TAG, "could not read memory info: ${it.message}") }
             fun knownCrashKey(id: String) = "$KEY_KNOWN_CRASH_LABELS_PREFIX$id"
 
-            // Entries left by attempts that are gone are crashes; entries whose token
-            // is still live belong to an attempt running in *this* process and are
-            // left for that attempt's own finally block — see liveAttemptTokens.
-            for (dead in takeCrashedPending(prefs, KEY_PENDING_LABEL, "clearing stale pending markers")) {
-                val crashedModelId = dead.optString("modelId")
-                val crashedLabel = dead.optString("label")
-                if (crashedModelId.isEmpty() || crashedLabel.isEmpty()) {
-                    Log.w(TAG, "discarding pending marker with no model id or label: $dead")
-                    continue
+            // Drain, record, and snapshot as ONE critical section, not three steps that
+            // happen to run in order.
+            //
+            // takeCrashedPending hands each stale marker to exactly one caller — that is
+            // what stops two loads double-recording the same crash — so a load that does
+            // not drain a marker learns about it only from the known-crash set. Ordering
+            // the three steps is not enough on its own: a load that removed a marker can
+            // be descheduled before committing the matching label, and a second load
+            // reaching here in that gap finds no pending entry AND no recorded label, so
+            // it retries the backend already proven to abort the process. Under one lock
+            // there is no such gap: whoever drains has committed the label before anyone
+            // else can read the set.
+            //
+            // pendingMarkerLock, reentrantly (takeCrashedPending takes it too). Lock
+            // order is unchanged — engineConstructionLock is not held here, and where
+            // both are taken it is always engineConstructionLock first.
+            val knownCrashLabels = synchronized(pendingMarkerLock) {
+                // Entries left by attempts that are gone are crashes; entries whose token
+                // is still live belong to an attempt running in *this* process and are
+                // left for that attempt's own finally block — see liveAttemptTokens.
+                for (dead in takeCrashedPending(prefs, KEY_PENDING_LABEL, "clearing stale pending markers")) {
+                    val crashedModelId = dead.optString("modelId")
+                    val crashedLabel = dead.optString("label")
+                    if (crashedModelId.isEmpty() || crashedLabel.isEmpty()) {
+                        Log.w(TAG, "discarding pending marker with no model id or label: $dead")
+                        continue
+                    }
+                    Log.w(TAG, "backend=$crashedLabel for model=$crashedModelId never returned on " +
+                        "the previous load — it crashed the process; skipping it for that model on " +
+                        "this device from now on")
+                    val crashedModelKnown =
+                        prefs.getStringSet(knownCrashKey(crashedModelId), emptySet())!!.toMutableSet()
+                    crashedModelKnown += crashedLabel
+                    prefs.edit()
+                        .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
+                        .commitLogged("recording crash for $crashedModelId/$crashedLabel")
                 }
-                Log.w(TAG, "backend=$crashedLabel for model=$crashedModelId never returned on " +
-                    "the previous load — it crashed the process; skipping it for that model on " +
-                    "this device from now on")
-                val crashedModelKnown =
-                    prefs.getStringSet(knownCrashKey(crashedModelId), emptySet())!!.toMutableSet()
-                crashedModelKnown += crashedLabel
-                prefs.edit()
-                    .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
-                    .commitLogged("recording crash for $crashedModelId/$crashedLabel")
+                // Read last, inside the same section, so it includes both this load's own
+                // drain and any drain that completed before this section was entered.
+                prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
             }
-
-            // Read AFTER the drain, never before it. takeCrashedPending hands each stale
-            // marker to exactly one caller, so a load that snapshots first and drains
-            // second misses whatever its own drain just recorded — and where two loads
-            // overlap after a restart, the one that loses the drain keeps an empty
-            // snapshot and retries the very backend just proven to abort the process.
-            // Reading afterwards also picks up a crash recorded by the load that won.
-            val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
 
             val attempted = mutableListOf<String>()
             var last: Throwable? = null
