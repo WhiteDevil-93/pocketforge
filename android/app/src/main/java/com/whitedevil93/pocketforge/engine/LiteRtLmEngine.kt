@@ -423,7 +423,12 @@ class LiteRtLmEngine private constructor(
          */
         private fun clearPending(prefs: SharedPreferences, key: String, token: String, what: String) =
             synchronized(pendingMarkerLock) {
-                writePending(prefs, key, readPending(prefs, key).filterNot { it.optString("token") == token }, what)
+                val entries = readPending(prefs, key)
+                val remaining = entries.filterNot { it.optString("token") == token }
+                // Skip the commit when this token was not there. writePending commits
+                // synchronously, and callers retire idempotently — a second call must
+                // not pay for a disk write that changes nothing.
+                if (remaining.size != entries.size) writePending(prefs, key, remaining, what)
             }
 
         /**
@@ -675,7 +680,6 @@ class LiteRtLmEngine private constructor(
                     "lowMemory=${memInfo.lowMemory} thresholdMb=${memInfo.threshold / (1024 * 1024)}")
             }.onFailure { Log.w(TAG, "could not read memory info: ${it.message}") }
             fun knownCrashKey(id: String) = "$KEY_KNOWN_CRASH_LABELS_PREFIX$id"
-            val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
 
             // Entries left by attempts that are gone are crashes; entries whose token
             // is still live belong to an attempt running in *this* process and are
@@ -696,8 +700,15 @@ class LiteRtLmEngine private constructor(
                 prefs.edit()
                     .putStringSet(knownCrashKey(crashedModelId), crashedModelKnown)
                     .commitLogged("recording crash for $crashedModelId/$crashedLabel")
-                if (crashedModelId == modelId) knownCrashLabels += crashedLabel
             }
+
+            // Read AFTER the drain, never before it. takeCrashedPending hands each stale
+            // marker to exactly one caller, so a load that snapshots first and drains
+            // second misses whatever its own drain just recorded — and where two loads
+            // overlap after a restart, the one that loses the drain keeps an empty
+            // snapshot and retries the very backend just proven to abort the process.
+            // Reading afterwards also picks up a crash recorded by the load that won.
+            val knownCrashLabels = prefs.getStringSet(knownCrashKey(modelId), emptySet())!!.toMutableSet()
 
             val attempted = mutableListOf<String>()
             var last: Throwable? = null
@@ -831,6 +842,18 @@ class LiteRtLmEngine private constructor(
                             //
                             // Thrown, not returned: the catch below owns closing it, and the
                             // handler outside restores the interrupt flag.
+                            //
+                            // Retired BEFORE that check, not after. The native calls this
+                            // marker guards have all returned by now, so rule 1 says its
+                            // life is over — and retiring it here moves the synchronous
+                            // SharedPreferences commit inside the guarded region instead of
+                            // leaving it between the check and the unlock, where a stop
+                            // landing during a blocking disk write would still hand a
+                            // cancelled engine to the caller. The finally below repeats
+                            // both calls for the failure paths; both are idempotent, and
+                            // clearPending skips its commit when there is nothing to remove.
+                            clearPending(prefs, KEY_PENDING_LABEL, attemptToken, "clearing pending marker for $label/$modelId")
+                            liveAttemptTokens -= attemptToken
                             if (Thread.interrupted()) {
                                 throw InterruptedException("load was stopped while its engine was initializing")
                             }
