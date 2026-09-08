@@ -222,6 +222,10 @@ export interface AppSettings {
    *  only crowds its context. Optional so an unset value keeps the existing
    *  behaviour — mergeStoreState backfills nothing here. */
   localToolProtocol?: 'native' | 'text';
+  /** How the species pickers lay their results out — a text-forward list, or a
+   *  sprite-forward grid. Optional so an unset value keeps the existing list
+   *  layout; mergeStoreState backfills nothing here. */
+  pokemonPickerView?: 'list' | 'grid';
 }
 
 export interface AppState {

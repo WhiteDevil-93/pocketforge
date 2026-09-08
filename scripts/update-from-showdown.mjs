@@ -20,6 +20,7 @@ const OUTPUTS = {
   moves: join(__dirname, '..', 'src', 'data', 'movesData.ts'),
   items: join(__dirname, '..', 'src', 'data', 'itemsData.ts'),
   types: join(__dirname, '..', 'src', 'data', 'typesData.ts'),
+  spriteIds: join(__dirname, '..', 'src', 'data', 'spriteIds.ts'),
 };
 
 async function fetchShowdownData(url) {
@@ -120,6 +121,26 @@ function parseShowdownData(content) {
   }
 }
 
+/** Showdown's own id normalisation — lowercase, alphanumerics only. */
+function toShowdownId(value) {
+  return (value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Filename Showdown serves a species' sprite under, which is NOT the species id:
+ * a forme keeps its base species and forme as separate hyphen-joined ids
+ * ("Charizard-Mega-X" -> charizard-megax), while a base species with a hyphen or
+ * space in its own name collapses to one id ("Ho-Oh" -> hooh, "Tapu Koko" ->
+ * tapukoko). Neither the display name nor the species id gets both cases right,
+ * so it has to come from Showdown's baseSpecies/forme fields.
+ */
+function spriteIdFor(entry, key) {
+  if (entry.baseSpecies && entry.forme) {
+    return `${toShowdownId(entry.baseSpecies)}-${toShowdownId(entry.forme)}`;
+  }
+  return toShowdownId(entry.name || key);
+}
+
 function transformPokemonData(pokedex) {
   return Object.entries(pokedex)
     .filter(([key, val]) => val && typeof val === 'object' && val.num > 0)
@@ -150,6 +171,7 @@ function transformPokemonData(pokedex) {
         abilities: regularAbilities,
         hiddenAbility,
         sprite: key.toLowerCase(),
+        spriteId: spriteIdFor(val, key),
         learnset: [], // Will be populated separately from learnsets
       };
     });
@@ -206,6 +228,63 @@ function transformTypeChart(typechart) {
   return chart;
 }
 
+/**
+ * Normalisation used to LOOK UP a name in the override table: alphanumerics only,
+ * so a caller passing either the display name or the species id lands on one key.
+ */
+function toSpriteLookupId(name) {
+  return (name || '').normalize('NFD').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Normalisation used when a name is NOT in the override table. Keeps hyphens,
+ * because Showdown's forme filenames have them (charizard-megax) — this is the
+ * guess that serves a species released after the bundled pokedex was generated.
+ */
+function toSpriteFallbackId(name) {
+  return (name || '')
+    .normalize('NFD')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
+/**
+ * The sprite filenames the fallback alone cannot produce.
+ *
+ * Deliberately NOT "every entry whose spriteId differs from its species id" — that
+ * criterion is both bigger and wrong. It omits Ho-Oh, Porygon-Z, Kommo-o, the four
+ * Ruinous legendaries and Nidoran-F/M, whose spriteId happens to equal their species
+ * id, and the hyphen-preserving fallback then emits ho-oh.png for them. Keying off
+ * what the fallback actually gets wrong yields 51 entries instead of 355, and breaks
+ * nothing.
+ */
+function buildSpriteIdOverrides(pokemon) {
+  const overrides = {};
+  for (const entry of pokemon) {
+    if (toSpriteFallbackId(entry.name) !== entry.spriteId) {
+      overrides[toSpriteLookupId(entry.name)] = entry.spriteId;
+    }
+  }
+  return overrides;
+}
+
+function generateSpriteIdsFile(pokemon) {
+  const overrides = buildSpriteIdOverrides(pokemon);
+  return `// Auto-generated from Pokemon Showdown — do not edit manually
+// Last updated: ${new Date().toISOString()}
+//
+// Sprite filenames that cannot be derived from a species name by normalisation
+// alone. Kept in its own module, separate from pokemonData.ts, because
+// PokemonSprite renders on routes that need nothing else from the pokedex —
+// importing the full 1,380-entry array to resolve an image URL pulls a ~286 KB
+// chunk into a 1.3 KB component. See src/data/sprites.ts.
+
+export const SPRITE_ID_OVERRIDES: Record<string, string> = ${JSON.stringify(overrides, null, 2)};
+`;
+}
+
 function generatePokemonFile(pokemon) {
   return `// Auto-generated from Pokemon Showdown — do not edit manually
 // Last updated: ${new Date().toISOString()}
@@ -217,7 +296,14 @@ export interface PokedexEntry {
   baseStats: { hp: number; atk: number; def: number; spa: number; spd: number; spe: number };
   abilities: string[];
   hiddenAbility: string;
+  /** Species id (lowercase alphanumerics). Used as a slug for lookups — this is
+   *  NOT the sprite filename; see spriteId. */
   sprite: string;
+  /** Filename Showdown serves this species' sprite under, hyphenating a forme
+   *  onto its base species ("Charizard-Mega-X" -> charizard-megax) while leaving
+   *  a hyphenated base species alone ("Ho-Oh" -> hooh). getSpriteUrl reads this;
+   *  deriving it from the display name or from sprite 404s on 355 formes. */
+  spriteId: string;
   learnset: string[];
 }
 
@@ -228,9 +314,13 @@ export const POKEMON_BY_NAME = new Map(POKEDEX.map(p => [p.name.toLowerCase(), p
 export const POKEMON_BY_SLUG = new Map(POKEDEX.map(p => [p.sprite.toLowerCase(), p]));
 
 export function getPokemonByName(name: string): PokedexEntry | undefined {
-  const normalized = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  // normalize('NFD') on both sides: stripping non-alphanumerics drops a combining
+  // accent but not a precomposed letter, so "Flabébé" reduces to flabebe decomposed
+  // and flabb precomposed. Names arriving from outside this file (a pasted import,
+  // a custom format) use the precomposed form and would otherwise never match.
+  const normalized = name.normalize('NFD').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   return POKEDEX.find(p =>
-    p.name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalized ||
+    p.name.normalize('NFD').toLowerCase().replace(/[^a-z0-9]/g, '') === normalized ||
     p.sprite === normalized
   );
 }
@@ -447,12 +537,14 @@ async function main() {
   console.log(`  Types: ${Object.keys(typesData).length} entries`);
 
   const pokemonFile = generatePokemonFile(pokemon);
+  const spriteIdsFile = generateSpriteIdsFile(pokemon);
   const movesFile = generateMovesFile(movesList);
   const itemsFile = generateItemsFile(itemsList);
   const typesFile = generateTypesFile(typesData);
 
   const files = [
     { path: OUTPUTS.pokemon, content: pokemonFile },
+    { path: OUTPUTS.spriteIds, content: spriteIdsFile },
     { path: OUTPUTS.moves, content: movesFile },
     { path: OUTPUTS.items, content: itemsFile },
     { path: OUTPUTS.types, content: typesFile },

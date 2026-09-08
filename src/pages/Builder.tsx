@@ -21,7 +21,7 @@ import PokemonCard from '../components/PokemonCard';
 import PokemonEditor, { type TeammateAddResult } from '../components/PokemonEditor';
 import BottomSheet from '../components/BottomSheet';
 import ConfirmSheet from '../components/ConfirmSheet';
-import TypeBadge from '../components/TypeBadge';
+import SpeciesPickerList from '../components/SpeciesPickerList';
 import { useStore } from '../store/useStore';
 import {
   getFormatById,
@@ -670,33 +670,7 @@ export default function Builder() {
         searchPlaceholder="Search Pokemon..."
         onSearch={setPokemonSearch}
       >
-        <div className="space-y-1">
-          {filteredPokemon.map((p) => (
-            <motion.button
-              key={p.name}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleSelectPokemon(p.name)}
-              className="w-full h-14 flex items-center gap-3 px-3 rounded-xl hover:bg-bg-secondary transition-colors text-left touch-target"
-            >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-bg-tertiary">
-                <img
-                  src={`https://play.pokemonshowdown.com/sprites/gen5/${p.sprite}.png`}
-                  alt={p.name}
-                  className="w-9 h-9 object-contain [image-rendering:pixelated]"
-                  loading="lazy"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="font-body text-text-primary block">{p.name}</span>
-              </div>
-              <div className="flex gap-1.5">
-                {p.types.map((t) => (
-                  <TypeBadge key={t} type={t} size="sm" />
-                ))}
-              </div>
-            </motion.button>
-          ))}
-        </div>
+        <SpeciesPickerList results={filteredPokemon} onSelect={handleSelectPokemon} />
       </BottomSheet>
 
       {/* Context Menu */}

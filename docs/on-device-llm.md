@@ -1,9 +1,12 @@
 # On-device LLM in PocketForge — design notes
 
-**Status: parked.** No code in the repo implements any of this. It is written down so the
-research isn't lost, and so a model can be dropped in later without re-deriving the design.
+**Status: implemented.** The design below is live in
+`android/app/src/main/java/com/whitedevil93/pocketforge/` — see `LocalLlmPlugin.kt`,
+`LocalLlmService.kt`, and `engine/`. Export-side requirements live in
+`docs/litertlm-export.md`; the LiteRT-LM adapter's own contract is
+`docs/litertlm-android-adapter.md`.
 
-Researched August 2026, against Gemma 4 E2B. Target device: Samsung Galaxy S25 Ultra.
+Researched August 2026. Target device: Samsung Galaxy S25 Ultra.
 
 ---
 
@@ -21,8 +24,8 @@ otherwise independent.
 Use **LiteRT-LM**, Google's on-device GenAI runtime.
 
 ```gradle
-// Pin explicitly. 0.15.0 was current as of 2026-08-01.
-implementation("com.google.ai.edge.litertlm:litertlm-android:0.15.0")
+// Pin explicitly. Actual pin lives in android/variables.gradle (litertLmVersion).
+implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.0")
 ```
 
 Do **not** use the MediaPipe LLM Inference API (`@mediapipe/tasks-genai`,
@@ -78,17 +81,45 @@ The GPU backend requires these in `AndroidManifest.xml`:
 | SoC | Snapdragon 8 Elite (**SM8750**), Adreno 830 |
 | RAM | 12 GB |
 
-Reference performance for Gemma 4 E2B on LiteRT-LM (Google's published figures, S26 Ultra):
+Reference performance on LiteRT-LM (Google's published figures, S26 Ultra):
 
-| Backend | Prefill tok/s | Decode tok/s | TTFT | Resident memory |
-|---|---|---|---|---|
-| GPU | 3,808 | 52 | 0.3 s | ~676 MB |
-| CPU | 557 | 46.9 | 1.8 s | ~1,733 MB |
+| Variant | Backend | Prefill tok/s | Decode tok/s | TTFT | Resident memory |
+|---|---|---|---|---|---|
+| E2B (2.58 GB) | GPU | 3,808 | 52 | 0.3 s | ~676 MB |
+| | CPU | 557 | 47 | 1.8 s | ~1,733 MB |
+| E4B (3.65 GB) | GPU | 1,293 | 22 | 0.8 s | ~710 MB |
+| | CPU | 195 | 18 | 5.3 s | ~3,283 MB |
 
-With speculative decoding on GPU, decode reaches 66–92 tok/s depending on task type.
+Prefill and decode sit in different physical regimes. Prefill processes the prompt in parallel,
+so it scales with the accelerator's FLOPs — hence the 3x gap between the variants. Decode is
+strictly memory-bandwidth bound: every active parameter is streamed from DRAM per token, so
+doubling active parameters roughly halves throughput, and decode clusters tightly across vendors
+regardless of GPU architecture. Speculative decoding buys back part of that (up to 2.2x on mobile
+GPU) and is enabled automatically when the bundle carries a drafter — see `LiteRtLmEngine`'s
+`configureExperimentalFlags`.
 
-Gemma 4 E2B uses mixed 2/4/8-bit quantization: text-only weights are ~0.8 GB resident, while
-the 1.12 GB embedding table is memory-mapped. Vision and audio submodels load on demand.
+Gemma 4 uses mixed 2/4/8-bit quantization; in E2B, text-only weights are ~0.8 GB resident while
+the 1.12 GB per-layer embedding table is memory-mapped. Vision and audio submodels load on demand.
+
+### Which variant to target: E4B
+
+**Target E4B**, despite it being the slower half of that table.
+
+The deciding factor is not general quality, it is tool-call fidelity. PocketForge declares 14
+tools with overlapping signatures — several take a `species`, several take a `format`, several
+differ only in which stat they compute. Google's own guidance is that on schemas shaped like
+that, E4B "significantly reduces syntactic hallucinations and schema misalignments relative to
+E2B". That failure is not hypothetical here: the entire recovery apparatus in
+`src/lib/llm/textToolProtocol.ts` — fuzzy tool-name matching, mutation guards, block stripping —
+exists because a fine-tune was emitting invented tool names and malformed call blocks on-device.
+Buying that back with parameters is worth more than decode speed.
+
+The cost is real and has a UI consequence: 22–25 tok/s on mobile GPU rather than 52–56. At that
+rate, a reply must stream token-by-token with a visible progress affordance — which `ChatPanel`
+already does. E2B remains the right choice for a latency-critical single-turn feature (inline
+autocomplete, classification); it is the wrong choice for a multi-tool agent loop.
+
+Nothing in the code hardcodes either variant — this is guidance for which bundle to import.
 
 ---
 
@@ -97,6 +128,12 @@ the 1.12 GB embedding table is memory-mapped. Vision and audio submodels load on
 Everything above is **model-agnostic** — it needs a `.litertlm` file, not specifically Gemma.
 A custom fine-tune has to be converted to `.litertlm` to run through LiteRT-LM, but the plugin,
 tool layer, and UI described here don't change.
+
+**The export flags are not optional.** `--externalize_embedder`, `--task image_text_to_text` and
+`--jinja_chat_template_override` each fail *inside this app*, at runtime, with errors that point
+nowhere near their cause — an OOM kill during load, garbage tokens, a generic "generation failed"
+on the first message. `docs/litertlm-export.md` has the command line and what each omission
+breaks.
 
 Google's published Gemma 4 E2B builds (`litert-community/gemma-4-E2B-it-litert-lm` on
 Hugging Face):
@@ -161,8 +198,23 @@ Use manual tool calling instead, which is designed for exactly this:
    `conversation.sendMessage(Message.tool(Contents.of(Content.ToolResponse(name, json))))`.
 5. Loop until the response carries no tool calls, streaming tokens throughout.
 
-Create the conversation with `automaticToolCalling = false`. Cap tool iterations (~5) and add a
+Create the conversation with `automaticToolCalling = false`. Cap tool iterations and add a
 per-call timeout so a confused model can't spin.
+
+### Constrained decoding
+
+The failure that has actually cost us on-device is not a wrong tool call — it is one that does
+not parse: an invented tool name, a truncated argument object. LiteRT-LM can prevent that at the
+sampling step rather than leaving it to be recovered afterwards, by masking every token that
+would violate the declared tool schema. `LiteRtLmEngine` turns this on with
+`ExperimentalFlags.enableConversationConstrainedDecoding` plus `enableResponseFormat` on the
+`ConversationConfig`.
+
+It is a hardening of the **native** tool path, not a replacement for
+`src/lib/llm/textToolProtocol.ts`. Under the text protocol TypeScript declares no tools at all,
+so there is no schema for the engine to constrain, and the parser remains the only recovery —
+which is also why `enableResponseFormat` is set from `parsed.tools.isNotEmpty()` rather than
+unconditionally. The llama.cpp/GGUF backend has no equivalent mechanism either.
 
 ---
 
