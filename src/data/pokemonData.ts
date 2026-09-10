@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-09-09T00:52:55.937Z
+// Last updated: 2026-09-10T00:50:54.887Z
 
 export interface PokedexEntry {
   id: number;
@@ -22569,7 +22569,7 @@ export const POKEDEX: PokedexEntry[] = [
       "spe": 40
     },
     "abilities": [
-      "Emergency Exit"
+      "Tough Claws"
     ],
     "hiddenAbility": "",
     "sprite": "golisopodmega",

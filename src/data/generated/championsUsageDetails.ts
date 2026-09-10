@@ -5,8 +5,8 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
     "sourceName": "Pokémon Champions Battle Data",
     "sourceUrl": "https://championsbattledata.com/api_guide",
     "apiUrl": "https://championsbattledata.com/api",
-    "sourceUpdatedAt": "2026-09-08T17:26:52.590Z",
-    "dataVersion": "20260908172652590",
+    "sourceUpdatedAt": "2026-09-09T14:53:22.594Z",
+    "dataVersion": "20260909145322594",
     "season": "Current",
     "format": "Doubles",
     "rankedPokemonCount": 235,
@@ -138,7 +138,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Naughty",
-          "usage": 3.8
+          "usage": 0.3
         },
         {
           "name": "Relaxed",
@@ -969,7 +969,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Naive",
-          "usage": 6
+          "usage": 0.3
         },
         {
           "name": "Hasty",
@@ -2101,7 +2101,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sassy",
-          "usage": 2.2
+          "usage": 10.7
         },
         {
           "name": "Timid",
@@ -3983,7 +3983,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       ],
       "items": [
         {
-          "name": "Tyra nitarite",
+          "name": "Tyranitarite",
           "usage": 57.5
         },
         {
@@ -4052,23 +4052,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Careful",
-          "usage": 7.9
+          "usage": 1.9
         },
         {
           "name": "Relaxed",
-          "usage": 7
+          "usage": 1
         },
         {
           "name": "Sassy",
-          "usage": 5
+          "usage": 0.5
         },
         {
           "name": "Naughty",
-          "usage": 1.3
+          "usage": 0.3
         },
         {
           "name": "Modest",
-          "usage": 1
+          "usage": 0.3
         },
         {
           "name": "Quiet",
@@ -4321,7 +4321,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sassy",
-          "usage": 1.3
+          "usage": 2.2
         },
         {
           "name": "Relaxed",
@@ -7669,7 +7669,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Calm",
-          "usage": 1.7
+          "usage": 1
         },
         {
           "name": "Naive",
@@ -7868,7 +7868,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sunny Day",
-          "usage": 5
+          "usage": 9.5
         }
       ],
       "items": [
@@ -8231,19 +8231,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Hasty",
-          "usage": 6
+          "usage": 1
         },
         {
           "name": "Quiet",
-          "usage": 5
+          "usage": 0.5
         },
         {
           "name": "Relaxed",
-          "usage": 1
+          "usage": 0.2
         },
         {
           "name": "Naive",
-          "usage": 1
+          "usage": 0.2
         },
         {
           "name": "Gentle",
@@ -10084,7 +10084,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Psychic Fangs",
-          "usage": 0
+          "usage": 1.3
         }
       ],
       "items": [
@@ -10965,11 +10965,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Choice Scarf",
-          "usage": 3.4
+          "usage": 9.7
         },
         {
           "name": "Bright Powder",
-          "usage": 9.1
+          "usage": 2.9
         },
         {
           "name": "Quick Claw",
@@ -11025,7 +11025,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Relaxed",
-          "usage": 1
+          "usage": 2.3
         },
         {
           "name": "Mild",
@@ -12093,7 +12093,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Magnet",
-          "usage": 3.7
+          "usage": 7.3
         },
         {
           "name": "Wide Lens",
@@ -13460,7 +13460,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Detect",
-          "usage": 39
+          "usage": 58.4
         },
         {
           "name": "Protect",
@@ -13532,11 +13532,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Speed Boost",
-          "usage": 96.6
+          "usage": 93.4
         },
         {
           "name": "Blaze",
-          "usage": 3.4
+          "usage": 6.6
         }
       ],
       "natures": [
@@ -13839,15 +13839,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Bold",
-          "usage": 7.7
+          "usage": 2.5
         },
         {
           "name": "Adamant",
-          "usage": 7.6
+          "usage": 1.6
         },
         {
           "name": "Jolly",
-          "usage": 6
+          "usage": 1
         },
         {
           "name": "Calm",
