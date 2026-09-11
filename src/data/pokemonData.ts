@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-09-10T00:50:54.887Z
+// Last updated: 2026-09-11T00:50:43.808Z
 
 export interface PokedexEntry {
   id: number;
@@ -29502,7 +29502,7 @@ export const POKEDEX: PokedexEntry[] = [
     "abilities": [
       "Thermal Exchange"
     ],
-    "hiddenAbility": "Ice Body",
+    "hiddenAbility": "",
     "sprite": "baxcaliburmega",
     "learnset": []
   },
