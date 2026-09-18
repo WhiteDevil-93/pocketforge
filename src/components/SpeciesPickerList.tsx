@@ -4,9 +4,10 @@
 
 import { useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, SearchX } from 'lucide-react';
 import type { PokedexEntry } from '../data/pokemonData';
 import { useStore } from '../store/useStore';
+import EmptyState from './EmptyState';
 import PokemonSprite from './PokemonSprite';
 import TypeBadge from './TypeBadge';
 
@@ -68,7 +69,22 @@ export default function SpeciesPickerList({ results, onSelect }: SpeciesPickerLi
         </div>
       </div>
 
-      {view === 'grid' ? (
+      {results.length === 0 ? (
+        // Both layouts below map straight over results, so an empty array left the
+        // sheet body blank — a search that matches nothing looked identical to one
+        // still loading, or to a broken picker. The count above says "0 results",
+        // which is easy to miss next to an otherwise empty panel.
+        //
+        // Smaller icon and no action: this sits inside a bottom sheet under a live
+        // search field, so the fix is already one keystroke away and a CTA would
+        // only compete with it.
+        <EmptyState
+          icon={SearchX}
+          iconSize={48}
+          title="No matches"
+          description="No Pokemon match that search. Check the spelling, or try a shorter term."
+        />
+      ) : view === 'grid' ? (
         <div className="grid grid-cols-3 gap-2">
           {results.map((p) => (
             <motion.button
