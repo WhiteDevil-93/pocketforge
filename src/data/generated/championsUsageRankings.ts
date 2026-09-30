@@ -5,8 +5,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
     "sourceName": "Pokémon Champions Battle Data",
     "sourceUrl": "https://championsbattledata.com/api_guide",
     "apiUrl": "https://championsbattledata.com/api",
-    "sourceUpdatedAt": "2026-09-28T23:54:36.414Z",
-    "dataVersion": "20260928235436414",
+    "sourceUpdatedAt": "2026-09-29T23:02:20.247Z",
+    "dataVersion": "20260929230220247",
     "season": "Current",
     "format": "Doubles",
     "rankedPokemonCount": 262,
@@ -84,13 +84,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 14
     },
     {
-      "species": "Charizard",
-      "showdownId": "charizard",
+      "species": "Raichu",
+      "showdownId": "raichu",
       "rank": 15
     },
     {
-      "species": "Raichu",
-      "showdownId": "raichu",
+      "species": "Charizard",
+      "showdownId": "charizard",
       "rank": 16
     },
     {
@@ -99,13 +99,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 17
     },
     {
-      "species": "Arcanine-Hisui",
-      "showdownId": "arcaninehisui",
+      "species": "Sylveon",
+      "showdownId": "sylveon",
       "rank": 18
     },
     {
-      "species": "Sylveon",
-      "showdownId": "sylveon",
+      "species": "Arcanine-Hisui",
+      "showdownId": "arcaninehisui",
       "rank": 19
     },
     {
@@ -149,13 +149,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 27
     },
     {
-      "species": "Excadrill",
-      "showdownId": "excadrill",
+      "species": "Volcarona",
+      "showdownId": "volcarona",
       "rank": 28
     },
     {
-      "species": "Volcarona",
-      "showdownId": "volcarona",
+      "species": "Excadrill",
+      "showdownId": "excadrill",
       "rank": 29
     },
     {
@@ -199,13 +199,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 37
     },
     {
-      "species": "Ninetales-Alola",
-      "showdownId": "ninetalesalola",
+      "species": "Dragonite",
+      "showdownId": "dragonite",
       "rank": 38
     },
     {
-      "species": "Dragonite",
-      "showdownId": "dragonite",
+      "species": "Ninetales-Alola",
+      "showdownId": "ninetalesalola",
       "rank": 39
     },
     {
@@ -224,13 +224,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 42
     },
     {
-      "species": "Glimmora",
-      "showdownId": "glimmora",
+      "species": "Primarina",
+      "showdownId": "primarina",
       "rank": 43
     },
     {
-      "species": "Primarina",
-      "showdownId": "primarina",
+      "species": "Glimmora",
+      "showdownId": "glimmora",
       "rank": 44
     },
     {
@@ -254,13 +254,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 48
     },
     {
-      "species": "Hatterene",
-      "showdownId": "hatterene",
+      "species": "Annihilape",
+      "showdownId": "annihilape",
       "rank": 49
     },
     {
-      "species": "Annihilape",
-      "showdownId": "annihilape",
+      "species": "Hatterene",
+      "showdownId": "hatterene",
       "rank": 50
     },
     {
@@ -274,13 +274,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 52
     },
     {
-      "species": "Talonflame",
-      "showdownId": "talonflame",
+      "species": "Dragapult",
+      "showdownId": "dragapult",
       "rank": 53
     },
     {
-      "species": "Dragapult",
-      "showdownId": "dragapult",
+      "species": "Talonflame",
+      "showdownId": "talonflame",
       "rank": 54
     },
     {
@@ -384,48 +384,48 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 74
     },
     {
-      "species": "Scovillain",
-      "showdownId": "scovillain",
+      "species": "Chandelure",
+      "showdownId": "chandelure",
       "rank": 75
     },
     {
-      "species": "Chandelure",
-      "showdownId": "chandelure",
+      "species": "Scovillain",
+      "showdownId": "scovillain",
       "rank": 76
-    },
-    {
-      "species": "Pincurchin",
-      "showdownId": "pincurchin",
-      "rank": 77
-    },
-    {
-      "species": "Aegislash",
-      "showdownId": "aegislash",
-      "rank": 78
     },
     {
       "species": "Malamar",
       "showdownId": "malamar",
-      "rank": 79
+      "rank": 77
     },
     {
-      "species": "Scizor",
-      "showdownId": "scizor",
-      "rank": 80
+      "species": "Pincurchin",
+      "showdownId": "pincurchin",
+      "rank": 78
     },
     {
       "species": "Mimikyu",
       "showdownId": "mimikyu",
-      "rank": 81
+      "rank": 79
     },
     {
-      "species": "Toxtricity",
-      "showdownId": "toxtricity",
-      "rank": 82
+      "species": "Aegislash",
+      "showdownId": "aegislash",
+      "rank": 80
+    },
+    {
+      "species": "Scizor",
+      "showdownId": "scizor",
+      "rank": 81
     },
     {
       "species": "Clefable",
       "showdownId": "clefable",
+      "rank": 82
+    },
+    {
+      "species": "Toxtricity",
+      "showdownId": "toxtricity",
       "rank": 83
     },
     {
@@ -434,13 +434,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 84
     },
     {
-      "species": "Cinderace",
-      "showdownId": "cinderace",
+      "species": "Grapploct",
+      "showdownId": "grapploct",
       "rank": 85
     },
     {
-      "species": "Grapploct",
-      "showdownId": "grapploct",
+      "species": "Cinderace",
+      "showdownId": "cinderace",
       "rank": 86
     },
     {
@@ -469,13 +469,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 91
     },
     {
-      "species": "Mamoswine",
-      "showdownId": "mamoswine",
+      "species": "Gyarados",
+      "showdownId": "gyarados",
       "rank": 92
     },
     {
-      "species": "Gyarados",
-      "showdownId": "gyarados",
+      "species": "Mamoswine",
+      "showdownId": "mamoswine",
       "rank": 93
     },
     {
@@ -484,18 +484,18 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 94
     },
     {
+      "species": "Basculegion-F",
+      "showdownId": "basculegionf",
+      "rank": 95
+    },
+    {
       "species": "Overqwil",
       "showdownId": "overqwil",
-      "rank": 95
+      "rank": 96
     },
     {
       "species": "Snorlax",
       "showdownId": "snorlax",
-      "rank": 96
-    },
-    {
-      "species": "Basculegion-F",
-      "showdownId": "basculegionf",
       "rank": 97
     },
     {
@@ -514,13 +514,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 100
     },
     {
-      "species": "Araquanid",
-      "showdownId": "araquanid",
+      "species": "Bellibolt",
+      "showdownId": "bellibolt",
       "rank": 101
     },
     {
-      "species": "Bellibolt",
-      "showdownId": "bellibolt",
+      "species": "Araquanid",
+      "showdownId": "araquanid",
       "rank": 102
     },
     {
@@ -529,13 +529,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 103
     },
     {
-      "species": "Lycanroc-Dusk",
-      "showdownId": "lycanrocdusk",
+      "species": "Pyroar",
+      "showdownId": "pyroar",
       "rank": 104
     },
     {
-      "species": "Pyroar",
-      "showdownId": "pyroar",
+      "species": "Lycanroc-Dusk",
+      "showdownId": "lycanrocdusk",
       "rank": 105
     },
     {
@@ -544,18 +544,18 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 106
     },
     {
+      "species": "Lopunny",
+      "showdownId": "lopunny",
+      "rank": 107
+    },
+    {
       "species": "Tinkaton",
       "showdownId": "tinkaton",
-      "rank": 107
+      "rank": 108
     },
     {
       "species": "Sceptile",
       "showdownId": "sceptile",
-      "rank": 108
-    },
-    {
-      "species": "Lopunny",
-      "showdownId": "lopunny",
       "rank": 109
     },
     {
@@ -579,8 +579,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 113
     },
     {
-      "species": "Slowking-Galar",
-      "showdownId": "slowkinggalar",
+      "species": "Meowstic-F",
+      "showdownId": "meowsticf",
       "rank": 114
     },
     {
@@ -589,8 +589,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 115
     },
     {
-      "species": "Meowstic-F",
-      "showdownId": "meowsticf",
+      "species": "Slowking-Galar",
+      "showdownId": "slowkinggalar",
       "rank": 116
     },
     {
@@ -604,38 +604,38 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 118
     },
     {
-      "species": "Skarmory",
-      "showdownId": "skarmory",
-      "rank": 119
-    },
-    {
       "species": "Clawitzer",
       "showdownId": "clawitzer",
-      "rank": 120
+      "rank": 119
     },
     {
       "species": "Aggron",
       "showdownId": "aggron",
-      "rank": 121
+      "rank": 120
     },
     {
-      "species": "Skeledirge",
-      "showdownId": "skeledirge",
-      "rank": 122
+      "species": "Skarmory",
+      "showdownId": "skarmory",
+      "rank": 121
     },
     {
       "species": "Umbreon",
       "showdownId": "umbreon",
-      "rank": 123
+      "rank": 122
     },
     {
-      "species": "Spiritomb",
-      "showdownId": "spiritomb",
-      "rank": 124
+      "species": "Skeledirge",
+      "showdownId": "skeledirge",
+      "rank": 123
     },
     {
       "species": "Gliscor",
       "showdownId": "gliscor",
+      "rank": 124
+    },
+    {
+      "species": "Spiritomb",
+      "showdownId": "spiritomb",
       "rank": 125
     },
     {
@@ -649,13 +649,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 127
     },
     {
-      "species": "Audino",
-      "showdownId": "audino",
+      "species": "Ampharos",
+      "showdownId": "ampharos",
       "rank": 128
     },
     {
-      "species": "Ampharos",
-      "showdownId": "ampharos",
+      "species": "Audino",
+      "showdownId": "audino",
       "rank": 129
     },
     {
@@ -664,8 +664,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 130
     },
     {
-      "species": "Abomasnow",
-      "showdownId": "abomasnow",
+      "species": "Eelektross",
+      "showdownId": "eelektross",
       "rank": 131
     },
     {
@@ -674,28 +674,28 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 132
     },
     {
-      "species": "Eelektross",
-      "showdownId": "eelektross",
+      "species": "Abomasnow",
+      "showdownId": "abomasnow",
       "rank": 133
-    },
-    {
-      "species": "Raichu-Alola",
-      "showdownId": "raichualola",
-      "rank": 134
     },
     {
       "species": "Crabominable",
       "showdownId": "crabominable",
-      "rank": 135
+      "rank": 134
     },
     {
-      "species": "Heliolisk",
-      "showdownId": "heliolisk",
-      "rank": 136
+      "species": "Raichu-Alola",
+      "showdownId": "raichualola",
+      "rank": 135
     },
     {
       "species": "Ditto",
       "showdownId": "ditto",
+      "rank": 136
+    },
+    {
+      "species": "Heliolisk",
+      "showdownId": "heliolisk",
       "rank": 137
     },
     {
@@ -719,13 +719,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 141
     },
     {
-      "species": "Alcremie",
-      "showdownId": "alcremie",
+      "species": "Serperior",
+      "showdownId": "serperior",
       "rank": 142
     },
     {
-      "species": "Serperior",
-      "showdownId": "serperior",
+      "species": "Alcremie",
+      "showdownId": "alcremie",
       "rank": 143
     },
     {
@@ -744,18 +744,18 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 146
     },
     {
-      "species": "Conkeldurr",
-      "showdownId": "conkeldurr",
-      "rank": 147
-    },
-    {
       "species": "Krookodile",
       "showdownId": "krookodile",
-      "rank": 148
+      "rank": 147
     },
     {
       "species": "Infernape",
       "showdownId": "infernape",
+      "rank": 148
+    },
+    {
+      "species": "Conkeldurr",
+      "showdownId": "conkeldurr",
       "rank": 149
     },
     {
@@ -769,23 +769,23 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 151
     },
     {
-      "species": "Manectric",
-      "showdownId": "manectric",
+      "species": "Hippowdon",
+      "showdownId": "hippowdon",
       "rank": 152
     },
     {
-      "species": "Hippowdon",
-      "showdownId": "hippowdon",
+      "species": "Manectric",
+      "showdownId": "manectric",
       "rank": 153
-    },
-    {
-      "species": "Perrserker",
-      "showdownId": "perrserker",
-      "rank": 154
     },
     {
       "species": "Wyrdeer",
       "showdownId": "wyrdeer",
+      "rank": 154
+    },
+    {
+      "species": "Perrserker",
+      "showdownId": "perrserker",
       "rank": 155
     },
     {
@@ -809,13 +809,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 159
     },
     {
-      "species": "Vileplume",
-      "showdownId": "vileplume",
+      "species": "Mudsdale",
+      "showdownId": "mudsdale",
       "rank": 160
     },
     {
-      "species": "Mudsdale",
-      "showdownId": "mudsdale",
+      "species": "Vileplume",
+      "showdownId": "vileplume",
       "rank": 161
     },
     {
@@ -824,18 +824,18 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 162
     },
     {
-      "species": "Wigglytuff",
-      "showdownId": "wigglytuff",
+      "species": "Decidueye-Hisui",
+      "showdownId": "decidueyehisui",
       "rank": 163
     },
     {
-      "species": "Decidueye-Hisui",
-      "showdownId": "decidueyehisui",
+      "species": "Wigglytuff",
+      "showdownId": "wigglytuff",
       "rank": 164
     },
     {
-      "species": "Persian-Alola",
-      "showdownId": "persianalola",
+      "species": "Reuniclus",
+      "showdownId": "reuniclus",
       "rank": 165
     },
     {
@@ -844,8 +844,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 166
     },
     {
-      "species": "Reuniclus",
-      "showdownId": "reuniclus",
+      "species": "Persian-Alola",
+      "showdownId": "persianalola",
       "rank": 167
     },
     {
@@ -864,13 +864,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 170
     },
     {
-      "species": "Medicham",
-      "showdownId": "medicham",
+      "species": "Heracross",
+      "showdownId": "heracross",
       "rank": 171
     },
     {
-      "species": "Heracross",
-      "showdownId": "heracross",
+      "species": "Medicham",
+      "showdownId": "medicham",
       "rank": 172
     },
     {
@@ -909,18 +909,18 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 179
     },
     {
-      "species": "Aromatisse",
-      "showdownId": "aromatisse",
-      "rank": 180
-    },
-    {
       "species": "Glalie",
       "showdownId": "glalie",
-      "rank": 181
+      "rank": 180
     },
     {
       "species": "Pikachu",
       "showdownId": "pikachu",
+      "rank": 181
+    },
+    {
+      "species": "Beedrill",
+      "showdownId": "beedrill",
       "rank": 182
     },
     {
@@ -929,8 +929,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 183
     },
     {
-      "species": "Beedrill",
-      "showdownId": "beedrill",
+      "species": "Aromatisse",
+      "showdownId": "aromatisse",
       "rank": 184
     },
     {
@@ -939,13 +939,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 185
     },
     {
-      "species": "Tauros-Paldea-Aqua",
-      "showdownId": "taurospaldeaaqua",
+      "species": "Banette",
+      "showdownId": "banette",
       "rank": 186
     },
     {
-      "species": "Banette",
-      "showdownId": "banette",
+      "species": "Tauros-Paldea-Aqua",
+      "showdownId": "taurospaldeaaqua",
       "rank": 187
     },
     {
@@ -969,33 +969,33 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 191
     },
     {
-      "species": "Squawkabilly",
-      "showdownId": "squawkabilly",
-      "rank": 192
-    },
-    {
       "species": "Toxicroak",
       "showdownId": "toxicroak",
-      "rank": 193
-    },
-    {
-      "species": "Orthworm",
-      "showdownId": "orthworm",
-      "rank": 194
+      "rank": 192
     },
     {
       "species": "Garganacl",
       "showdownId": "garganacl",
-      "rank": 195
+      "rank": 193
     },
     {
-      "species": "Squawkabilly-Yellow",
-      "showdownId": "squawkabillyyellow",
-      "rank": 196
+      "species": "Squawkabilly",
+      "showdownId": "squawkabilly",
+      "rank": 194
+    },
+    {
+      "species": "Orthworm",
+      "showdownId": "orthworm",
+      "rank": 195
     },
     {
       "species": "Sharpedo",
       "showdownId": "sharpedo",
+      "rank": 196
+    },
+    {
+      "species": "Squawkabilly-Yellow",
+      "showdownId": "squawkabillyyellow",
       "rank": 197
     },
     {
@@ -1029,13 +1029,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 203
     },
     {
-      "species": "Lycanroc",
-      "showdownId": "lycanroc",
+      "species": "Rampardos",
+      "showdownId": "rampardos",
       "rank": 204
     },
     {
-      "species": "Rampardos",
-      "showdownId": "rampardos",
+      "species": "Lycanroc",
+      "showdownId": "lycanroc",
       "rank": 205
     },
     {
@@ -1044,8 +1044,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 206
     },
     {
-      "species": "Chimecho",
-      "showdownId": "chimecho",
+      "species": "Victreebel",
+      "showdownId": "victreebel",
       "rank": 207
     },
     {
@@ -1054,8 +1054,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 208
     },
     {
-      "species": "Victreebel",
-      "showdownId": "victreebel",
+      "species": "Chimecho",
+      "showdownId": "chimecho",
       "rank": 209
     },
     {
@@ -1084,23 +1084,23 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 214
     },
     {
+      "species": "Rotom-Frost",
+      "showdownId": "rotomfrost",
+      "rank": 215
+    },
+    {
       "species": "Avalugg-Hisui",
       "showdownId": "avalugghisui",
-      "rank": 215
+      "rank": 216
     },
     {
       "species": "Musharna",
       "showdownId": "musharna",
-      "rank": 216
-    },
-    {
-      "species": "Rotom-Frost",
-      "showdownId": "rotomfrost",
       "rank": 217
     },
     {
-      "species": "Swalot",
-      "showdownId": "swalot",
+      "species": "Slurpuff",
+      "showdownId": "slurpuff",
       "rank": 218
     },
     {
@@ -1109,8 +1109,8 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 219
     },
     {
-      "species": "Slurpuff",
-      "showdownId": "slurpuff",
+      "species": "Swalot",
+      "showdownId": "swalot",
       "rank": 220
     },
     {
@@ -1154,28 +1154,28 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 228
     },
     {
+      "species": "Polteageist",
+      "showdownId": "polteageist",
+      "rank": 229
+    },
+    {
       "species": "Emolga",
       "showdownId": "emolga",
-      "rank": 229
+      "rank": 230
     },
     {
       "species": "Arbok",
       "showdownId": "arbok",
-      "rank": 230
-    },
-    {
-      "species": "Polteageist",
-      "showdownId": "polteageist",
       "rank": 231
-    },
-    {
-      "species": "Barbaracle",
-      "showdownId": "barbaracle",
-      "rank": 232
     },
     {
       "species": "Flareon",
       "showdownId": "flareon",
+      "rank": 232
+    },
+    {
+      "species": "Barbaracle",
+      "showdownId": "barbaracle",
       "rank": 233
     },
     {
@@ -1199,13 +1199,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 237
     },
     {
-      "species": "Persian",
-      "showdownId": "persian",
+      "species": "Castform",
+      "showdownId": "castform",
       "rank": 238
     },
     {
-      "species": "Castform",
-      "showdownId": "castform",
+      "species": "Persian",
+      "showdownId": "persian",
       "rank": 239
     },
     {
@@ -1219,13 +1219,13 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 241
     },
     {
-      "species": "Ariados",
-      "showdownId": "ariados",
+      "species": "Forretress",
+      "showdownId": "forretress",
       "rank": 242
     },
     {
-      "species": "Forretress",
-      "showdownId": "forretress",
+      "species": "Ariados",
+      "showdownId": "ariados",
       "rank": 243
     },
     {
@@ -1279,18 +1279,18 @@ export const CHAMPIONS_USAGE_RANKINGS_SNAPSHOT = {
       "rank": 253
     },
     {
+      "species": "Tauros",
+      "showdownId": "tauros",
+      "rank": 254
+    },
+    {
       "species": "Rotom",
       "showdownId": "rotom",
-      "rank": 254
+      "rank": 255
     },
     {
       "species": "Simisage",
       "showdownId": "simisage",
-      "rank": 255
-    },
-    {
-      "species": "Tauros",
-      "showdownId": "tauros",
       "rank": 256
     },
     {

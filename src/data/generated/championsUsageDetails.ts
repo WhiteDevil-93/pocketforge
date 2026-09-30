@@ -5,8 +5,8 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
     "sourceName": "Pokémon Champions Battle Data",
     "sourceUrl": "https://championsbattledata.com/api_guide",
     "apiUrl": "https://championsbattledata.com/api",
-    "sourceUpdatedAt": "2026-09-28T23:54:36.414Z",
-    "dataVersion": "20260928235436414",
+    "sourceUpdatedAt": "2026-09-29T23:02:20.247Z",
+    "dataVersion": "20260929230220247",
     "season": "Current",
     "format": "Doubles",
     "rankedPokemonCount": 262,
@@ -32,11 +32,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "High Horsepower",
-          "usage": 50.3
+          "usage": 50.2
         },
         {
           "name": "U-turn",
-          "usage": 47.3
+          "usage": 47.5
         },
         {
           "name": "Protect",
@@ -62,15 +62,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Miracle Seed",
-          "usage": 57.6
+          "usage": 58
         },
         {
           "name": "Life Orb",
-          "usage": 10.5
+          "usage": 10.4
         },
         {
           "name": "Sitrus Berry",
-          "usage": 10.1
+          "usage": 9.9
         },
         {
           "name": "Grassy Seed",
@@ -82,11 +82,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Leftovers",
-          "usage": 3.3
+          "usage": 3.2
         },
         {
           "name": "Occa Berry",
-          "usage": 3.1
+          "usage": 3
         },
         {
           "name": "Expert Belt",
@@ -179,15 +179,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 6
         },
         {
-          "species": "Basculegion",
+          "species": "Garchomp",
           "rank": 7
         },
         {
-          "species": "Arcanine-Hisui",
+          "species": "Basculegion",
           "rank": 8
         },
         {
-          "species": "Garchomp",
+          "species": "Arcanine-Hisui",
           "rank": 9
         },
         {
@@ -198,7 +198,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 11.4,
+          "usage": 11.6,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -301,7 +301,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Close Combat",
-          "usage": 99.3
+          "usage": 99.2
         },
         {
           "name": "Dire Claw",
@@ -313,11 +313,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Fake Out",
-          "usage": 55.8
+          "usage": 55.7
         },
         {
           "name": "Rock Slide",
-          "usage": 27.6
+          "usage": 27.5
         },
         {
           "name": "Coaching",
@@ -325,11 +325,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Throat Chop",
-          "usage": 11.2
+          "usage": 11.3
         },
         {
           "name": "Feint",
-          "usage": 5.8
+          "usage": 5.7
         },
         {
           "name": "Acrobatics",
@@ -343,7 +343,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "White Herb",
-          "usage": 30.6
+          "usage": 30.9
         },
         {
           "name": "Psychic Seed",
@@ -351,7 +351,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Grassy Seed",
-          "usage": 25
+          "usage": 24.8
         },
         {
           "name": "Focus Sash",
@@ -359,7 +359,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Normal Gem",
-          "usage": 1
+          "usage": 1.1
         },
         {
           "name": "Life Orb",
@@ -385,7 +385,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Unburden",
-          "usage": 89.2
+          "usage": 89.1
         },
         {
           "name": "Poison Touch",
@@ -403,7 +403,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Jolly",
-          "usage": 34.2
+          "usage": 34
         },
         {
           "name": "Brave",
@@ -427,11 +427,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Impish",
-          "usage": 0.2
+          "usage": 0.3
         },
         {
           "name": "Careful",
-          "usage": 0.1
+          "usage": 0.2
         },
         {
           "name": "Timid",
@@ -509,18 +509,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 3,
           "usage": 4.2,
           "points": {
-            "hp": 16,
-            "atk": 20,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 30
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 4.1,
-          "points": {
             "hp": 0,
             "atk": 32,
             "def": 0,
@@ -530,8 +518,20 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           }
         },
         {
+          "rank": 4,
+          "usage": 4.1,
+          "points": {
+            "hp": 16,
+            "atk": 20,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 30
+          }
+        },
+        {
           "rank": 5,
-          "usage": 1.9,
+          "usage": 1.8,
           "points": {
             "hp": 1,
             "atk": 32,
@@ -590,23 +590,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Flare Blitz",
-          "usage": 91.1
+          "usage": 91.2
         },
         {
           "name": "Parting Shot",
-          "usage": 90.7
+          "usage": 90.8
         },
         {
           "name": "Darkest Lariat",
-          "usage": 40.8
+          "usage": 41.5
         },
         {
           "name": "Throat Chop",
-          "usage": 38.6
+          "usage": 38.2
         },
         {
           "name": "Protect",
-          "usage": 13.9
+          "usage": 13.8
         },
         {
           "name": "Snarl",
@@ -614,11 +614,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Helping Hand",
-          "usage": 5
+          "usage": 4.9
         },
         {
           "name": "Close Combat",
-          "usage": 4.9
+          "usage": 4.8
         },
         {
           "name": "Taunt",
@@ -628,7 +628,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Sitrus Berry",
-          "usage": 64.9
+          "usage": 65.3
         },
         {
           "name": "Chople Berry",
@@ -636,11 +636,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Passho Berry",
-          "usage": 7
+          "usage": 6.9
         },
         {
           "name": "Rocky Helmet",
-          "usage": 6
+          "usage": 5.9
         },
         {
           "name": "Leftovers",
@@ -648,15 +648,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Life Orb",
-          "usage": 2.9
+          "usage": 2.8
         },
         {
           "name": "White Herb",
-          "usage": 1.5
+          "usage": 1.4
         },
         {
           "name": "Expert Belt",
-          "usage": 1
+          "usage": 0.9
         },
         {
           "name": "Charcoal",
@@ -680,42 +680,42 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Careful",
-          "usage": 37.4
+          "usage": 37.1
         },
         {
           "name": "Impish",
-          "usage": 25.1
+          "usage": 25.6
         },
         {
           "name": "Adamant",
-          "usage": 19
+          "usage": 18.9
         },
         {
           "name": "Sassy",
-          "usage": 6
+          "usage": 5.9
         },
         {
           "name": "Brave",
-          "usage": 5.8
+          "usage": 5.7
         },
         {
           "name": "Relaxed",
-          "usage": 3.6
+          "usage": 3.5
         },
         {
           "name": "Jolly",
-          "usage": 1.6
+          "usage": 1.7
         },
         {
           "name": "Calm",
           "usage": 0.3
         },
         {
-          "name": "Bold",
+          "name": "Naughty",
           "usage": 0.2
         },
         {
-          "name": "Naughty",
+          "name": "Bold",
           "usage": 0.2
         }
       ],
@@ -729,11 +729,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 2
         },
         {
-          "species": "Salamence",
+          "species": "Garchomp",
           "rank": 3
         },
         {
-          "species": "Garchomp",
+          "species": "Salamence",
           "rank": 4
         },
         {
@@ -745,15 +745,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 6
         },
         {
-          "species": "Indeedee-F",
+          "species": "Raichu",
           "rank": 7
         },
         {
-          "species": "Kingambit",
+          "species": "Indeedee-F",
           "rank": 8
         },
         {
-          "species": "Golisopod",
+          "species": "Kingambit",
           "rank": 9
         },
         {
@@ -764,7 +764,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 9.2,
+          "usage": 9.1,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -851,11 +851,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 1.7,
           "points": {
             "hp": 32,
-            "atk": 32,
-            "def": 0,
+            "atk": 0,
+            "def": 32,
             "spa": 0,
-            "spd": 0,
-            "spe": 2
+            "spd": 2,
+            "spe": 0
           }
         }
       ]
@@ -867,27 +867,27 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Protect",
-          "usage": 93.8
+          "usage": 93.7
         },
         {
           "name": "Hyper Voice",
-          "usage": 90.7
+          "usage": 90.6
         },
         {
           "name": "Draco Meteor",
-          "usage": 61.2
+          "usage": 61.3
         },
         {
           "name": "Tailwind",
-          "usage": 58.4
+          "usage": 58.1
         },
         {
           "name": "Flamethrower",
-          "usage": 29.4
+          "usage": 29.7
         },
         {
           "name": "Double-Edge",
-          "usage": 20.3
+          "usage": 20.1
         },
         {
           "name": "Heat Wave",
@@ -903,7 +903,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Dragon Dance",
-          "usage": 2.5
+          "usage": 2.6
         }
       ],
       "items": [
@@ -929,7 +929,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sitrus Berry",
-          "usage": 0.1
+          "usage": 0.2
         },
         {
           "name": "Yache Berry",
@@ -961,19 +961,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Timid",
-          "usage": 51.7
+          "usage": 52
         },
         {
           "name": "Modest",
-          "usage": 23
+          "usage": 22.9
         },
         {
           "name": "Naive",
-          "usage": 10.3
+          "usage": 10.1
         },
         {
           "name": "Hasty",
-          "usage": 5.1
+          "usage": 5
         },
         {
           "name": "Adamant",
@@ -1045,7 +1045,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 44.2,
+          "usage": 44.3,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -1069,7 +1069,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 3.5,
+          "usage": 3.4,
           "points": {
             "hp": 1,
             "atk": 21,
@@ -1121,7 +1121,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "points": {
             "hp": 0,
             "atk": 0,
-            "def": 0,
+            "def": 2,
             "spa": 32,
             "spd": 0,
             "spe": 32
@@ -1133,7 +1133,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "points": {
             "hp": 0,
             "atk": 0,
-            "def": 2,
+            "def": 0,
             "spa": 32,
             "spd": 0,
             "spe": 32
@@ -1148,27 +1148,27 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Follow Me",
-          "usage": 97.4
+          "usage": 97.3
         },
         {
           "name": "Trick Room",
-          "usage": 82.1
+          "usage": 81.8
         },
         {
           "name": "Helping Hand",
-          "usage": 79.8
+          "usage": 79.6
         },
         {
           "name": "Psychic",
-          "usage": 62.2
+          "usage": 62.4
         },
         {
           "name": "Protect",
-          "usage": 18.9
+          "usage": 19.1
         },
         {
           "name": "Terrain Pulse",
-          "usage": 18.1
+          "usage": 17.9
         },
         {
           "name": "Imprison",
@@ -1176,11 +1176,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Mystical Fire",
-          "usage": 5.8
+          "usage": 5.9
         },
         {
           "name": "Heal Pulse",
-          "usage": 4.8
+          "usage": 4.9
         },
         {
           "name": "Dazzling Gleam",
@@ -1190,15 +1190,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Colbur Berry",
-          "usage": 26.9
+          "usage": 26.7
         },
         {
           "name": "Rocky Helmet",
-          "usage": 26.2
+          "usage": 26.3
         },
         {
           "name": "Psychic Seed",
-          "usage": 22.9
+          "usage": 22.8
         },
         {
           "name": "Sitrus Berry",
@@ -1206,7 +1206,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Focus Sash",
-          "usage": 3.6
+          "usage": 3.7
         },
         {
           "name": "Terrain Extender",
@@ -1222,7 +1222,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Mental Herb",
-          "usage": 0.6
+          "usage": 0.7
         },
         {
           "name": "Choice Scarf",
@@ -1246,11 +1246,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Relaxed",
-          "usage": 43.4
+          "usage": 43.5
         },
         {
           "name": "Bold",
-          "usage": 36.6
+          "usage": 36.5
         },
         {
           "name": "Calm",
@@ -1258,7 +1258,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Modest",
-          "usage": 3.6
+          "usage": 3.7
         },
         {
           "name": "Sassy",
@@ -1330,7 +1330,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 53.5,
+          "usage": 53.4,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -1342,7 +1342,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 8.8,
+          "usage": 8.7,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -1354,7 +1354,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 3.3,
+          "usage": 3.2,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -1445,19 +1445,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 57.2
+          "usage": 57.6
         },
         {
           "name": "Low Kick",
-          "usage": 47.9
+          "usage": 47.4
         },
         {
           "name": "Swords Dance",
-          "usage": 15.2
+          "usage": 15.3
         },
         {
           "name": "Brick Break",
-          "usage": 2.6
+          "usage": 2.7
         },
         {
           "name": "Assurance",
@@ -1475,11 +1475,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Chople Berry",
-          "usage": 42.3
+          "usage": 42.1
         },
         {
           "name": "Black Glasses",
-          "usage": 18.5
+          "usage": 18.6
         },
         {
           "name": "Focus Sash",
@@ -1487,7 +1487,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Life Orb",
-          "usage": 15.2
+          "usage": 15.3
         },
         {
           "name": "Occa Berry",
@@ -1510,18 +1510,18 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.3
         },
         {
-          "name": "Psychic Seed",
+          "name": "Muscle Band",
           "usage": 0.2
         }
       ],
       "abilities": [
         {
           "name": "Defiant",
-          "usage": 95.8
+          "usage": 95.7
         },
         {
           "name": "Supreme Overlord",
-          "usage": 4.1
+          "usage": 4.2
         },
         {
           "name": "Pressure",
@@ -1535,7 +1535,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Brave",
-          "usage": 16
+          "usage": 16.1
         },
         {
           "name": "Jolly",
@@ -1588,11 +1588,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 4
         },
         {
-          "species": "Indeedee-F",
+          "species": "Garchomp",
           "rank": 5
         },
         {
-          "species": "Garchomp",
+          "species": "Indeedee-F",
           "rank": 6
         },
         {
@@ -1615,7 +1615,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 19.9,
+          "usage": 20,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -1627,7 +1627,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 9,
+          "usage": 9.1,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -1663,7 +1663,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 5.4,
+          "usage": 5.3,
           "points": {
             "hp": 32,
             "atk": 25,
@@ -1687,7 +1687,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 2.4,
+          "usage": 2.3,
           "points": {
             "hp": 32,
             "atk": 15,
@@ -1722,19 +1722,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Wave Crash",
-          "usage": 93
+          "usage": 92.9
         },
         {
           "name": "Aqua Jet",
-          "usage": 90.2
+          "usage": 90.1
         },
         {
           "name": "Protect",
-          "usage": 51.4
+          "usage": 51.3
         },
         {
           "name": "Flip Turn",
-          "usage": 46.3
+          "usage": 46.4
         },
         {
           "name": "Liquidation",
@@ -1742,7 +1742,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Psychic Fangs",
-          "usage": 3.1
+          "usage": 3.2
         },
         {
           "name": "Ice Fang",
@@ -1754,17 +1754,17 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Crunch",
-          "usage": 0.8
+          "usage": 0.9
         }
       ],
       "items": [
         {
           "name": "Choice Scarf",
-          "usage": 45.7
+          "usage": 45.8
         },
         {
           "name": "Life Orb",
-          "usage": 29.3
+          "usage": 29.1
         },
         {
           "name": "Mystic Water",
@@ -1772,7 +1772,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Focus Sash",
-          "usage": 7.6
+          "usage": 7.7
         },
         {
           "name": "Sitrus Berry",
@@ -1780,7 +1780,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Colbur Berry",
-          "usage": 0.4
+          "usage": 0.5
         },
         {
           "name": "Quick Claw",
@@ -1792,7 +1792,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Muscle Band",
-          "usage": 0.2
+          "usage": 0.3
         },
         {
           "name": "Leftovers",
@@ -1802,11 +1802,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Adaptability",
-          "usage": 94.1
+          "usage": 94
         },
         {
           "name": "Swift Swim",
-          "usage": 5.6
+          "usage": 5.7
         },
         {
           "name": "Mold Breaker",
@@ -1816,7 +1816,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Adamant",
-          "usage": 53.4
+          "usage": 53.3
         },
         {
           "name": "Jolly",
@@ -1828,11 +1828,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Lonely",
-          "usage": 0.3
+          "usage": 0.4
         },
         {
           "name": "Naughty",
-          "usage": 0.3
+          "usage": 0.4
         },
         {
           "name": "Naive",
@@ -1900,7 +1900,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 37.8,
+          "usage": 37.9,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -1912,7 +1912,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 11.6,
+          "usage": 11.7,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -1924,7 +1924,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 5.6,
+          "usage": 5.5,
           "points": {
             "hp": 4,
             "atk": 23,
@@ -1960,7 +1960,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.3,
+          "usage": 2.2,
           "points": {
             "hp": 0,
             "atk": 28,
@@ -1974,24 +1974,24 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 7,
           "usage": 1.6,
           "points": {
-            "hp": 4,
-            "atk": 18,
-            "def": 4,
-            "spa": 0,
-            "spd": 15,
-            "spe": 25
-          }
-        },
-        {
-          "rank": 8,
-          "usage": 1.6,
-          "points": {
             "hp": 0,
             "atk": 20,
             "def": 14,
             "spa": 0,
             "spd": 0,
             "spe": 32
+          }
+        },
+        {
+          "rank": 8,
+          "usage": 1.6,
+          "points": {
+            "hp": 4,
+            "atk": 18,
+            "def": 4,
+            "spa": 0,
+            "spd": 15,
+            "spe": 25
           }
         }
       ]
@@ -2007,7 +2007,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Iron Head",
-          "usage": 81.5
+          "usage": 81.4
         },
         {
           "name": "Protect",
@@ -2015,11 +2015,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Swords Dance",
-          "usage": 44
+          "usage": 43.8
         },
         {
           "name": "Sucker Punch",
-          "usage": 33.5
+          "usage": 33.7
         },
         {
           "name": "Liquidation",
@@ -2031,11 +2031,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Drill Run",
-          "usage": 9.9
+          "usage": 10.2
         },
         {
           "name": "Close Combat",
-          "usage": 8.5
+          "usage": 8.4
         },
         {
           "name": "Aqua Jet",
@@ -2093,11 +2093,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Adamant",
-          "usage": 60
+          "usage": 60.1
         },
         {
           "name": "Brave",
-          "usage": 34
+          "usage": 33.8
         },
         {
           "name": "Careful",
@@ -2177,7 +2177,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 43.7,
+          "usage": 43.6,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -2213,7 +2213,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 2.5,
+          "usage": 2.4,
           "points": {
             "hp": 32,
             "atk": 25,
@@ -2263,11 +2263,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 8,
           "usage": 1.7,
           "points": {
-            "hp": 32,
-            "atk": 5,
-            "def": 0,
+            "hp": 0,
+            "atk": 32,
+            "def": 2,
             "spa": 0,
-            "spd": 29,
+            "spd": 32,
             "spe": 0
           }
         }
@@ -2280,65 +2280,65 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Protect",
-          "usage": 80.5
+          "usage": 80.8
         },
         {
           "name": "Rock Slide",
-          "usage": 44.1
+          "usage": 42.8
         },
         {
           "name": "Dragon Claw",
-          "usage": 43.2
+          "usage": 41.9
         },
         {
           "name": "Earthquake",
-          "usage": 41
+          "usage": 40
         },
         {
           "name": "Power Gem",
-          "usage": 36.6
+          "usage": 38.1
         },
         {
           "name": "Flamethrower",
-          "usage": 30.7
+          "usage": 30.3
         },
         {
           "name": "Draco Meteor",
-          "usage": 28.8
+          "usage": 28.4
         },
         {
           "name": "Earth Power",
-          "usage": 22.3
+          "usage": 24.2
         },
         {
           "name": "Stomping Tantrum",
-          "usage": 21.9
+          "usage": 21.2
         },
         {
           "name": "Dragon Pulse",
-          "usage": 19.2
+          "usage": 21
         }
       ],
       "items": [
         {
           "name": "Garchompite Z",
-          "usage": 46.1
+          "usage": 47.5
         },
         {
           "name": "Life Orb",
-          "usage": 26.2
+          "usage": 25.4
         },
         {
           "name": "Choice Scarf",
-          "usage": 9.4
+          "usage": 9.2
         },
         {
           "name": "Rocky Helmet",
-          "usage": 4.4
+          "usage": 4.3
         },
         {
           "name": "Sitrus Berry",
-          "usage": 3.6
+          "usage": 3.5
         },
         {
           "name": "Garchompite",
@@ -2350,43 +2350,43 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Roseli Berry",
-          "usage": 1.1
+          "usage": 1
         },
         {
           "name": "Soft Sand",
-          "usage": 0.7
+          "usage": 0.6
         },
         {
-          "name": "White Herb",
+          "name": "Haban Berry",
           "usage": 0.6
         }
       ],
       "abilities": [
         {
           "name": "Rough Skin",
-          "usage": 96.7
+          "usage": 96.8
         },
         {
           "name": "Sand Veil",
-          "usage": 3.3
+          "usage": 3.2
         }
       ],
       "natures": [
         {
           "name": "Modest",
-          "usage": 35.4
+          "usage": 36.7
         },
         {
           "name": "Jolly",
-          "usage": 30.4
+          "usage": 29.6
         },
         {
           "name": "Adamant",
-          "usage": 20.3
+          "usage": 19.7
         },
         {
           "name": "Timid",
-          "usage": 9.8
+          "usage": 9.9
         },
         {
           "name": "Impish",
@@ -2435,30 +2435,30 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 5
         },
         {
-          "species": "Basculegion",
+          "species": "Gholdengo",
           "rank": 6
         },
         {
-          "species": "Whimsicott",
+          "species": "Basculegion",
           "rank": 7
         },
         {
-          "species": "Gholdengo",
+          "species": "Whimsicott",
           "rank": 8
         },
         {
-          "species": "Farigiraf",
+          "species": "Volcarona",
           "rank": 9
         },
         {
-          "species": "Volcarona",
+          "species": "Farigiraf",
           "rank": 10
         }
       ],
       "spreads": [
         {
           "rank": 1,
-          "usage": 24.7,
+          "usage": 24.1,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -2470,7 +2470,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 17.7,
+          "usage": 18.7,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -2482,7 +2482,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 3.6,
+          "usage": 3.4,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -2494,7 +2494,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 3.1,
+          "usage": 3,
           "points": {
             "hp": 8,
             "atk": 0,
@@ -2506,7 +2506,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 2.9,
+          "usage": 2.8,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -2518,7 +2518,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.7,
+          "usage": 2.6,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -2530,7 +2530,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 1.4,
+          "usage": 1.5,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -2569,15 +2569,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 90.5
+          "usage": 90.6
         },
         {
           "name": "Nasty Plot",
-          "usage": 81.8
+          "usage": 82.1
         },
         {
           "name": "Power Gem",
-          "usage": 11.5
+          "usage": 11.2
         },
         {
           "name": "Thunderbolt",
@@ -2589,7 +2589,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Focus Blast",
-          "usage": 1.9
+          "usage": 1.8
         },
         {
           "name": "Dazzling Gleam",
@@ -2603,11 +2603,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Life Orb",
-          "usage": 77.8
+          "usage": 78.2
         },
         {
           "name": "Choice Scarf",
-          "usage": 5.9
+          "usage": 5.7
         },
         {
           "name": "White Herb",
@@ -2615,7 +2615,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Focus Sash",
-          "usage": 2.8
+          "usage": 2.7
         },
         {
           "name": "Leftovers",
@@ -2623,7 +2623,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Grassy Seed",
-          "usage": 2.1
+          "usage": 2
         },
         {
           "name": "Metal Coat",
@@ -2651,11 +2651,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 63.3
+          "usage": 63.8
         },
         {
           "name": "Timid",
-          "usage": 34.2
+          "usage": 33.7
         },
         {
           "name": "Quiet",
@@ -2720,11 +2720,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 7
         },
         {
-          "species": "Staraptor",
+          "species": "Garchomp",
           "rank": 8
         },
         {
-          "species": "Garchomp",
+          "species": "Staraptor",
           "rank": 9
         },
         {
@@ -2735,7 +2735,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 23.2,
+          "usage": 23,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -2747,7 +2747,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 9.8,
+          "usage": 9.7,
           "points": {
             "hp": 17,
             "atk": 0,
@@ -2759,7 +2759,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 7.3,
+          "usage": 7.2,
           "points": {
             "hp": 7,
             "atk": 0,
@@ -2771,7 +2771,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 3.2,
+          "usage": 3.1,
           "points": {
             "hp": 15,
             "atk": 0,
@@ -2819,7 +2819,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 1.5,
+          "usage": 1.4,
           "points": {
             "hp": 3,
             "atk": 0,
@@ -2842,11 +2842,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 92.5
+          "usage": 92.4
         },
         {
           "name": "Flash Cannon",
-          "usage": 83.2
+          "usage": 82.7
         },
         {
           "name": "Dragon Pulse",
@@ -2854,19 +2854,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Aura Sphere",
-          "usage": 18.2
+          "usage": 18.4
         },
         {
           "name": "Draco Meteor",
-          "usage": 15
+          "usage": 15.1
         },
         {
           "name": "Snarl",
-          "usage": 9.7
+          "usage": 9.9
         },
         {
           "name": "Thunderbolt",
-          "usage": 3.4
+          "usage": 3.5
         },
         {
           "name": "Dark Pulse",
@@ -2880,15 +2880,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Leftovers",
-          "usage": 86.4
+          "usage": 86.3
         },
         {
           "name": "Sitrus Berry",
-          "usage": 3
+          "usage": 3.1
         },
         {
           "name": "Chople Berry",
-          "usage": 2.2
+          "usage": 2.1
         },
         {
           "name": "Choice Scarf",
@@ -2936,7 +2936,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 51
+          "usage": 50.7
         },
         {
           "name": "Calm",
@@ -2944,7 +2944,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Bold",
-          "usage": 13.1
+          "usage": 13.3
         },
         {
           "name": "Timid",
@@ -3080,7 +3080,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.8,
+          "usage": 2.9,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -3127,11 +3127,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Weather Ball",
-          "usage": 85.1
+          "usage": 84.8
         },
         {
           "name": "Tailwind",
-          "usage": 78.6
+          "usage": 78.4
         },
         {
           "name": "Wide Guard",
@@ -3139,7 +3139,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 31.3
+          "usage": 31.2
         },
         {
           "name": "Ice Beam",
@@ -3147,11 +3147,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Muddy Water",
-          "usage": 9.7
+          "usage": 9.8
         },
         {
           "name": "U-turn",
-          "usage": 4
+          "usage": 4.1
         },
         {
           "name": "Rain Dance",
@@ -3159,7 +3159,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Helping Hand",
-          "usage": 3
+          "usage": 3.2
         }
       ],
       "items": [
@@ -3169,11 +3169,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sitrus Berry",
-          "usage": 29.5
+          "usage": 29.2
         },
         {
           "name": "Damp Rock",
-          "usage": 8.7
+          "usage": 9
         },
         {
           "name": "Life Orb",
@@ -3184,12 +3184,12 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 2.8
         },
         {
-          "name": "Mystic Water",
-          "usage": 1
+          "name": "Quick Claw",
+          "usage": 1.1
         },
         {
-          "name": "Quick Claw",
-          "usage": 1
+          "name": "Mystic Water",
+          "usage": 1.1
         },
         {
           "name": "Leftovers",
@@ -3221,15 +3221,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 56.2
+          "usage": 56.1
         },
         {
           "name": "Timid",
-          "usage": 19.7
+          "usage": 19.8
         },
         {
           "name": "Bold",
-          "usage": 11.5
+          "usage": 11.6
         },
         {
           "name": "Calm",
@@ -3237,11 +3237,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Quiet",
-          "usage": 4.1
+          "usage": 4
         },
         {
           "name": "Relaxed",
-          "usage": 0.8
+          "usage": 0.9
         },
         {
           "name": "Sassy",
@@ -3249,7 +3249,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Mild",
-          "usage": 0.4
+          "usage": 0.5
         },
         {
           "name": "Hasty",
@@ -3282,11 +3282,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 5
         },
         {
-          "species": "Basculegion",
+          "species": "Sneasler",
           "rank": 6
         },
         {
-          "species": "Sneasler",
+          "species": "Basculegion",
           "rank": 7
         },
         {
@@ -3305,7 +3305,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 30.3,
+          "usage": 30.2,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -3353,7 +3353,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 2.7,
+          "usage": 2.8,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -3377,7 +3377,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 1.8,
+          "usage": 1.7,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -3408,35 +3408,35 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Protect",
-          "usage": 70.9
+          "usage": 70.4
         },
         {
           "name": "Scald",
-          "usage": 65.5
+          "usage": 65.3
         },
         {
           "name": "Ice Beam",
-          "usage": 58.4
+          "usage": 58.3
         },
         {
           "name": "Icy Wind",
-          "usage": 40.4
+          "usage": 40.2
         },
         {
           "name": "Muddy Water",
-          "usage": 35
+          "usage": 35.3
         },
         {
           "name": "Recover",
-          "usage": 30.3
+          "usage": 30.5
         },
         {
           "name": "Coil",
-          "usage": 30
+          "usage": 30.3
         },
         {
           "name": "Hypnosis",
-          "usage": 28.7
+          "usage": 28.9
         },
         {
           "name": "Life Dew",
@@ -3444,21 +3444,21 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Haze",
-          "usage": 4
+          "usage": 4.1
         }
       ],
       "items": [
         {
           "name": "Leftovers",
-          "usage": 62.5
+          "usage": 62.4
         },
         {
           "name": "Sitrus Berry",
-          "usage": 21.8
+          "usage": 21.7
         },
         {
           "name": "Psychic Seed",
-          "usage": 5.9
+          "usage": 6
         },
         {
           "name": "Grassy Seed",
@@ -3506,11 +3506,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 34.1
+          "usage": 34
         },
         {
           "name": "Calm",
-          "usage": 32.6
+          "usage": 32.7
         },
         {
           "name": "Bold",
@@ -3530,7 +3530,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sassy",
-          "usage": 0.7
+          "usage": 0.8
         },
         {
           "name": "Mild",
@@ -3638,7 +3638,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 2.1,
+          "usage": 2.2,
           "points": {
             "hp": 31,
             "atk": 0,
@@ -3693,35 +3693,35 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Trick Room",
-          "usage": 95
+          "usage": 94.9
         },
         {
           "name": "Helping Hand",
-          "usage": 52.5
+          "usage": 52.6
         },
         {
           "name": "Psychic",
-          "usage": 51
+          "usage": 51.1
         },
         {
           "name": "Protect",
-          "usage": 46.3
+          "usage": 46.4
         },
         {
           "name": "Thunderbolt",
-          "usage": 41.9
-        },
-        {
-          "name": "Twin Beam",
-          "usage": 18.7
+          "usage": 41.5
         },
         {
           "name": "Expanding Force",
-          "usage": 18.6
+          "usage": 18.7
+        },
+        {
+          "name": "Twin Beam",
+          "usage": 18.5
         },
         {
           "name": "Hyper Voice",
-          "usage": 15.7
+          "usage": 15.6
         },
         {
           "name": "Imprison",
@@ -3729,7 +3729,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Ally Switch",
-          "usage": 7.3
+          "usage": 7.4
         }
       ],
       "items": [
@@ -3743,7 +3743,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Grassy Seed",
-          "usage": 6.4
+          "usage": 6.3
         },
         {
           "name": "Leftovers",
@@ -3755,14 +3755,14 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Focus Sash",
-          "usage": 1.9
-        },
-        {
-          "name": "Psychic Seed",
-          "usage": 1
+          "usage": 2
         },
         {
           "name": "Rocky Helmet",
+          "usage": 1.1
+        },
+        {
+          "name": "Psychic Seed",
           "usage": 1
         },
         {
@@ -3795,7 +3795,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Relaxed",
-          "usage": 18.5
+          "usage": 18.4
         },
         {
           "name": "Modest",
@@ -3807,11 +3807,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Quiet",
-          "usage": 11.6
+          "usage": 11.5
         },
         {
           "name": "Sassy",
-          "usage": 7.6
+          "usage": 7.8
         },
         {
           "name": "Timid",
@@ -3875,7 +3875,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 7.5,
+          "usage": 7.4,
           "points": {
             "hp": 27,
             "atk": 0,
@@ -3899,7 +3899,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 3.8,
+          "usage": 3.7,
           "points": {
             "hp": 29,
             "atk": 0,
@@ -3911,7 +3911,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 3.3,
+          "usage": 3.4,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -3971,22 +3971,303 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
-    "charizard": {
-      "species": "Charizard",
-      "showdownId": "charizard",
+    "raichu": {
+      "species": "Raichu",
+      "showdownId": "raichu",
       "rank": 15,
       "moves": [
         {
           "name": "Protect",
-          "usage": 93.5
+          "usage": 86.6
+        },
+        {
+          "name": "Zap Cannon",
+          "usage": 83.3
+        },
+        {
+          "name": "Focus Blast",
+          "usage": 83
+        },
+        {
+          "name": "Fake Out",
+          "usage": 76.7
+        },
+        {
+          "name": "Encore",
+          "usage": 19.9
+        },
+        {
+          "name": "Volt Switch",
+          "usage": 10.4
+        },
+        {
+          "name": "Volt Tackle",
+          "usage": 6.9
+        },
+        {
+          "name": "Rising Voltage",
+          "usage": 6.9
+        },
+        {
+          "name": "Grass Knot",
+          "usage": 3.2
+        },
+        {
+          "name": "Dazzling Gleam",
+          "usage": 2.4
+        }
+      ],
+      "items": [
+        {
+          "name": "Raichunite Y",
+          "usage": 83.4
+        },
+        {
+          "name": "Raichunite X",
+          "usage": 13.9
+        },
+        {
+          "name": "Focus Sash",
+          "usage": 1.3
+        },
+        {
+          "name": "Sitrus Berry",
+          "usage": 0.2
+        },
+        {
+          "name": "Magnet",
+          "usage": 0.2
+        },
+        {
+          "name": "Air Balloon",
+          "usage": 0.1
+        },
+        {
+          "name": "Shuca Berry",
+          "usage": 0.1
+        },
+        {
+          "name": "Life Orb",
+          "usage": 0.1
+        },
+        {
+          "name": "Choice Scarf",
+          "usage": 0.1
+        },
+        {
+          "name": "Focus Band",
+          "usage": 0
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Lightning Rod",
+          "usage": 96.8
+        },
+        {
+          "name": "Static",
+          "usage": 3.2
+        }
+      ],
+      "natures": [
+        {
+          "name": "Timid",
+          "usage": 82.6
+        },
+        {
+          "name": "Modest",
+          "usage": 7.7
+        },
+        {
+          "name": "Jolly",
+          "usage": 6.3
+        },
+        {
+          "name": "Adamant",
+          "usage": 1.4
+        },
+        {
+          "name": "Hasty",
+          "usage": 0.5
+        },
+        {
+          "name": "Bold",
+          "usage": 0.4
+        },
+        {
+          "name": "Naive",
+          "usage": 0.3
+        },
+        {
+          "name": "Mild",
+          "usage": 0.1
+        },
+        {
+          "name": "Quiet",
+          "usage": 0.1
+        },
+        {
+          "name": "Impish",
+          "usage": 0.1
+        }
+      ],
+      "teammates": [
+        {
+          "species": "Rillaboom",
+          "rank": 1
+        },
+        {
+          "species": "Gholdengo",
+          "rank": 2
+        },
+        {
+          "species": "Incineroar",
+          "rank": 3
+        },
+        {
+          "species": "Arcanine-Hisui",
+          "rank": 4
+        },
+        {
+          "species": "Staraptor",
+          "rank": 5
+        },
+        {
+          "species": "Sneasler",
+          "rank": 6
+        },
+        {
+          "species": "Sylveon",
+          "rank": 7
+        },
+        {
+          "species": "Garchomp",
+          "rank": 8
+        },
+        {
+          "species": "Salamence",
+          "rank": 9
+        },
+        {
+          "species": "Milotic",
+          "rank": 10
+        }
+      ],
+      "spreads": [
+        {
+          "rank": 1,
+          "usage": 21.4,
+          "points": {
+            "hp": 2,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 2,
+          "usage": 5.2,
+          "points": {
+            "hp": 26,
+            "atk": 0,
+            "def": 17,
+            "spa": 0,
+            "spd": 0,
+            "spe": 23
+          }
+        },
+        {
+          "rank": 3,
+          "usage": 5,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 11,
+            "spa": 0,
+            "spd": 0,
+            "spe": 23
+          }
+        },
+        {
+          "rank": 4,
+          "usage": 4.2,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 0,
+            "spa": 2,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 5,
+          "usage": 4.2,
+          "points": {
+            "hp": 2,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 6,
+          "usage": 3.1,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 2,
+            "spa": 0,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 7,
+          "usage": 2.5,
+          "points": {
+            "hp": 29,
+            "atk": 0,
+            "def": 5,
+            "spa": 0,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 8,
+          "usage": 2.4,
+          "points": {
+            "hp": 30,
+            "atk": 0,
+            "def": 13,
+            "spa": 0,
+            "spd": 0,
+            "spe": 23
+          }
+        }
+      ]
+    },
+    "charizard": {
+      "species": "Charizard",
+      "showdownId": "charizard",
+      "rank": 16,
+      "moves": [
+        {
+          "name": "Protect",
+          "usage": 93.4
         },
         {
           "name": "Heat Wave",
-          "usage": 93.2
+          "usage": 93.1
         },
         {
           "name": "Weather Ball",
-          "usage": 70.5
+          "usage": 70.2
         },
         {
           "name": "Solar Beam",
@@ -3994,15 +4275,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Ancient Power",
-          "usage": 25.9
+          "usage": 25.7
         },
         {
           "name": "Hurricane",
-          "usage": 10.7
+          "usage": 10.9
         },
         {
           "name": "Air Slash",
-          "usage": 8.5
+          "usage": 8.6
         },
         {
           "name": "Dragon Pulse",
@@ -4014,21 +4295,21 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Flare Blitz",
-          "usage": 3
+          "usage": 3.1
         }
       ],
       "items": [
         {
           "name": "Charizardite Y",
-          "usage": 93.3
+          "usage": 93.2
         },
         {
           "name": "Charizardite X",
-          "usage": 4.7
+          "usage": 4.8
         },
         {
           "name": "Choice Scarf",
-          "usage": 0.4
+          "usage": 0.5
         },
         {
           "name": "Charcoal",
@@ -4072,11 +4353,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 58.8
+          "usage": 58.6
         },
         {
           "name": "Timid",
-          "usage": 32.3
+          "usage": 32.5
         },
         {
           "name": "Adamant",
@@ -4180,7 +4461,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 4.2,
+          "usage": 4.1,
           "points": {
             "hp": 12,
             "atk": 0,
@@ -4216,7 +4497,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 1.6,
+          "usage": 1.7,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -4252,287 +4533,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
-    "raichu": {
-      "species": "Raichu",
-      "showdownId": "raichu",
-      "rank": 16,
-      "moves": [
-        {
-          "name": "Protect",
-          "usage": 86.5
-        },
-        {
-          "name": "Zap Cannon",
-          "usage": 83
-        },
-        {
-          "name": "Focus Blast",
-          "usage": 82.7
-        },
-        {
-          "name": "Fake Out",
-          "usage": 76.1
-        },
-        {
-          "name": "Encore",
-          "usage": 20.5
-        },
-        {
-          "name": "Volt Switch",
-          "usage": 10.7
-        },
-        {
-          "name": "Volt Tackle",
-          "usage": 7
-        },
-        {
-          "name": "Rising Voltage",
-          "usage": 6.9
-        },
-        {
-          "name": "Grass Knot",
-          "usage": 3.2
-        },
-        {
-          "name": "Dazzling Gleam",
-          "usage": 2.4
-        }
-      ],
-      "items": [
-        {
-          "name": "Raichunite Y",
-          "usage": 83
-        },
-        {
-          "name": "Raichunite X",
-          "usage": 14.2
-        },
-        {
-          "name": "Focus Sash",
-          "usage": 1.4
-        },
-        {
-          "name": "Sitrus Berry",
-          "usage": 0.2
-        },
-        {
-          "name": "Magnet",
-          "usage": 0.2
-        },
-        {
-          "name": "Air Balloon",
-          "usage": 0.1
-        },
-        {
-          "name": "Shuca Berry",
-          "usage": 0.1
-        },
-        {
-          "name": "Life Orb",
-          "usage": 0.1
-        },
-        {
-          "name": "Choice Scarf",
-          "usage": 0.1
-        },
-        {
-          "name": "Focus Band",
-          "usage": 0
-        }
-      ],
-      "abilities": [
-        {
-          "name": "Lightning Rod",
-          "usage": 96.8
-        },
-        {
-          "name": "Static",
-          "usage": 3.2
-        }
-      ],
-      "natures": [
-        {
-          "name": "Timid",
-          "usage": 82.5
-        },
-        {
-          "name": "Modest",
-          "usage": 7.6
-        },
-        {
-          "name": "Jolly",
-          "usage": 6.4
-        },
-        {
-          "name": "Adamant",
-          "usage": 1.5
-        },
-        {
-          "name": "Hasty",
-          "usage": 0.5
-        },
-        {
-          "name": "Bold",
-          "usage": 0.4
-        },
-        {
-          "name": "Naive",
-          "usage": 0.3
-        },
-        {
-          "name": "Mild",
-          "usage": 0.1
-        },
-        {
-          "name": "Quiet",
-          "usage": 0.1
-        },
-        {
-          "name": "Impish",
-          "usage": 0.1
-        }
-      ],
-      "teammates": [
-        {
-          "species": "Rillaboom",
-          "rank": 1
-        },
-        {
-          "species": "Gholdengo",
-          "rank": 2
-        },
-        {
-          "species": "Incineroar",
-          "rank": 3
-        },
-        {
-          "species": "Arcanine-Hisui",
-          "rank": 4
-        },
-        {
-          "species": "Staraptor",
-          "rank": 5
-        },
-        {
-          "species": "Sneasler",
-          "rank": 6
-        },
-        {
-          "species": "Sylveon",
-          "rank": 7
-        },
-        {
-          "species": "Salamence",
-          "rank": 8
-        },
-        {
-          "species": "Milotic",
-          "rank": 9
-        },
-        {
-          "species": "Kingambit",
-          "rank": 10
-        }
-      ],
-      "spreads": [
-        {
-          "rank": 1,
-          "usage": 21.4,
-          "points": {
-            "hp": 2,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 2,
-          "usage": 5.3,
-          "points": {
-            "hp": 26,
-            "atk": 0,
-            "def": 17,
-            "spa": 0,
-            "spd": 0,
-            "spe": 23
-          }
-        },
-        {
-          "rank": 3,
-          "usage": 4.8,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 11,
-            "spa": 0,
-            "spd": 0,
-            "spe": 23
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 4.3,
-          "points": {
-            "hp": 2,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 5,
-          "usage": 4.3,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 0,
-            "spa": 2,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 6,
-          "usage": 2.8,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 2,
-            "spa": 0,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 7,
-          "usage": 2.4,
-          "points": {
-            "hp": 30,
-            "atk": 0,
-            "def": 13,
-            "spa": 0,
-            "spd": 0,
-            "spe": 23
-          }
-        },
-        {
-          "rank": 8,
-          "usage": 2.2,
-          "points": {
-            "hp": 0,
-            "atk": 0,
-            "def": 2,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        }
-      ]
-    },
     "gardevoir": {
       "species": "Gardevoir",
       "showdownId": "gardevoir",
@@ -4540,19 +4540,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Hyper Voice",
-          "usage": 94.9
+          "usage": 94.8
         },
         {
           "name": "Protect",
-          "usage": 94
+          "usage": 93.8
         },
         {
           "name": "Expanding Force",
-          "usage": 93.2
+          "usage": 93.1
         },
         {
           "name": "Trick Room",
-          "usage": 33
+          "usage": 32.6
         },
         {
           "name": "Mystical Fire",
@@ -4560,7 +4560,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Calm Mind",
-          "usage": 10.7
+          "usage": 11
         },
         {
           "name": "Thunderbolt",
@@ -4572,11 +4572,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Moonblast",
-          "usage": 7.7
+          "usage": 7.8
         },
         {
           "name": "Psychic",
-          "usage": 6.5
+          "usage": 6.6
         }
       ],
       "items": [
@@ -4617,18 +4617,18 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.1
         },
         {
-          "name": "Wise Glasses",
+          "name": "Quick Claw",
           "usage": 0.1
         }
       ],
       "abilities": [
         {
           "name": "Trace",
-          "usage": 78.6
+          "usage": 78.4
         },
         {
           "name": "Telepathy",
-          "usage": 11.5
+          "usage": 11.7
         },
         {
           "name": "Synchronize",
@@ -4638,11 +4638,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 75.8
+          "usage": 75.6
         },
         {
           "name": "Timid",
-          "usage": 12.4
+          "usage": 12.6
         },
         {
           "name": "Quiet",
@@ -4722,7 +4722,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 20.6,
+          "usage": 20.7,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -4746,7 +4746,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 7.9,
+          "usage": 7.8,
           "points": {
             "hp": 29,
             "atk": 0,
@@ -4782,7 +4782,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.2,
+          "usage": 2.1,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -4799,14 +4799,259 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
             "hp": 32,
             "atk": 0,
             "def": 0,
-            "spa": 23,
-            "spd": 0,
-            "spe": 11
+            "spa": 32,
+            "spd": 2,
+            "spe": 0
           }
         },
         {
           "rank": 8,
-          "usage": 2,
+          "usage": 1.9,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 0,
+            "spa": 23,
+            "spd": 0,
+            "spe": 11
+          }
+        }
+      ]
+    },
+    "sylveon": {
+      "species": "Sylveon",
+      "showdownId": "sylveon",
+      "rank": 18,
+      "moves": [
+        {
+          "name": "Hyper Voice",
+          "usage": 99.6
+        },
+        {
+          "name": "Hyper Beam",
+          "usage": 74.2
+        },
+        {
+          "name": "Quick Attack",
+          "usage": 68.3
+        },
+        {
+          "name": "Detect",
+          "usage": 64.3
+        },
+        {
+          "name": "Protect",
+          "usage": 30.4
+        },
+        {
+          "name": "Mystical Fire",
+          "usage": 11.6
+        },
+        {
+          "name": "Yawn",
+          "usage": 11.5
+        },
+        {
+          "name": "Calm Mind",
+          "usage": 8.6
+        },
+        {
+          "name": "Moonblast",
+          "usage": 8.1
+        },
+        {
+          "name": "Shadow Ball",
+          "usage": 5.8
+        }
+      ],
+      "items": [
+        {
+          "name": "Fairy Feather",
+          "usage": 86
+        },
+        {
+          "name": "Life Orb",
+          "usage": 5.1
+        },
+        {
+          "name": "Leftovers",
+          "usage": 2.2
+        },
+        {
+          "name": "Sitrus Berry",
+          "usage": 1.7
+        },
+        {
+          "name": "Quick Claw",
+          "usage": 1.5
+        },
+        {
+          "name": "Choice Scarf",
+          "usage": 0.6
+        },
+        {
+          "name": "Grassy Seed",
+          "usage": 0.4
+        },
+        {
+          "name": "Focus Sash",
+          "usage": 0.4
+        },
+        {
+          "name": "Wise Glasses",
+          "usage": 0.3
+        },
+        {
+          "name": "Metronome",
+          "usage": 0.2
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Pixilate",
+          "usage": 99.8
+        },
+        {
+          "name": "Cute Charm",
+          "usage": 0.2
+        }
+      ],
+      "natures": [
+        {
+          "name": "Modest",
+          "usage": 79.5
+        },
+        {
+          "name": "Quiet",
+          "usage": 13.9
+        },
+        {
+          "name": "Bold",
+          "usage": 2.4
+        },
+        {
+          "name": "Timid",
+          "usage": 2
+        },
+        {
+          "name": "Calm",
+          "usage": 0.6
+        },
+        {
+          "name": "Relaxed",
+          "usage": 0.5
+        },
+        {
+          "name": "Mild",
+          "usage": 0.4
+        },
+        {
+          "name": "Sassy",
+          "usage": 0.2
+        },
+        {
+          "name": "Gentle",
+          "usage": 0.1
+        },
+        {
+          "name": "Rash",
+          "usage": 0.1
+        }
+      ],
+      "teammates": [
+        {
+          "species": "Rillaboom",
+          "rank": 1
+        },
+        {
+          "species": "Kingambit",
+          "rank": 2
+        },
+        {
+          "species": "Raichu",
+          "rank": 3
+        },
+        {
+          "species": "Salamence",
+          "rank": 4
+        },
+        {
+          "species": "Farigiraf",
+          "rank": 5
+        },
+        {
+          "species": "Arcanine-Hisui",
+          "rank": 6
+        },
+        {
+          "species": "Staraptor",
+          "rank": 7
+        },
+        {
+          "species": "Gholdengo",
+          "rank": 8
+        },
+        {
+          "species": "Garchomp",
+          "rank": 9
+        },
+        {
+          "species": "Sneasler",
+          "rank": 10
+        }
+      ],
+      "spreads": [
+        {
+          "rank": 1,
+          "usage": 12.2,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 2,
+            "spa": 32,
+            "spd": 0,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 2,
+          "usage": 5.8,
+          "points": {
+            "hp": 9,
+            "atk": 0,
+            "def": 22,
+            "spa": 20,
+            "spd": 0,
+            "spe": 15
+          }
+        },
+        {
+          "rank": 3,
+          "usage": 5.5,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 2
+          }
+        },
+        {
+          "rank": 4,
+          "usage": 4.1,
+          "points": {
+            "hp": 13,
+            "atk": 0,
+            "def": 22,
+            "spa": 23,
+            "spd": 0,
+            "spe": 8
+          }
+        },
+        {
+          "rank": 5,
+          "usage": 2.9,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -4815,13 +5060,49 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
             "spd": 2,
             "spe": 0
           }
+        },
+        {
+          "rank": 6,
+          "usage": 2.6,
+          "points": {
+            "hp": 2,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 7,
+          "usage": 2.4,
+          "points": {
+            "hp": 2,
+            "atk": 0,
+            "def": 32,
+            "spa": 32,
+            "spd": 0,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 8,
+          "usage": 1.6,
+          "points": {
+            "hp": 3,
+            "atk": 0,
+            "def": 17,
+            "spa": 30,
+            "spd": 0,
+            "spe": 16
+          }
         }
       ]
     },
     "arcaninehisui": {
       "species": "Arcanine-Hisui",
       "showdownId": "arcaninehisui",
-      "rank": 18,
+      "rank": 19,
       "moves": [
         {
           "name": "Flare Blitz",
@@ -4833,19 +5114,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 92.9
+          "usage": 92.8
         },
         {
           "name": "Extreme Speed",
-          "usage": 86.1
+          "usage": 86
         },
         {
           "name": "Rock Slide",
-          "usage": 12.7
+          "usage": 12.8
         },
         {
           "name": "Wild Charge",
-          "usage": 4.7
+          "usage": 4.8
         },
         {
           "name": "Close Combat",
@@ -4867,7 +5148,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Focus Sash",
-          "usage": 90.3
+          "usage": 90.1
         },
         {
           "name": "Choice Scarf",
@@ -4886,11 +5167,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.5
         },
         {
-          "name": "Charcoal",
+          "name": "Expert Belt",
           "usage": 0.3
         },
         {
-          "name": "Expert Belt",
+          "name": "Charcoal",
           "usage": 0.3
         },
         {
@@ -4923,11 +5204,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Jolly",
-          "usage": 78.6
+          "usage": 78.5
         },
         {
           "name": "Adamant",
-          "usage": 19.7
+          "usage": 19.8
         },
         {
           "name": "Naughty",
@@ -5007,7 +5288,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 65.3,
+          "usage": 65,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -5031,7 +5312,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 5.4,
+          "usage": 5.6,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -5055,7 +5336,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 3.9,
+          "usage": 3.8,
           "points": {
             "hp": 1,
             "atk": 32,
@@ -5067,7 +5348,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.9,
+          "usage": 3,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -5091,7 +5372,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 0.7,
+          "usage": 0.6,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -5103,287 +5384,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
-    "sylveon": {
-      "species": "Sylveon",
-      "showdownId": "sylveon",
-      "rank": 19,
-      "moves": [
-        {
-          "name": "Hyper Voice",
-          "usage": 99.6
-        },
-        {
-          "name": "Hyper Beam",
-          "usage": 74.3
-        },
-        {
-          "name": "Quick Attack",
-          "usage": 68.8
-        },
-        {
-          "name": "Detect",
-          "usage": 64.4
-        },
-        {
-          "name": "Protect",
-          "usage": 30.4
-        },
-        {
-          "name": "Mystical Fire",
-          "usage": 11.5
-        },
-        {
-          "name": "Yawn",
-          "usage": 11.4
-        },
-        {
-          "name": "Calm Mind",
-          "usage": 8.5
-        },
-        {
-          "name": "Moonblast",
-          "usage": 8.1
-        },
-        {
-          "name": "Shadow Ball",
-          "usage": 5.7
-        }
-      ],
-      "items": [
-        {
-          "name": "Fairy Feather",
-          "usage": 86.2
-        },
-        {
-          "name": "Life Orb",
-          "usage": 5.1
-        },
-        {
-          "name": "Leftovers",
-          "usage": 2.2
-        },
-        {
-          "name": "Sitrus Berry",
-          "usage": 1.7
-        },
-        {
-          "name": "Quick Claw",
-          "usage": 1.5
-        },
-        {
-          "name": "Choice Scarf",
-          "usage": 0.6
-        },
-        {
-          "name": "Grassy Seed",
-          "usage": 0.4
-        },
-        {
-          "name": "Focus Sash",
-          "usage": 0.4
-        },
-        {
-          "name": "Wise Glasses",
-          "usage": 0.3
-        },
-        {
-          "name": "Metronome",
-          "usage": 0.2
-        }
-      ],
-      "abilities": [
-        {
-          "name": "Pixilate",
-          "usage": 99.8
-        },
-        {
-          "name": "Cute Charm",
-          "usage": 0.2
-        }
-      ],
-      "natures": [
-        {
-          "name": "Modest",
-          "usage": 79.8
-        },
-        {
-          "name": "Quiet",
-          "usage": 13.7
-        },
-        {
-          "name": "Bold",
-          "usage": 2.3
-        },
-        {
-          "name": "Timid",
-          "usage": 2
-        },
-        {
-          "name": "Calm",
-          "usage": 0.6
-        },
-        {
-          "name": "Relaxed",
-          "usage": 0.5
-        },
-        {
-          "name": "Mild",
-          "usage": 0.4
-        },
-        {
-          "name": "Sassy",
-          "usage": 0.2
-        },
-        {
-          "name": "Naive",
-          "usage": 0.1
-        },
-        {
-          "name": "Rash",
-          "usage": 0.1
-        }
-      ],
-      "teammates": [
-        {
-          "species": "Rillaboom",
-          "rank": 1
-        },
-        {
-          "species": "Kingambit",
-          "rank": 2
-        },
-        {
-          "species": "Raichu",
-          "rank": 3
-        },
-        {
-          "species": "Salamence",
-          "rank": 4
-        },
-        {
-          "species": "Farigiraf",
-          "rank": 5
-        },
-        {
-          "species": "Arcanine-Hisui",
-          "rank": 6
-        },
-        {
-          "species": "Staraptor",
-          "rank": 7
-        },
-        {
-          "species": "Gholdengo",
-          "rank": 8
-        },
-        {
-          "species": "Sneasler",
-          "rank": 9
-        },
-        {
-          "species": "Garchomp",
-          "rank": 10
-        }
-      ],
-      "spreads": [
-        {
-          "rank": 1,
-          "usage": 12,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 2,
-            "spa": 32,
-            "spd": 0,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 2,
-          "usage": 5.9,
-          "points": {
-            "hp": 9,
-            "atk": 0,
-            "def": 22,
-            "spa": 20,
-            "spd": 0,
-            "spe": 15
-          }
-        },
-        {
-          "rank": 3,
-          "usage": 5.4,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 2
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 4.2,
-          "points": {
-            "hp": 13,
-            "atk": 0,
-            "def": 22,
-            "spa": 23,
-            "spd": 0,
-            "spe": 8
-          }
-        },
-        {
-          "rank": 5,
-          "usage": 2.8,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 2,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 6,
-          "usage": 2.5,
-          "points": {
-            "hp": 2,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 7,
-          "usage": 2.4,
-          "points": {
-            "hp": 2,
-            "atk": 0,
-            "def": 32,
-            "spa": 32,
-            "spd": 0,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 8,
-          "usage": 1.6,
-          "points": {
-            "hp": 3,
-            "atk": 0,
-            "def": 17,
-            "spa": 30,
-            "spd": 0,
-            "spe": 16
-          }
-        }
-      ]
-    },
     "tyranitar": {
       "species": "Tyranitar",
       "showdownId": "tyranitar",
@@ -5391,7 +5391,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Rock Slide",
-          "usage": 96.8
+          "usage": 96.7
         },
         {
           "name": "Knock Off",
@@ -5399,11 +5399,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 88.4
+          "usage": 88.5
         },
         {
           "name": "Low Kick",
-          "usage": 56.3
+          "usage": 56.1
         },
         {
           "name": "Ice Punch",
@@ -5411,7 +5411,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Dragon Dance",
-          "usage": 13.6
+          "usage": 13.7
         },
         {
           "name": "High Horsepower",
@@ -5422,26 +5422,26 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 3.8
         },
         {
-          "name": "Crunch",
-          "usage": 3.4
+          "name": "Earthquake",
+          "usage": 3.5
         },
         {
-          "name": "Earthquake",
-          "usage": 3.4
+          "name": "Crunch",
+          "usage": 3.5
         }
       ],
       "items": [
         {
           "name": "Tyranitarite",
-          "usage": 71.6
+          "usage": 71.7
         },
         {
           "name": "Choice Scarf",
-          "usage": 7.1
+          "usage": 6.9
         },
         {
           "name": "Chople Berry",
-          "usage": 6.9
+          "usage": 6.8
         },
         {
           "name": "Focus Sash",
@@ -5485,11 +5485,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Adamant",
-          "usage": 48.5
+          "usage": 48.4
         },
         {
           "name": "Jolly",
-          "usage": 41.3
+          "usage": 41.4
         },
         {
           "name": "Brave",
@@ -5497,11 +5497,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Impish",
-          "usage": 1.8
+          "usage": 1.9
         },
         {
           "name": "Careful",
-          "usage": 1.6
+          "usage": 1.7
         },
         {
           "name": "Sassy",
@@ -5517,7 +5517,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Quiet",
-          "usage": 0.1
+          "usage": 0.2
         },
         {
           "name": "Naughty",
@@ -5569,7 +5569,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 19.8,
+          "usage": 19.9,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -5581,7 +5581,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 6,
+          "usage": 5.9,
           "points": {
             "hp": 17,
             "atk": 17,
@@ -5672,19 +5672,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Tailwind",
-          "usage": 96.9
+          "usage": 96.8
         },
         {
           "name": "Moonblast",
-          "usage": 84.8
+          "usage": 84.6
         },
         {
           "name": "Encore",
-          "usage": 65.5
+          "usage": 65.3
         },
         {
           "name": "Protect",
-          "usage": 50.8
+          "usage": 50.5
         },
         {
           "name": "Sunny Day",
@@ -5692,7 +5692,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Charm",
-          "usage": 15.3
+          "usage": 15.4
         },
         {
           "name": "Helping Hand",
@@ -5704,17 +5704,17 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Taunt",
-          "usage": 6.7
+          "usage": 6.8
         },
         {
           "name": "Dazzling Gleam",
-          "usage": 6.1
+          "usage": 6.2
         }
       ],
       "items": [
         {
           "name": "Focus Sash",
-          "usage": 77.4
+          "usage": 77.3
         },
         {
           "name": "Fairy Feather",
@@ -5722,7 +5722,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Occa Berry",
-          "usage": 3.4
+          "usage": 3.3
         },
         {
           "name": "Coba Berry",
@@ -5738,7 +5738,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Life Orb",
-          "usage": 1.6
+          "usage": 1.7
         },
         {
           "name": "Bright Powder",
@@ -5756,33 +5756,33 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Prankster",
-          "usage": 97.7
+          "usage": 97.6
         },
         {
           "name": "Chlorophyll",
-          "usage": 1.7
+          "usage": 1.8
         },
         {
           "name": "Infiltrator",
-          "usage": 0.6
+          "usage": 0.7
         }
       ],
       "natures": [
         {
           "name": "Timid",
-          "usage": 71.1
+          "usage": 70.8
         },
         {
           "name": "Modest",
-          "usage": 17.3
+          "usage": 17.5
         },
         {
           "name": "Bold",
-          "usage": 4.6
+          "usage": 4.7
         },
         {
           "name": "Calm",
-          "usage": 4.1
+          "usage": 4.2
         },
         {
           "name": "Hasty",
@@ -5854,7 +5854,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 51.6,
+          "usage": 51.4,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -5902,7 +5902,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 1.7,
+          "usage": 1.8,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -5926,7 +5926,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 1.3,
+          "usage": 1.4,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -5957,11 +5957,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Expanding Force",
-          "usage": 94.6
+          "usage": 94.5
         },
         {
           "name": "Armor Cannon",
-          "usage": 79.4
+          "usage": 79.5
         },
         {
           "name": "Protect",
@@ -5969,19 +5969,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Wide Guard",
-          "usage": 45
+          "usage": 45.3
         },
         {
           "name": "Trick Room",
-          "usage": 42.9
+          "usage": 42.5
         },
         {
           "name": "Heat Wave",
-          "usage": 25.6
+          "usage": 25.4
         },
         {
           "name": "Aura Sphere",
-          "usage": 20.7
+          "usage": 20.8
         },
         {
           "name": "Psychic",
@@ -5989,7 +5989,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Dark Pulse",
-          "usage": 3.7
+          "usage": 3.6
         },
         {
           "name": "Energy Ball",
@@ -5999,11 +5999,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Life Orb",
-          "usage": 50
+          "usage": 49.8
         },
         {
           "name": "Focus Sash",
-          "usage": 23.6
+          "usage": 23.8
         },
         {
           "name": "Twisted Spoon",
@@ -6035,27 +6035,27 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Leftovers",
-          "usage": 0.9
+          "usage": 1
         }
       ],
       "abilities": [
         {
           "name": "Flash Fire",
-          "usage": 85
+          "usage": 84.7
         },
         {
           "name": "Weak Armor",
-          "usage": 15
+          "usage": 15.3
         }
       ],
       "natures": [
         {
           "name": "Modest",
-          "usage": 55.9
+          "usage": 56.1
         },
         {
           "name": "Quiet",
-          "usage": 33.5
+          "usage": 33.2
         },
         {
           "name": "Timid",
@@ -6135,7 +6135,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 20.4,
+          "usage": 20.3,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -6147,7 +6147,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 12.2,
+          "usage": 12.4,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -6159,7 +6159,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 9.9,
+          "usage": 9.8,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -6171,7 +6171,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 7,
+          "usage": 6.9,
           "points": {
             "hp": 29,
             "atk": 0,
@@ -6183,7 +6183,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 3.8,
+          "usage": 3.9,
           "points": {
             "hp": 9,
             "atk": 0,
@@ -6195,7 +6195,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.4,
+          "usage": 2.5,
           "points": {
             "hp": 1,
             "atk": 0,
@@ -6219,13 +6219,13 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 1.8,
+          "usage": 1.9,
           "points": {
             "hp": 0,
             "atk": 0,
-            "def": 2,
+            "def": 0,
             "spa": 32,
-            "spd": 0,
+            "spd": 2,
             "spe": 32
           }
         }
@@ -6242,7 +6242,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Brave Bird",
-          "usage": 80.4
+          "usage": 80.6
         },
         {
           "name": "Protect",
@@ -6250,27 +6250,27 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Tailwind",
-          "usage": 41.9
+          "usage": 41.8
         },
         {
           "name": "Roost",
-          "usage": 40.5
+          "usage": 40.8
         },
         {
           "name": "Dual Wingbeat",
-          "usage": 18.3
+          "usage": 18
         },
         {
           "name": "Final Gambit",
-          "usage": 16.4
+          "usage": 16.3
         },
         {
           "name": "U-turn",
-          "usage": 14.5
+          "usage": 14.3
         },
         {
           "name": "Blaze Kick",
-          "usage": 4.3
+          "usage": 4.4
         },
         {
           "name": "Quick Attack",
@@ -6280,11 +6280,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Staraptite",
-          "usage": 83.4
+          "usage": 83.5
         },
         {
           "name": "Choice Scarf",
-          "usage": 15.4
+          "usage": 15.2
         },
         {
           "name": "Focus Sash",
@@ -6311,11 +6311,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.1
         },
         {
-          "name": "Muscle Band",
+          "name": "Leftovers",
           "usage": 0
         },
         {
-          "name": "Leftovers",
+          "name": "Muscle Band",
           "usage": 0
         }
       ],
@@ -6332,11 +6332,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Jolly",
-          "usage": 80.8
+          "usage": 80.5
         },
         {
           "name": "Adamant",
-          "usage": 15.2
+          "usage": 15.4
         },
         {
           "name": "Careful",
@@ -6364,7 +6364,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Lonely",
-          "usage": 0.2
+          "usage": 0.3
         },
         {
           "name": "Timid",
@@ -6416,7 +6416,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 15.4,
+          "usage": 15.6,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -6452,7 +6452,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 6.4,
+          "usage": 6.2,
           "points": {
             "hp": 32,
             "atk": 17,
@@ -6464,7 +6464,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 5.5,
+          "usage": 5.7,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -6476,7 +6476,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 3.9,
+          "usage": 3.8,
           "points": {
             "hp": 15,
             "atk": 19,
@@ -6488,7 +6488,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 2.6,
+          "usage": 2.5,
           "points": {
             "hp": 19,
             "atk": 15,
@@ -6523,7 +6523,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 82.4
+          "usage": 82.2
         },
         {
           "name": "Steel Roller",
@@ -6531,7 +6531,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Iron Head",
-          "usage": 35.3
+          "usage": 35
         },
         {
           "name": "Body Press",
@@ -6539,11 +6539,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Ice Punch",
-          "usage": 25.2
+          "usage": 25.1
         },
         {
           "name": "Stomping Tantrum",
-          "usage": 22.9
+          "usage": 22.8
         },
         {
           "name": "Bullet Punch",
@@ -6551,17 +6551,17 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Meteor Mash",
-          "usage": 11.8
+          "usage": 12
         },
         {
           "name": "Psych Up",
-          "usage": 6.5
+          "usage": 6.7
         }
       ],
       "items": [
         {
           "name": "Metagrossite",
-          "usage": 90.1
+          "usage": 89.9
         },
         {
           "name": "Life Orb",
@@ -6576,11 +6576,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.7
         },
         {
-          "name": "Metal Coat",
+          "name": "Leftovers",
           "usage": 0.7
         },
         {
-          "name": "Leftovers",
+          "name": "Metal Coat",
           "usage": 0.7
         },
         {
@@ -6592,11 +6592,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.4
         },
         {
-          "name": "Psychic Seed",
+          "name": "Rocky Helmet",
           "usage": 0.4
         },
         {
-          "name": "Rocky Helmet",
+          "name": "Psychic Seed",
           "usage": 0.4
         }
       ],
@@ -6613,11 +6613,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Adamant",
-          "usage": 50.2
+          "usage": 50.3
         },
         {
           "name": "Jolly",
-          "usage": 41.8
+          "usage": 41.6
         },
         {
           "name": "Impish",
@@ -6625,23 +6625,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Brave",
-          "usage": 2.1
+          "usage": 2.2
         },
         {
           "name": "Careful",
           "usage": 1.6
         },
         {
-          "name": "Naughty",
-          "usage": 0.3
-        },
-        {
           "name": "Relaxed",
           "usage": 0.3
         },
         {
+          "name": "Naughty",
+          "usage": 0.3
+        },
+        {
           "name": "Sassy",
-          "usage": 0.2
+          "usage": 0.3
         },
         {
           "name": "Lonely",
@@ -6697,7 +6697,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 23.5,
+          "usage": 23.4,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -6709,7 +6709,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 8.1,
+          "usage": 8,
           "points": {
             "hp": 24,
             "atk": 15,
@@ -6721,7 +6721,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 3.8,
+          "usage": 3.9,
           "points": {
             "hp": 12,
             "atk": 15,
@@ -6781,7 +6781,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 1.9,
+          "usage": 1.8,
           "points": {
             "hp": 14,
             "atk": 27,
@@ -6804,11 +6804,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Mystical Fire",
-          "usage": 53.7
+          "usage": 54
         },
         {
           "name": "Trick",
-          "usage": 50
+          "usage": 49.8
         },
         {
           "name": "Protect",
@@ -6816,49 +6816,49 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Trick Room",
-          "usage": 35.1
+          "usage": 35.3
         },
         {
           "name": "Dazzling Gleam",
-          "usage": 24
+          "usage": 23.6
         },
         {
           "name": "Imprison",
-          "usage": 20.2
+          "usage": 20.5
         },
         {
           "name": "Hyper Voice",
-          "usage": 15.9
+          "usage": 15.7
         },
         {
           "name": "Helping Hand",
-          "usage": 13.1
+          "usage": 12.9
         },
         {
           "name": "Shadow Ball",
-          "usage": 9.4
+          "usage": 9.3
         }
       ],
       "items": [
         {
           "name": "Choice Scarf",
-          "usage": 61.7
+          "usage": 61.5
         },
         {
           "name": "Focus Sash",
-          "usage": 16.1
+          "usage": 16.4
         },
         {
           "name": "Psychic Seed",
-          "usage": 5.9
+          "usage": 5.8
         },
         {
           "name": "Twisted Spoon",
-          "usage": 3.8
+          "usage": 3.7
         },
         {
           "name": "Colbur Berry",
-          "usage": 3.5
+          "usage": 3.4
         },
         {
           "name": "Life Orb",
@@ -6898,11 +6898,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 59.4
+          "usage": 59.2
         },
         {
           "name": "Timid",
-          "usage": 31.9
+          "usage": 32.1
         },
         {
           "name": "Bold",
@@ -6925,11 +6925,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.5
         },
         {
-          "name": "Hasty",
+          "name": "Sassy",
           "usage": 0.3
         },
         {
-          "name": "Sassy",
+          "name": "Hasty",
           "usage": 0.3
         },
         {
@@ -6982,7 +6982,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 52.2,
+          "usage": 52.1,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -6994,7 +6994,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 7.3,
+          "usage": 7.5,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -7054,7 +7054,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 1.7,
+          "usage": 1.8,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -7089,15 +7089,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Rage Powder",
-          "usage": 93.8
+          "usage": 93.7
         },
         {
           "name": "Trick Room",
-          "usage": 62.2
+          "usage": 61.9
         },
         {
           "name": "Protect",
-          "usage": 53.4
+          "usage": 53.3
         },
         {
           "name": "Life Dew",
@@ -7105,19 +7105,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Shadow Ball",
-          "usage": 20.9
+          "usage": 21.2
         },
         {
           "name": "Strength Sap",
-          "usage": 12.7
+          "usage": 12.9
         },
         {
           "name": "Imprison",
-          "usage": 2.7
+          "usage": 2.6
         },
         {
           "name": "Scald",
-          "usage": 1.9
+          "usage": 2
         },
         {
           "name": "Psych Up",
@@ -7127,11 +7127,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Sitrus Berry",
-          "usage": 30
+          "usage": 29.9
         },
         {
           "name": "Colbur Berry",
-          "usage": 17.6
+          "usage": 17.4
         },
         {
           "name": "Leftovers",
@@ -7139,7 +7139,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Kasib Berry",
-          "usage": 8.9
+          "usage": 8.8
         },
         {
           "name": "Occa Berry",
@@ -7163,7 +7163,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Eject Button",
-          "usage": 2.4
+          "usage": 2.6
         }
       ],
       "abilities": [
@@ -7179,7 +7179,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Bold",
-          "usage": 42.8
+          "usage": 42.7
         },
         {
           "name": "Calm",
@@ -7187,15 +7187,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Relaxed",
-          "usage": 11.6
+          "usage": 11.5
         },
         {
           "name": "Modest",
-          "usage": 9.6
+          "usage": 9.7
         },
         {
           "name": "Sassy",
-          "usage": 7.1
+          "usage": 7
         },
         {
           "name": "Quiet",
@@ -7203,7 +7203,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Timid",
-          "usage": 1.6
+          "usage": 1.7
         },
         {
           "name": "Mild",
@@ -7263,7 +7263,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 16.6,
+          "usage": 16.5,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -7275,7 +7275,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 11.9,
+          "usage": 11.7,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -7323,18 +7323,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 1.9,
-          "points": {
-            "hp": 29,
-            "atk": 0,
-            "def": 15,
-            "spa": 0,
-            "spd": 22,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 7,
           "usage": 1.8,
           "points": {
             "hp": 32,
@@ -7342,6 +7330,18 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
             "def": 24,
             "spa": 0,
             "spd": 10,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 7,
+          "usage": 1.8,
+          "points": {
+            "hp": 29,
+            "atk": 0,
+            "def": 15,
+            "spa": 0,
+            "spd": 22,
             "spe": 0
           }
         },
@@ -7370,23 +7370,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 87.1
+          "usage": 87
         },
         {
           "name": "Weather Ball",
-          "usage": 61.8
+          "usage": 61.6
         },
         {
           "name": "Earth Power",
-          "usage": 45.4
+          "usage": 45.5
         },
         {
           "name": "Heat Wave",
-          "usage": 39.6
+          "usage": 39.3
         },
         {
           "name": "Solar Beam",
-          "usage": 24.4
+          "usage": 24.6
         },
         {
           "name": "Helping Hand",
@@ -7398,25 +7398,25 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Yawn",
-          "usage": 3.6
+          "usage": 3.7
         },
         {
           "name": "Flamethrower",
-          "usage": 3
+          "usage": 3.1
         }
       ],
       "items": [
         {
           "name": "Charcoal",
-          "usage": 83.6
+          "usage": 83.4
         },
         {
           "name": "Life Orb",
-          "usage": 3.1
+          "usage": 3.2
         },
         {
           "name": "Sitrus Berry",
-          "usage": 2.8
+          "usage": 3
         },
         {
           "name": "Leftovers",
@@ -7424,11 +7424,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Quick Claw",
-          "usage": 1.9
+          "usage": 1.8
         },
         {
           "name": "Heat Rock",
-          "usage": 1.4
+          "usage": 1.5
         },
         {
           "name": "Wise Glasses",
@@ -7464,7 +7464,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Quiet",
-          "usage": 86.1
+          "usage": 85.8
         },
         {
           "name": "Modest",
@@ -7472,15 +7472,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Relaxed",
-          "usage": 1.6
+          "usage": 1.7
         },
         {
           "name": "Sassy",
-          "usage": 1.4
+          "usage": 1.5
         },
         {
           "name": "Bold",
-          "usage": 1.1
+          "usage": 1.2
         },
         {
           "name": "Calm",
@@ -7500,7 +7500,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Gentle",
-          "usage": 0.1
+          "usage": 0
         }
       ],
       "teammates": [
@@ -7548,7 +7548,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 47,
+          "usage": 46.9,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -7560,7 +7560,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 13.1,
+          "usage": 12.9,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -7608,7 +7608,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 1.8,
+          "usage": 1.9,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -7620,7 +7620,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 1.7,
+          "usage": 1.8,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -7644,10 +7644,291 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
+    "volcarona": {
+      "species": "Volcarona",
+      "showdownId": "volcarona",
+      "rank": 28,
+      "moves": [
+        {
+          "name": "Protect",
+          "usage": 68.4
+        },
+        {
+          "name": "Quiver Dance",
+          "usage": 57
+        },
+        {
+          "name": "Rage Powder",
+          "usage": 44.5
+        },
+        {
+          "name": "Heat Wave",
+          "usage": 43.8
+        },
+        {
+          "name": "Struggle Bug",
+          "usage": 32.8
+        },
+        {
+          "name": "Tailwind",
+          "usage": 30.9
+        },
+        {
+          "name": "Giga Drain",
+          "usage": 28.8
+        },
+        {
+          "name": "Bug Buzz",
+          "usage": 27.5
+        },
+        {
+          "name": "Fiery Dance",
+          "usage": 22.4
+        },
+        {
+          "name": "Overheat",
+          "usage": 21.7
+        }
+      ],
+      "items": [
+        {
+          "name": "Grassy Seed",
+          "usage": 38
+        },
+        {
+          "name": "Rocky Helmet",
+          "usage": 25
+        },
+        {
+          "name": "Sitrus Berry",
+          "usage": 13.3
+        },
+        {
+          "name": "Leftovers",
+          "usage": 8.1
+        },
+        {
+          "name": "Focus Sash",
+          "usage": 3.6
+        },
+        {
+          "name": "Life Orb",
+          "usage": 2.7
+        },
+        {
+          "name": "Charti Berry",
+          "usage": 2
+        },
+        {
+          "name": "Charcoal",
+          "usage": 1.2
+        },
+        {
+          "name": "Psychic Seed",
+          "usage": 0.8
+        },
+        {
+          "name": "Electric Seed",
+          "usage": 0.6
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Flame Body",
+          "usage": 98.7
+        },
+        {
+          "name": "Swarm",
+          "usage": 1.3
+        }
+      ],
+      "natures": [
+        {
+          "name": "Modest",
+          "usage": 42.9
+        },
+        {
+          "name": "Bold",
+          "usage": 30.1
+        },
+        {
+          "name": "Timid",
+          "usage": 23.9
+        },
+        {
+          "name": "Calm",
+          "usage": 2.1
+        },
+        {
+          "name": "Quiet",
+          "usage": 0.3
+        },
+        {
+          "name": "Mild",
+          "usage": 0.3
+        },
+        {
+          "name": "Hasty",
+          "usage": 0.1
+        },
+        {
+          "name": "Relaxed",
+          "usage": 0.1
+        },
+        {
+          "name": "Jolly",
+          "usage": 0
+        },
+        {
+          "name": "Sassy",
+          "usage": 0
+        }
+      ],
+      "teammates": [
+        {
+          "species": "Rillaboom",
+          "rank": 1
+        },
+        {
+          "species": "Incineroar",
+          "rank": 2
+        },
+        {
+          "species": "Garchomp",
+          "rank": 3
+        },
+        {
+          "species": "Raichu",
+          "rank": 4
+        },
+        {
+          "species": "Sneasler",
+          "rank": 5
+        },
+        {
+          "species": "Gholdengo",
+          "rank": 6
+        },
+        {
+          "species": "Salamence",
+          "rank": 7
+        },
+        {
+          "species": "Kingambit",
+          "rank": 8
+        },
+        {
+          "species": "Basculegion",
+          "rank": 9
+        },
+        {
+          "species": "Metagross",
+          "rank": 10
+        }
+      ],
+      "spreads": [
+        {
+          "rank": 1,
+          "usage": 9.4,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 32,
+            "spa": 0,
+            "spd": 2,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 2,
+          "usage": 8.7,
+          "points": {
+            "hp": 16,
+            "atk": 0,
+            "def": 15,
+            "spa": 5,
+            "spd": 0,
+            "spe": 30
+          }
+        },
+        {
+          "rank": 3,
+          "usage": 8.5,
+          "points": {
+            "hp": 21,
+            "atk": 0,
+            "def": 15,
+            "spa": 5,
+            "spd": 1,
+            "spe": 24
+          }
+        },
+        {
+          "rank": 4,
+          "usage": 3.9,
+          "points": {
+            "hp": 2,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 5,
+          "usage": 3.6,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 32,
+            "spa": 0,
+            "spd": 0,
+            "spe": 2
+          }
+        },
+        {
+          "rank": 6,
+          "usage": 3,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 11,
+            "spa": 5,
+            "spd": 1,
+            "spe": 17
+          }
+        },
+        {
+          "rank": 7,
+          "usage": 1.7,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 16,
+            "spa": 0,
+            "spd": 1,
+            "spe": 17
+          }
+        },
+        {
+          "rank": 8,
+          "usage": 1.6,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 32,
+            "spa": 2,
+            "spd": 0,
+            "spe": 0
+          }
+        }
+      ]
+    },
     "excadrill": {
       "species": "Excadrill",
       "showdownId": "excadrill",
-      "rank": 28,
+      "rank": 29,
       "moves": [
         {
           "name": "Iron Head",
@@ -7659,7 +7940,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Rock Slide",
-          "usage": 88.6
+          "usage": 88.5
         },
         {
           "name": "High Horsepower",
@@ -7667,11 +7948,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Earthquake",
-          "usage": 20.9
+          "usage": 21
         },
         {
           "name": "Swords Dance",
-          "usage": 2.1
+          "usage": 2.2
         },
         {
           "name": "Drill Run",
@@ -7697,7 +7978,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Life Orb",
-          "usage": 9.2
+          "usage": 9.1
         },
         {
           "name": "Excadrite",
@@ -7716,11 +7997,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.7
         },
         {
-          "name": "Iron Ball",
-          "usage": 0.2
+          "name": "Chople Berry",
+          "usage": 0.3
         },
         {
-          "name": "Chople Berry",
+          "name": "Iron Ball",
           "usage": 0.2
         },
         {
@@ -7735,7 +8016,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Sand Rush",
-          "usage": 96.1
+          "usage": 96
         },
         {
           "name": "Mold Breaker",
@@ -7749,11 +8030,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Adamant",
-          "usage": 66.8
+          "usage": 66.4
         },
         {
           "name": "Jolly",
-          "usage": 31.5
+          "usage": 31.8
         },
         {
           "name": "Brave",
@@ -7833,7 +8114,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 58.4,
+          "usage": 58.3,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -7845,7 +8126,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 20.3,
+          "usage": 20.2,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -7869,7 +8150,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 2.3,
+          "usage": 2.4,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -7881,7 +8162,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 1.3,
+          "usage": 1.4,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -7917,293 +8198,12 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 0.7,
+          "usage": 0.6,
           "points": {
             "hp": 1,
             "atk": 32,
             "def": 0,
             "spa": 0,
-            "spd": 0,
-            "spe": 32
-          }
-        }
-      ]
-    },
-    "volcarona": {
-      "species": "Volcarona",
-      "showdownId": "volcarona",
-      "rank": 29,
-      "moves": [
-        {
-          "name": "Protect",
-          "usage": 71.9
-        },
-        {
-          "name": "Quiver Dance",
-          "usage": 59.5
-        },
-        {
-          "name": "Heat Wave",
-          "usage": 45.7
-        },
-        {
-          "name": "Rage Powder",
-          "usage": 42.1
-        },
-        {
-          "name": "Giga Drain",
-          "usage": 30.1
-        },
-        {
-          "name": "Struggle Bug",
-          "usage": 29.4
-        },
-        {
-          "name": "Bug Buzz",
-          "usage": 28.6
-        },
-        {
-          "name": "Tailwind",
-          "usage": 27.7
-        },
-        {
-          "name": "Fiery Dance",
-          "usage": 23.2
-        },
-        {
-          "name": "Overheat",
-          "usage": 18.6
-        }
-      ],
-      "items": [
-        {
-          "name": "Grassy Seed",
-          "usage": 39.8
-        },
-        {
-          "name": "Rocky Helmet",
-          "usage": 21.7
-        },
-        {
-          "name": "Sitrus Berry",
-          "usage": 14.1
-        },
-        {
-          "name": "Leftovers",
-          "usage": 8.5
-        },
-        {
-          "name": "Focus Sash",
-          "usage": 3.7
-        },
-        {
-          "name": "Life Orb",
-          "usage": 2.8
-        },
-        {
-          "name": "Charti Berry",
-          "usage": 2.1
-        },
-        {
-          "name": "Charcoal",
-          "usage": 1.3
-        },
-        {
-          "name": "Psychic Seed",
-          "usage": 0.9
-        },
-        {
-          "name": "Electric Seed",
-          "usage": 0.7
-        }
-      ],
-      "abilities": [
-        {
-          "name": "Flame Body",
-          "usage": 98.7
-        },
-        {
-          "name": "Swarm",
-          "usage": 1.3
-        }
-      ],
-      "natures": [
-        {
-          "name": "Modest",
-          "usage": 44.7
-        },
-        {
-          "name": "Bold",
-          "usage": 31.1
-        },
-        {
-          "name": "Timid",
-          "usage": 21
-        },
-        {
-          "name": "Calm",
-          "usage": 2.1
-        },
-        {
-          "name": "Quiet",
-          "usage": 0.3
-        },
-        {
-          "name": "Mild",
-          "usage": 0.3
-        },
-        {
-          "name": "Hasty",
-          "usage": 0.1
-        },
-        {
-          "name": "Relaxed",
-          "usage": 0.1
-        },
-        {
-          "name": "Jolly",
-          "usage": 0
-        },
-        {
-          "name": "Gentle",
-          "usage": 0
-        }
-      ],
-      "teammates": [
-        {
-          "species": "Rillaboom",
-          "rank": 1
-        },
-        {
-          "species": "Incineroar",
-          "rank": 2
-        },
-        {
-          "species": "Garchomp",
-          "rank": 3
-        },
-        {
-          "species": "Sneasler",
-          "rank": 4
-        },
-        {
-          "species": "Raichu",
-          "rank": 5
-        },
-        {
-          "species": "Salamence",
-          "rank": 6
-        },
-        {
-          "species": "Gholdengo",
-          "rank": 7
-        },
-        {
-          "species": "Kingambit",
-          "rank": 8
-        },
-        {
-          "species": "Basculegion",
-          "rank": 9
-        },
-        {
-          "species": "Metagross",
-          "rank": 10
-        }
-      ],
-      "spreads": [
-        {
-          "rank": 1,
-          "usage": 9.7,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 32,
-            "spa": 0,
-            "spd": 2,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 2,
-          "usage": 9,
-          "points": {
-            "hp": 16,
-            "atk": 0,
-            "def": 15,
-            "spa": 5,
-            "spd": 0,
-            "spe": 30
-          }
-        },
-        {
-          "rank": 3,
-          "usage": 8.9,
-          "points": {
-            "hp": 21,
-            "atk": 0,
-            "def": 15,
-            "spa": 5,
-            "spd": 1,
-            "spe": 24
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 4,
-          "points": {
-            "hp": 2,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 5,
-          "usage": 3.7,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 32,
-            "spa": 0,
-            "spd": 0,
-            "spe": 2
-          }
-        },
-        {
-          "rank": 6,
-          "usage": 3.2,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 11,
-            "spa": 5,
-            "spd": 1,
-            "spe": 17
-          }
-        },
-        {
-          "rank": 7,
-          "usage": 1.7,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 32,
-            "spa": 2,
-            "spd": 0,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 8,
-          "usage": 1.5,
-          "points": {
-            "hp": 0,
-            "atk": 0,
-            "def": 2,
-            "spa": 32,
             "spd": 0,
             "spe": 32
           }
@@ -8225,27 +8225,27 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Calm Mind",
-          "usage": 69.7
+          "usage": 69.9
         },
         {
           "name": "Moonblast",
-          "usage": 69
+          "usage": 68.8
         },
         {
           "name": "Light of Ruin",
-          "usage": 32.6
+          "usage": 32.3
         },
         {
           "name": "Draining Kiss",
-          "usage": 26.8
+          "usage": 27
         },
         {
           "name": "Psychic",
-          "usage": 3
+          "usage": 3.1
         },
         {
           "name": "Giga Drain",
-          "usage": 0.9
+          "usage": 1
         },
         {
           "name": "Pollen Puff",
@@ -8294,7 +8294,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0
         },
         {
-          "name": "Electric Seed",
+          "name": "Big Root",
           "usage": 0
         }
       ],
@@ -8311,11 +8311,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 67.6
+          "usage": 67.8
         },
         {
           "name": "Timid",
-          "usage": 29.5
+          "usage": 29.3
         },
         {
           "name": "Bold",
@@ -8419,6 +8419,18 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
+          "usage": 2.7,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 14,
+            "spa": 5,
+            "spd": 0,
+            "spe": 15
+          }
+        },
+        {
+          "rank": 4,
           "usage": 2.5,
           "points": {
             "hp": 27,
@@ -8427,18 +8439,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
             "spa": 5,
             "spd": 0,
             "spe": 19
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 2.5,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 14,
-            "spa": 5,
-            "spd": 0,
-            "spe": 15
           }
         },
         {
@@ -8455,7 +8455,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2,
+          "usage": 1.9,
           "points": {
             "hp": 31,
             "atk": 0,
@@ -8479,7 +8479,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 1.9,
+          "usage": 1.8,
           "points": {
             "hp": 16,
             "atk": 0,
@@ -8498,27 +8498,27 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Protect",
-          "usage": 92.4
+          "usage": 92.3
         },
         {
           "name": "Weather Ball",
-          "usage": 84.3
+          "usage": 84.1
         },
         {
           "name": "Ice Beam",
-          "usage": 51.4
-        },
-        {
-          "name": "Perish Song",
-          "usage": 45.1
+          "usage": 51.5
         },
         {
           "name": "Muddy Water",
-          "usage": 44.9
+          "usage": 45.1
+        },
+        {
+          "name": "Perish Song",
+          "usage": 44.8
         },
         {
           "name": "Encore",
-          "usage": 28.9
+          "usage": 28.8
         },
         {
           "name": "Helping Hand",
@@ -8526,7 +8526,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Icy Wind",
-          "usage": 8.6
+          "usage": 8.8
         },
         {
           "name": "Hypnosis",
@@ -8534,20 +8534,20 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Psych Up",
-          "usage": 5.9
+          "usage": 6
         }
       ],
       "items": [
         {
           "name": "Sitrus Berry",
-          "usage": 49.9
-        },
-        {
-          "name": "Life Orb",
-          "usage": 15
+          "usage": 49.7
         },
         {
           "name": "Mystic Water",
+          "usage": 15
+        },
+        {
+          "name": "Life Orb",
           "usage": 14.8
         },
         {
@@ -8556,15 +8556,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Damp Rock",
-          "usage": 3.4
+          "usage": 3.5
         },
         {
           "name": "Eject Button",
-          "usage": 2.4
+          "usage": 2.3
         },
         {
           "name": "Choice Scarf",
-          "usage": 1.8
+          "usage": 1.9
         },
         {
           "name": "Bright Powder",
@@ -8582,7 +8582,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Drizzle",
-          "usage": 99.8
+          "usage": 99.7
         },
         {
           "name": "Water Absorb",
@@ -8596,15 +8596,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Calm",
-          "usage": 38.9
+          "usage": 38.7
         },
         {
           "name": "Modest",
-          "usage": 28.5
+          "usage": 28.9
         },
         {
           "name": "Quiet",
-          "usage": 13.7
+          "usage": 13.5
         },
         {
           "name": "Bold",
@@ -8612,11 +8612,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Timid",
-          "usage": 3.3
+          "usage": 3.4
         },
         {
           "name": "Sassy",
-          "usage": 3
+          "usage": 2.9
         },
         {
           "name": "Relaxed",
@@ -8680,7 +8680,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 15.6,
+          "usage": 15.3,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -8692,7 +8692,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 9.5,
+          "usage": 9.4,
           "points": {
             "hp": 31,
             "atk": 0,
@@ -8740,7 +8740,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.5,
+          "usage": 2.6,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -8764,7 +8764,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 2.5,
+          "usage": 2.4,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -8787,15 +8787,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Reflect",
-          "usage": 91
+          "usage": 90.9
         },
         {
           "name": "Parting Shot",
-          "usage": 88.4
+          "usage": 88.2
         },
         {
           "name": "Spirit Break",
-          "usage": 75.8
+          "usage": 75.9
         },
         {
           "name": "Fake Out",
@@ -8803,7 +8803,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Foul Play",
-          "usage": 7.9
+          "usage": 7.8
         },
         {
           "name": "Sucker Punch",
@@ -8815,17 +8815,17 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Scary Face",
-          "usage": 3
+          "usage": 3.1
         },
         {
           "name": "Taunt",
-          "usage": 2.6
+          "usage": 2.7
         }
       ],
       "items": [
         {
           "name": "Light Clay",
-          "usage": 88.8
+          "usage": 88.7
         },
         {
           "name": "Sitrus Berry",
@@ -8881,23 +8881,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Careful",
-          "usage": 49.4
+          "usage": 49
         },
         {
           "name": "Impish",
-          "usage": 17.8
+          "usage": 18
         },
         {
           "name": "Sassy",
-          "usage": 14.5
+          "usage": 14.6
         },
         {
           "name": "Adamant",
-          "usage": 7
+          "usage": 7.1
         },
         {
           "name": "Calm",
-          "usage": 4.6
+          "usage": 4.5
         },
         {
           "name": "Relaxed",
@@ -8965,7 +8965,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 20.1,
+          "usage": 20,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -8977,7 +8977,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 8.3,
+          "usage": 8.1,
           "points": {
             "hp": 31,
             "atk": 0,
@@ -9013,6 +9013,18 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
+          "usage": 2.8,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 14,
+            "spa": 0,
+            "spd": 20,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 6,
           "usage": 2.7,
           "points": {
             "hp": 32,
@@ -9020,18 +9032,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
             "def": 17,
             "spa": 0,
             "spd": 17,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 6,
-          "usage": 2.6,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 14,
-            "spa": 0,
-            "spd": 20,
             "spe": 0
           }
         },
@@ -9068,53 +9068,53 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Aura Sphere",
-          "usage": 92.6
+          "usage": 92.5
         },
         {
           "name": "Flash Cannon",
-          "usage": 80.9
+          "usage": 80.8
         },
         {
           "name": "Detect",
-          "usage": 49.6
+          "usage": 49.4
         },
         {
           "name": "Protect",
-          "usage": 38.1
+          "usage": 38
         },
         {
           "name": "Calm Mind",
-          "usage": 26.1
+          "usage": 25.8
         },
         {
           "name": "Dark Pulse",
-          "usage": 24.8
+          "usage": 25
         },
         {
           "name": "Nasty Plot",
-          "usage": 21.7
+          "usage": 21.5
         },
         {
           "name": "Steel Beam",
-          "usage": 13.9
+          "usage": 13.8
+        },
+        {
+          "name": "Terrain Pulse",
+          "usage": 7.7
         },
         {
           "name": "Vacuum Wave",
           "usage": 7.5
-        },
-        {
-          "name": "Terrain Pulse",
-          "usage": 7.4
         }
       ],
       "items": [
         {
           "name": "Lucarionite Z",
-          "usage": 93
+          "usage": 92.9
         },
         {
           "name": "Lucarionite",
-          "usage": 3.2
+          "usage": 3.3
         },
         {
           "name": "Focus Sash",
@@ -9160,7 +9160,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Justified",
-          "usage": 3.7
+          "usage": 3.8
         }
       ],
       "natures": [
@@ -9170,7 +9170,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Timid",
-          "usage": 43.2
+          "usage": 43
         },
         {
           "name": "Jolly",
@@ -9178,7 +9178,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Adamant",
-          "usage": 1.9
+          "usage": 2
         },
         {
           "name": "Naive",
@@ -9264,18 +9264,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 2,
           "usage": 2.9,
           "points": {
-            "hp": 20,
-            "atk": 0,
-            "def": 0,
-            "spa": 16,
-            "spd": 0,
-            "spe": 30
-          }
-        },
-        {
-          "rank": 3,
-          "usage": 2.8,
-          "points": {
             "hp": 0,
             "atk": 0,
             "def": 2,
@@ -9285,8 +9273,20 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           }
         },
         {
+          "rank": 3,
+          "usage": 2.9,
+          "points": {
+            "hp": 20,
+            "atk": 0,
+            "def": 0,
+            "spa": 16,
+            "spd": 0,
+            "spe": 30
+          }
+        },
+        {
           "rank": 4,
-          "usage": 2.5,
+          "usage": 2.8,
           "points": {
             "hp": 24,
             "atk": 0,
@@ -9310,7 +9310,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.4,
+          "usage": 2.3,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -9334,7 +9334,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 2.3,
+          "usage": 2.2,
           "points": {
             "hp": 18,
             "atk": 0,
@@ -9353,11 +9353,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Protect",
-          "usage": 88.2
+          "usage": 88.1
         },
         {
           "name": "Wave Crash",
-          "usage": 85.4
+          "usage": 85.2
         },
         {
           "name": "Ice Punch",
@@ -9365,15 +9365,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Earthquake",
-          "usage": 64.7
+          "usage": 64.8
         },
         {
           "name": "High Horsepower",
-          "usage": 32.9
+          "usage": 32.8
         },
         {
           "name": "Liquidation",
-          "usage": 7.2
+          "usage": 7.4
         },
         {
           "name": "Flip Turn",
@@ -9381,7 +9381,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Rock Slide",
-          "usage": 5.3
+          "usage": 5.4
         },
         {
           "name": "Wide Guard",
@@ -9437,25 +9437,25 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Torrent",
-          "usage": 67.8
+          "usage": 67.6
         },
         {
           "name": "Damp",
-          "usage": 32.2
+          "usage": 32.4
         }
       ],
       "natures": [
         {
           "name": "Adamant",
-          "usage": 84
+          "usage": 83.9
         },
         {
           "name": "Jolly",
-          "usage": 6.3
+          "usage": 6.4
         },
         {
           "name": "Brave",
-          "usage": 2.7
+          "usage": 2.8
         },
         {
           "name": "Modest",
@@ -9531,7 +9531,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 29.8,
+          "usage": 30.1,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -9567,7 +9567,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 2.6,
+          "usage": 2.7,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -9638,31 +9638,31 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 92
+          "usage": 91.9
         },
         {
           "name": "Shadow Ball",
-          "usage": 83
+          "usage": 83.2
         },
         {
           "name": "Aurora Veil",
-          "usage": 77.7
+          "usage": 77.5
         },
         {
           "name": "Rain Dance",
-          "usage": 13.7
+          "usage": 13.4
         },
         {
           "name": "Thunderbolt",
-          "usage": 7.1
+          "usage": 7.2
         },
         {
           "name": "Destiny Bond",
-          "usage": 4.8
+          "usage": 4.9
         },
         {
           "name": "Taunt",
-          "usage": 4.8
+          "usage": 4.7
         },
         {
           "name": "Nasty Plot",
@@ -9695,11 +9695,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0
         },
         {
-          "name": "Life Orb",
+          "name": "Expert Belt",
           "usage": 0
         },
         {
-          "name": "Expert Belt",
+          "name": "Life Orb",
           "usage": 0
         },
         {
@@ -9707,22 +9707,22 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0
         },
         {
-          "name": "Wide Lens",
+          "name": "Occa Berry",
           "usage": 0
         },
         {
-          "name": "Occa Berry",
+          "name": "Wide Lens",
           "usage": 0
         }
       ],
       "abilities": [
         {
           "name": "Cursed Body",
-          "usage": 76.3
+          "usage": 76.1
         },
         {
           "name": "Snow Cloak",
-          "usage": 23.7
+          "usage": 23.9
         }
       ],
       "natures": [
@@ -9748,7 +9748,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Bold",
-          "usage": 0.2
+          "usage": 0.3
         },
         {
           "name": "Quiet",
@@ -9812,7 +9812,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 31.1,
+          "usage": 31.4,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -9848,7 +9848,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 4,
+          "usage": 4.1,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -9872,7 +9872,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 3.6,
+          "usage": 3.5,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -9896,7 +9896,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 2.3,
+          "usage": 2.2,
           "points": {
             "hp": 24,
             "atk": 0,
@@ -9915,11 +9915,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Shadow Ball",
-          "usage": 95.4
+          "usage": 95.3
         },
         {
           "name": "Protect",
-          "usage": 90.9
+          "usage": 90.7
         },
         {
           "name": "Sludge Bomb",
@@ -9927,27 +9927,27 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Perish Song",
-          "usage": 69.8
+          "usage": 69.2
         },
         {
           "name": "Disable",
-          "usage": 16.5
+          "usage": 16.3
         },
         {
           "name": "Icy Wind",
-          "usage": 7.9
+          "usage": 8.2
         },
         {
           "name": "Sludge Wave",
-          "usage": 6.8
+          "usage": 6.9
         },
         {
           "name": "Destiny Bond",
-          "usage": 5.9
+          "usage": 6
         },
         {
           "name": "Focus Blast",
-          "usage": 5.9
+          "usage": 6
         },
         {
           "name": "Substitute",
@@ -9957,7 +9957,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Gengarite",
-          "usage": 88.8
+          "usage": 88.6
         },
         {
           "name": "Focus Sash",
@@ -9972,11 +9972,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.8
         },
         {
-          "name": "Expert Belt",
+          "name": "Sitrus Berry",
           "usage": 0.2
         },
         {
-          "name": "Sitrus Berry",
+          "name": "Expert Belt",
           "usage": 0.2
         },
         {
@@ -10005,11 +10005,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 49.5
+          "usage": 49.4
         },
         {
           "name": "Timid",
-          "usage": 45.4
+          "usage": 45.5
         },
         {
           "name": "Bold",
@@ -10082,14 +10082,14 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "rank": 9
         },
         {
-          "species": "Kingambit",
+          "species": "Golisopod",
           "rank": 10
         }
       ],
       "spreads": [
         {
           "rank": 1,
-          "usage": 21,
+          "usage": 21.3,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -10101,7 +10101,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 5.3,
+          "usage": 5.2,
           "points": {
             "hp": 30,
             "atk": 0,
@@ -10125,7 +10125,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 4.5,
+          "usage": 4.4,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -10161,7 +10161,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 2.2,
+          "usage": 2.1,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -10196,15 +10196,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 85.1
+          "usage": 84.8
         },
         {
           "name": "Ice Shard",
-          "usage": 78.8
+          "usage": 78.6
         },
         {
           "name": "Icicle Crash",
-          "usage": 40.2
+          "usage": 40.3
         },
         {
           "name": "High Horsepower",
@@ -10212,29 +10212,29 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Swords Dance",
-          "usage": 18.9
+          "usage": 18.7
         },
         {
           "name": "Dragon Dance",
-          "usage": 15.5
-        },
-        {
-          "name": "Icicle Spear",
-          "usage": 7.5
+          "usage": 15.6
         },
         {
           "name": "Earthquake",
+          "usage": 7.5
+        },
+        {
+          "name": "Icicle Spear",
           "usage": 7.4
         },
         {
           "name": "Iron Head",
-          "usage": 5.6
+          "usage": 5.7
         }
       ],
       "items": [
         {
           "name": "Baxcalibrite",
-          "usage": 76.4
+          "usage": 76.3
         },
         {
           "name": "Life Orb",
@@ -10246,7 +10246,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Focus Sash",
-          "usage": 1.9
+          "usage": 2
         },
         {
           "name": "Never-Melt Ice",
@@ -10261,11 +10261,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 1.2
         },
         {
-          "name": "Expert Belt",
-          "usage": 0.3
+          "name": "Dragon Fang",
+          "usage": 0.4
         },
         {
-          "name": "Dragon Fang",
+          "name": "Expert Belt",
           "usage": 0.3
         },
         {
@@ -10276,17 +10276,17 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Thermal Exchange",
-          "usage": 96.1
+          "usage": 96
         },
         {
           "name": "Ice Body",
-          "usage": 3.9
+          "usage": 4
         }
       ],
       "natures": [
         {
           "name": "Adamant",
-          "usage": 79.5
+          "usage": 79.4
         },
         {
           "name": "Jolly",
@@ -10310,7 +10310,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Lonely",
-          "usage": 0.5
+          "usage": 0.6
         },
         {
           "name": "Sassy",
@@ -10370,7 +10370,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 11.9,
+          "usage": 12,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -10382,7 +10382,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 9,
+          "usage": 8.9,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -10394,7 +10394,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 7.1,
+          "usage": 7,
           "points": {
             "hp": 32,
             "atk": 2,
@@ -10406,7 +10406,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 5.3,
+          "usage": 5.1,
           "points": {
             "hp": 21,
             "atk": 16,
@@ -10418,7 +10418,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 4.3,
+          "usage": 4.4,
           "points": {
             "hp": 32,
             "atk": 32,
@@ -10466,10 +10466,291 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
+    "dragonite": {
+      "species": "Dragonite",
+      "showdownId": "dragonite",
+      "rank": 38,
+      "moves": [
+        {
+          "name": "Protect",
+          "usage": 65.4
+        },
+        {
+          "name": "Dragon Pulse",
+          "usage": 50
+        },
+        {
+          "name": "Heat Wave",
+          "usage": 42
+        },
+        {
+          "name": "Extreme Speed",
+          "usage": 34.9
+        },
+        {
+          "name": "Tailwind",
+          "usage": 32.8
+        },
+        {
+          "name": "Hurricane",
+          "usage": 20.6
+        },
+        {
+          "name": "Draco Meteor",
+          "usage": 17.6
+        },
+        {
+          "name": "Thunderbolt",
+          "usage": 13.3
+        },
+        {
+          "name": "Dragon Claw",
+          "usage": 13.3
+        },
+        {
+          "name": "Ice Beam",
+          "usage": 11.1
+        }
+      ],
+      "items": [
+        {
+          "name": "Dragoninite",
+          "usage": 67.6
+        },
+        {
+          "name": "Life Orb",
+          "usage": 12.8
+        },
+        {
+          "name": "Leftovers",
+          "usage": 2.8
+        },
+        {
+          "name": "Sitrus Berry",
+          "usage": 2.4
+        },
+        {
+          "name": "White Herb",
+          "usage": 1.9
+        },
+        {
+          "name": "Expert Belt",
+          "usage": 1.4
+        },
+        {
+          "name": "Quick Claw",
+          "usage": 1
+        },
+        {
+          "name": "Lum Berry",
+          "usage": 0.9
+        },
+        {
+          "name": "Yache Berry",
+          "usage": 0.9
+        },
+        {
+          "name": "Dragon Fang",
+          "usage": 0.9
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Multiscale",
+          "usage": 67.2
+        },
+        {
+          "name": "Inner Focus",
+          "usage": 32.8
+        }
+      ],
+      "natures": [
+        {
+          "name": "Modest",
+          "usage": 61.4
+        },
+        {
+          "name": "Adamant",
+          "usage": 21.7
+        },
+        {
+          "name": "Timid",
+          "usage": 7
+        },
+        {
+          "name": "Jolly",
+          "usage": 2.6
+        },
+        {
+          "name": "Quiet",
+          "usage": 1.9
+        },
+        {
+          "name": "Mild",
+          "usage": 0.8
+        },
+        {
+          "name": "Brave",
+          "usage": 0.8
+        },
+        {
+          "name": "Rash",
+          "usage": 0.5
+        },
+        {
+          "name": "Careful",
+          "usage": 0.5
+        },
+        {
+          "name": "Calm",
+          "usage": 0.5
+        }
+      ],
+      "teammates": [
+        {
+          "species": "Sneasler",
+          "rank": 1
+        },
+        {
+          "species": "Rillaboom",
+          "rank": 2
+        },
+        {
+          "species": "Incineroar",
+          "rank": 3
+        },
+        {
+          "species": "Basculegion",
+          "rank": 4
+        },
+        {
+          "species": "Kingambit",
+          "rank": 5
+        },
+        {
+          "species": "Archaludon",
+          "rank": 6
+        },
+        {
+          "species": "Pelipper",
+          "rank": 7
+        },
+        {
+          "species": "Gholdengo",
+          "rank": 8
+        },
+        {
+          "species": "Indeedee-F",
+          "rank": 9
+        },
+        {
+          "species": "Garchomp",
+          "rank": 10
+        }
+      ],
+      "spreads": [
+        {
+          "rank": 1,
+          "usage": 38.5,
+          "points": {
+            "hp": 2,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 2,
+          "usage": 5,
+          "points": {
+            "hp": 2,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 3,
+          "usage": 2.6,
+          "points": {
+            "hp": 1,
+            "atk": 0,
+            "def": 1,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 4,
+          "usage": 2.5,
+          "points": {
+            "hp": 31,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 3
+          }
+        },
+        {
+          "rank": 5,
+          "usage": 2.5,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 2
+          }
+        },
+        {
+          "rank": 6,
+          "usage": 2.5,
+          "points": {
+            "hp": 7,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 27
+          }
+        },
+        {
+          "rank": 7,
+          "usage": 1.8,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 2,
+            "spa": 32,
+            "spd": 0,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 8,
+          "usage": 1.8,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 2,
+            "spe": 0
+          }
+        }
+      ]
+    },
     "ninetalesalola": {
       "species": "Ninetales-Alola",
       "showdownId": "ninetalesalola",
-      "rank": 38,
+      "rank": 39,
       "moves": [
         {
           "name": "Blizzard",
@@ -10477,15 +10758,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Aurora Veil",
-          "usage": 77.5
+          "usage": 77.6
         },
         {
           "name": "Protect",
-          "usage": 64
+          "usage": 63.8
         },
         {
           "name": "Freeze-Dry",
-          "usage": 47.1
+          "usage": 47.2
         },
         {
           "name": "Moonblast",
@@ -10493,15 +10774,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Encore",
-          "usage": 20.6
+          "usage": 20.5
         },
         {
           "name": "Dazzling Gleam",
-          "usage": 12.5
+          "usage": 12.6
         },
         {
           "name": "Icy Wind",
-          "usage": 12.4
+          "usage": 12.3
         },
         {
           "name": "Disable",
@@ -10519,7 +10800,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Focus Sash",
-          "usage": 20
+          "usage": 19.9
         },
         {
           "name": "Never-Melt Ice",
@@ -10527,7 +10808,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Choice Scarf",
-          "usage": 10.4
+          "usage": 10.3
         },
         {
           "name": "Life Orb",
@@ -10567,11 +10848,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Timid",
-          "usage": 79
+          "usage": 78.8
         },
         {
           "name": "Modest",
-          "usage": 16.3
+          "usage": 16.5
         },
         {
           "name": "Bold",
@@ -10663,7 +10944,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 8.1,
+          "usage": 7.9,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -10675,7 +10956,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 6.4,
+          "usage": 6.5,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -10723,7 +11004,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 1.9,
+          "usage": 2,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -10747,287 +11028,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
-    "dragonite": {
-      "species": "Dragonite",
-      "showdownId": "dragonite",
-      "rank": 39,
-      "moves": [
-        {
-          "name": "Protect",
-          "usage": 66.1
-        },
-        {
-          "name": "Dragon Pulse",
-          "usage": 50.3
-        },
-        {
-          "name": "Heat Wave",
-          "usage": 42.2
-        },
-        {
-          "name": "Extreme Speed",
-          "usage": 35.4
-        },
-        {
-          "name": "Tailwind",
-          "usage": 32.7
-        },
-        {
-          "name": "Hurricane",
-          "usage": 20.8
-        },
-        {
-          "name": "Draco Meteor",
-          "usage": 17.5
-        },
-        {
-          "name": "Dragon Claw",
-          "usage": 13.5
-        },
-        {
-          "name": "Thunderbolt",
-          "usage": 13.4
-        },
-        {
-          "name": "Ice Beam",
-          "usage": 11
-        }
-      ],
-      "items": [
-        {
-          "name": "Dragoninite",
-          "usage": 68.1
-        },
-        {
-          "name": "Life Orb",
-          "usage": 12.6
-        },
-        {
-          "name": "Leftovers",
-          "usage": 2.7
-        },
-        {
-          "name": "Sitrus Berry",
-          "usage": 2.3
-        },
-        {
-          "name": "White Herb",
-          "usage": 1.9
-        },
-        {
-          "name": "Expert Belt",
-          "usage": 1.4
-        },
-        {
-          "name": "Lum Berry",
-          "usage": 0.9
-        },
-        {
-          "name": "Yache Berry",
-          "usage": 0.9
-        },
-        {
-          "name": "Quick Claw",
-          "usage": 0.9
-        },
-        {
-          "name": "Dragon Fang",
-          "usage": 0.9
-        }
-      ],
-      "abilities": [
-        {
-          "name": "Multiscale",
-          "usage": 67.8
-        },
-        {
-          "name": "Inner Focus",
-          "usage": 32.2
-        }
-      ],
-      "natures": [
-        {
-          "name": "Modest",
-          "usage": 61.7
-        },
-        {
-          "name": "Adamant",
-          "usage": 21.4
-        },
-        {
-          "name": "Timid",
-          "usage": 7.1
-        },
-        {
-          "name": "Jolly",
-          "usage": 2.5
-        },
-        {
-          "name": "Quiet",
-          "usage": 1.9
-        },
-        {
-          "name": "Mild",
-          "usage": 0.8
-        },
-        {
-          "name": "Brave",
-          "usage": 0.7
-        },
-        {
-          "name": "Rash",
-          "usage": 0.5
-        },
-        {
-          "name": "Calm",
-          "usage": 0.5
-        },
-        {
-          "name": "Careful",
-          "usage": 0.5
-        }
-      ],
-      "teammates": [
-        {
-          "species": "Sneasler",
-          "rank": 1
-        },
-        {
-          "species": "Rillaboom",
-          "rank": 2
-        },
-        {
-          "species": "Incineroar",
-          "rank": 3
-        },
-        {
-          "species": "Basculegion",
-          "rank": 4
-        },
-        {
-          "species": "Kingambit",
-          "rank": 5
-        },
-        {
-          "species": "Archaludon",
-          "rank": 6
-        },
-        {
-          "species": "Pelipper",
-          "rank": 7
-        },
-        {
-          "species": "Gholdengo",
-          "rank": 8
-        },
-        {
-          "species": "Indeedee-F",
-          "rank": 9
-        },
-        {
-          "species": "Garchomp",
-          "rank": 10
-        }
-      ],
-      "spreads": [
-        {
-          "rank": 1,
-          "usage": 38.6,
-          "points": {
-            "hp": 2,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 2,
-          "usage": 4.9,
-          "points": {
-            "hp": 2,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 3,
-          "usage": 2.6,
-          "points": {
-            "hp": 1,
-            "atk": 0,
-            "def": 1,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 2.6,
-          "points": {
-            "hp": 31,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 3
-          }
-        },
-        {
-          "rank": 5,
-          "usage": 2.5,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 2
-          }
-        },
-        {
-          "rank": 6,
-          "usage": 2,
-          "points": {
-            "hp": 7,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 27
-          }
-        },
-        {
-          "rank": 7,
-          "usage": 1.8,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 2,
-            "spa": 32,
-            "spd": 0,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 8,
-          "usage": 1.7,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 2,
-            "spe": 0
-          }
-        }
-      ]
-    },
     "aerodactyl": {
       "species": "Aerodactyl",
       "showdownId": "aerodactyl",
@@ -11039,7 +11039,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Tailwind",
-          "usage": 86.6
+          "usage": 86.5
         },
         {
           "name": "Dual Wingbeat",
@@ -11047,31 +11047,31 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Wide Guard",
-          "usage": 47.3
+          "usage": 47.2
         },
         {
           "name": "Protect",
-          "usage": 37.7
+          "usage": 37.6
         },
         {
           "name": "Ice Fang",
-          "usage": 17.8
+          "usage": 17.6
         },
         {
           "name": "Taunt",
-          "usage": 8.1
+          "usage": 8
         },
         {
           "name": "Earthquake",
-          "usage": 4.2
+          "usage": 4.3
         },
         {
           "name": "Psychic Fangs",
-          "usage": 2.8
+          "usage": 2.9
         },
         {
           "name": "Iron Head",
-          "usage": 2.7
+          "usage": 2.8
         }
       ],
       "items": [
@@ -11081,7 +11081,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Aerodactylite",
-          "usage": 36.7
+          "usage": 36.5
         },
         {
           "name": "King's Rock",
@@ -11097,7 +11097,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Hard Stone",
-          "usage": 1.7
+          "usage": 1.8
         },
         {
           "name": "Sitrus Berry",
@@ -11119,11 +11119,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Unnerve",
-          "usage": 91.9
+          "usage": 91.8
         },
         {
           "name": "Pressure",
-          "usage": 4.4
+          "usage": 4.5
         },
         {
           "name": "Rock Head",
@@ -11133,7 +11133,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Jolly",
-          "usage": 82.5
+          "usage": 82.3
         },
         {
           "name": "Adamant",
@@ -11145,11 +11145,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Hasty",
-          "usage": 0.9
+          "usage": 1
         },
         {
           "name": "Naughty",
-          "usage": 0.6
+          "usage": 0.7
         },
         {
           "name": "Lonely",
@@ -11168,7 +11168,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.2
         },
         {
-          "name": "Lax",
+          "name": "Brave",
           "usage": 0.1
         }
       ],
@@ -11241,7 +11241,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 6.8,
+          "usage": 6.9,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -11301,7 +11301,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 8,
-          "usage": 1.1,
+          "usage": 1,
           "points": {
             "hp": 10,
             "atk": 20,
@@ -11320,19 +11320,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Light Screen",
-          "usage": 60.1
+          "usage": 59.8
         },
         {
           "name": "Rain Dance",
-          "usage": 54.3
+          "usage": 53.9
         },
         {
           "name": "Reflect",
-          "usage": 48.9
+          "usage": 48.6
         },
         {
           "name": "Encore",
-          "usage": 47.5
+          "usage": 47.7
         },
         {
           "name": "Will-O-Wisp",
@@ -11344,7 +11344,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Disable",
-          "usage": 22.8
+          "usage": 22.9
         },
         {
           "name": "Quash",
@@ -11356,29 +11356,29 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sunny Day",
-          "usage": 10.5
+          "usage": 10.6
         }
       ],
       "items": [
         {
           "name": "Light Clay",
-          "usage": 40.3
+          "usage": 40.2
         },
         {
           "name": "Roseli Berry",
-          "usage": 23.8
+          "usage": 23.5
         },
         {
           "name": "Sitrus Berry",
-          "usage": 8.9
+          "usage": 9
         },
         {
           "name": "Focus Sash",
-          "usage": 6.1
+          "usage": 6.2
         },
         {
           "name": "Leftovers",
-          "usage": 3.8
+          "usage": 3.9
         },
         {
           "name": "Wide Lens",
@@ -11418,11 +11418,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Careful",
-          "usage": 33.3
+          "usage": 33.2
         },
         {
           "name": "Sassy",
-          "usage": 16.3
+          "usage": 16.2
         },
         {
           "name": "Calm",
@@ -11442,7 +11442,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Adamant",
-          "usage": 1.8
+          "usage": 1.9
         },
         {
           "name": "Jolly",
@@ -11502,7 +11502,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 20.9,
+          "usage": 20.8,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -11514,7 +11514,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 12.6,
+          "usage": 12.5,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -11526,7 +11526,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 6.8,
+          "usage": 6.7,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -11574,7 +11574,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 7,
-          "usage": 4.1,
+          "usage": 4,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -11605,7 +11605,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Sludge Bomb",
-          "usage": 91.1
+          "usage": 91
         },
         {
           "name": "Protect",
@@ -11613,15 +11613,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sleep Powder",
-          "usage": 65
+          "usage": 64.9
         },
         {
           "name": "Earth Power",
-          "usage": 58.4
+          "usage": 58.2
         },
         {
           "name": "Leaf Storm",
-          "usage": 33.6
+          "usage": 33.4
         },
         {
           "name": "Giga Drain",
@@ -11629,33 +11629,33 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Solar Beam",
-          "usage": 10
+          "usage": 10.1
         },
         {
           "name": "Energy Ball",
-          "usage": 10
+          "usage": 9.9
         },
         {
           "name": "Weather Ball",
-          "usage": 4.9
+          "usage": 5
         },
         {
           "name": "Leech Seed",
-          "usage": 4.1
+          "usage": 4.2
         }
       ],
       "items": [
         {
           "name": "Focus Sash",
-          "usage": 37.6
+          "usage": 37.4
         },
         {
           "name": "Life Orb",
-          "usage": 17.7
+          "usage": 17.6
         },
         {
           "name": "Venusaurite",
-          "usage": 17.3
+          "usage": 17.4
         },
         {
           "name": "Wide Lens",
@@ -11667,15 +11667,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sitrus Berry",
-          "usage": 2.7
+          "usage": 2.8
         },
         {
           "name": "Occa Berry",
-          "usage": 2.2
+          "usage": 2.1
         },
         {
           "name": "Miracle Seed",
-          "usage": 1.3
+          "usage": 1.4
         },
         {
           "name": "Expert Belt",
@@ -11699,7 +11699,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 78
+          "usage": 77.8
         },
         {
           "name": "Timid",
@@ -11711,7 +11711,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Calm",
-          "usage": 2.9
+          "usage": 3
         },
         {
           "name": "Quiet",
@@ -11719,11 +11719,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Mild",
-          "usage": 0.4
+          "usage": 0.5
         },
         {
           "name": "Hasty",
-          "usage": 0.2
+          "usage": 0.3
         },
         {
           "name": "Relaxed",
@@ -11783,7 +11783,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 37.5,
+          "usage": 37.4,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -11831,7 +11831,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 3,
+          "usage": 3.1,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -11879,291 +11879,10 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
-    "glimmora": {
-      "species": "Glimmora",
-      "showdownId": "glimmora",
-      "rank": 43,
-      "moves": [
-        {
-          "name": "Power Gem",
-          "usage": 96.4
-        },
-        {
-          "name": "Spiky Shield",
-          "usage": 92.4
-        },
-        {
-          "name": "Earth Power",
-          "usage": 92
-        },
-        {
-          "name": "Sludge Bomb",
-          "usage": 82
-        },
-        {
-          "name": "Sludge Wave",
-          "usage": 12.3
-        },
-        {
-          "name": "Mortal Spin",
-          "usage": 6.5
-        },
-        {
-          "name": "Stealth Rock",
-          "usage": 3.2
-        },
-        {
-          "name": "Energy Ball",
-          "usage": 3.2
-        },
-        {
-          "name": "Dazzling Gleam",
-          "usage": 2.2
-        },
-        {
-          "name": "Protect",
-          "usage": 1.9
-        }
-      ],
-      "items": [
-        {
-          "name": "Glimmoranite",
-          "usage": 48.6
-        },
-        {
-          "name": "Focus Sash",
-          "usage": 39.2
-        },
-        {
-          "name": "Life Orb",
-          "usage": 2.9
-        },
-        {
-          "name": "Choice Scarf",
-          "usage": 2.2
-        },
-        {
-          "name": "Air Balloon",
-          "usage": 1.5
-        },
-        {
-          "name": "Sitrus Berry",
-          "usage": 0.9
-        },
-        {
-          "name": "Expert Belt",
-          "usage": 0.7
-        },
-        {
-          "name": "Red Card",
-          "usage": 0.7
-        },
-        {
-          "name": "Leftovers",
-          "usage": 0.7
-        },
-        {
-          "name": "Rocky Helmet",
-          "usage": 0.4
-        }
-      ],
-      "abilities": [
-        {
-          "name": "Toxic Debris",
-          "usage": 97.3
-        },
-        {
-          "name": "Corrosion",
-          "usage": 2.7
-        }
-      ],
-      "natures": [
-        {
-          "name": "Modest",
-          "usage": 49.3
-        },
-        {
-          "name": "Timid",
-          "usage": 44
-        },
-        {
-          "name": "Quiet",
-          "usage": 2.7
-        },
-        {
-          "name": "Calm",
-          "usage": 1
-        },
-        {
-          "name": "Bold",
-          "usage": 0.9
-        },
-        {
-          "name": "Hasty",
-          "usage": 0.3
-        },
-        {
-          "name": "Naive",
-          "usage": 0.3
-        },
-        {
-          "name": "Sassy",
-          "usage": 0.2
-        },
-        {
-          "name": "Adamant",
-          "usage": 0.2
-        },
-        {
-          "name": "Jolly",
-          "usage": 0.2
-        }
-      ],
-      "teammates": [
-        {
-          "species": "Rillaboom",
-          "rank": 1
-        },
-        {
-          "species": "Kingambit",
-          "rank": 2
-        },
-        {
-          "species": "Salamence",
-          "rank": 3
-        },
-        {
-          "species": "Basculegion",
-          "rank": 4
-        },
-        {
-          "species": "Incineroar",
-          "rank": 5
-        },
-        {
-          "species": "Volcarona",
-          "rank": 6
-        },
-        {
-          "species": "Whimsicott",
-          "rank": 7
-        },
-        {
-          "species": "Golisopod",
-          "rank": 8
-        },
-        {
-          "species": "Garchomp",
-          "rank": 9
-        },
-        {
-          "species": "Indeedee-F",
-          "rank": 10
-        }
-      ],
-      "spreads": [
-        {
-          "rank": 1,
-          "usage": 44.5,
-          "points": {
-            "hp": 2,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 2,
-          "usage": 12.9,
-          "points": {
-            "hp": 1,
-            "atk": 0,
-            "def": 1,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 3,
-          "usage": 6.7,
-          "points": {
-            "hp": 1,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 1,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 3.9,
-          "points": {
-            "hp": 0,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 2,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 5,
-          "usage": 2.8,
-          "points": {
-            "hp": 0,
-            "atk": 0,
-            "def": 2,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 6,
-          "usage": 2.7,
-          "points": {
-            "hp": 32,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 2,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 7,
-          "usage": 1.6,
-          "points": {
-            "hp": 9,
-            "atk": 0,
-            "def": 0,
-            "spa": 25,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 8,
-          "usage": 1.3,
-          "points": {
-            "hp": 0,
-            "atk": 0,
-            "def": 0,
-            "spa": 32,
-            "spd": 0,
-            "spe": 32
-          }
-        }
-      ]
-    },
     "primarina": {
       "species": "Primarina",
       "showdownId": "primarina",
-      "rank": 44,
+      "rank": 43,
       "moves": [
         {
           "name": "Hyper Voice",
@@ -12171,11 +11890,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Protect",
-          "usage": 88.8
+          "usage": 88.7
         },
         {
           "name": "Moonblast",
-          "usage": 85.7
+          "usage": 85.6
         },
         {
           "name": "Calm Mind",
@@ -12183,19 +11902,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Ice Beam",
-          "usage": 19.7
+          "usage": 19.8
         },
         {
           "name": "Dazzling Gleam",
-          "usage": 14.4
+          "usage": 14.6
         },
         {
           "name": "Aqua Jet",
-          "usage": 13.9
+          "usage": 13.8
         },
         {
           "name": "Energy Ball",
-          "usage": 6.6
+          "usage": 6.5
         },
         {
           "name": "Icy Wind",
@@ -12203,17 +11922,17 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Sparkling Aria",
-          "usage": 4.6
+          "usage": 4.7
         }
       ],
       "items": [
         {
           "name": "Life Orb",
-          "usage": 28.7
+          "usage": 28.6
         },
         {
           "name": "Leftovers",
-          "usage": 26.5
+          "usage": 26.6
         },
         {
           "name": "Mystic Water",
@@ -12225,7 +11944,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Grassy Seed",
-          "usage": 7.4
+          "usage": 7.3
         },
         {
           "name": "Fairy Feather",
@@ -12261,23 +11980,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Modest",
-          "usage": 66
+          "usage": 66.1
         },
         {
           "name": "Quiet",
-          "usage": 21.7
+          "usage": 21.5
         },
         {
           "name": "Bold",
           "usage": 5.3
         },
         {
-          "name": "Timid",
+          "name": "Calm",
           "usage": 1.8
         },
         {
-          "name": "Calm",
-          "usage": 1.7
+          "name": "Timid",
+          "usage": 1.8
         },
         {
           "name": "Relaxed",
@@ -12293,7 +12012,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Hasty",
-          "usage": 0.1
+          "usage": 0.2
         },
         {
           "name": "Brave",
@@ -12345,7 +12064,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 16.8,
+          "usage": 16.7,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -12369,7 +12088,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 3.4,
+          "usage": 3.3,
           "points": {
             "hp": 24,
             "atk": 0,
@@ -12441,6 +12160,287 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
+    "glimmora": {
+      "species": "Glimmora",
+      "showdownId": "glimmora",
+      "rank": 44,
+      "moves": [
+        {
+          "name": "Power Gem",
+          "usage": 96.2
+        },
+        {
+          "name": "Spiky Shield",
+          "usage": 92.3
+        },
+        {
+          "name": "Earth Power",
+          "usage": 91.8
+        },
+        {
+          "name": "Sludge Bomb",
+          "usage": 81.8
+        },
+        {
+          "name": "Sludge Wave",
+          "usage": 12.4
+        },
+        {
+          "name": "Mortal Spin",
+          "usage": 6.7
+        },
+        {
+          "name": "Stealth Rock",
+          "usage": 3.3
+        },
+        {
+          "name": "Energy Ball",
+          "usage": 3.2
+        },
+        {
+          "name": "Dazzling Gleam",
+          "usage": 2.2
+        },
+        {
+          "name": "Toxic",
+          "usage": 1.9
+        }
+      ],
+      "items": [
+        {
+          "name": "Glimmoranite",
+          "usage": 48.6
+        },
+        {
+          "name": "Focus Sash",
+          "usage": 39
+        },
+        {
+          "name": "Life Orb",
+          "usage": 2.9
+        },
+        {
+          "name": "Choice Scarf",
+          "usage": 2.2
+        },
+        {
+          "name": "Air Balloon",
+          "usage": 1.5
+        },
+        {
+          "name": "Sitrus Berry",
+          "usage": 0.9
+        },
+        {
+          "name": "Expert Belt",
+          "usage": 0.8
+        },
+        {
+          "name": "Red Card",
+          "usage": 0.8
+        },
+        {
+          "name": "Leftovers",
+          "usage": 0.7
+        },
+        {
+          "name": "Rocky Helmet",
+          "usage": 0.5
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Toxic Debris",
+          "usage": 97.2
+        },
+        {
+          "name": "Corrosion",
+          "usage": 2.8
+        }
+      ],
+      "natures": [
+        {
+          "name": "Modest",
+          "usage": 49.1
+        },
+        {
+          "name": "Timid",
+          "usage": 44.1
+        },
+        {
+          "name": "Quiet",
+          "usage": 2.7
+        },
+        {
+          "name": "Calm",
+          "usage": 1
+        },
+        {
+          "name": "Bold",
+          "usage": 1
+        },
+        {
+          "name": "Hasty",
+          "usage": 0.3
+        },
+        {
+          "name": "Naive",
+          "usage": 0.3
+        },
+        {
+          "name": "Adamant",
+          "usage": 0.2
+        },
+        {
+          "name": "Sassy",
+          "usage": 0.2
+        },
+        {
+          "name": "Jolly",
+          "usage": 0.2
+        }
+      ],
+      "teammates": [
+        {
+          "species": "Rillaboom",
+          "rank": 1
+        },
+        {
+          "species": "Kingambit",
+          "rank": 2
+        },
+        {
+          "species": "Salamence",
+          "rank": 3
+        },
+        {
+          "species": "Basculegion",
+          "rank": 4
+        },
+        {
+          "species": "Incineroar",
+          "rank": 5
+        },
+        {
+          "species": "Volcarona",
+          "rank": 6
+        },
+        {
+          "species": "Whimsicott",
+          "rank": 7
+        },
+        {
+          "species": "Golisopod",
+          "rank": 8
+        },
+        {
+          "species": "Garchomp",
+          "rank": 9
+        },
+        {
+          "species": "Indeedee-F",
+          "rank": 10
+        }
+      ],
+      "spreads": [
+        {
+          "rank": 1,
+          "usage": 44.3,
+          "points": {
+            "hp": 2,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 2,
+          "usage": 12.8,
+          "points": {
+            "hp": 1,
+            "atk": 0,
+            "def": 1,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 3,
+          "usage": 6.6,
+          "points": {
+            "hp": 1,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 1,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 4,
+          "usage": 3.9,
+          "points": {
+            "hp": 0,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 2,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 5,
+          "usage": 2.9,
+          "points": {
+            "hp": 0,
+            "atk": 0,
+            "def": 2,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 6,
+          "usage": 2.7,
+          "points": {
+            "hp": 32,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 2,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 7,
+          "usage": 1.6,
+          "points": {
+            "hp": 9,
+            "atk": 0,
+            "def": 0,
+            "spa": 25,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 8,
+          "usage": 1.3,
+          "points": {
+            "hp": 0,
+            "atk": 0,
+            "def": 0,
+            "spa": 32,
+            "spd": 0,
+            "spe": 32
+          }
+        }
+      ]
+    },
     "pawmot": {
       "species": "Pawmot",
       "showdownId": "pawmot",
@@ -12448,11 +12448,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Double Shock",
-          "usage": 93.4
+          "usage": 93.3
         },
         {
           "name": "Close Combat",
-          "usage": 86.9
+          "usage": 86.8
         },
         {
           "name": "Revival Blessing",
@@ -12460,23 +12460,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Fake Out",
-          "usage": 48.7
+          "usage": 48.6
         },
         {
           "name": "Ice Punch",
           "usage": 22.9
         },
         {
-          "name": "Coaching",
+          "name": "Protect",
           "usage": 21.1
         },
         {
-          "name": "Protect",
-          "usage": 21
+          "name": "Coaching",
+          "usage": 20.9
         },
         {
           "name": "Mach Punch",
-          "usage": 8.9
+          "usage": 9
         },
         {
           "name": "Thunder Punch",
@@ -12484,13 +12484,13 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Fire Punch",
-          "usage": 3.4
+          "usage": 3.5
         }
       ],
       "items": [
         {
           "name": "Focus Sash",
-          "usage": 78.6
+          "usage": 78.3
         },
         {
           "name": "Life Orb",
@@ -12498,15 +12498,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Leppa Berry",
-          "usage": 5.1
+          "usage": 5.3
+        },
+        {
+          "name": "Sitrus Berry",
+          "usage": 1.3
         },
         {
           "name": "White Herb",
           "usage": 1.3
-        },
-        {
-          "name": "Sitrus Berry",
-          "usage": 1.2
         },
         {
           "name": "Expert Belt",
@@ -12532,25 +12532,25 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Iron Fist",
-          "usage": 88.7
+          "usage": 88.5
         },
         {
           "name": "Volt Absorb",
-          "usage": 9.7
+          "usage": 9.9
         },
         {
           "name": "Natural Cure",
-          "usage": 1.6
+          "usage": 1.7
         }
       ],
       "natures": [
         {
           "name": "Jolly",
-          "usage": 66.8
+          "usage": 67
         },
         {
           "name": "Adamant",
-          "usage": 28.1
+          "usage": 27.8
         },
         {
           "name": "Naughty",
@@ -12562,7 +12562,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Naive",
-          "usage": 0.6
+          "usage": 0.7
         },
         {
           "name": "Hasty",
@@ -12630,7 +12630,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 70.5,
+          "usage": 70.2,
           "points": {
             "hp": 2,
             "atk": 32,
@@ -12642,7 +12642,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 6.5,
+          "usage": 6.6,
           "points": {
             "hp": 0,
             "atk": 32,
@@ -12733,39 +12733,39 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Brave Bird",
-          "usage": 79.6
+          "usage": 79.5
         },
         {
           "name": "Roost",
-          "usage": 77.9
+          "usage": 78.1
         },
         {
           "name": "Bulk Up",
-          "usage": 63.9
+          "usage": 64
         },
         {
           "name": "Power Trip",
-          "usage": 50.9
+          "usage": 51.1
         },
         {
           "name": "Body Press",
-          "usage": 29.7
+          "usage": 29.6
         },
         {
           "name": "Iron Head",
-          "usage": 27.9
+          "usage": 27.7
         },
         {
           "name": "Tailwind",
-          "usage": 27.2
+          "usage": 27.1
         },
         {
           "name": "Iron Defense",
-          "usage": 16.2
+          "usage": 16.3
         },
         {
           "name": "Protect",
-          "usage": 12.1
+          "usage": 12
         },
         {
           "name": "Taunt",
@@ -12775,7 +12775,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "items": [
         {
           "name": "Psychic Seed",
-          "usage": 49.9
+          "usage": 50
         },
         {
           "name": "Leftovers",
@@ -12831,15 +12831,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "natures": [
         {
           "name": "Careful",
-          "usage": 55
+          "usage": 55.1
         },
         {
           "name": "Impish",
-          "usage": 27
+          "usage": 26.8
         },
         {
           "name": "Adamant",
-          "usage": 11.8
+          "usage": 11.7
         },
         {
           "name": "Jolly",
@@ -12851,7 +12851,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Brave",
-          "usage": 1
+          "usage": 0.9
         },
         {
           "name": "Sassy",
@@ -13018,23 +13018,23 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Water Spout",
-          "usage": 85.5
+          "usage": 85.4
         },
         {
           "name": "Dark Pulse",
-          "usage": 62.1
+          "usage": 61.9
         },
         {
           "name": "Protect",
-          "usage": 61.2
+          "usage": 61.1
         },
         {
           "name": "Shell Smash",
-          "usage": 54.2
+          "usage": 54.3
         },
         {
           "name": "Aura Sphere",
-          "usage": 43.3
+          "usage": 43.2
         },
         {
           "name": "Terrain Pulse",
@@ -13054,13 +13054,13 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Dragon Pulse",
-          "usage": 6.1
+          "usage": 6.2
         }
       ],
       "items": [
         {
           "name": "Blastoisinite",
-          "usage": 90.7
+          "usage": 90.6
         },
         {
           "name": "White Herb",
@@ -13068,7 +13068,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Mystic Water",
-          "usage": 1.4
+          "usage": 1.5
         },
         {
           "name": "Leftovers",
@@ -13084,7 +13084,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Life Orb",
-          "usage": 0.3
+          "usage": 0.4
         },
         {
           "name": "Focus Sash",
@@ -13102,41 +13102,41 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Rain Dish",
-          "usage": 66.1
+          "usage": 65.9
         },
         {
           "name": "Torrent",
-          "usage": 33.9
+          "usage": 34.1
         }
       ],
       "natures": [
         {
           "name": "Modest",
-          "usage": 70.5
+          "usage": 70.4
         },
         {
           "name": "Quiet",
-          "usage": 20.8
+          "usage": 20.7
         },
         {
           "name": "Timid",
           "usage": 4.9
         },
         {
+          "name": "Bold",
+          "usage": 0.8
+        },
+        {
           "name": "Calm",
           "usage": 0.8
         },
         {
-          "name": "Bold",
-          "usage": 0.7
-        },
-        {
           "name": "Sassy",
-          "usage": 0.5
+          "usage": 0.6
         },
         {
           "name": "Relaxed",
-          "usage": 0.4
+          "usage": 0.5
         },
         {
           "name": "Mild",
@@ -13147,7 +13147,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.2
         },
         {
-          "name": "Jolly",
+          "name": "Hasty",
           "usage": 0.1
         }
       ],
@@ -13208,7 +13208,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 17.3,
+          "usage": 17.2,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -13232,7 +13232,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 5.2,
+          "usage": 5.1,
           "points": {
             "hp": 22,
             "atk": 0,
@@ -13299,19 +13299,19 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "moves": [
         {
           "name": "Heat Wave",
-          "usage": 90.9
+          "usage": 90.8
         },
         {
           "name": "Protect",
-          "usage": 89.4
+          "usage": 89.3
         },
         {
           "name": "Psychic",
-          "usage": 55.1
+          "usage": 55.3
         },
         {
           "name": "Nasty Plot",
-          "usage": 47.4
+          "usage": 47.5
         },
         {
           "name": "Expanding Force",
@@ -13319,7 +13319,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Psyshock",
-          "usage": 11.7
+          "usage": 11.6
         },
         {
           "name": "Dazzling Gleam",
@@ -13327,32 +13327,32 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Encore",
-          "usage": 8.2
-        },
-        {
-          "name": "Substitute",
-          "usage": 6.9
+          "usage": 8.1
         },
         {
           "name": "Flamethrower",
           "usage": 6.8
+        },
+        {
+          "name": "Substitute",
+          "usage": 6.7
         }
       ],
       "items": [
         {
           "name": "Delphoxite",
-          "usage": 84.3
+          "usage": 84.4
         },
         {
           "name": "Life Orb",
-          "usage": 6.6
-        },
-        {
-          "name": "Focus Sash",
-          "usage": 2
+          "usage": 6.4
         },
         {
           "name": "Psychic Seed",
+          "usage": 2
+        },
+        {
+          "name": "Focus Sash",
           "usage": 2
         },
         {
@@ -13383,17 +13383,17 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "abilities": [
         {
           "name": "Blaze",
-          "usage": 82.9
+          "usage": 82.8
         },
         {
           "name": "Magician",
-          "usage": 17.1
+          "usage": 17.2
         }
       ],
       "natures": [
         {
           "name": "Timid",
-          "usage": 76.5
+          "usage": 76.4
         },
         {
           "name": "Modest",
@@ -13420,11 +13420,11 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
           "usage": 0.3
         },
         {
-          "name": "Relaxed",
+          "name": "Naive",
           "usage": 0.1
         },
         {
-          "name": "Naive",
+          "name": "Relaxed",
           "usage": 0.1
         },
         {
@@ -13477,7 +13477,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 32.2,
+          "usage": 32,
           "points": {
             "hp": 2,
             "atk": 0,
@@ -13489,7 +13489,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 7.2,
+          "usage": 7.3,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -13501,7 +13501,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 3,
-          "usage": 5,
+          "usage": 5.1,
           "points": {
             "hp": 0,
             "atk": 0,
@@ -13513,7 +13513,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 4,
-          "usage": 4.9,
+          "usage": 4.8,
           "points": {
             "hp": 1,
             "atk": 0,
@@ -13525,7 +13525,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 5,
-          "usage": 2.3,
+          "usage": 2.6,
           "points": {
             "hp": 9,
             "atk": 0,
@@ -13537,7 +13537,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 6,
-          "usage": 2.1,
+          "usage": 2,
           "points": {
             "hp": 23,
             "atk": 0,
@@ -13573,30 +13573,315 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         }
       ]
     },
-    "hatterene": {
-      "species": "Hatterene",
-      "showdownId": "hatterene",
+    "annihilape": {
+      "species": "Annihilape",
+      "showdownId": "annihilape",
       "rank": 49,
       "moves": [
         {
-          "name": "Dazzling Gleam",
-          "usage": 93.7
+          "name": "Rage Fist",
+          "usage": 64.1
         },
         {
-          "name": "Trick Room",
-          "usage": 89.6
-        },
-        {
-          "name": "Expanding Force",
-          "usage": 87.8
+          "name": "Drain Punch",
+          "usage": 52
         },
         {
           "name": "Protect",
-          "usage": 69.3
+          "usage": 51.4
+        },
+        {
+          "name": "Close Combat",
+          "usage": 44.4
+        },
+        {
+          "name": "Ice Punch",
+          "usage": 39.6
+        },
+        {
+          "name": "Bulk Up",
+          "usage": 30.7
+        },
+        {
+          "name": "Shadow Claw",
+          "usage": 18.2
+        },
+        {
+          "name": "Rock Slide",
+          "usage": 17.2
+        },
+        {
+          "name": "Phantom Force",
+          "usage": 16.7
+        },
+        {
+          "name": "U-turn",
+          "usage": 13.5
+        }
+      ],
+      "items": [
+        {
+          "name": "Choice Scarf",
+          "usage": 33.1
+        },
+        {
+          "name": "Leftovers",
+          "usage": 22.4
+        },
+        {
+          "name": "Sitrus Berry",
+          "usage": 13.1
+        },
+        {
+          "name": "Focus Sash",
+          "usage": 7.8
+        },
+        {
+          "name": "Life Orb",
+          "usage": 5.5
+        },
+        {
+          "name": "Psychic Seed",
+          "usage": 2.6
+        },
+        {
+          "name": "Expert Belt",
+          "usage": 2.2
+        },
+        {
+          "name": "Coba Berry",
+          "usage": 1.4
+        },
+        {
+          "name": "Grassy Seed",
+          "usage": 1.4
+        },
+        {
+          "name": "Muscle Band",
+          "usage": 1.1
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Defiant",
+          "usage": 98.1
+        },
+        {
+          "name": "Inner Focus",
+          "usage": 1.4
+        },
+        {
+          "name": "Vital Spirit",
+          "usage": 0.5
+        }
+      ],
+      "natures": [
+        {
+          "name": "Adamant",
+          "usage": 57.2
+        },
+        {
+          "name": "Jolly",
+          "usage": 25.9
+        },
+        {
+          "name": "Careful",
+          "usage": 8.9
+        },
+        {
+          "name": "Brave",
+          "usage": 3.7
+        },
+        {
+          "name": "Impish",
+          "usage": 2.3
+        },
+        {
+          "name": "Lonely",
+          "usage": 0.4
+        },
+        {
+          "name": "Sassy",
+          "usage": 0.4
+        },
+        {
+          "name": "Naughty",
+          "usage": 0.3
+        },
+        {
+          "name": "Relaxed",
+          "usage": 0.2
+        },
+        {
+          "name": "Naive",
+          "usage": 0.2
+        }
+      ],
+      "teammates": [
+        {
+          "species": "Rillaboom",
+          "rank": 1
+        },
+        {
+          "species": "Indeedee-F",
+          "rank": 2
+        },
+        {
+          "species": "Incineroar",
+          "rank": 3
+        },
+        {
+          "species": "Golisopod",
+          "rank": 4
+        },
+        {
+          "species": "Salamence",
+          "rank": 5
+        },
+        {
+          "species": "Pelipper",
+          "rank": 6
+        },
+        {
+          "species": "Archaludon",
+          "rank": 7
+        },
+        {
+          "species": "Armarouge",
+          "rank": 8
+        },
+        {
+          "species": "Garchomp",
+          "rank": 9
+        },
+        {
+          "species": "Sneasler",
+          "rank": 10
+        }
+      ],
+      "spreads": [
+        {
+          "rank": 1,
+          "usage": 29.5,
+          "points": {
+            "hp": 2,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 2,
+          "usage": 5.4,
+          "points": {
+            "hp": 32,
+            "atk": 32,
+            "def": 2,
+            "spa": 0,
+            "spd": 0,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 3,
+          "usage": 4.2,
+          "points": {
+            "hp": 0,
+            "atk": 32,
+            "def": 2,
+            "spa": 0,
+            "spd": 0,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 4,
+          "usage": 3.5,
+          "points": {
+            "hp": 32,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 2,
+            "spe": 0
+          }
+        },
+        {
+          "rank": 5,
+          "usage": 2.6,
+          "points": {
+            "hp": 32,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 2
+          }
+        },
+        {
+          "rank": 6,
+          "usage": 1.9,
+          "points": {
+            "hp": 0,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 2,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 7,
+          "usage": 1.7,
+          "points": {
+            "hp": 0,
+            "atk": 32,
+            "def": 1,
+            "spa": 0,
+            "spd": 1,
+            "spe": 32
+          }
+        },
+        {
+          "rank": 8,
+          "usage": 1.5,
+          "points": {
+            "hp": 7,
+            "atk": 32,
+            "def": 0,
+            "spa": 0,
+            "spd": 0,
+            "spe": 27
+          }
+        }
+      ]
+    },
+    "hatterene": {
+      "species": "Hatterene",
+      "showdownId": "hatterene",
+      "rank": 50,
+      "moves": [
+        {
+          "name": "Dazzling Gleam",
+          "usage": 93.6
+        },
+        {
+          "name": "Trick Room",
+          "usage": 89.4
+        },
+        {
+          "name": "Expanding Force",
+          "usage": 87.6
+        },
+        {
+          "name": "Protect",
+          "usage": 69.1
         },
         {
           "name": "Mystical Fire",
-          "usage": 20
+          "usage": 20.2
         },
         {
           "name": "Psychic",
@@ -13608,25 +13893,25 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Giga Drain",
-          "usage": 2.9
+          "usage": 3
         },
         {
           "name": "Draining Kiss",
-          "usage": 2.8
+          "usage": 2.9
         },
         {
           "name": "Dark Pulse",
-          "usage": 2.5
+          "usage": 2.6
         }
       ],
       "items": [
         {
           "name": "Life Orb",
-          "usage": 63.7
+          "usage": 63.4
         },
         {
           "name": "Focus Sash",
-          "usage": 13
+          "usage": 13.1
         },
         {
           "name": "Psychic Seed",
@@ -13646,7 +13931,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Leftovers",
-          "usage": 2.2
+          "usage": 2.3
         },
         {
           "name": "Babiri Berry",
@@ -13654,7 +13939,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Wise Glasses",
-          "usage": 0.9
+          "usage": 0.8
         },
         {
           "name": "Quick Claw",
@@ -13672,13 +13957,13 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Anticipation",
-          "usage": 0.9
+          "usage": 1
         }
       ],
       "natures": [
         {
           "name": "Quiet",
-          "usage": 81.6
+          "usage": 81.3
         },
         {
           "name": "Modest",
@@ -13686,15 +13971,15 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Relaxed",
-          "usage": 3.2
+          "usage": 3.3
         },
         {
           "name": "Bold",
-          "usage": 2.1
+          "usage": 2.2
         },
         {
           "name": "Sassy",
-          "usage": 1.2
+          "usage": 1.3
         },
         {
           "name": "Calm",
@@ -13702,7 +13987,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "name": "Mild",
-          "usage": 0.1
+          "usage": 0.2
         },
         {
           "name": "Timid",
@@ -13762,7 +14047,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
       "spreads": [
         {
           "rank": 1,
-          "usage": 42.4,
+          "usage": 42.3,
           "points": {
             "hp": 32,
             "atk": 0,
@@ -13774,7 +14059,7 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
         },
         {
           "rank": 2,
-          "usage": 11.7,
+          "usage": 11.6,
           "points": {
             "hp": 27,
             "atk": 0,
@@ -13854,291 +14139,6 @@ export const CHAMPIONS_USAGE_DETAILS_SNAPSHOT = {
             "spa": 32,
             "spd": 32,
             "spe": 0
-          }
-        }
-      ]
-    },
-    "annihilape": {
-      "species": "Annihilape",
-      "showdownId": "annihilape",
-      "rank": 50,
-      "moves": [
-        {
-          "name": "Rage Fist",
-          "usage": 64.2
-        },
-        {
-          "name": "Drain Punch",
-          "usage": 52.1
-        },
-        {
-          "name": "Protect",
-          "usage": 51.6
-        },
-        {
-          "name": "Close Combat",
-          "usage": 44.5
-        },
-        {
-          "name": "Ice Punch",
-          "usage": 39.5
-        },
-        {
-          "name": "Bulk Up",
-          "usage": 30.8
-        },
-        {
-          "name": "Shadow Claw",
-          "usage": 18.1
-        },
-        {
-          "name": "Rock Slide",
-          "usage": 17.1
-        },
-        {
-          "name": "Phantom Force",
-          "usage": 16.5
-        },
-        {
-          "name": "U-turn",
-          "usage": 13.7
-        }
-      ],
-      "items": [
-        {
-          "name": "Choice Scarf",
-          "usage": 33.1
-        },
-        {
-          "name": "Leftovers",
-          "usage": 22.5
-        },
-        {
-          "name": "Sitrus Berry",
-          "usage": 13
-        },
-        {
-          "name": "Focus Sash",
-          "usage": 7.9
-        },
-        {
-          "name": "Life Orb",
-          "usage": 5.4
-        },
-        {
-          "name": "Psychic Seed",
-          "usage": 2.6
-        },
-        {
-          "name": "Expert Belt",
-          "usage": 2.1
-        },
-        {
-          "name": "Coba Berry",
-          "usage": 1.5
-        },
-        {
-          "name": "Grassy Seed",
-          "usage": 1.4
-        },
-        {
-          "name": "Muscle Band",
-          "usage": 1.1
-        }
-      ],
-      "abilities": [
-        {
-          "name": "Defiant",
-          "usage": 98.2
-        },
-        {
-          "name": "Inner Focus",
-          "usage": 1.3
-        },
-        {
-          "name": "Vital Spirit",
-          "usage": 0.5
-        }
-      ],
-      "natures": [
-        {
-          "name": "Adamant",
-          "usage": 57.2
-        },
-        {
-          "name": "Jolly",
-          "usage": 25.7
-        },
-        {
-          "name": "Careful",
-          "usage": 8.9
-        },
-        {
-          "name": "Brave",
-          "usage": 3.8
-        },
-        {
-          "name": "Impish",
-          "usage": 2.3
-        },
-        {
-          "name": "Lonely",
-          "usage": 0.4
-        },
-        {
-          "name": "Sassy",
-          "usage": 0.4
-        },
-        {
-          "name": "Naughty",
-          "usage": 0.3
-        },
-        {
-          "name": "Naive",
-          "usage": 0.2
-        },
-        {
-          "name": "Relaxed",
-          "usage": 0.2
-        }
-      ],
-      "teammates": [
-        {
-          "species": "Rillaboom",
-          "rank": 1
-        },
-        {
-          "species": "Indeedee-F",
-          "rank": 2
-        },
-        {
-          "species": "Incineroar",
-          "rank": 3
-        },
-        {
-          "species": "Golisopod",
-          "rank": 4
-        },
-        {
-          "species": "Salamence",
-          "rank": 5
-        },
-        {
-          "species": "Pelipper",
-          "rank": 6
-        },
-        {
-          "species": "Archaludon",
-          "rank": 7
-        },
-        {
-          "species": "Armarouge",
-          "rank": 8
-        },
-        {
-          "species": "Garchomp",
-          "rank": 9
-        },
-        {
-          "species": "Sneasler",
-          "rank": 10
-        }
-      ],
-      "spreads": [
-        {
-          "rank": 1,
-          "usage": 29.6,
-          "points": {
-            "hp": 2,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 2,
-          "usage": 5.5,
-          "points": {
-            "hp": 32,
-            "atk": 32,
-            "def": 2,
-            "spa": 0,
-            "spd": 0,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 3,
-          "usage": 3.9,
-          "points": {
-            "hp": 0,
-            "atk": 32,
-            "def": 2,
-            "spa": 0,
-            "spd": 0,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 4,
-          "usage": 3.4,
-          "points": {
-            "hp": 32,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 2,
-            "spe": 0
-          }
-        },
-        {
-          "rank": 5,
-          "usage": 2.6,
-          "points": {
-            "hp": 32,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 2
-          }
-        },
-        {
-          "rank": 6,
-          "usage": 1.9,
-          "points": {
-            "hp": 0,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 2,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 7,
-          "usage": 1.7,
-          "points": {
-            "hp": 0,
-            "atk": 32,
-            "def": 1,
-            "spa": 0,
-            "spd": 1,
-            "spe": 32
-          }
-        },
-        {
-          "rank": 8,
-          "usage": 1.5,
-          "points": {
-            "hp": 7,
-            "atk": 32,
-            "def": 0,
-            "spa": 0,
-            "spd": 0,
-            "spe": 27
           }
         }
       ]
