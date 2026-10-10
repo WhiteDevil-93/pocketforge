@@ -1,6 +1,6 @@
 // Auto-generated from Pokémon Showdown champions mod — do not edit manually
 // Source: champions + base learnsets for patched species
-// Last updated: 2026-10-09T00:59:56.037Z
+// Last updated: 2026-10-10T00:57:47.234Z
 
 export const CHAMPIONS_LEARNSETS: Record<string, string[]> = {
   "abomasnow": [
