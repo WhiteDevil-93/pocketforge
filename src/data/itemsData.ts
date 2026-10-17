@@ -1,5 +1,5 @@
 // Auto-generated from Pokemon Showdown — do not edit manually
-// Last updated: 2026-10-16T00:47:31.181Z
+// Last updated: 2026-10-17T00:48:32.927Z
 
 export interface ItemEntry {
   id: string;
@@ -710,6 +710,25 @@ export const ITEMS: ItemEntry[] = [
     "isPokeball": false
   },
   {
+    "id": "blackaugurite",
+    "name": "Black Augurite",
+    "description": "",
+    "category": "item",
+    "fling": 0,
+    "onPlate": false,
+    "onDrive": false,
+    "onMemory": false,
+    "megaStone": null,
+    "megaEvolves": null,
+    "zMove": null,
+    "zMoveType": null,
+    "zMoveFrom": null,
+    "naturalGift": null,
+    "isBerry": false,
+    "isGem": false,
+    "isPokeball": false
+  },
+  {
     "id": "blackbelt",
     "name": "Black Belt",
     "description": "",
@@ -753,6 +772,25 @@ export const ITEMS: ItemEntry[] = [
     "description": "",
     "category": "item",
     "fling": 30,
+    "onPlate": false,
+    "onDrive": false,
+    "onMemory": false,
+    "megaStone": null,
+    "megaEvolves": null,
+    "zMove": null,
+    "zMoveType": null,
+    "zMoveFrom": null,
+    "naturalGift": null,
+    "isBerry": false,
+    "isGem": false,
+    "isPokeball": false
+  },
+  {
+    "id": "blankplate",
+    "name": "Blank Plate",
+    "description": "",
+    "category": "item",
+    "fling": 0,
     "onPlate": false,
     "onDrive": false,
     "onMemory": false,
@@ -4588,6 +4626,25 @@ export const ITEMS: ItemEntry[] = [
     "isPokeball": false
   },
   {
+    "id": "legendplate",
+    "name": "Legend Plate",
+    "description": "",
+    "category": "item",
+    "fling": 0,
+    "onPlate": false,
+    "onDrive": false,
+    "onMemory": false,
+    "megaStone": null,
+    "megaEvolves": null,
+    "zMove": null,
+    "zMoveType": null,
+    "zMoveFrom": null,
+    "naturalGift": null,
+    "isBerry": false,
+    "isGem": false,
+    "isPokeball": false
+  },
+  {
     "id": "leppaberry",
     "name": "Leppa Berry",
     "description": "",
@@ -6079,6 +6136,25 @@ export const ITEMS: ItemEntry[] = [
       "type": "Psychic"
     },
     "isBerry": true,
+    "isGem": false,
+    "isPokeball": false
+  },
+  {
+    "id": "peatblock",
+    "name": "Peat Block",
+    "description": "",
+    "category": "item",
+    "fling": 0,
+    "onPlate": false,
+    "onDrive": false,
+    "onMemory": false,
+    "megaStone": null,
+    "megaEvolves": null,
+    "zMove": null,
+    "zMoveType": null,
+    "zMoveFrom": null,
+    "naturalGift": null,
+    "isBerry": false,
     "isGem": false,
     "isPokeball": false
   },

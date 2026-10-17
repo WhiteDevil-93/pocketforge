@@ -1,6 +1,6 @@
 // Auto-generated from Pokémon Showdown champions mod — do not edit manually
 // Moves with isNonstandard: "Past" in data/mods/champions/moves.ts
-// Last updated: 2026-10-16T00:47:32.168Z
+// Last updated: 2026-10-17T00:48:33.899Z
 
 export const CHAMPIONS_BANNED_MOVES: string[] = [
   "absorb",
