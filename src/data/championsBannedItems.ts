@@ -1,6 +1,6 @@
 // Auto-generated from Pokémon Showdown champions mod — do not edit manually
 // Items with isNonstandard: "Past" in data/mods/champions/items.ts
-// Last updated: 2026-10-18T00:54:04.110Z
+// Last updated: 2026-10-19T00:53:37.723Z
 
 export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "abilityshield",
@@ -29,7 +29,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "covertcloak",
   "crackedpot",
   "custapberry",
-  "darkranite",
   "dawnstone",
   "destinyknot",
   "diveball",
@@ -65,7 +64,6 @@ export const CHAMPIONS_BANNED_ITEMS: string[] = [
   "griseousorb",
   "healball",
   "hearthflamemask",
-  "heatranite",
   "heavyball",
   "heavydutyboots",
   "hondewberry",
